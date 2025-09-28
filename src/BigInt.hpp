@@ -50,7 +50,6 @@ SOFTWARE.
 #include <cstdint>
 #include <climits>
 #include <cstring>
-
 #include <iostream>
 #include <string>
 #include <algorithm>
@@ -80,9 +79,9 @@ namespace __LAMINA::BIGINT
 	constexpr uint32_t DIGIT_BYTES = DIGIT_BITS / CHAR_BIT;
 
 	/**
-	 * @brief Check if the current platform is Little Endian.
+	 * @brief 检查当前平台是否为小端字节序（Little Endian）。
 	 *
-	 * @return true if the platform is Little Endian, false otherwise.
+	 * @return 若平台是小端字节序则返回 true，否则返回 false。
 	 */
 	inline bool is_little_endian()
 	{
@@ -91,13 +90,13 @@ namespace __LAMINA::BIGINT
 	}
 
 	/**
-	 * @brief Universal byte order conversion, implemented based on bitwise operations, applicable to all integer types (cross-platform).
+	 * @brief 通用字节序转换，基于位运算实现，适用于所有整数类型（跨平台）。
 	 *
-	 * @tparam T The type of the value to perform byte order conversion.
-	 * @param value The value to be byte order converted.
-	 * @return The byte order converted value.
+	 * @tparam T 要执行字节序转换的值的类型。
+	 * @param value 要进行字节序转换的值。
+	 * @return 字节序转换后的值。
 	 */
-	template <typename T, typename std::enable_if<std::is_integral_v<T>>::type* = nullptr>
+	template <typename T, typename std::enable_if<std::is_integral_v<T>>::type * = nullptr>
 	constexpr T endian_swap(T value)
 	{
 		static_assert(!std::is_same<T, bool>::value, "bool is not supported");
@@ -189,30 +188,28 @@ namespace __LAMINA::BIGINT
 		BigInteger& operator+=(const BigInteger& other);
 
 		/**
-		 * @brief Adds another BigInteger to the current instance.
+		 * @brief 将另一个 BigInteger 加到当前实例上。
 		 *
-		 * This function performs addition of two BigIntegers and updates the current
-		 * instance with the result.
+		 * 此函数执行两个 BigInteger 的加法运算，并使用结果更新当前实例。
 		 *
-		 * @param other The BigInteger to be added.
-		 * @return Reference to the modified current instance after addition.
+		 * @param other 要被加上的 BigInteger。
+		 * @return 加法运算后经过修改的当前实例的引用。
 		 */
-		BigInteger& Add(const BigInteger& other);
+		BigInteger &Add(const BigInteger &other);
 
 		BigInteger& operator-=(const BigInteger& other);
 
 		BigInteger Difference(const BigInteger& other) const;
 
 		/**
-		 * @brief Subtracts another BigInteger from the current instance.
+		 * @brief 从当前实例中减去另一个 BigInteger。
 		 *
-		 * This function performs subtraction of two BigIntegers and updates the current
-		 * instance with the result.
+		 * 此函数执行两个 BigInteger 的减法运算，并使用结果更新当前实例。
 		 *
-		 * @param other The BigInteger to be subtracted.
-		 * @return Reference to the modified current instance after subtraction.
+		 * @param other 要被减去的 BigInteger。
+		 * @return 减法运算后经过修改的当前实例的引用。
 		 */
-		BigInteger& Subtract(const BigInteger& other);
+		BigInteger &Subtract(const BigInteger &other);
 
 		BigInteger operator++();
 
@@ -227,61 +224,60 @@ namespace __LAMINA::BIGINT
 		BigInteger LeftShiftBlock(size_t d) const;
 
 		/**
-		 * Computes the integer square root of the current BigInteger instance.
+		 * 计算当前 BigInteger 实例的整数平方根（向下取整）。
 		 *
-		 * @return A reference to the current object, with its value updated to the integer square root of the original value.
+		 * @return 返回当前对象的引用，其值已更新为原始值的整数平方根。
 		 *
-		 * @warning This function modifies the current BigInteger instance and returns a reference to itself. Any subsequent modifications to this reference will affect the original object. The computed square root is the largest integer less than or equal to the true square root.
+		 * @warning 此函数会修改当前 BigInteger 实例并返回其自身的引用。对该引用的任何后续修改都会影响原始对象。计算得到的平方根是小于或等于实际平方根的最大整数。
 		 */
-		BigInteger& Sqrt();
+		BigInteger &Sqrt();
 
 		/**
-		 * Computes the integer cube root of the current BigInteger instance.
+		 * 计算当前 BigInteger 实例的整数立方根。
 		 *
-		 * @return A reference to the current object, with its value updated to the integer cube root of the original value.
+		 * @return 返回当前对象的引用，其值已更新为原始值的整数立方根。
 		 *
-		 * @warning This function modifies the current BigInteger instance and returns a reference to itself. Any subsequent modifications to this reference will affect the original object. The computed square root is the largest integer less than or equal to the true square root.
+		 * @warning 此函数会修改当前 BigInteger 实例并返回其自身的引用。对该引用的任何后续修改都会影响原始对象。计算得到的立方根是小于或等于实际立方根的最大整数。
 		 */
-		BigInteger& Cbrt();
+		BigInteger &Cbrt();
 
 		/**
-		 * Computes the modular exponentiation of the current BigInteger instance.
-		 * this = this^{exponent} mod modulo
+		 * 计算当前 BigInteger 实例的模幂运算。
+		 * this = this^exponent mod modulo
 		 *
-		 * @param exponent The exponent value as a BigInteger.
-		 * @param modulo The modulus value as a BigInteger.
-		 * @return A reference to the current object, with its value updated to the result of the modular exponentiation.
+		 * @param exponent 作为指数值的 BigInteger 对象。
+		 * @param modulo 作为模数值的 BigInteger 对象。
+		 * @return 返回当前对象的引用，其值已更新为模幂运算的结果。
 		 *
-		 * @warning This function modifies the current BigInteger instance and returns a reference to itself. Any subsequent modifications to this reference will affect the original object. Also, if the modulo is 1, the function sets the object to 0 and returns immediately.
+		 * @warning 此函数会修改当前 BigInteger 实例并返回其自身的引用。对该引用的任何后续修改都会影响原始对象。此外，如果模值为 1，函数会将对象设为 0 并立即返回。
 		 */
-		BigInteger& PowerWithModulo(const BigInteger& exponent, const BigInteger& modulo);
+		BigInteger &PowerWithModulo(const BigInteger &exponent, const BigInteger &modulo);
 
 		/**
-		 * Performs modular multiplication of the current BigInteger instance with another BigInteger.
+		 * 对当前 BigInteger 实例与另一个 BigInteger 执行模乘法运算。
+		 * 时间复杂度大致为 O ( m*log m * log n)，其中 m 是当前 BigInteger 的长度，n 是 other 的值
 		 * this = this * other mod modulo
 		 *
-		 * @param other The BigInteger to multiply with.
-		 * @param modulo The modulus value as a BigInteger.
-		 * @return A reference to the current object, with its value updated to the result of the modular multiplication.
+		 * @param other 要相乘的另一个 BigInteger 对象。
+		 * @param modulo 作为模数值的 BigInteger 对象。
+		 * @return 返回当前对象的引用，其值已更新为模乘法运算的结果。
 		 *
-		 * @warning This function modifies the current BigInteger instance and returns a reference to itself. Any subsequent modifications to this reference will affect the original object. If the modulo is 1, the function sets the object to 0 and returns immediately. This function uses a binary exponentiation algorithm, which is efficient for large numbers.
+		 * @warning 此函数会修改当前 BigInteger 实例并返回其自身的引用。对该引用的任何后续修改都会影响原始对象。如果模值为 1，函数会将对象设为 0 并立即返回。本函数使用二进制 exponentiation 算法，该算法对于大数运算效率较高。
 		 */
-		BigInteger& MultiplyWithModulo(const BigInteger& other, const BigInteger modulo);
+		BigInteger &MultiplyWithModulo(const BigInteger &other, const BigInteger modulo);
 
 		BigInteger ReciprocalNewtonIteration(size_t bit, size_t offset = 0) const;
 
 		/**
-		* Performs division using Newton's iteration method for BigIntegers.
-		*
-		* This function implements a division algorithm based on Newton's iteration method, which is an
-		* efficient way to calculate the division of two large integers. The method works by
-		* approximating the reciprocal of the divisor and iteratively refining the quotient until
-		* the remainder is less than the divisor.
-		*
-		* @param divisor The BigInteger representing the divisor.
-		* @return A pair containing the quotient and the remainder after division.
-		*/
-		BigInteger DivideModuloNewtonIteration(const BigInteger& divisor, BigInteger& remainder) const;
+		 * 使用牛顿迭代法对 BigInteger 执行除法运算。
+		 *
+		 * 此函数实现了基于牛顿迭代法的除法算法。
+		 * 该方法通过逼近除数的倒数并迭代优化商，直到余数小于除数为止。
+		 *
+		 * @param divisor 表示除数的 BigInteger 对象。
+		 * @return 一个包含除法运算后的商和余数的对。
+		 */
+		BigInteger DivideModuloNewtonIteration(const BigInteger &divisor, BigInteger &remainder) const;
 
 		BigInteger DivideModuloDivideConquer(const BigInteger& divisor, BigInteger& remainder) const;
 
@@ -366,26 +362,26 @@ namespace __LAMINA::BIGINT
 		BigInteger& operator^=(const BigInteger& other);
 
 		/**
-		 * Computes the power of the current BigInteger instance.
-		 * result = result.Power(exponent)
+		 * 计算当前 BigInteger 实例的幂。
+		 * 结果 = result.Power(exponent)
 		 *
-		 * @param exponent The exponent value, which must be a non-negative integer.
-		 * @return A reference to the current object, with its value updated to the result of the computation.
+		 * @param exponent 指数值，必须是一个非负整数。
+		 * @return 返回当前对象的引用，其值已更新为计算结果。
 		 *
-		 * @warning Be aware that this function returns a reference to the current object, not a copy. Any modifications to the returned reference will affect the original BigInteger object.
+		 * @warning 请注意，此函数返回的是当前对象的引用，而非副本。对返回的引用进行任何修改都会影响原始的 BigInteger 对象。
 		 */
-		BigInteger& Power(const size_t exponent);
+		BigInteger &Power(const size_t exponent);
 
 		/**
-		 * Computes the power of the current BigInteger instance, where the exponent is also a BigInteger object.
-		 * result = result.BigPower(exponent)
+		 * 计算当前 BigInteger 实例的幂，其中指数也是一个 BigInteger 对象。
+		 * 结果 = result.BigPower(exponent)
 		 *
-		 * @param exponent The exponent value, which must be a positive integer.
-		 * @return A reference to the current object, with its value updated to the result of the computation.
+		 * @param exponent 指数值，必须是一个正整数。
+		 * @return 返回当前对象的引用，其值已更新为计算结果。
 		 *
-		 * @warning Be aware that this function returns a reference to the current object, not a copy. Any modifications to the returned reference will affect the original BigInteger object.
+		 * @warning 请注意，此函数返回的是当前对象的引用，而非副本。对返回的引用进行任何修改都会影响原始的 BigInteger 对象。
 		 */
-		BigInteger& BigPower(const BigInteger& exponent);
+		BigInteger &BigPower(const BigInteger &exponent);
 
 		BigInteger ModuloBasePower(size_t n) const;
 
@@ -416,52 +412,46 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		 * @brief Rotates the bits of a BigInteger to the left by a specified number of positions.
+		 * @brief 对 BigInteger 的位进行指定位置的左旋转操作。
 		 *
-		 * @param bits The BigInteger to be rotated.
-		 * @param shift The number of positions to rotate the bits to the left.
-		 * @param reference_bit_capacity The bit capacity to reference for the rotation (default is 0).
-		 * @return A new BigInteger that represents the result of the left bit rotation.
+		 * @param bits 要进行旋转的 BigInteger 对象。
+		 * @param shift 要将位向右旋转的位置数。
+		 * @param reference_bit_capacity 旋转操作时参考的位容量（默认为 0）。
+		 * @return 一个表示右旋转操作结果的新 BigInteger 对象。
 		 *
-		 * This method performs a left bitwise rotation on the given BigInteger. The rotation
-		 * effectively shifts the bits to the left by the specified number of positions, with the bits
-		 * that overflow on the left being placed back on the right.
+		 * 该方法对给定的 BigInteger 对象执行左位旋转操作。旋转操作将位向左移动指定的位置数，
+		 * 并将左侧溢出的位重新放置到右侧。
 		 *
-		 * The rotation is performed with respect to a reference bit capacity:
-		 * - If the reference bit capacity is greater than or equal to the actual bit length of the input,
-		 *   the rotation is straightforward, and the leading bits are squeezed to fit the reference capacity.
-		 * - If the reference bit capacity is less than the actual bit length, the rotation is split into two
-		 *   parts: the part to be rotated and the steady part that remains unchanged. The rotated part is
-		 *   processed and combined with the steady part to form the final result.
+		 * 旋转操作根据参考位容量进行：
+		 * - 如果参考位容量大于或等于输入的实际位长度，旋转操作是直接的，并且前导位会被压缩以适应参考位容量。
+		 * - 如果参考位容量小于实际位长度，旋转操作将分为两部分：要旋转的部分和保持不变的部分。
+		 *   旋转部分会被处理并与稳定部分组合形成最终结果。
 		 *
 		 * @example
-		 * BigInteger num("1001", 2); // Binary representation: 1001
-		 * BigInteger result = BigInteger::BitRotateLeft(num, 2, 4); // Result: 0110 (binary)
+		 * BigInteger num("10001", 2); // 二进制表示: 10001
+		 * BigInteger result = BigInteger::BitRotateLeft(num, 2, 4); // 结果: 00110 (二进制)
 		 */
 		static BigInteger BitRotateLeft(const BigInteger& bits, size_t shift, size_t reference_bit_capacity);
 
 		/**
-		 * @brief Rotates the bits of a BigInteger to the right by a specified number of positions.
+		 * @brief 对 BigInteger 的位进行指定位置的右旋转操作。
 		 *
-		 * @param bits The BigInteger to be rotated.
-		 * @param shift The number of positions to rotate the bits to the right.
-		 * @param reference_bit_capacity The bit capacity to reference for the rotation (default is 0).
-		 * @return A new BigInteger that represents the result of the right bit rotation.
+		 * @param bits 要进行旋转的 BigInteger 对象。
+		 * @param shift 要将位向右旋转的位置数。
+		 * @param reference_bit_capacity 旋转操作时参考的位容量（默认为 0）。
+		 * @return 一个表示右旋转操作结果的新 BigInteger 对象。
 		 *
-		 * This method performs a right bitwise rotation on the given BigInteger. The rotation
-		 * effectively shifts the bits to the right by the specified number of positions, with the bits
-		 * that overflow on the right being placed back on the left.
+		 * 该方法对给定的 BigInteger 对象执行右位旋转操作。旋转操作将位向右移动指定的位置数，
+		 * 并将右侧溢出的位重新放置到左侧。
 		 *
-		 * The rotation is performed with respect to a reference bit capacity:
-		 * - If the reference bit capacity is greater than or equal to the actual bit length of the input,
-		 *   the rotation is straightforward, and the leading bits are squeezed to fit the reference capacity.
-		 * - If the reference bit capacity is less than the actual bit length, the rotation is split into two
-		 *   parts: the part to be rotated and the steady part that remains unchanged. The rotated part is
-		 *   processed and combined with the steady part to form the final result.
+		 * 旋转操作根据参考位容量进行：
+		 * - 如果参考位容量大于或等于输入的实际位长度，旋转操作是直接的，并且前导位会被压缩以适应参考位容量。
+		 * - 如果参考位容量小于实际位长度，旋转操作将分为两部分：要旋转的部分和保持不变的部分。
+		 *   旋转部分会被处理并与稳定部分组合形成最终结果。
 		 *
 		 * @example
-		 * BigInteger num("1001", 2); // Binary representation: 1001
-		 * BigInteger result = BigInteger::BitRotateRight(num, 2, 4); // Result: 0110 (binary)
+		 * BigInteger num("1001", 2); // 二进制表示: 1001
+		 * BigInteger result = BigInteger::BitRotateRight(num, 2, 4); // 结果: 0110 (二进制)
 		 */
 		static BigInteger BitRotateRight(const BigInteger& bits, size_t shift, size_t reference_bit_capacity);
 
@@ -481,30 +471,27 @@ namespace __LAMINA::BIGINT
 		static BigInteger LCM(const BigInteger& a, const BigInteger& b);
 
 		/**
-		 * @brief Pollard's Rho algorithm for integer factorization.
+		 * @brief Pollard's Rho 算法用于整数因式分解。
 		 *
-		 * This function applies Pollard's Rho algorithm to find a non-trivial factor
-		 * of the given integer `n`. It returns a factor if found, or -1 if no non-trivial
-		 * factor is discovered.
+		 * 该函数应用 Pollard's Rho 算法来寻找给定整数 `n` 的非平凡因子。
+		 * 如果找到因子，则返回该因子；如果没有找到非平凡因子，则返回 -1。
 		 *
-		 * @param n The integer to factorize.
-		 * @return A non-trivial factor of `n`, or -1 if none is found.
+		 * @param n 要因式分解的整数，BigInteger 类型
+		 * @return 找到的非平凡因子，如果没有找到则返回 BigInteger(-1)。
 		 */
 		static BigInteger PollardRho(const BigInteger& n);
 
 		/**
-		 * @brief Baby-step Giant-step algorithm for computing discrete logarithms.
+		 * @brief 使用 Baby-Step Giant-Step 算法求解离散对数问题
 		 *
-		 * This function uses the Baby-step Giant-step algorithm to solve the discrete
-		 * logarithm problem in a finite field. It takes a base `base`, a result `result`,
-		 * and a modulus `mod`, and returns the smallest non-negative integer `x` such that
-		 * `base^x ≡ result (mod mod)`. If no solution is found, it returns 0.
+		 * 该函数用于求解形如 a^x ≡ b (mod p) 的离散对数问题，
+		 * 其中 a 和 b 是给定的 BigInteger 类型的大整数，p 是模数。
 		 *
-		 * @param base The base used for computing the discrete logarithm.
-		 * @param result The result of the discrete logarithm computation.
-		 * @param mod The modulus.
-		 * @return The smallest non-negative integer `x` such that `base^x ≡ result (mod mod)`,
-		 * or 0 if no solution is found.
+		 * @param base   底数 a，BigInteger 类型
+		 * @param result 结果 b，BigInteger 类型
+		 * @param mod    模数 p，BigInteger 类型
+		 * @return BigInteger 满足 a^x ≡ b (mod p) 的 x 的值，
+		 *                     如果不存在这样的 x，则返回 BigInteger(0)
 		 */
 		static BigInteger BabyStepGiantStep(const BigInteger& base, const BigInteger& result, const BigInteger& mod);
 

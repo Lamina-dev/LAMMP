@@ -99,7 +99,7 @@ namespace __LAMINA::BIGINT
 			PrintBinary(false);
 		}
 		if (base_value == 10)
-		{
+		{ 
 			std::cout << ToString(10) << "\n\n";
 		}
 		if (base_value == 16)
@@ -1507,32 +1507,34 @@ namespace __LAMINA::BIGINT
 		return n;
 	}
 
-	BigInteger BigInteger::BigInteger::BabyStepGiantStep(const BigInteger& base, const BigInteger& result, const BigInteger& modulo)
+	BigInteger BigInteger::BabyStepGiantStep(const BigInteger& base, const BigInteger& result, const BigInteger& modulo)
 	{
+		// 计算步长界限
 		BigInteger bounds = modulo;
 		bounds = bounds.Sqrt() + 1;
 
-		// Calculate a ^ n
+		// 计算 a ^ n
 		BigInteger an = 1;
 		for (BigInteger i = 0; i < bounds; i = i + 1)
 			an.MultiplyWithModulo(base, modulo);
 
-		// Baby steps: Save all values of a^(n*i) of LHS
-		BigInteger												 value = an;
+		// Baby steps: 保存所有 a^(n*i) 的值
+		BigInteger value = an;
 		std::unordered_map<BigInteger, BigInteger, HashFunction> BabySteps;
 		for (BigInteger i = 1; i <= bounds; i = i + 1)
 		{
-			if (!BabySteps[value])
+			// 如果 BabySteps 中没有当前值，则添加
+			if (BabySteps.find(value) == BabySteps.end())
 				BabySteps[value] = i;
 			value.MultiplyWithModulo(an, modulo);
 		}
 
 		value = result;
-		// Giant steps: load baby steps
+		// Giant steps: 检查 baby steps
 		for (BigInteger i = 0; i <= bounds; i = i + 1)
 		{
-			// Calculate (a ^ j) * b and check for collision
-			if (BabySteps[value])
+			// 计算 (a ^ j) * b 并检查碰撞
+			if (BabySteps.find(value) != BabySteps.end())
 			{
 				BigInteger answer = BabySteps[value] * bounds - i;
 				if (answer < modulo)
@@ -1541,9 +1543,10 @@ namespace __LAMINA::BIGINT
 			value.MultiplyWithModulo(base, modulo);
 		}
 
-		// By a^{x} ≡ b (mod p), is not exist x
+		// 如果不存在满足 a^{x} ≡ b (mod p) 的 x，则返回 BigInteger(0)
 		return BigInteger(0);
 	}
+
 
 	BigInteger BigInteger::RandomGenerateNBit(size_t n)
 	{
