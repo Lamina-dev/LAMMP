@@ -505,31 +505,30 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		* Calculates the base-2 logarithm (log2) of a BigInteger using binary search.
-		*
-		* This function iterates through the bits of the BigInteger from the most significant bit to the least
-		* significant bit, checking if the bit is set (1). The position of the first set bit is the log2 of the number.
-		*
-		* @return The value of log2(n) as an integer, or -1 if n is 0 or 1.
-		*/
+		 * 使用二分查找计算BigInteger的以2为底的对数（log2）。
+		 *
+		 * 此函数从最高有效位到最低有效位遍历BigInteger的位，检查位是否被设置（1）。
+		 * 第一个被设置的位的位置就是该数字的log2值。
+		 *
+		 * @return log2(n)的整数值，如果n为0或1则返回-1。
+		 */
 		size_t Log2() const;
-
 		/**
-		* Convert the BigInteger to a binary string representation.
-		*
-		* @param reference_bit_capacity The desired bit capacity of the resulting binary string.
-		* @param have_leading_zeros     Flag indicating whether to include leading zeros in the binary string.
-		* @return                       Binary string representation of the BigInteger.
-		*/
+		 * 将BigInteger转换为二进制字符串表示。
+		 *
+		 * @param reference_bit_capacity 所需的二进制字符串的位容量。
+		 * @param have_leading_zeros     指示二进制字符串是否应包含前导零。
+		 * @return BigInteger的二进制字符串表示。
+		 */
 		std::string ToBinaryString(const uint32_t reference_bit_capacity, bool have_leading_zeros = true) const;
 
 		/**
-		* Convert the BigInteger to a string representation with the specified base.
-		*
-		* @param base_value The desired base for the string representation.
-		* @warning Binary base is unsupported in ToString function.
-		* @return String representation of the BigInteger in the specified base.
-		*/
+		 * 将BigInteger转换为指定基数的字符串表示形式。
+		 *
+		 * @param base_value 字符串表示形式的目标基数。
+		 * @warning ToString函数不支持二进制基数。
+		 * @return BigInteger在指定基数下的字符串表示形式。
+		 */
 		std::string ToString(uint32_t base_value = 10) const;
 
 		std::string to_string() const;
@@ -562,11 +561,13 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		 * @brief Convert the LittleEndian data in this->values to host byte order and export it to OutputData.
+		 * @brief 将this->values中的小端序数据转换为主机字节序，并导出到OutputData中。
 		 *
-		 * @param OutputData The vector to store the exported data.
+		 * @param OutputData 用于存储导出数据的向量。
+		 * @param length 导出数据的长度（默认为0）。
+		 * @param is_big_endian 是否以大端序格式导出（默认为false）。
 		 */
-		void ExportData(std::vector<std::byte>& OutputData, size_t length = 0, bool is_big_endian = false)
+		void ExportData(std::vector<std::byte> &OutputData, size_t length = 0, bool is_big_endian = false)
 		{
 			size_t bit_length = BitLength();
 			size_t bytes = (bit_length + CHAR_BIT - 1) / CHAR_BIT;
@@ -592,9 +593,10 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		 * @brief Convert host byte order data to this->values of the LittleEndian data and import from InData.
+		 * @brief 将主机字节序数据转换为this->values中的小端序数据，并从InData导入。
 		 *
-		 * @param InData The vector containing the data to be imported.
+		 * @param InData 包含待导入数据的向量。
+		 * @param is_big_endian 导入的数据是否为大端序格式（默认为false）。
 		 */
 		void ImportData(std::vector<std::byte> InData, bool is_big_endian = false)
 		{
@@ -618,11 +620,13 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		 * @brief Convert the LittleEndian data in this->values to host byte order and export it to OutputData.
+		 * @brief 将this->values中的小端序数据转换为主机字节序，并导出到OutputData中。
 		 *
-		 * @param OutputData The vector to store the exported data.
+		 * @param OutputData 用于存储导出数据的向量。
+		 * @param length 导出数据的长度（默认为0）。
+		 * @param is_big_endian 是否以大端序格式导出（默认为false）。
 		 */
-		void ExportData(std::vector<uint8_t>& OutputData, size_t length = 0, bool is_big_endian = false)
+		void ExportData(std::vector<uint8_t> &OutputData, size_t length = 0, bool is_big_endian = false)
 		{
 			std::vector<std::byte> output_byte;
 			ExportData(output_byte, length, is_big_endian);
@@ -634,9 +638,10 @@ namespace __LAMINA::BIGINT
 		}
 
 		/**
-		 * @brief Convert host byte order data to this->values of the LittleEndian data and import from InData.
+		 * @brief 将主机字节序数据转换为this->values中的小端序数据，并从InData导入。
 		 *
-		 * @param InData The vector containing the data to be imported.
+		 * @param InData 包含待导入数据的向量。
+		 * @param is_big_endian 导入的数据是否为大端序格式（默认为false）。
 		 */
 		void ImportData(std::vector<uint8_t> InData, bool is_big_endian = false)
 		{
@@ -647,7 +652,20 @@ namespace __LAMINA::BIGINT
 			}
 			ImportData(input_byte, is_big_endian);
 		}
-
+		/**
+		 * @brief 对BigInteger类型数据执行SipHash哈希算法计算
+		 *
+		 * 该函数实现了SipHash加密哈希算法，用于计算给定BigInteger的哈希值。
+		 *
+		 * @param Integer 要计算哈希值的BigInteger对象
+		 * @param keys 可选的密钥向量，用于哈希计算的加密密钥（可为nullptr）
+		 * @return 计算得到的SipHash哈希值（64位整数，以size_t类型返回）
+		 * @note 若输入的BigInteger为空（values为空），则返回0
+		 * @note 密钥处理规则：
+		 *       - 若密钥长度小于8字节，仅使用可用部分作为第一个密钥
+		 *       - 若密钥长度在8-15字节之间，前8字节作为第一个密钥，剩余部分作为第二个密钥
+		 *       - 若密钥长度大于等于16字节，前8字节作为第一个密钥，接下来8字节作为第二个密钥
+		 */
 		size_t SipHash(const BigInteger& Integer, std::vector<uint8_t>* keys = nullptr) const;
 
 		friend class HashFunction;
@@ -1202,6 +1220,5 @@ namespace __LAMINA::BIGINT
 	} // namespace Factorial
 
 }  // namespace __LAMINA::BIGINT
-
 #endif
 

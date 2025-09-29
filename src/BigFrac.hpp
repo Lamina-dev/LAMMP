@@ -49,6 +49,28 @@ SOFTWARE.
 
 namespace __LAMINA::BIGFRAC
 {
+	/*
+		BigFraction 类的两种精度模式（DecimalPrecisionMode::FixedFixed 和 DecimalPrecisionMode::Full）
+		区别主要体现在小数形式的字符串转换（ComputeAndToDecimalString 方法）中，具体如下：
+		1. DecimalPrecisionMode::Fixed（固定精度模式）
+			特点：
+				按照预设的固定小数位数生成字符串，位数由 FixedPrecisionCount 成员变量指定。
+			转换逻辑：
+				计算分数的整数部分和余数（小数部分的初始值）。
+				循环 FixedPrecisionCount 次，每次将余数乘以 10（基数），取商作为当前小数位，更新余数为新的模。
+				若余数提前变为 0，可提前终止循环（后续小数位均为 0）。
+			示例：
+				若 FixedPrecisionCount = 3，则无论分数是否能被除尽，最终字符串都最多保留 3 位小数。
+		2. DecimalPrecisionMode::Full（完全精度模式）
+			特点：
+				根据 BigFractionFullPrecision 成员变量定义的精度（分母为 10 的幂），生成尽可能完整的小数位数，直到达到预设精度或余数为 0。
+			转换逻辑：
+				通过 GetFullPrecision() 获取预设精度（其分母必须是 10 的幂，如 1000 表示保留 3 位小数）。
+				计算所需的小数位数：通过对精度分母反复除以 10，得到 10 的幂次（如 1000 → 3 位）。
+				循环生成小数位，直到达到所需位数或余数为 0。
+			示例：
+				若 BigFractionFullPrecision 的分母为 10000（10⁴），则最多生成 4 位小数。
+	*/
 	enum class DecimalPrecisionMode : uint32_t
 	{
 		Fixed = 0,	 // Specify the precision mode
@@ -241,12 +263,15 @@ namespace __LAMINA::BIGFRAC
 		static BigFraction GenerateSrinivasaRamanujanPI();
 		//用于通过 Nilakantha 数列计算 π 的近似值，迭代次数由参数 iteration 指定。
 		static BigFraction GenerateNilakanthaArrayPI(uint64_t iteration);
-		// 输入参数为：
-		//  • const BigInteger& value：要计算指数的整数值（即 e ^ value）。
-		//  • DecimalPrecisionMode precision_mode（可选，默认值为 Full）：指定计算精度模式（定点或全精度）。
-		//  • uint64_t fixed_precision_count（可选，默认值为 2）：在定点模式下指定泰勒展开的项数。
-		// 输出为：
-		//  • 返回值类型为 BigFraction，表示 e ^ value 的高精度分数近似值。
+
+		/**
+		 * @brief 计算 e ^ value 的高精度分数近似值。
+		 *
+		 * @param value 所需要计算的指数值（整数形式）。
+		 * @param precision_mode 指定计算精度模式（定点或全精度）。默认值为 Full。
+		 * @param fixed_precision_count 在定点模式下指定泰勒展开的项数。默认值为 2。
+		 * @return 返回值类型为 BigFraction，表示 e ^ value 的高精度分数近似值。
+		 */
 		static BigFraction Exponential_Taylor(const BigInteger& value, DecimalPrecisionMode precision_mode = DecimalPrecisionMode::Full, uint64_t fixed_precision_count = 2);
 		static BigFraction Exponential_Taylor(const BigFraction& value);
 		static BigFraction Exponential(const BigFraction& x, int64_t precision_digits = 16);
@@ -272,6 +297,6 @@ namespace __LAMINA::BIGFRAC
 
 	inline BigFraction BigFractionFullPrecision(1, 0);
 
-}  // namespace __BIGFRAC
+}  // namespace BIGFRAC
 
 #endif

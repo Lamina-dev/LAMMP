@@ -2566,24 +2566,23 @@ SOFTWARE.
             }
         };
 
-        /// @brief Divides a large integer, represented as an array of 64-bit blocks, by a 64-bit divisor.
-        /// @param in Input array representing the large integer to be divided. Each element of the array is a 64-bit block of the integer.
-        /// @param length Number of 64-bit blocks in the input array.
-        /// @param out Output array that will hold the result of the division. After division, out will represent the quotient (*this / divisor).
-        /// @param divisor The 64-bit number by which the large integer is divided.
-        /// @return The remainder of the division (*this % divisor), which is a 64-bit value.
-        ///
+        /// @brief 将一个表示为64位块数组的大整数除以一个64位除数
+        /// @param in 表示要被除的大整数的输入数组。数组的每个元素都是该整数的一个64位块
+        /// @param length 输入数组中64位块的数量
+        /// @param out 存储除法结果的输出数组。除法后，out将表示商（*this / divisor）
+        /// @param divisor 用于除大整数的64位数字
+        /// @return 除法的余数（*this % divisor），为64位值
         /// @details
-        /// The function performs division on a large integer represented by multiple 64-bit blocks:
-        /// 1. Initialize `remainder_high64bit` to 0.
-        /// 2. For each block of the large integer, starting from the most significant block (index `length-1`) down to the least significant block (index 0):
-        ///    a. Combine the current block `in[length]` and the current `remainder_high64bit` to form a 128-bit value.
-        ///    b. Call `selfDivRem(divisor)` on this 128-bit value:
-        ///       - Divide the 128-bit value by the 64-bit `divisor`.
-        ///       - Update the current block in `out[llength]` with the quotient.
-        ///       - Update `remainder_high64bit` with the remainder.
-        /// 3. After processing all blocks, the final value of `remainder_high64bit` is the remainder of the entire division.
-        /// 4. Return `remainder_high64bit`.
+        /// 该函数对由多个64位块表示的大整数执行除法操作：
+        /// 1. 将`remainder_high64bit`初始化为0
+        /// 2. 对于大整数的每个块，从最高有效块（索引`length-1`）到最低有效块（索引0）：
+        ///    a. 组合当前块`in[length]`和当前`remainder_high64bit`以形成128位值
+        ///    b. 对这个128位值调用`selfDivRem(divisor)`：
+        ///       - 用64位`divisor`除以128位值
+        ///       - 用商更新`out[llength]`中的当前块
+        ///       - 用余数更新`remainder_high64bit`
+        /// 3. 处理完所有块后，`remainder_high64bit`的最终值就是整个除法的余数
+        /// 4. 返回`remainder_high64bit`
         inline uint64_t abs_div_rem_num64(const uint64_t in[], size_t length, uint64_t out[], uint64_t divisor)
         {
             uint64_t remainder_high64bit = 0;
@@ -3105,17 +3104,18 @@ SOFTWARE.
                 return remove_leading_zeros(out, out_len);
             }
 
-            // 创建2^64的指数列表，下面用 M 表示 2^(64 * MIN_LEN)
-            //   head
-            //     |
-            //	   ↓
-            //     +--------+ <--front--- +--------+ <--front--- +--------+ <--...
-            //     |  M^1 ㅤ|ㅤㅤㅤㅤㅤ  ㅤ|ㅤM^2   |ㅤㅤ  ㅤ     | ㅤM^4   |
-            //     +--------+ ---back---> +--------+ ---bask---> +--------+ ----...
-            //
-            // index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，_2pow64_index 为 M^index 的值
+            /// 创建2^64的指数列表，下面用 M 表示 2^(64 * MIN_LEN)
+            /// index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，
+            /// _2pow64_index 为 M^index 的值
             _2pow64_index_list create_2pow64_index_list(size_t max_index, const uint64_t base_num, const double base_d)
             {
+                ///   head
+                ///     |
+                ///     ↓
+                ///     +--------+ <--front---+--------+ <--front---+--------+ <--...
+                ///     |  M^1   |            |  M^2   |            |  M^4   |
+                ///     +--------+ ---back--->+--------+ ---back--->+--------+ ----...
+                /// 2^64的指数列表， M 表示 2^(64 * MIN_LEN)
                 assert(max_index > MIN_LEN);
                 assert((max_index & (max_index - 1)) == 0);
 
@@ -3151,7 +3151,37 @@ SOFTWARE.
             // in will be changed
             size_t num2base(uint64_t *in, size_t len, const uint64_t base, uint64_t *res)
             {
-                assert(base >= 2 && base <= 36);
+                // 1. 分割策略：按 2 的幂次方长度分割
+                //         每次处理的子部分长度都是 2^k（num_base_recursive_core会递归处理这部分），
+                //         通过`63ull - hint_clz(current_len)` 计算当前最大可能的 2 的幂指数
+                //             例如，若当前剩余长度为 10，则最大的 2 的幂是 8（2 ^ 3），先处理前 8 个元素，剩余 2 个元素下次处理
+                //         代码中 `pri_len = 1ull << current_index` 就是计算当前要处理的子部分长度
+                //
+                // 2. 预计算缓存：避免重复计算
+                //         通过create_2pow64_index_list创建预计算链表，存储不同长度（2 的幂）的子部分在目标进制下的表示
+                //         链表的结构如下：
+                ///             head
+                ///              |
+                ///              ↓
+                ///              +--------+ <--front---+--------+ <--front---+--------+ <--...
+                ///              |  M^1   |            |  M^2   |            |  M^4   |
+                ///              +--------+ ---back--->+--------+ ---back--->+--------+ ----...
+                ///         其中 M 表示 2^(64 * MIN_LEN)，`M^i` 表示 2^(64 * MIN_LEN * i)
+                //         代码中通过`find_head(head, pri_len)` 用于查找当前子部分长度对应的预计算数据。
+                //
+                // 3. 子问题处理：
+                //         对每个子部分（长度`pri_len`）调用 `num_base_recursive_core` 进行进制转换，
+                //         这个递归函数会继续将子部分分割为更小的部分，直到达到 MIN_LEN 阈值后使用经典算法
+                //
+                // 4. 合并策略：
+                //         基数幂乘法 + 加法 由于大整数的各子部分在原始表示中是 "高位在前" 的（类似a * B ^ n + b，其中 B 是原始基数），
+                //         合并时需要： 将剩余子部分的转换结果乘以 base ^ pow（pow是之前处理的总长度） 与已累计的结果相加，代码中通过
+                //         `abs_mul64_ntt_base`实现乘法，`abs_add_base`实现加法，`base_pow`数组动态维护当前需要的基数幂值，随处理过程更新
+                //         需要注意的是：随着递归的进行，剩余子部分的转换结果乘以基数幂，这通常是一个不平衡乘法，
+                //         使用NTT-crt可能并不能达到最佳性能，使用 Karatsuba 等方法可能会更合适      
+                // 
+                // 5. 终止条件：小规模使用经典算法 当剩余长度 <= MIN_LEN时，不再分割，直接调用 num2base_classic 处理。
+
                 BaseTable::BaseInfo info(base);
                 const size_t max_len_2pow_index = 63ull - hint_clz(len);
 
