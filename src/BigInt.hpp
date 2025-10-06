@@ -1,4 +1,4 @@
-﻿/*
+/*
  * [LAMINA_SCI_CAL]
  * Copyright (C) [2025] [HJimmyK/LAMINA]
  *
@@ -773,8 +773,8 @@ namespace __LAMINA::BIGINT
 	private:
 		friend struct __LAMINA::PrimeNumberTester;
 
+		bool	   sign;  //MSB is true, then the number is negative
 		BigInteger uint_data;
-		bool	   sign = false;  //MSB is true, then the number is negative
 
 	public:
 		enum class ArithmeticMode : uint8_t
@@ -1081,7 +1081,7 @@ namespace __LAMINA::BIGINT
 				{
 					right = mid;
 				}
-			}
+			}			
 			return left;
 		}
 
