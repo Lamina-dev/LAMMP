@@ -1227,7 +1227,7 @@ namespace __LAMINA::BIGINT
 			throw std::invalid_argument("Base must be less than or equal to 36.");
 		}
 
-		auto charToNumber = [](char c) {
+		auto charToNumber = [](const char &c) {
 			if ('0' <= c && c <= '9')
 			{
 				return c - '0';
@@ -1263,18 +1263,20 @@ namespace __LAMINA::BIGINT
 		uint64_t maxi = count / n;
 		uint64_t t;
 		uint64_t mulnum = 1;
+		uint32_t CTNt;
 		for (uint32_t i = 0; i < n; i++)mulnum *= base_value;
 		std::string::const_iterator i = number_string.begin();
 
 		for (size_t j = 0; j < maxi; j++) {
 			t = 0;
 			for (uint32_t k = 0; k < n; k++) {
-				if (charToNumber(*i) >= base_value)
+				CTNt = charToNumber(*i);
+				if (CTNt >= base_value)
 				{
 					throw std::invalid_argument("Invalid digit for specified base.");
 				}
 				t *= base_value;
-				t += charToNumber(*i);
+				t += CTNt;
 				i++;
 			}
 			AddMultiplyNumber(t, mulnum);
@@ -1284,12 +1286,13 @@ namespace __LAMINA::BIGINT
 			mulnum = 1;
 			t = 0;
 			for (; i < number_string.end(); i++) {
-				if (charToNumber(*i) >= base_value)
+				CTNt = charToNumber(*i);
+				if (CTNt >= base_value)
 				{
 					throw std::invalid_argument("Invalid digit for specified base.");
 				}
 				t *= base_value;
-				t += charToNumber(*i);
+				t += CTNt;
 				mulnum *= base_value;
 			}
 			AddMultiplyNumber(t, mulnum);
@@ -1315,7 +1318,22 @@ namespace __LAMINA::BIGINT
 		}
 
 		std::vector<uint8_t> datas(Integer.values.size() * sizeof(digit_type), 0);
-		::memcpy(&datas, Integer.values.data(), Integer.values.size() * sizeof(digit_type));
+		//::memcpy(&datas, Integer.values.data(), Integer.values.size() * sizeof(digit_type));
+		//使用更安全的方法进行复制
+		{//代码块内容等价于上面的代码
+			union Uint64ToUint8 {
+				uint64_t ull;
+				uint8_t  ucs[8];
+			}t;
+
+			size_t datai = 0;
+			for (const uint64_t& i : Integer.values) {
+				t.ull = i;
+				for (uint64_t j = 0; j < 8; j++, datai++) {
+					datas[datai] = t.ucs[j];
+				}
+			}
+		}
 
 		uint64_t state = 0x736f6d6570736575UL;
 		uint64_t state2 = 0x646f72616e646f6dUL;
@@ -1640,7 +1658,7 @@ namespace __LAMINA::BIGINT
 
 	*/
 
-	BigSignedInteger::BigSignedInteger() {}
+	BigSignedInteger::BigSignedInteger() : sign(false) {}
 
 	BigSignedInteger::BigSignedInteger(int64_t n) : sign(n < 0), uint_data(std::abs(n)) {}
 
@@ -1652,7 +1670,7 @@ namespace __LAMINA::BIGINT
 
 	BigSignedInteger::BigSignedInteger(BigInteger&& other, bool new_sign) : sign(new_sign), uint_data(std::move(other)) {}
 
-	BigSignedInteger::BigSignedInteger(const std::string& number_string)
+	BigSignedInteger::BigSignedInteger(const std::string& number_string) : sign(false)
 	{
 		if (!number_string.empty() && number_string[0] == '-')
 		{
@@ -1666,7 +1684,7 @@ namespace __LAMINA::BIGINT
 		}
 	}
 
-	BigSignedInteger::BigSignedInteger(const std::string& number_string, uint32_t base)
+	BigSignedInteger::BigSignedInteger(const std::string& number_string, uint32_t base) : sign(false)
 	{
 		if (!number_string.empty() && number_string[0] == '-')
 		{
