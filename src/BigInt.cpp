@@ -1,4 +1,4 @@
-﻿/*
+/*
  * [LAMINA_SCI_CAL]
  * Copyright (C) [2025] [HJimmyK/LAMINA]
  *
@@ -44,6 +44,20 @@ SOFTWARE.
 
 #include "BigInt.hpp"
 #include "hint.hpp"
+
+namespace __LAMINA{
+	//解pow(bv,n) < MAX_UINT64_T n的最大值
+	inline uint32_t solve_max_powbvn(const uint32_t& bv) {
+		uint32_t re = 0;
+		uint64_t t = 0;
+		t -= 1;//减一产生溢出变为最大值
+		while (t) {
+			t /= bv;
+			re++;
+		}
+		return --re;
+	}
+}
 
 namespace __LAMINA::BIGINT
 {
@@ -1244,6 +1258,44 @@ namespace __LAMINA::BIGINT
 			}
 			return;
 		}
+
+		uint32_t n = __LAMINA::solve_max_powbvn(base_value);
+		uint64_t maxi = count / n;
+		uint64_t t;
+		uint64_t mulnum = 1;
+		for (uint32_t i = 0; i < n; i++)mulnum *= base_value;
+		std::string::const_iterator i = number_string.begin();
+
+		for (size_t j = 0; j < maxi; j++) {
+			t = 0;
+			for (uint32_t k = 0; k < n; k++) {
+				if (charToNumber(*i) >= base_value)
+				{
+					throw std::invalid_argument("Invalid digit for specified base.");
+				}
+				t *= base_value;
+				t += charToNumber(*i);
+				i++;
+			}
+			AddMultiplyNumber(t, mulnum);
+		}
+
+		if (i != number_string.end()) {//如果还有剩的另外处理
+			mulnum = 1;
+			t = 0;
+			for (; i < number_string.end(); i++) {
+				if (charToNumber(*i) >= base_value)
+				{
+					throw std::invalid_argument("Invalid digit for specified base.");
+				}
+				t *= base_value;
+				t += charToNumber(*i);
+				mulnum *= base_value;
+			}
+			AddMultiplyNumber(t, mulnum);
+		}
+
+		/*
 		for (size_t i = 0; i < count; i++)
 		{
 			int n = charToNumber(number_string[i]);
@@ -1252,7 +1304,7 @@ namespace __LAMINA::BIGINT
 				throw std::invalid_argument("Invalid digit for specified base.");
 			}
 			AddMultiplyNumber(n, base_value);
-		}
+		}*/
 	}
 
 	size_t BigInteger::SipHash(const BigInteger& Integer, std::vector<uint8_t>* keys) const
