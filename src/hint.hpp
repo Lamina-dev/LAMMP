@@ -350,27 +350,29 @@ SOFTWARE.
     // Compute Integer multiplication, 64bit x 64bit to 128bit, basic algorithm
     // first is low 64bit, second is high 64bit
     constexpr void mul64x64to128_base(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
-    {   
-        const uint64_t al = a >> 32,
-                       ar = uint32_t(a),
-                       bl = b >> 32,
-                       br = uint32_t(b);
-        low  = ar * br;
-        high = al * bl;
+    {
+        /*
+        /// 一种更易于读懂的实现，但由于其存在两个分支预测，其性能略低于现行算法。
+        /// 现行实现平均 3.92564 纳秒
+        /// 此实现 6.78839 纳秒
+            const uint64_t al = a >> 32,
+                        ar = uint32_t(a),
+                        bl = b >> 32,
+                        br = uint32_t(b);
+            low  = ar * br;
+            high = al * bl;
 
-        const uint64_t t1 = al * br,
-                       t2 = ar * bl,
-                       t1addt2 = t1 + t2;
+            const uint64_t t1 = al * br,
+                        t2 = ar * bl,
+                        t1addt2 = t1 + t2;
 
-        if (t1addt2 < t2)high += 1ULL << 32;//如果溢出，即进位那么加上一
+            if (t1addt2 < t2)high += 1ULL << 32;//如果溢出，即进位那么加上一
 
-        low += t1addt2 << 32;
-        if (low < (t1addt2 << 32))high += 1;//作用同上
+            low += t1addt2 << 32;
+            if (low < (t1addt2 << 32))high += 1;//作用同上
 
-        high += t1addt2 >> 32;
-        
-
-        /*原来的太晦涩难懂啦，正好看到了就改一下
+            high += t1addt2 >> 32;
+        */
         uint64_t ah = a >> 32, bh = b >> 32;
         a = uint32_t(a), b = uint32_t(b);
         uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
@@ -380,7 +382,6 @@ SOFTWARE.
         r1 += (r0 >> 32);
         high = r3 + (r1 >> 32);
         low = (r1 << 32) | uint32_t(r0);
-        */
     }
 
     inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
