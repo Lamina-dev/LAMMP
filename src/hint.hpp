@@ -57,7 +57,6 @@ SOFTWARE.
 #include <type_traits>
 #include <random>
 #include <cassert>
-
 // Windows 64bit fast multiply macro.
 #if defined(_WIN64)
 #include <intrin.h>
@@ -69,7 +68,7 @@ SOFTWARE.
 #define UINT128T
 #endif //__SIZEOF_INT128__
 
-    namespace HyperInt
+namespace HyperInt
 {
     // bits of 1, equals to 2^bits - 1
     template <typename T>
@@ -352,9 +351,7 @@ SOFTWARE.
     constexpr void mul64x64to128_base(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
     {
         /*
-        /// 一种更易于读懂的实现，但由于其存在两个分支预测，其性能略低于现行算法。
-        /// 现行实现平均 3.92564 纳秒
-        /// 此实现 6.78839 纳秒
+        //// 一种更易于读懂的实现，但由于其存在两个分支预测，其性能略低于现行算法。
             const uint64_t al = a >> 32,
                         ar = uint32_t(a),
                         bl = b >> 32,
@@ -387,21 +384,21 @@ SOFTWARE.
     inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t &low, uint64_t &high)
     {
 #if defined(UMUL128)
-#pragma message("Using _umul128 to compute 64bit x 64bit to 128bit")
+        // #pragma message("Using _umul128 to compute 64bit x 64bit to 128bit")
         unsigned long long lo, hi;
         lo = _umul128(a, b, &hi);
         low = lo, high = hi;
 #else
 #if defined(UINT128T) // No _umul128
-#pragma message("Using __uint128_t to compute 64bit x 64bit to 128bit")
+        // #pragma message("Using __uint128_t to compute 64bit x 64bit to 128bit")
         __uint128_t x(a);
         x *= b;
         low = uint64_t(x), high = uint64_t(x >> 64);
-#else // No __uint128_t
-#pragma message("Using basic function to compute 64bit x 64bit to 128bit")
+#else                 // No __uint128_t and no _umul128
+        // #pragma message("Using basic function to compute 64bit x 64bit to 128bit")
         mul64x64to128_base(a, b, low, high);
-#endif // UINT128T
-#endif // UMUL128
+#endif                // UINT128T
+#endif                // UMUL128
     }
 
     constexpr uint32_t div128by32(uint64_t &dividend_hi64, uint64_t &dividend_lo64, uint32_t divisor)
@@ -1068,7 +1065,7 @@ SOFTWARE.
                 return result < MOD123 ? result : result - MOD123;
             }
 
-            namespace SplitRadix
+            namespace SplitRadix /* Split-Radix NTT  模板魔法神力*/
             {
                 template <uint64_t ROOT, typename ModIntType>
                 inline ModIntType mul_w41(ModIntType n)
@@ -1793,7 +1790,10 @@ SOFTWARE.
 
         // Binary absolute addtion a+b=sum, return the carry
         template <typename UintTy>
-        constexpr bool abs_add_binary_half(const UintTy a[], size_t len_a, const UintTy b[], size_t len_b, UintTy sum[])
+        constexpr bool abs_add_binary_half(
+            const UintTy a[], size_t len_a,
+            const UintTy b[], size_t len_b,
+            UintTy sum[])
         {
             bool carry = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -1812,7 +1812,10 @@ SOFTWARE.
             return carry;
         }
         template <typename UintTy>
-        constexpr UintTy abs_add_binary_half_base(const UintTy a[], size_t len_a, const UintTy b[], size_t len_b, UintTy sum[], const UintTy &base_num)
+        constexpr UintTy abs_add_binary_half_base(
+            const UintTy a[], size_t len_a,
+            const UintTy b[], size_t len_b,
+            UintTy sum[], const UintTy &base_num)
         {
             bool carry = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -1846,7 +1849,10 @@ SOFTWARE.
 
         // Binary absolute subtraction a-b=diff, return the borrow
         template <typename UintTy>
-        constexpr bool abs_sub_binary(const UintTy a[], size_t len_a, const UintTy b[], size_t len_b, UintTy diff[], bool assign_borow = false)
+        constexpr bool abs_sub_binary(
+            const UintTy a[], size_t len_a,
+            const UintTy b[], size_t len_b,
+            UintTy diff[], bool assign_borow = false)
         {
             bool borrow = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -2069,7 +2075,13 @@ SOFTWARE.
         }
 
         // 小学乘法
-        inline void abs_mul64_classic(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[], uint64_t *work_begin = nullptr, uint64_t *work_end = nullptr)
+        inline void abs_mul64_classic(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+            uint64_t out[],
+            uint64_t *work_begin = nullptr,
+            uint64_t *work_end = nullptr
+        )
         {
             const size_t out_len = get_mul_len(len1, len2);
             len1 = remove_leading_zeros(in1, len1);
@@ -2113,7 +2125,13 @@ SOFTWARE.
         }
 
         // Karatsuba 乘法
-        inline void abs_mul64_karatsuba_buffered(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[], uint64_t *buffer_begin = nullptr, uint64_t *buffer_end = nullptr)
+        inline void abs_mul64_karatsuba_buffered(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+            uint64_t out[],
+            uint64_t *buffer_begin = nullptr,
+            uint64_t *buffer_end = nullptr
+        )
         {
             const size_t out_len = get_mul_len(len1, len2);
             len1 = remove_leading_zeros(in1, len1);
@@ -2357,7 +2375,12 @@ SOFTWARE.
         }
 
         // NTT multiplication 在 base_num进制下
-        inline void abs_mul64_ntt_base(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[], const uint64_t base_num)
+        inline void abs_mul64_ntt_base(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+            uint64_t out[],
+            const uint64_t base_num
+        )
         {
             if (0 == len1 || 0 == len2 || in1 == nullptr || in2 == nullptr)
             {
@@ -2402,7 +2425,13 @@ SOFTWARE.
             out[conv_len] = carry % base_num;
         }
 
-        inline void abs_mul64_balanced(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[], uint64_t *work_begin = nullptr, uint64_t *work_end = nullptr)
+        inline void abs_mul64_balanced(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+            uint64_t out[],
+            uint64_t *work_begin = nullptr,
+            uint64_t *work_end = nullptr
+        )
         {
             if (len1 < len2)
             {
@@ -2423,7 +2452,13 @@ SOFTWARE.
             }
         }
 
-        inline void abs_mul64(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[], uint64_t *work_begin = nullptr, uint64_t *work_end = nullptr)
+        inline void abs_mul64(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+            uint64_t out[],
+            uint64_t *work_begin = nullptr,
+            uint64_t *work_end = nullptr
+        )
         {
             if (len1 < len2)
             {
@@ -2670,7 +2705,15 @@ SOFTWARE.
         }
 
         // 只处理商的长度为dividend_len-divisor_len的情况
-        inline void abs_div64_classic_core(uint64_t dividend[], size_t dividend_len, const uint64_t divisor[], size_t divisor_len, uint64_t quotient[], uint64_t *work_begin = nullptr, uint64_t *work_end = nullptr)
+        inline void abs_div64_classic_core(
+            uint64_t dividend[],
+            size_t dividend_len,
+            const uint64_t divisor[],
+            size_t divisor_len,
+            uint64_t quotient[],
+            uint64_t *work_begin = nullptr,
+            uint64_t *work_end = nullptr
+        )
         {
             if (nullptr == dividend || dividend_len <= divisor_len)
             {
@@ -2770,7 +2813,15 @@ SOFTWARE.
                 quotient[i] = qhat;
             }
         }
-        inline void abs_div64_recursive_core(uint64_t dividend[], size_t dividend_len, const uint64_t divisor[], size_t divisor_len, uint64_t quotient[], uint64_t *work_begin = nullptr, uint64_t *work_end = nullptr)
+        inline void abs_div64_recursive_core(
+            uint64_t dividend[],
+            size_t dividend_len,
+            const uint64_t divisor[],
+            size_t divisor_len,
+            uint64_t quotient[],
+            uint64_t *work_begin = nullptr,
+            uint64_t *work_end = nullptr
+        )
         {
             if (nullptr == dividend || dividend_len <= divisor_len)
             {
@@ -2892,6 +2943,7 @@ SOFTWARE.
         {
             namespace BaseTable
             {
+
                 // 第一列为基数，第二列为基数的幂次数
                 constexpr uint64_t table1[35][2] = {
                     {9223372036854775808ull, 63ull},
@@ -2930,7 +2982,7 @@ SOFTWARE.
                     {3379220508056640625ull, 12ull},
                     {4738381338321616896ull, 12ull}};
                 // 用以计算进制转换后的数据长度，根据对数计算
-                const double table2[35] = {
+                constexpr double table2[35] = {
                     1.015873015873016e+00,
                     1.009487605714332e+00,
                     1.032258064516129e+00,
@@ -2958,7 +3010,6 @@ SOFTWARE.
                     1.047365186724249e+00,
                     1.039781450100194e+00,
                     1.031607485958778e+00};
-
                 struct BaseInfo
                 {
                     uint64_t base_num;
@@ -3041,10 +3092,11 @@ SOFTWARE.
             }
 
             size_t base_2power_index(
-                const uint64_t &base_num,
+                const uint64_t base_num,
                 const size_t index,
                 uint64_t *res,
-                size_t res_len)
+                size_t res_len
+            )
             {
                 assert(index > 0);
 
@@ -3069,19 +3121,19 @@ SOFTWARE.
                 }
             }
 
-            typedef struct _2pow64_index_node
+            typedef struct base_index_node
             {
                 size_t index;
                 size_t length;
-                _2pow64_index_node *front;
-                _2pow64_index_node *back;
-                std::vector<uint64_t> _2pow64_index;
+                base_index_node *front;
+                base_index_node *back;
+                std::vector<uint64_t> base_index;
 
-                _2pow64_index_node(size_t _index, double base_d)
+                base_index_node(size_t _index, double base_d)
                 {
                     index = _index;
                     length = get_buffer_size(_index, base_d);
-                    _2pow64_index.resize(length, 0);
+                    base_index.resize(length, 0);
                     front = nullptr;
                     back = nullptr;
                 }
@@ -3092,7 +3144,8 @@ SOFTWARE.
 
             // 只能处理 len 为二的次幂的情况，in 会被修改
             size_t num_base_recursive_core(
-                uint64_t *in, const size_t len,
+                uint64_t *in,
+                const size_t len,
                 const uint64_t base_num,
                 const double base_d,
                 uint64_t *out,
@@ -3112,7 +3165,7 @@ SOFTWARE.
                 size_t half_len = len / 2,
                        pow_len = list->length,
                        buffer_len = get_buffer_size(half_len, base_d);
-                const uint64_t *base_pow = list->_2pow64_index.data();
+                const uint64_t *base_pow = list->base_index.data();
                 std::vector<uint64_t> buffer(buffer_len, 0);
                 // low
                 buffer_len = num_base_recursive_core(in, half_len, base_num, base_d, buffer.data(), list->front);
@@ -3141,22 +3194,23 @@ SOFTWARE.
                 assert(max_index > MIN_LEN);
                 assert((max_index & (max_index - 1)) == 0);
 
-                _2pow64_index_list head = new _2pow64_index_node(MIN_LEN, base_d);
-                head->length = base_2power_index(base_num, MIN_LEN, head->_2pow64_index.data(), head->length);
+                _2pow64_index_list head = new base_index_node(MIN_LEN, base_d);
+                head->length = base_2power_index(base_num, MIN_LEN, head->base_index.data(), head->length);
 
                 _2pow64_index_list current = head;
 
                 for (size_t i = MIN_LEN << 1; i <= max_index; i <<= 1)
                 {
-                    current->back = new _2pow64_index_node(i, base_d);
-                    abs_sqr64_ntt_base(current->_2pow64_index.data(), current->length, current->back->_2pow64_index.data(), base_num);
-                    current->back->length = remove_leading_zeros(current->back->_2pow64_index.data(), current->back->length);
+                    current->back = new base_index_node(i, base_d);
+                    abs_sqr64_ntt_base(current->base_index.data(), current->length, current->back->base_index.data(), base_num);
+                    current->back->length = remove_leading_zeros(current->back->base_index.data(), current->back->length);
                     current->back->front = current;
                     current = current->back;
                 }
                 return head;
             }
 
+            // 在链表中查找 index 对应的节点
             _2pow64_index_list find_head(_2pow64_index_list head, size_t index)
             {
                 while (head->back != nullptr)
@@ -3170,7 +3224,15 @@ SOFTWARE.
                 return nullptr;
             }
 
-            // in will be changed
+            /// @brief 将一个表示为64位块数组的大整数从二进制（基数2^64）转换为指定的较小基数
+            /// @param in 表示要转换的大整数的输入数组。数组的每个元素都是该整数的一个64位块
+            /// @param len 输入数组中64位块的数量
+            /// @param base 要转换到的基数
+            /// @param res 转换后的结果数组，数组的每个元素都是该整数在目标基数下的一个64位块
+            /// @return 转换后的结果数组的长度
+            /// @note
+            ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
+            ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
             size_t num2base(uint64_t *in, size_t len, const uint64_t base, uint64_t *res)
             {
                 // 1. 分割策略：按 2 的幂次方长度分割
@@ -3185,9 +3247,9 @@ SOFTWARE.
                 ///             head
                 ///              |
                 ///              ↓
-                ///              +--------+ <--front---+--------+ <--front---+--------+ <--...
-                ///              |  M^1   |            |  M^2   |            |  M^4   |
-                ///              +--------+ ---back--->+--------+ ---back--->+--------+ ----...
+                ///              +--------+ <--front--- +--------+ <--front--- +--------+ <--...
+                ///              |  M^1   |             |  M^2   |             |  M^4   |
+                ///              +--------+ ---back---> +--------+ ---back---> +--------+ ----...
                 ///         其中 M 表示 2^(64 * MIN_LEN)，`M^i` 表示 2^(64 * MIN_LEN * i)
                 //         代码中通过`find_head(head, pri_len)` 用于查找当前子部分长度对应的预计算数据。
                 //
@@ -3200,8 +3262,8 @@ SOFTWARE.
                 //         合并时需要： 将剩余子部分的转换结果乘以 base ^ pow（pow是之前处理的总长度） 与已累计的结果相加，代码中通过
                 //         `abs_mul64_ntt_base`实现乘法，`abs_add_base`实现加法，`base_pow`数组动态维护当前需要的基数幂值，随处理过程更新
                 //         需要注意的是：随着递归的进行，剩余子部分的转换结果乘以基数幂，这通常是一个不平衡乘法，
-                //         使用NTT-crt可能并不能达到最佳性能，使用 Karatsuba 等方法可能会更合适      
-                // 
+                //         使用NTT-crt可能并不能达到最佳性能，使用 Karatsuba 等方法可能会更合适
+                //
                 // 5. 终止条件：小规模使用经典算法 当剩余长度 <= MIN_LEN时，不再分割，直接调用 num2base_classic 处理。
 
                 BaseTable::BaseInfo info(base);
@@ -3233,7 +3295,7 @@ SOFTWARE.
                     if (pow_len == 0)
                     {
                         res_len = num_base_recursive_core(current_in, pri_len, info.base_num, info.base_d, res, current_list->front);
-                        std::copy(current_list->_2pow64_index.begin(), current_list->_2pow64_index.end(), base_pow.begin());
+                        std::copy(current_list->base_index.begin(), current_list->base_index.end(), base_pow.begin());
                         pow_len = current_list->length;
                     }
                     else
@@ -3247,7 +3309,7 @@ SOFTWARE.
                         res_len = remove_leading_zeros(res, get_add_len(res_len, buffer_len));
 
                         // 更新 base_pow
-                        abs_mul64_ntt_base(base_pow.data(), pow_len, current_list->_2pow64_index.data(), current_list->length, base_pow.data(), info.base_num);
+                        abs_mul64_ntt_base(base_pow.data(), pow_len, current_list->base_index.data(), current_list->length, base_pow.data(), info.base_num);
                         pow_len = remove_leading_zeros(base_pow.data(), get_mul_len(pow_len, current_list->length));
                     }
 

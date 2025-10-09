@@ -45,19 +45,7 @@ SOFTWARE.
 #include "BigInt.hpp"
 #include "hint.hpp"
 
-namespace __LAMINA{
-	//解pow(bv,n) < MAX_UINT64_T n的最大值
-	inline uint32_t solve_max_powbvn(const uint32_t& bv) {
-		uint32_t re = 0;
-		uint64_t t = 0;
-		t -= 1;//减一产生溢出变为最大值
-		while (t) {
-			t /= bv;
-			re++;
-		}
-		return --re;
-	}
-}
+
 
 namespace __LAMINA::BIGINT
 {
@@ -1241,7 +1229,7 @@ namespace __LAMINA::BIGINT
 				return c - ('a' - 10);
 			}
 			return 37;
-			};
+		};
 
 		size_t count = number_string.length();
 		values.clear();
@@ -1258,8 +1246,21 @@ namespace __LAMINA::BIGINT
 			}
 			return;
 		}
+		
+		auto solve_max_powbvn = [](const uint32_t &bv) -> uint32_t
+		{
+			uint32_t re = 0;
+			uint64_t t = 0;
+			t -= 1; // 减一产生溢出变为最大值（0xFFFFFFFFFFFFFFFF）
+			while (t)
+			{
+				t /= bv;
+				re++;
+			}
+			return --re;
+		};
 
-		uint32_t n = __LAMINA::solve_max_powbvn(base_value);
+		uint32_t n = solve_max_powbvn(base_value);
 		uint64_t maxi = count / n;
 		uint64_t t;
 		uint64_t mulnum = 1;
@@ -1318,21 +1319,9 @@ namespace __LAMINA::BIGINT
 		}
 
 		std::vector<uint8_t> datas(Integer.values.size() * sizeof(digit_type), 0);
-		::memcpy(&datas, Integer.values.data(), Integer.values.size() * sizeof(digit_type));
-		// 可能更安全的写法
-		// {
-		// 	union Uint64ToUint8 {
-		// 		uint64_t ull;
-		// 		uint8_t  ucs[8];
-		// 	}t;
-		// 	size_t datai = 0;
-		// 	for (const uint64_t& i : Integer.values) {
-		// 		t.ull = i;
-		// 		for (uint64_t j = 0; j < 8; j++, datai++) {
-		// 			datas[datai] = t.ucs[j];
-		// 		}
-		// 	}
-		// }
+		// warning ：
+		// ::memcpy(&datas, Integer.values.data(), Integer.values.size() * sizeof(digit_type));
+		::memcpy(datas.data(), Integer.values.data(), Integer.values.size() * sizeof(digit_type));
 
 		uint64_t state = 0x736f6d6570736575UL;
 		uint64_t state2 = 0x646f72616e646f6dUL;
