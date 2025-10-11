@@ -270,8 +270,9 @@ namespace HyperInt
     constexpr UintTy add_half_base(UintTy x, UintTy y, bool &carry, const UintTy &base_num)
     {
         assert(x < base_num && y < base_num);
+        //assert(base_num < (all_one<UintTy>(sizeof(UintTy) * CHAR_BIT - 1) + 1));
         UintTy sum = x + y;
-        carry = (sum < x);
+        carry = (sum >= base_num) || (sum < x);
         return (carry) ? (sum - base_num) : (sum % base_num);
     }
 
@@ -279,12 +280,12 @@ namespace HyperInt
     template <typename UintTy>
     constexpr UintTy add_carry_base(UintTy x, UintTy y, bool &carry, const UintTy &base_num)
     {
-        assert(x < base_num && y < base_num && carry < base_num);
+        assert(x < base_num && y < base_num);
+        //assert(base_num < (all_one<UintTy>(sizeof(UintTy) * CHAR_BIT - 1) + 1));
         UintTy sum = x + carry;
         carry = (sum < x);
-        sum += y;                   // carry
-        carry = carry || (sum < y); // carry
-
+        sum += y;                          // carry
+        carry = carry || (sum >= base_num) || (sum < y); // carry
         return (carry) ? (sum - base_num) : (sum % base_num);
     }
 
@@ -1791,9 +1792,10 @@ namespace HyperInt
         // Binary absolute addtion a+b=sum, return the carry
         template <typename UintTy>
         constexpr bool abs_add_binary_half(
-            const UintTy a[], size_t len_a,
-            const UintTy b[], size_t len_b,
-            UintTy sum[])
+            const UintTy   a[],  size_t len_a,
+            const UintTy   b[],  size_t len_b,
+                  UintTy sum[]
+        )
         {
             bool carry = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -1812,10 +1814,12 @@ namespace HyperInt
             return carry;
         }
         template <typename UintTy>
-        constexpr UintTy abs_add_binary_half_base(
-            const UintTy a[], size_t len_a,
-            const UintTy b[], size_t len_b,
-            UintTy sum[], const UintTy &base_num)
+        constexpr bool abs_add_binary_half_base(
+            const UintTy   a[],  size_t len_a,
+            const UintTy   b[],  size_t len_b,
+                  UintTy sum[], 
+            const UintTy &base_num
+        )
         {
             bool carry = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -1844,15 +1848,16 @@ namespace HyperInt
         constexpr void abs_add_base(const UintTy a[], size_t len_a, const UintTy b[], size_t len_b, UintTy sum[], UintTy base_num)
         {
             UintTy carry = abs_add_binary_half_base(a, len_a, b, len_b, sum, base_num);
-            sum[std::max(len_a, len_b)] = carry;
+            sum[std::max(len_a, len_b)] = UintTy(carry);
         }
 
         // Binary absolute subtraction a-b=diff, return the borrow
         template <typename UintTy>
         constexpr bool abs_sub_binary(
-            const UintTy a[], size_t len_a,
-            const UintTy b[], size_t len_b,
-            UintTy diff[], bool assign_borow = false)
+            const UintTy    a[], size_t len_a,
+            const UintTy    b[], size_t len_b,
+                  UintTy diff[], bool   assign_borow = false
+        )
         {
             bool borrow = false;
             size_t i = 0, min_len = std::min(len_a, len_b);
@@ -3017,10 +3022,31 @@ namespace HyperInt
                     double base_d;
                     BaseInfo(uint64_t base)
                     {
-                        assert(base > 1 && base <= 36);
-                        base_num = table1[base - 2][0];
-                        base_len = table1[base - 2][1];
-                        base_d = table2[base - 2];
+                        assert(base != 0 && base != 1);
+                        if (base > 1 && base <= 36)
+                        {
+                            base_num = table1[base - 2][0];
+                            base_len = table1[base - 2][1];
+                            base_d = table2[base - 2];
+                            return;
+                        }
+                        else {
+                            uint64_t t = 0xFFFFFFFFFFFFFFFFull;
+                            base_len = 0;
+                            while (t >= base)
+                            { // 使用>=确保最后一次除法有效
+                                t /= base;
+                                base_len++;
+                            }
+                            /*
+                            warning：使用pow函数计算base_num的幂，可能会导致溢出，因此使用乘法计算
+                            */
+                            base_num = 1;
+                            for (size_t i = 0; i < base_len; i++)
+                                base_num *= base;
+                            base_d = double(64.0) / (base_len * std::log2(double(base)));
+                            return;
+                        }
                     }
                 };
 
@@ -3038,23 +3064,11 @@ namespace HyperInt
                 }
                 return res;
             }
-            // res为(2^64)^(index)在base_num进制下的表示，返回值为res的长度
-            size_t base_2power_index_classic(const uint64_t base_num, const size_t index, uint64_t *res)
-            {
 
-                size_t _len = index + 1;
-                std::vector<uint64_t> _2pow64_index(_len, 0);
-                _2pow64_index[index] = 1;
-                size_t res_i = 0;
-                while (_len != 0 && _2pow64_index[_len - 1] != 0)
-                {
-                    res[res_i++] = abs_div_rem_num64(_2pow64_index.data(), _len, _2pow64_index.data(), base_num);
-                    _len = remove_leading_zeros(_2pow64_index.data(), _len);
-                }
-                return res_i;
-            }
-
-            inline size_t num2base_classic(uint64_t *in, size_t len, const uint64_t base_num, uint64_t *res)
+            // 将in数组表示的数从2^64进制转换为base_num进制，存储在res数组中，返回值为res的长度
+            // in数组会被修改
+            // res数组需要足够大，至少为 get_buffer_size(len, base_d)
+            inline size_t num2base_classic(uint64_t in[], size_t len, const uint64_t base_num, uint64_t res[])
             {
                 size_t res_i = 0;
                 while (len != 0 && in[len - 1] != 0)
@@ -3065,12 +3079,69 @@ namespace HyperInt
                 return res_i;
             }
 
+            // 将in数组表示的数从base_num进制转换为2^64进制，存储在res数组中，返回值为res的长度
+            // in数组会被修改
+            // res数组需要足够大，至少为 get_buffer_size(len, base_d)
+            // 一个值得注意的特性是：
+            //      虽然应当保证 in 数组中的每个元素都小于 base_num，
+            //      但是即使 in 数组中的某些元素大于 base_num，函数依然可以正确工作，并可以按照正常的 base_num 进制进行转换。
+            //      超过 base_num 的元素能够正确的进位。
+            inline size_t base2num_classic(uint64_t in[], size_t len, const uint64_t base_num, uint64_t res[])
+            {
+                size_t  in_len = len, 
+                       res_len = 0;
+                while(in_len != 0){
+                    uint64_t temp = 0, product_lo = 0, product_hi = 0;
+                    for (size_t i = in_len; i-- != 0; ){
+                        // 此assert可以保证输入的数符合进制要求
+                        // 由于函数本身可以处理不符合进制要求的数，因此可以选择忽略该assert
+                        assert(in[i] < base_num); 
+                        mul64x64to128(temp, base_num, product_lo, product_hi);
+                        product_lo += in[i];
+                        product_hi += (product_lo < in[i]) ? 1 : 0;
+                        in[i] = product_hi;
+                        temp = product_lo;
+                    }
+                    res[res_len++] = temp;
+                    in_len = remove_leading_zeros(in, in_len);
+                }
+                return res_len;
+            }
+
+            // res为(2^64)^(index)在base_num进制下的表示，返回值为res的长度
+            size_t _2_64power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
+            {
+
+                size_t len = index + 1;
+                std::vector<uint64_t> _2pow64_index(len, 0);
+                _2pow64_index[index] = 1;
+                // size_t res_i = 0;
+                // while (len != 0 && _2pow64_index[len - 1] != 0)
+                // {
+                //     res[res_i++] = abs_div_rem_num64(_2pow64_index.data(), len, _2pow64_index.data(), base_num);
+                //     len = remove_leading_zeros(_2pow64_index.data(), len);
+                // }
+                // return res_i;
+                return num2base_classic(_2pow64_index.data(), len, base_num, res);
+            }
+
+            // res为(base_num)^(index)在 2^64 进制下的表示，返回值为res的长度
+            size_t base_power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
+            {
+                size_t len = index + 1;
+                std::vector<uint64_t> base_pow_index(len, 0);
+                base_pow_index[index] = 1;
+                return base2num_classic(base_pow_index.data(), len, base_num, res);
+            }
+
             // 进制转换后的长度，额外加一防止溢出
             inline size_t get_buffer_size(size_t len, double base_d)
             {
                 return static_cast<size_t>(std::ceil(base_d * len)) + 1;
             }
 
+            // 计算 in * 2^64，并存储在 in 数组中，in 数组会被修改
+            // in 数组为 base_num 进制下的数
             inline void abs_mul2pow64_base(uint64_t in[], size_t len, const uint64_t base_num)
             {
                 uint64_t temp = 0;
@@ -3091,10 +3162,30 @@ namespace HyperInt
                 }
             }
 
-            size_t base_2power_index(
+            // 计算 in * base，并存储在 in 数组中，in 数组会被修改
+            // in 数组为 2^64 进制下的数
+            inline void abs_mul_base(uint64_t in[], size_t len, const uint64_t base_num)
+            {
+                uint64_t temp = 0;
+                for (size_t i = 0; i < len; i++)
+                {
+                    // 计算in[i] * base_num
+                    // 在2^64进制下
+                    uint64_t product_lo = 0, product_hi = 0;
+                    mul64x64to128(in[i], base_num, product_lo, product_hi);
+                    product_lo += temp;
+                    product_hi += (product_lo < temp) ? 1 : 0;
+                    temp = product_hi;
+                    in[i] = product_lo;
+                }
+                in[len] = temp;
+            }
+
+            // 计算进制数为 base_num 的(2^64)^index 值，并存储在 res 数组中
+            size_t _2_64_power_index(
                 const uint64_t base_num,
                 const size_t index,
-                uint64_t *res,
+                uint64_t res[],
                 size_t res_len
             )
             {
@@ -3102,20 +3193,52 @@ namespace HyperInt
 
                 if (index <= 32)
                 {
-                    return base_2power_index_classic(base_num, index, res);
+                    return _2_64power_index_classic(base_num, index, res);
                 }
                 if (index % 2 == 0)
                 {
                     size_t temp_len = res_len / 2 + 1;
                     std::vector<uint64_t> temp(temp_len, 0);
-                    temp_len = base_2power_index(base_num, index / 2, temp.data(), temp_len);
+                    temp_len = _2_64_power_index(base_num, index / 2, temp.data(), temp_len);
                     abs_sqr64_ntt_base(temp.data(), temp_len, res, base_num);
                     return remove_leading_zeros(res, 2 * temp_len);
                 }
                 else
                 {
-                    res_len = base_2power_index(base_num, index - 1, res, res_len);
+                    res_len = _2_64_power_index(base_num, index - 1, res, res_len);
                     abs_mul2pow64_base(res, res_len, base_num);
+                    res_len = remove_leading_zeros(res, res_len + 2);
+                    return remove_leading_zeros(res, res_len);
+                }
+            }
+
+            // 计算进制数为 2^64 的(base_num)^index 值，并存储在 res 数组中
+            size_t base_power_index(
+                const uint64_t base_num,
+                const size_t index,
+                uint64_t res[],
+                size_t res_len
+            )
+            {
+                assert(index > 0);
+
+                if (index <= 32)
+                {
+                    return base_power_index_classic(base_num, index, res);
+                }
+                if (index % 2 == 0)
+                {
+                    auto &multiplier = HyperInt::Arithmetic::getMultiplier();
+                    size_t temp_len = res_len / 2 + 1;
+                    std::vector<uint64_t> temp(temp_len, 0);
+                    temp_len = base_power_index(base_num, index / 2, temp.data(), temp_len);
+                    multiplier(temp.data(), temp_len, temp.data(), temp_len, res);
+                    return remove_leading_zeros(res, 2 * temp_len);
+                }
+                else
+                {
+                    res_len = base_power_index(base_num, index - 1, res, res_len);
+                    abs_mul_base(res, res_len, base_num);
                     res_len = remove_leading_zeros(res, res_len + 2);
                     return remove_leading_zeros(res, res_len);
                 }
@@ -3140,16 +3263,20 @@ namespace HyperInt
 
             } *_2pow64_index_list;
 
+            typedef struct base_index_node *_base_index_list;
+
             constexpr size_t MIN_LEN = 64;
 
             // 只能处理 len 为二的次幂的情况，in 会被修改
+            // 将2^64进制转换为base_num进制，并存储在out数组中
             size_t num_base_recursive_core(
-                uint64_t *in,
+                uint64_t in[],
                 const size_t len,
                 const uint64_t base_num,
                 const double base_d,
-                uint64_t *out,
-                const _2pow64_index_list list)
+                uint64_t out[],
+                const _2pow64_index_list list
+            )
             {
                 // assert len != 0 && len为2的幂
                 assert(len != 0 && (len & (len - 1)) == 0);
@@ -3162,8 +3289,8 @@ namespace HyperInt
                 assert(list != nullptr);
                 assert(list->index == len / 2);
 
-                size_t half_len = len / 2,
-                       pow_len = list->length,
+                size_t   half_len = len / 2,
+                          pow_len = list->length,
                        buffer_len = get_buffer_size(half_len, base_d);
                 const uint64_t *base_pow = list->base_index.data();
                 std::vector<uint64_t> buffer(buffer_len, 0);
@@ -3176,7 +3303,7 @@ namespace HyperInt
                 out_len = remove_leading_zeros(out, out_len + pow_len);
                 // out <= high * base_pow + low
                 abs_add_base(buffer.data(), buffer_len, out, out_len, out, base_num);
-                return remove_leading_zeros(out, out_len);
+                return remove_leading_zeros(out, get_add_len(out_len, buffer_len));
             }
 
             /// 创建2^64的指数列表，下面用 M 表示 2^(64 * MIN_LEN)
@@ -3195,13 +3322,14 @@ namespace HyperInt
                 assert((max_index & (max_index - 1)) == 0);
 
                 _2pow64_index_list head = new base_index_node(MIN_LEN, base_d);
-                head->length = base_2power_index(base_num, MIN_LEN, head->base_index.data(), head->length);
+                head->length = _2_64_power_index(base_num, MIN_LEN, head->base_index.data(), head->length);
 
                 _2pow64_index_list current = head;
 
                 for (size_t i = MIN_LEN << 1; i <= max_index; i <<= 1)
                 {
                     current->back = new base_index_node(i, base_d);
+                    // 无任意基数乘法的权宜之计，直接用 NTT 乘法计算
                     abs_sqr64_ntt_base(current->base_index.data(), current->length, current->back->base_index.data(), base_num);
                     current->back->length = remove_leading_zeros(current->back->base_index.data(), current->back->length);
                     current->back->front = current;
@@ -3233,7 +3361,7 @@ namespace HyperInt
             /// @note
             ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
             ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
-            size_t num2base(uint64_t *in, size_t len, const uint64_t base, uint64_t *res)
+            size_t num2base(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
             {
                 // 1. 分割策略：按 2 的幂次方长度分割
                 //         每次处理的子部分长度都是 2^k（num_base_recursive_core会递归处理这部分），
@@ -3302,13 +3430,14 @@ namespace HyperInt
                     {
                         std::vector<uint64_t> buffer(buffer_len, 0);
                         buffer_len = num_base_recursive_core(current_in, pri_len, info.base_num, info.base_d, buffer.data(), current_list->front);
-
+                        // ntt 只是权宜之计，目前没有适配的任意基数卡拉楚巴乘法
                         abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), info.base_num);
                         buffer_len = remove_leading_zeros(buffer.data(), get_mul_len(buffer_len, pow_len));
                         abs_add_base(buffer.data(), buffer_len, res, res_len, res, info.base_num);
                         res_len = remove_leading_zeros(res, get_add_len(res_len, buffer_len));
 
                         // 更新 base_pow
+                        // 同上上述，这里的 ntt 也只是权宜之计，没有适配的任意基数卡拉楚巴乘法
                         abs_mul64_ntt_base(base_pow.data(), pow_len, current_list->base_index.data(), current_list->length, base_pow.data(), info.base_num);
                         pow_len = remove_leading_zeros(base_pow.data(), get_mul_len(pow_len, current_list->length));
                     }
@@ -3326,7 +3455,8 @@ namespace HyperInt
                         buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
                         std::vector<uint64_t> buffer(buffer_len, 0);
                         buffer_len = num2base_classic(current_in, current_len, info.base_num, buffer.data());
-
+                        
+                        // ntt 只是权宜之计，目前没有适配的任意基数卡拉楚巴乘法
                         abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), info.base_num);
                         buffer_len = remove_leading_zeros(buffer.data(), get_mul_len(buffer_len, pow_len));
                         abs_add_base(buffer.data(), buffer_len, res, res_len, res, info.base_num);

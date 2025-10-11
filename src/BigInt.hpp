@@ -63,17 +63,11 @@ SOFTWARE.
 #include <random>
 #include <bitset>
 
-namespace __LAMINA
-{
-	struct PrimeNumberTester;
-}
-
 
 
 namespace __LAMINA::BIGINT
 {
 	
-
 	using digit_type = uint64_t;
 	constexpr uint32_t DIGIT_BITS = std::numeric_limits<digit_type>::digits;
 	constexpr uint32_t DIGIT_BYTES = DIGIT_BITS / CHAR_BIT;
@@ -128,8 +122,6 @@ namespace __LAMINA::BIGINT
 	class BigInteger
 	{
 	private:
-		friend struct __LAMINA::PrimeNumberTester;
-
 		void Clean();
 
 		std::vector<digit_type> values;
@@ -771,7 +763,6 @@ namespace __LAMINA::BIGINT
 	class BigSignedInteger
 	{
 	private:
-		friend struct __LAMINA::PrimeNumberTester;
 
 		bool	   sign;  //MSB is true, then the number is negative
 		BigInteger uint_data;
