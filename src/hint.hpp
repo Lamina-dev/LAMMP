@@ -44,8 +44,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef LAMINA_BIGINT_HPP
-#define LAMINA_BIGINT_HPP
+#ifndef LAMINA_HYPERINT_HPP
+#define LAMINA_HYPERINT_HPP
 
 #include <iostream>
 #include <future>
@@ -2085,7 +2085,7 @@ namespace HyperInt
             const uint64_t in2[], size_t len2,
             uint64_t out[],
             uint64_t *work_begin = nullptr,
-            uint64_t *work_end = nullptr
+            uint64_t *work_end   = nullptr
         )
         {
             const size_t out_len = get_mul_len(len1, len2);
@@ -2460,9 +2460,9 @@ namespace HyperInt
         inline void abs_mul64(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
-            uint64_t out[],
-            uint64_t *work_begin = nullptr,
-            uint64_t *work_end = nullptr
+                  uint64_t out[],
+                  uint64_t *work_begin = nullptr,
+                  uint64_t *work_end   = nullptr
         )
         {
             if (len1 < len2)
@@ -2711,13 +2711,13 @@ namespace HyperInt
 
         // 只处理商的长度为dividend_len-divisor_len的情况
         inline void abs_div64_classic_core(
-            uint64_t dividend[],
-            size_t dividend_len,
+                  uint64_t dividend[],
+                  size_t   dividend_len,
             const uint64_t divisor[],
-            size_t divisor_len,
-            uint64_t quotient[],
-            uint64_t *work_begin = nullptr,
-            uint64_t *work_end = nullptr
+                  size_t   divisor_len,
+                  uint64_t quotient[],
+                  uint64_t *work_begin = nullptr,
+                  uint64_t *work_end   = nullptr
         )
         {
             if (nullptr == dividend || dividend_len <= divisor_len)
@@ -3048,6 +3048,9 @@ namespace HyperInt
                             return;
                         }
                     }
+                    void base_d_inv(){
+                        base_d = 1.0 / base_d;
+                    }
                 };
 
             }
@@ -3184,9 +3187,9 @@ namespace HyperInt
             // 计算进制数为 base_num 的(2^64)^index 值，并存储在 res 数组中
             size_t _2_64_power_index(
                 const uint64_t base_num,
-                const size_t index,
-                uint64_t res[],
-                size_t res_len
+                const size_t   index,
+                      uint64_t res[],
+                      size_t   res_len
             )
             {
                 assert(index > 0);
@@ -3215,9 +3218,9 @@ namespace HyperInt
             // 计算进制数为 2^64 的(base_num)^index 值，并存储在 res 数组中
             size_t base_power_index(
                 const uint64_t base_num,
-                const size_t index,
-                uint64_t res[],
-                size_t res_len
+                const size_t   index,
+                      uint64_t res[],
+                      size_t   res_len
             )
             {
                 assert(index > 0);
@@ -3228,11 +3231,10 @@ namespace HyperInt
                 }
                 if (index % 2 == 0)
                 {
-                    auto &multiplier = HyperInt::Arithmetic::getMultiplier();
                     size_t temp_len = res_len / 2 + 1;
                     std::vector<uint64_t> temp(temp_len, 0);
                     temp_len = base_power_index(base_num, index / 2, temp.data(), temp_len);
-                    multiplier(temp.data(), temp_len, temp.data(), temp_len, res);
+                    abs_mul64(temp.data(), temp_len, temp.data(), temp_len, res);
                     return remove_leading_zeros(res, 2 * temp_len);
                 }
                 else
@@ -3265,16 +3267,16 @@ namespace HyperInt
 
             typedef struct base_index_node *_base_index_list;
 
-            constexpr size_t MIN_LEN = 64;
+            constexpr size_t MIN_LEN = 64ull;
 
             // 只能处理 len 为二的次幂的情况，in 会被修改
             // 将2^64进制转换为base_num进制，并存储在out数组中
             size_t num_base_recursive_core(
-                uint64_t in[],
-                const size_t len,
-                const uint64_t base_num,
-                const double base_d,
-                uint64_t out[],
+                      uint64_t           in[],
+                const size_t             len,
+                const uint64_t           base_num,
+                const double             base_d,
+                      uint64_t           out[],
                 const _2pow64_index_list list
             )
             {
@@ -3308,7 +3310,7 @@ namespace HyperInt
 
             /// 创建2^64的指数列表，下面用 M 表示 2^(64 * MIN_LEN)
             /// index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，
-            /// _2pow64_index 为 M^index 的值
+            /// _base_index 为 M^index 的值
             _2pow64_index_list create_2pow64_index_list(size_t max_index, const uint64_t base_num, const double base_d)
             {
                 ///   head
@@ -3331,6 +3333,79 @@ namespace HyperInt
                     current->back = new base_index_node(i, base_d);
                     // 无任意基数乘法的权宜之计，直接用 NTT 乘法计算
                     abs_sqr64_ntt_base(current->base_index.data(), current->length, current->back->base_index.data(), base_num);
+                    current->back->length = remove_leading_zeros(current->back->base_index.data(), current->back->length);
+                    current->back->front = current;
+                    current = current->back;
+                }
+                return head;
+            }
+
+            // 只能处理 len 为二的次幂的情况，in 会被修改
+            // 将base_num进制转换为2^64进制，并存储在out数组中
+            size_t base_num_recursive_core(
+                      uint64_t         in[],
+                const size_t           len,
+                const uint64_t         base_num,
+                const double           base_d,
+                      uint64_t         out[],
+                const _base_index_list list
+            )
+            {
+                // assert len != 0 && len为2的幂
+                assert(len != 0 && (len & (len - 1)) == 0);
+
+                if (len <= MIN_LEN)
+                {
+                    return base2num_classic(in, len, base_num, out);
+                }
+
+                assert(list != nullptr);
+                assert(list->index == len / 2);
+
+                size_t half_len   = len / 2,
+                       pow_len    = list->length,
+                       buffer_len = get_buffer_size(half_len, base_d);
+                const uint64_t *base_pow = list->base_index.data();
+                std::vector<uint64_t> buffer(buffer_len, 0);
+                // low
+                buffer_len = base_num_recursive_core(in, half_len, base_num, base_d, buffer.data(), list->front);
+                // high
+                size_t out_len = base_num_recursive_core(in + half_len, half_len, base_num, base_d, out, list->front);
+                // high * base_pow
+                abs_mul64(out, out_len, base_pow, pow_len, out);
+                out_len = remove_leading_zeros(out, out_len + pow_len);
+                // out <= high * base_pow + low
+                abs_add_binary(buffer.data(), buffer_len, out, out_len, out);
+                return remove_leading_zeros(out, get_add_len(out_len, buffer_len));
+            }
+
+            /// 创建base_num的指数列表，下面用 M 表示 base_num^(MIN_LEN)
+            /// index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，
+            /// _base_index 为 M^index 的值
+            _base_index_list create_base_index_list(size_t max_index, const uint64_t base_num, const double base_d)
+            {
+                ///   head
+                ///     |
+                ///     ↓
+                ///     +--------+ <--front---+--------+ <--front---+--------+ <--...
+                ///     |  M^1   |            |  M^2   |            |  M^4   |
+                ///     +--------+ ---back--->+--------+ ---back--->+--------+ ----...
+                /// base_num的指数列表， M 表示 base_num^(MIN_LEN)
+                assert(max_index > MIN_LEN);
+                assert((max_index & (max_index - 1)) == 0);
+
+                _2pow64_index_list head = new base_index_node(MIN_LEN, base_d);
+                head->length = base_power_index(base_num, MIN_LEN, head->base_index.data(), head->length);
+
+                _2pow64_index_list current = head;
+                for (size_t i = MIN_LEN << 1; i <= max_index; i <<= 1)
+                {
+                    current->back = new base_index_node(i, base_d);
+                    abs_mul64(
+                        current->base_index.data(), current->length, 
+                        current->base_index.data(), current->length, 
+                        current->back->base_index.data()
+                    );
                     current->back->length = remove_leading_zeros(current->back->base_index.data(), current->back->length);
                     current->back->front = current;
                     current = current->back;
@@ -3460,6 +3535,89 @@ namespace HyperInt
                         abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), info.base_num);
                         buffer_len = remove_leading_zeros(buffer.data(), get_mul_len(buffer_len, pow_len));
                         abs_add_base(buffer.data(), buffer_len, res, res_len, res, info.base_num);
+                        res_len = remove_leading_zeros(res, get_add_len(res_len, buffer_len));
+                        return res_len;
+                    }
+                }
+                assert(false);
+                return 0;
+            }
+
+            /// @brief 将一个表示为64位块数组的大整数从base进制（基数base_num）转换为指定的二进制（基数2^64）
+            /// @param in 表示要转换的大整数的输入数组。数组的每个元素都是该整数的一个64位块
+            /// @param len 输入数组中64位块的数量
+            /// @param base 要转换到的基数
+            /// @param res 转换后的结果数组，数组的每个元素都是该整数在目标基数下的一个64位块
+            /// @return 转换后的结果数组的长度
+            /// @note
+            ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
+            ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
+            size_t base2num(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
+            {
+                BaseTable::BaseInfo info(base);
+                info.base_d_inv();
+                const size_t max_len_base_index = 63ull - hint_clz(len);
+
+                if (len <= 2 * MIN_LEN)
+                {
+                    return base2num_classic(in, len, info.base_num, res);
+                }
+                _base_index_list head = create_base_index_list(1ull << max_len_base_index, info.base_num, info.base_d);
+                uint64_t *current_in = in;
+
+                size_t pow_len = 0,
+                       res_len = 0;
+                std::vector<uint64_t> _2_64_pow(get_buffer_size(len, info.base_d), 0);
+
+                for (size_t current_len = len; current_len > MIN_LEN;)
+                {
+
+                    size_t current_index = 63ull - hint_clz(current_len);
+                    size_t pri_len       = 1ull << current_index;
+                    size_t buffer_len    = get_buffer_size(pri_len, info.base_d) + pow_len;
+
+                    _base_index_list current_list = find_head(head, pri_len);
+                    assert(current_list != nullptr);
+                    assert(current_list->index == pri_len);
+
+                    // 计算 base_pow 并计算 buffer * base_pow => res
+                    if (pow_len == 0)
+                    {
+                        res_len = base_num_recursive_core(current_in, pri_len, info.base_num, info.base_d, res, current_list->front);
+                        std::copy(current_list->base_index.begin(), current_list->base_index.end(), _2_64_pow.begin());
+                        pow_len = current_list->length;
+                    }
+                    else
+                    {
+                        std::vector<uint64_t> buffer(buffer_len, 0);
+                        buffer_len = base_num_recursive_core(current_in, pri_len, info.base_num, info.base_d, buffer.data(), current_list->front);
+                        abs_mul64(buffer.data(), buffer_len, _2_64_pow.data(), pow_len, buffer.data());
+                        buffer_len = remove_leading_zeros(buffer.data(), get_mul_len(buffer_len, pow_len));
+                        abs_add_binary(buffer.data(), buffer_len, res, res_len, res);
+                        res_len = remove_leading_zeros(res, get_add_len(res_len, buffer_len));
+
+                        // 更新 base_pow
+                        abs_mul64(_2_64_pow.data(), pow_len, current_list->base_index.data(), current_list->length, _2_64_pow.data());
+                        pow_len = remove_leading_zeros(_2_64_pow.data(), get_mul_len(pow_len, current_list->length));
+                    }
+
+                    current_len -= pri_len;
+                    current_in  += pri_len;
+
+                    if (current_len == 0)
+                    {
+                        return res_len;
+                    }
+
+                    if (current_len <= MIN_LEN)
+                    {
+                        buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
+                        std::vector<uint64_t> buffer(buffer_len, 0);
+                        buffer_len = base2num_classic(current_in, current_len, info.base_num, buffer.data());
+
+                        abs_mul64(buffer.data(), buffer_len, _2_64_pow.data(), pow_len, buffer.data());
+                        buffer_len = remove_leading_zeros(buffer.data(), get_mul_len(buffer_len, pow_len));
+                        abs_add_binary(buffer.data(), buffer_len, res, res_len, res);
                         res_len = remove_leading_zeros(res, get_add_len(res_len, buffer_len));
                         return res_len;
                     }
