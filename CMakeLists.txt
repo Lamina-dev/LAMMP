@@ -32,17 +32,23 @@ else()
 	endif()
 endif()
 
-add_library(BigNumberSystem
+add_library(
+	BigNumberSystem
 	src/BigInt.hpp
 	src/BigInt.cpp
 	src/BigFrac.hpp
 	src/BigFrac.cpp
  )
 
-add_executable(Test
+add_executable(
+	Test
 	Test.cpp
 	main.cpp
 )
+
+
+target_link_libraries(Test BigNumberSystem)
+
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
 	set_property(TARGET BigNumberSystem PROPERTY CXX_STANDARD 17)

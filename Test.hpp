@@ -1,3 +1,5 @@
+#include "src/BigFrac.hpp"
+#include "src/BigInt.hpp"
 #include "src/hint.hpp"
 #include <chrono>
 #include <iostream>
@@ -278,6 +280,7 @@ void run_tests_and_save(const std::string &filename,
     }
 
     // 测试除法
+    
     for (int len1 : lengths)
     { // 只选择小于 len1 的 len2 进行测试
         for (int len2 : lengths){
@@ -311,79 +314,91 @@ void run_tests_and_save(const std::string &filename,
         }
         std::cout << "div testing complete, length1: " << len1 << std::endl;
     }
-
-        // 测试num2binary
-        for (int len : lengths)
+    
+    // 测试num2binary
+    for (int len : lengths)
+    {
+        std::vector<double> times(repetitions, 0);
+        for (int i = 0; i < repetitions; ++i)
         {
-            std::vector<double> times(repetitions, 0);
-            for (int i = 0; i < repetitions; ++i)
-            {
-                times[i] = test_num2binary(len);
-            }
-
-            // 计算统计值
-            double sum = 0, min = times[0], max = times[0];
-            for (double t : times)
-            {
-                sum += t;
-                if (t < min)
-                    min = t;
-                if (t > max)
-                    max = t;
-            }
-            double avg = sum / repetitions;
-
-            // 计算标准差
-            double variance = 0;
-            for (double t : times)
-            {
-                variance += (t - avg) * (t - avg);
-            }
-            double std_dev = std::sqrt(variance / repetitions);
-
-            // 写入CSV，第二个长度留空
-            out << "num2binary," << len << ",,"
-                << std::fixed << std::setprecision(3)
-                << avg << "," << min << "," << max << "," << std_dev << std::endl;
+            times[i] = test_num2binary(len);
         }
-        std::cout << "num2binary testing complete" << std::endl;
 
-        // 测试binary2num
-        for (int len : lengths)
+        // 计算统计值
+        double sum = 0, min = times[0], max = times[0];
+        for (double t : times)
         {
-            std::vector<double> times(repetitions, 0);
-            for (int i = 0; i < repetitions; ++i)
-            {
-                times[i] = test_binary2num(len);
-            }
-
-            // 计算统计值
-            double sum = 0, min = times[0], max = times[0];
-            for (double t : times)
-            {
-                sum += t;
-                if (t < min)
-                    min = t;
-                if (t > max)
-                    max = t;
-            }
-            double avg = sum / repetitions;
-
-            // 计算标准差
-            double variance = 0;
-            for (double t : times)
-            {
-                variance += (t - avg) * (t - avg);
-            }
-            double std_dev = std::sqrt(variance / repetitions);
-
-            // 写入CSV，第二个长度留空
-            out << "binary2num," << len << ",,"
-                << std::fixed << std::setprecision(3)
-                << avg << "," << min << "," << max << "," << std_dev << std::endl;
+            sum += t;
+            if (t < min)
+                min = t;
+            if (t > max)
+                max = t;
         }
-        std::cout << "binary2num testing complete" << std::endl;
+        double avg = sum / repetitions;
 
-        out.close();
-        std::cout << "All tests complete, results saved to: " << filename << std::endl;
+        // 计算标准差
+        double variance = 0;
+        for (double t : times)
+        {
+            variance += (t - avg) * (t - avg);
+        }
+        double std_dev = std::sqrt(variance / repetitions);
+
+        // 写入CSV，第二个长度留空
+        out << "num2binary," << len << ",,"
+            << std::fixed << std::setprecision(3)
+            << avg << "," << min << "," << max << "," << std_dev << std::endl;
     }
+    std::cout << "num2binary testing complete" << std::endl;
+
+    // 测试binary2num
+    for (int len : lengths)
+    {
+        std::vector<double> times(repetitions, 0);
+        for (int i = 0; i < repetitions; ++i)
+        {
+            times[i] = test_binary2num(len);
+        }
+
+        // 计算统计值
+        double sum = 0, min = times[0], max = times[0];
+        for (double t : times)
+        {
+            sum += t;
+            if (t < min)
+                min = t;
+            if (t > max)
+                max = t;
+        }
+        double avg = sum / repetitions;
+
+        // 计算标准差
+        double variance = 0;
+        for (double t : times)
+        {
+            variance += (t - avg) * (t - avg);
+        }
+        double std_dev = std::sqrt(variance / repetitions);
+
+        // 写入CSV，第二个长度留空
+        out << "binary2num," << len << ",,"
+            << std::fixed << std::setprecision(3)
+            << avg << "," << min << "," << max << "," << std_dev << std::endl;
+    }
+    std::cout << "binary2num testing complete" << std::endl;
+
+    out.close();
+    std::cout << "All tests complete, results saved to: " << filename << std::endl;
+}
+
+void test_factorial(size_t n)
+{
+    using namespace __LAMINA::BIGINT;
+    BigInteger num(n);
+    auto start = std::chrono::high_resolution_clock::now();
+    BigInteger res = num.Factorial(n);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "factorial of " << n << " computed." << std::endl;
+    std::cout << "time: " << duration.count() << " us" << std::endl;
+}

@@ -4,7 +4,24 @@
 #include <random>
 #include <cmath>
 #include <fstream>
-#include "test.hpp"
+#include "Test.hpp"
+/*
+文件名：hint.hpp
+
+文件名：BigFrac.hpp
+包含：BigInt.hpp
+
+文件名：BigInt.hpp
+
+文件名：BigInt.cpp
+包含：BigInt.hpp hint.hpp
+
+文件名：BigFrac.cpp
+包含：BigFrac.hpp 
+
+*/
+
+
 
 // double test_time(size_t bits)
 // {
@@ -159,17 +176,21 @@
 // 	std::cout << carry << std::endl;
 // }
 
-int main()
+
+
+int	main()
 {
+	test_factorial(2000000);
+	
 	// 配置测试长度，可以根据需要调整
 	std::vector<int> test_lengths = {2000, 3000, 4000};
 	// std::vector<int> test_lengths = { 320000, 360000, 400000, 440000, 480000, 520000, 560000, 600000, 640000 };
-	
+
 	//每个测试重复的次数，用于计算统计值
 	const int repetitions = 3;
 
+	const std::string csv_path = "test_results.csv";
 	// 运行测试并保存结果
-	run_tests_and_save( "F:/cpp_code/LAMINA_BIGINT/res/test10-13/performance_results.csv", test_lengths, repetitions);
-
+	run_tests_and_save( csv_path, test_lengths, repetitions);
 	return 0;
 }
