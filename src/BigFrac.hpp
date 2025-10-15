@@ -44,7 +44,6 @@ SOFTWARE.
 
 #ifndef LAMINA_BIG_FRACTION_HPP
 #define LAMINA_BIG_FRACTION_HPP
-
 #include "BigInt.hpp"
 
 namespace __LAMINA::BIGFRAC
@@ -73,8 +72,8 @@ namespace __LAMINA::BIGFRAC
 	*/
 	enum class DecimalPrecisionMode : uint32_t
 	{
-		Fixed = 0,	 // Specify the precision mode
-		Full = 1	 // Full the precision mode
+		Fixed = 0, // Specify the precision mode
+		Full = 1   // Full the precision mode
 	};
 
 	inline const __LAMINA::BIGINT::BigInteger ONE = 1;
@@ -94,85 +93,85 @@ namespace __LAMINA::BIGFRAC
 		using BigSignedInteger = __LAMINA::BIGINT::BigSignedInteger;
 
 		BigFraction();
-		BigFraction(const BigFraction& other) noexcept;
-		BigFraction(BigFraction&& other) noexcept;
-		explicit BigFraction(const BigInteger& numerator);
-		BigFraction(const BigInteger& numerator, const BigInteger& denominator);
-		BigFraction(const BigInteger& numerator, const BigInteger& denominator, int32_t sign);
-		explicit BigFraction(const std::string& complexString);
+		BigFraction(const BigFraction &other) noexcept;
+		BigFraction(BigFraction &&other) noexcept;
+		explicit BigFraction(const BigInteger &numerator);
+		BigFraction(const BigInteger &numerator, const BigInteger &denominator);
+		BigFraction(const BigInteger &numerator, const BigInteger &denominator, int32_t sign);
+		explicit BigFraction(const std::string &complexString);
 
-		void	   SetSimplifyReduced(bool value);
-		bool	   IsNaN() const;
-		bool	   IsInfinityPoint() const;
-		bool	   IsZero() const;
-		bool	   IsNegative() const;
-		bool	   IsInteger() const;
+		void SetSimplifyReduced(bool value);
+		bool IsNaN() const;
+		bool IsInfinityPoint() const;
+		bool IsZero() const;
+		bool IsNegative() const;
+		bool IsInteger() const;
 		BigInteger GetNumerator() const;
 		BigInteger GetDenominator() const;
 		std::optional<BigInteger> TryGetInteger() const;
 		// 设置分子
-		void	   SetNumerator(const BigInteger& number);
+		void SetNumerator(const BigInteger &number);
 		// 设置分母
-		void	   SetDenominator(const BigInteger& number);
+		void SetDenominator(const BigInteger &number);
 		BigFraction GetFullPrecision() const;
 		void SetFullPrecision(BigInteger number);
 
-		void		ComputeAndFromDecimalString(const std::string& complexString);
+		void ComputeAndFromDecimalString(const std::string &complexString);
 		std::string ComputeAndToDecimalString() const;
 
-		BigFraction& operator=(const BigFraction& other);
-		BigFraction& operator=(BigFraction&& other);
-		BigFraction& operator+=(const BigFraction& other);
-		BigFraction& operator+=(const BigInteger& other);
-		BigFraction& operator-=(const BigFraction& other);
-		BigFraction& operator-=(const BigInteger& other);
-		BigFraction& operator*=(const BigFraction& other);
-		BigFraction& operator*=(const BigInteger& other);
-		BigFraction& operator/=(const BigFraction& other);
-		BigFraction& operator/=(const BigInteger& other);
+		BigFraction &operator=(const BigFraction &other);
+		BigFraction &operator=(BigFraction &&other);
+		BigFraction &operator+=(const BigFraction &other);
+		BigFraction &operator+=(const BigInteger &other);
+		BigFraction &operator-=(const BigFraction &other);
+		BigFraction &operator-=(const BigInteger &other);
+		BigFraction &operator*=(const BigFraction &other);
+		BigFraction &operator*=(const BigInteger &other);
+		BigFraction &operator/=(const BigFraction &other);
+		BigFraction &operator/=(const BigInteger &other);
 
-		BigFraction operator+(const BigFraction& other) const;
-		BigFraction operator+(const BigInteger& other) const;
-		BigFraction operator-(const BigFraction& other) const;
-		BigFraction operator-(const BigInteger& other) const;
-		BigFraction operator*(const BigFraction& other) const;
-		BigFraction operator*(const BigInteger& other) const;
-		BigFraction operator/(const BigFraction& other) const;
-		BigFraction operator/(const BigInteger& other) const;
+		BigFraction operator+(const BigFraction &other) const;
+		BigFraction operator+(const BigInteger &other) const;
+		BigFraction operator-(const BigFraction &other) const;
+		BigFraction operator-(const BigInteger &other) const;
+		BigFraction operator*(const BigFraction &other) const;
+		BigFraction operator*(const BigInteger &other) const;
+		BigFraction operator/(const BigFraction &other) const;
+		BigFraction operator/(const BigInteger &other) const;
 
 		BigFraction operator-() const;
 
-		bool operator<(const BigFraction& other) const;
-		bool operator<=(const BigFraction& other) const;
-		bool operator>(const BigFraction& other) const;
-		bool operator>=(const BigFraction& other) const;
-		bool operator==(const BigFraction& other) const;
-		bool operator!=(const BigFraction& other) const;
+		bool operator<(const BigFraction &other) const;
+		bool operator<=(const BigFraction &other) const;
+		bool operator>(const BigFraction &other) const;
+		bool operator>=(const BigFraction &other) const;
+		bool operator==(const BigFraction &other) const;
+		bool operator!=(const BigFraction &other) const;
 
 		BigFraction Abs() const;
 		BigFraction Reciprocal() const;
 		BigFraction Sqrt();
 		BigFraction Cbrt();
-		BigFraction Log(const BigInteger& value) const;
+		BigFraction Log(const BigInteger &value) const;
 		BigFraction Log() const;
-		BigFraction Log10(const BigInteger& fraction) const;
+		BigFraction Log10(const BigInteger &fraction) const;
 		BigFraction Log10() const;
 		// nth Power of a BigFraction
-		BigFraction Power(const BigInteger& exponent) const;
-		BigFraction Power(const BigFraction& exponent) const;
+		BigFraction Power(const BigInteger &exponent) const;
+		BigFraction Power(const BigFraction &exponent) const;
 		// nth Root of a BigFraction
-		BigFraction NthRoot(const BigInteger& n) const;
-		BigFraction NthRoot(const BigFraction& fraction, const BigInteger& n) const;
-		BigFraction Sine(const BigFraction& x) const;
-		BigFraction Cosine(const BigFraction& x) const;
-		BigFraction Tangent(const BigFraction& x) const;
-		BigFraction Arctangent(const BigFraction& x) const;
-		BigFraction Arcsine(const BigFraction& x) const;
-		BigFraction Arccosine(const BigFraction& x) const;
+		BigFraction NthRoot(const BigInteger &n) const;
+		BigFraction NthRoot(const BigFraction &fraction, const BigInteger &n) const;
+		BigFraction Sine(const BigFraction &x) const;
+		BigFraction Cosine(const BigFraction &x) const;
+		BigFraction Tangent(const BigFraction &x) const;
+		BigFraction Arctangent(const BigFraction &x) const;
+		BigFraction Arcsine(const BigFraction &x) const;
+		BigFraction Arccosine(const BigFraction &x) const;
 
-		BigInteger	Floor() const;
-		BigInteger	Ceil() const;
-		BigInteger	Round() const;
+		BigInteger Floor() const;
+		BigInteger Ceil() const;
+		BigInteger Round() const;
 
 		template <typename FloatingType>
 		BigFraction FromFloatingNumber(FloatingType value) const
@@ -253,15 +252,15 @@ namespace __LAMINA::BIGFRAC
 			return result;
 		}
 
-		long double BigIntegerToLongDouble(const BigInteger& big_integer) const;
+		long double BigIntegerToLongDouble(const BigInteger &big_integer) const;
 		operator BigInteger() const;
 		operator long double() const;
 		operator double() const;
 		operator float() const;
 
-		//生成由拉马努金提出的 π 的高精度表示。
+		// 生成由拉马努金提出的 π 的高精度表示。
 		static BigFraction GenerateSrinivasaRamanujanPI();
-		//用于通过 Nilakantha 数列计算 π 的近似值，迭代次数由参数 iteration 指定。
+		// 用于通过 Nilakantha 数列计算 π 的近似值，迭代次数由参数 iteration 指定。
 		static BigFraction GenerateNilakanthaArrayPI(uint64_t iteration);
 
 		/**
@@ -272,31 +271,31 @@ namespace __LAMINA::BIGFRAC
 		 * @param fixed_precision_count 在定点模式下指定泰勒展开的项数。默认值为 2。
 		 * @return 返回值类型为 BigFraction，表示 e ^ value 的高精度分数近似值。
 		 */
-		static BigFraction Exponential_Taylor(const BigInteger& value, DecimalPrecisionMode precision_mode = DecimalPrecisionMode::Full, uint64_t fixed_precision_count = 2);
-		static BigFraction Exponential_Taylor(const BigFraction& value);
-		static BigFraction Exponential(const BigFraction& x, int64_t precision_digits = 16);
+		static BigFraction Exponential_Taylor(const BigInteger &value, DecimalPrecisionMode precision_mode = DecimalPrecisionMode::Full, uint64_t fixed_precision_count = 2);
+		static BigFraction Exponential_Taylor(const BigFraction &value);
+		static BigFraction Exponential(const BigFraction &x, int64_t precision_digits = 16);
 
-		friend std::istream& operator>>(std::istream& is, BigFraction& fraction);
-		friend std::ostream& operator<<(std::ostream& os, const BigFraction& fraction);
+		friend std::istream &operator>>(std::istream &is, BigFraction &fraction);
+		friend std::ostream &operator<<(std::ostream &os, const BigFraction &fraction);
 
-		friend BigFraction operator+(const BigInteger& left, const BigFraction& right);
-		friend BigFraction operator-(const BigInteger& left, const BigFraction& right);
-		friend BigFraction operator*(const BigInteger& left, const BigFraction& right);
-		friend BigFraction operator/(const BigInteger& left, const BigFraction& right);
+		friend BigFraction operator+(const BigInteger &left, const BigFraction &right);
+		friend BigFraction operator-(const BigInteger &left, const BigFraction &right);
+		friend BigFraction operator*(const BigInteger &left, const BigFraction &right);
+		friend BigFraction operator/(const BigInteger &left, const BigFraction &right);
 
 	private:
 		BigInteger numerator;
 		BigInteger denominator;
-		int32_t	   sign;
-		bool	   simplify_reduced = true;
+		int32_t sign;
+		bool simplify_reduced = true;
 
 		void ReduceSimplify();
-		BigFraction LogarithmCF(const BigInteger& value) const;
-		BigFraction LogarithmHalley(const BigInteger& a) const;
+		BigFraction LogarithmCF(const BigInteger &value) const;
+		BigFraction LogarithmHalley(const BigInteger &a) const;
 	};
 
 	inline BigFraction BigFractionFullPrecision(1, 0);
 
-}  // namespace BIGFRAC
+} // namespace BIGFRAC
 
 #endif

@@ -1765,17 +1765,17 @@ namespace HyperInt
             return length;
         }
 
-        size_t get_add_len(size_t l_len, size_t r_len)
+        inline size_t get_add_len(size_t l_len, size_t r_len)
         {
             return std::max(l_len, r_len) + 1;
         }
 
-        size_t get_sub_len(size_t l_len, size_t r_len)
+        inline size_t get_sub_len(size_t l_len, size_t r_len)
         {
             return std::max(l_len, r_len);
         }
 
-        size_t get_mul_len(size_t l_len, size_t r_len)
+        inline size_t get_mul_len(size_t l_len, size_t r_len)
         {
             if (l_len == 0 || r_len == 0)
             {
@@ -1784,7 +1784,7 @@ namespace HyperInt
             return l_len + r_len;
         }
 
-        size_t get_div_len(size_t l_len, size_t r_len)
+        inline size_t get_div_len(size_t l_len, size_t r_len)
         {
             return l_len - r_len + 1;
         }
@@ -3053,10 +3053,32 @@ namespace HyperInt
                     }
                 };
 
-            }
+                template <uint64_t Base>
+                struct ShortBaseInfo
+                {
+                    // 静态断言确保基数在2-36范围内
+                    static_assert(Base >= 2 && Base <= 36, "Base must be in [2, 36]");
+
+                    // 编译期计算索引（Base-2对应table1/table2的下标）
+                    static constexpr size_t index = Base - 2;
+
+                    // 编译期初始化成员变量
+                    static constexpr uint64_t base_num = table1[index][0];
+                    static constexpr size_t base_len = table1[index][1];
+                    static constexpr double base_d = table2[index];
+
+                    // 编译期反转base_d的方法
+                    static constexpr double base_d_inv()
+                    {
+                        return 1.0 / base_d;
+                    }
+                };
+
+            } // namespace BaseTable
+
             // 返回逆序的字符串，低位数字在前
             // 对于10进制以上的进制，使用大写字母A-Z，A表示10，B表示11，以此类推
-            std::string to_string_base(uint64_t num, const uint64_t base, const size_t base_len)
+            inline std::string to_string_base(uint64_t num, const uint64_t base, const size_t base_len)
             {
                 std::string res(base_len, '0');
                 for (size_t i = 0; i < base_len; ++i)
@@ -3091,8 +3113,8 @@ namespace HyperInt
             //      超过 base_num 的元素能够正确的进位。
             inline size_t base2num_classic(uint64_t in[], size_t len, const uint64_t base_num, uint64_t res[])
             {
-                size_t  in_len = len, 
-                       res_len = 0;
+                size_t  in_len  = len, 
+                        res_len = 0;
                 while(in_len != 0){
                     uint64_t temp = 0, product_lo = 0, product_hi = 0;
                     for (size_t i = in_len; i-- != 0; ){
@@ -3112,7 +3134,7 @@ namespace HyperInt
             }
 
             // res为(2^64)^(index)在base_num进制下的表示，返回值为res的长度
-            size_t _2_64power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
+            inline size_t _2_64power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
             {
 
                 size_t len = index + 1;
@@ -3129,7 +3151,7 @@ namespace HyperInt
             }
 
             // res为(base_num)^(index)在 2^64 进制下的表示，返回值为res的长度
-            size_t base_power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
+            inline size_t base_power_index_classic(const uint64_t base_num, const size_t index, uint64_t res[])
             {
                 size_t len = index + 1;
                 std::vector<uint64_t> base_pow_index(len, 0);
@@ -3185,7 +3207,7 @@ namespace HyperInt
             }
 
             // 计算进制数为 base_num 的(2^64)^index 值，并存储在 res 数组中
-            size_t _2_64_power_index(
+            inline size_t _2_64_power_index(
                 const uint64_t base_num,
                 const size_t   index,
                       uint64_t res[],
@@ -3216,7 +3238,7 @@ namespace HyperInt
             }
 
             // 计算进制数为 2^64 的(base_num)^index 值，并存储在 res 数组中
-            size_t base_power_index(
+            inline size_t base_power_index(
                 const uint64_t base_num,
                 const size_t   index,
                       uint64_t res[],
@@ -3271,7 +3293,7 @@ namespace HyperInt
 
             // 只能处理 len 为二的次幂的情况，in 会被修改
             // 将2^64进制转换为base_num进制，并存储在out数组中
-            size_t num_base_recursive_core(
+            inline size_t num_base_recursive_core(
                       uint64_t           in[],
                 const size_t             len,
                 const uint64_t           base_num,
@@ -3311,7 +3333,7 @@ namespace HyperInt
             /// 创建2^64的指数列表，下面用 M 表示 2^(64 * MIN_LEN)
             /// index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，
             /// _base_index 为 M^index 的值
-            _2pow64_index_list create_2pow64_index_list(size_t max_index, const uint64_t base_num, const double base_d)
+            inline _2pow64_index_list create_2pow64_index_list(size_t max_index, const uint64_t base_num, const double base_d)
             {
                 ///   head
                 ///     |
@@ -3342,7 +3364,7 @@ namespace HyperInt
 
             // 只能处理 len 为二的次幂的情况，in 会被修改
             // 将base_num进制转换为2^64进制，并存储在out数组中
-            size_t base_num_recursive_core(
+            inline size_t base_num_recursive_core(
                       uint64_t         in[],
                 const size_t           len,
                 const uint64_t         base_num,
@@ -3382,7 +3404,7 @@ namespace HyperInt
             /// 创建base_num的指数列表，下面用 M 表示 base_num^(MIN_LEN)
             /// index 为 M 的指数，length 为 M^index 在 base_num 进制下的长度，
             /// _base_index 为 M^index 的值
-            _base_index_list create_base_index_list(size_t max_index, const uint64_t base_num, const double base_d)
+            inline _base_index_list create_base_index_list(size_t max_index, const uint64_t base_num, const double base_d)
             {
                 ///   head
                 ///     |
@@ -3414,7 +3436,7 @@ namespace HyperInt
             }
 
             // 在链表中查找 index 对应的节点
-            _2pow64_index_list find_head(_2pow64_index_list head, size_t index)
+            inline _2pow64_index_list find_head(_2pow64_index_list head, size_t index)
             {
                 while (head->back != nullptr)
                 {
@@ -3436,7 +3458,7 @@ namespace HyperInt
             /// @note
             ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
             ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
-            size_t num2base(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
+            inline size_t num2base(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
             {
                 // 1. 分割策略：按 2 的幂次方长度分割
                 //         每次处理的子部分长度都是 2^k（num_base_recursive_core会递归处理这部分），
@@ -3552,7 +3574,7 @@ namespace HyperInt
             /// @note
             ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
             ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
-            size_t base2num(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
+            inline size_t base2num(uint64_t in[], size_t len, const uint64_t base, uint64_t res[])
             {
                 BaseTable::BaseInfo info(base);
                 info.base_d_inv();

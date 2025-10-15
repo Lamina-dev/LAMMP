@@ -63,8 +63,6 @@ SOFTWARE.
 #include <random>
 #include <bitset>
 
-
-
 namespace __LAMINA::BIGINT
 {
 	
@@ -1139,11 +1137,11 @@ namespace __LAMINA::BIGINT
 		}
 	};
 
+	#ifndef LAMINA_BIGINT_FACTORIAL
+	#define LAMINA_BIGINT_FACTORIAL
 	namespace Factorial
 	{
-
 		using BigInteger = __LAMINA::BIGINT::BigInteger;
-
 		// Compute the prime factorization table for (n!)
 		inline std::vector<std::pair<size_t, size_t>> get_prime_factors(size_t n)
 		{
@@ -1170,7 +1168,7 @@ namespace __LAMINA::BIGINT
 		}
 
 		// Recursively calculate the product of odd powers
-		BigInteger calculate_odd_product(std::vector<std::pair<size_t, size_t>>::iterator beg, std::vector<std::pair<size_t, size_t>>::iterator end)
+		inline BigInteger calculate_odd_product(std::vector<std::pair<size_t, size_t>>::iterator beg, std::vector<std::pair<size_t, size_t>>::iterator end)
 		{
 			if (beg == end)
 				return 1;
@@ -1193,7 +1191,7 @@ namespace __LAMINA::BIGINT
 		}
 
 		// Recursively calculate the value of (n!)
-		BigInteger calculate_factorial(std::vector<std::pair<size_t, size_t>> &factors)
+		inline BigInteger calculate_factorial(std::vector<std::pair<size_t, size_t>> &factors)
 		{
 			BigInteger result = 1;
 			if (!factors.empty())
@@ -1209,7 +1207,7 @@ namespace __LAMINA::BIGINT
 			return result;
 		}
 	} // namespace Factorial
+	#endif
 
 }  // namespace __LAMINA::BIGINT
 #endif
-
