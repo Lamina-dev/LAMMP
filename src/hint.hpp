@@ -507,13 +507,13 @@ namespace HyperInt
         // Multi mode, self checking, fast number theoretic transform.
         namespace NumberTheoreticTransform
         {
-            constexpr uint64_t MOD0 = 2485986994308513793, ROOT0 = 5;
-            constexpr uint64_t MOD1 = 1945555039024054273, ROOT1 = 5;
-            constexpr uint64_t MOD2 = 4179340454199820289, ROOT2 = 3;
-            constexpr uint64_t MOD3 = 754974721, ROOT3 = 11;
-            constexpr uint64_t MOD4 = 469762049, ROOT4 = 3;
-            constexpr uint64_t MOD5 = 3489660929, ROOT5 = 3;
-            constexpr uint64_t MOD6 = 3221225473, ROOT6 = 5;
+            constexpr uint64_t MOD0 = 2485986994308513793ull, ROOT0 = 5ull;
+            constexpr uint64_t MOD1 = 1945555039024054273ull, ROOT1 = 5ull;
+            constexpr uint64_t MOD2 = 4179340454199820289ull, ROOT2 = 3ull;
+            constexpr uint64_t MOD3 = 754974721ull, ROOT3 = 11ull;
+            constexpr uint64_t MOD4 = 469762049ull, ROOT4 = 3ull;
+            constexpr uint64_t MOD5 = 3489660929ull, ROOT5 = 3ull;
+            constexpr uint64_t MOD6 = 3221225473ull, ROOT6 = 5ull;
             class InternalUInt128
             {
             private:
@@ -1572,7 +1572,13 @@ namespace HyperInt
                         }
                         INTT::dit244(out, ntt_len);
                     }
-                    static void convolutionRecursion(ModIntType in1[], ModIntType in2[], ModIntType out[], size_t ntt_len, bool normlize = true)
+                    static void convolutionRecursion(
+                        ModIntType in1[], 
+                        ModIntType in2[], 
+                        ModIntType out[], 
+                        size_t     ntt_len, 
+                        bool       normlize = true
+                    )
                     {
                         if (ntt_len <= LONG_THRESHOLD)
                         {
@@ -1635,6 +1641,86 @@ namespace HyperInt
                         convolutionRecursion(in1, in2, out, ntt_len / 2, false);
                         convolutionRecursion(in1 + quarter_len * 2, in2 + quarter_len * 2, out + quarter_len * 2, ntt_len / 4, false);
                         convolutionRecursion(in1 + quarter_len * 3, in2 + quarter_len * 3, out + quarter_len * 3, ntt_len / 4, false);
+
+                        unit_omega1 = qpow(ModIntType(rootInv()), (mod() - 1) / ntt_len);
+                        unit_omega3 = qpow(unit_omega1, 3);
+                        if (normlize)
+                        {
+                            const ModIntType inv_len(qpow(ModIntType(ntt_len), mod() - 2));
+                            omega1 = inv_len, omega3 = inv_len;
+                            for (size_t i = 0; i < quarter_len; i++)
+                            {
+                                ModIntType temp0 = out[i] * inv_len, temp1 = out[quarter_len + i] * inv_len, temp2 = out[quarter_len * 2 + i] * omega1, temp3 = out[quarter_len * 3 + i] * omega3;
+                                dit_butterfly244<rootInv()>(temp0, temp1, temp2, temp3);
+                                out[i] = temp0, out[quarter_len + i] = temp1, out[quarter_len * 2 + i] = temp2, out[quarter_len * 3 + i] = temp3;
+
+                                omega1 = omega1 * unit_omega1;
+                                omega3 = omega3 * unit_omega3;
+                            }
+                        }
+                        else
+                        {
+                            omega1 = 1, omega3 = 1;
+                            for (size_t i = 0; i < quarter_len; i++)
+                            {
+                                ModIntType temp0 = out[i], temp1 = out[quarter_len + i], temp2 = out[quarter_len * 2 + i] * omega1, temp3 = out[quarter_len * 3 + i] * omega3;
+                                dit_butterfly244<rootInv()>(temp0, temp1, temp2, temp3);
+                                out[i] = temp0, out[quarter_len + i] = temp1, out[quarter_len * 2 + i] = temp2, out[quarter_len * 3 + i] = temp3;
+
+                                omega1 = omega1 * unit_omega1;
+                                omega3 = omega3 * unit_omega3;
+                            }
+                        }
+                    }
+                    // in1 has been transformed
+                    static void convolutionRecursion_rep(
+                        const ModIntType in1[],
+                              ModIntType in2[],
+                              ModIntType out[],
+                              size_t     ntt_len,
+                              bool       normlize = true
+                    )
+                    {
+                        assert(in1 != in2);
+                        if (ntt_len <= LONG_THRESHOLD)
+                        {
+                            NTTTemplate::dif(in2, ntt_len);
+                            if (normlize)
+                            {
+                                const ModIntType inv_len(qpow(ModIntType(ntt_len), mod() - 2));
+                                for (size_t i = 0; i < ntt_len; i++)
+                                {
+                                    out[i] = in1[i] * in2[i] * inv_len;
+                                }
+                            }
+                            else
+                            {
+                                for (size_t i = 0; i < ntt_len; i++)
+                                {
+                                    out[i] = in1[i] * in2[i];
+                                }
+                            }
+                            INTT::NTTTemplate::dit(out, ntt_len);
+                            return;
+                        }
+                        const size_t quarter_len = ntt_len / 4;
+                        ModIntType unit_omega1 = qpow(ModIntType(root()), (mod() - 1) / ntt_len);
+                        ModIntType unit_omega3 = qpow(unit_omega1, 3);
+                        ModIntType omega1(1), omega3(1);
+                        for (size_t i = 0; i < quarter_len; i++)
+                        {
+                            ModIntType temp0 = in2[i], temp1 = in2[quarter_len + i], temp2 = in2[quarter_len * 2 + i], temp3 = in2[quarter_len * 3 + i];
+                            dif_butterfly244<ROOT>(temp0, temp1, temp2, temp3);
+                            in2[i] = temp0, in2[quarter_len + i] = temp1, in2[quarter_len * 2 + i] = temp2 * omega1, in2[quarter_len * 3 + i] = temp3 * omega3;
+
+                            omega1 = omega1 * unit_omega1;
+                            omega3 = omega3 * unit_omega3;
+                        }
+                        
+
+                        convolutionRecursion_rep(in1, in2, out, ntt_len / 2, false);
+                        convolutionRecursion_rep(in1 + quarter_len * 2, in2 + quarter_len * 2, out + quarter_len * 2, ntt_len / 4, false);
+                        convolutionRecursion_rep(in1 + quarter_len * 3, in2 + quarter_len * 3, out + quarter_len * 3, ntt_len / 4, false);
 
                         unit_omega1 = qpow(ModIntType(rootInv()), (mod() - 1) / ntt_len);
                         unit_omega3 = qpow(unit_omega1, 3);
@@ -1929,6 +2015,25 @@ namespace HyperInt
             return abs_compare(in1, in2, len1).cmp;
         }
 
+        /**
+         * @brief 计算两个二进制表示的大整数的绝对值差，并返回符号
+         *
+         * 该函数用于处理以数组形式存储的大整数（每个元素为 UintTy 类型的数字片段），
+         * 计算两者的绝对值差并存储到输出数组中，同时通过返回值指示原始两个数的大小关系。
+         * 内部确保用大数减去小数，避免负数结果，简化差值计算逻辑。
+         *
+         * @tparam UintTy 无符号整数类型（如 uint32_t、uint64_t），用于存储大整数的片段
+         * @param[in] a 第一个大整数的二进制表示数组
+         * @param[in] len1 a 数组的长度（元素个数）
+         * @param[in] b 第二个大整数的二进制表示数组
+         * @param[in] len2 b 数组的长度（元素个数）
+         * @param[out] diff 输出参数，用于存储 a 和 b 的绝对值差结果（需提前分配足够空间）
+         * @return int 符号：
+         *         - 1 表示 a > b（diff 存储 a - b）
+         *         - -1 表示 a < b（diff 存储 b - a）
+         *         - 0 表示 a == b（diff 存储全 0）
+         * @warning diff 数组的长度需至少为两个输入数组中的最大长度，将不会进行越界检查。
+         */
         template <typename UintTy>
         [[nodiscard]] constexpr int abs_difference_binary(const UintTy a[], size_t len1, const UintTy b[], size_t len2, UintTy diff[])
         {
@@ -2079,13 +2184,16 @@ namespace HyperInt
             in_out[len] = carry;
         }
 
-        // 小学乘法
+        constexpr size_t KARATSUBA_MIN_THRESHOLD = 24;
+        constexpr size_t KARATSUBA_MAX_THRESHOLD = 1536;
+
+        // 朴素乘法
         inline void abs_mul64_classic(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
-            uint64_t out[],
-            uint64_t *work_begin = nullptr,
-            uint64_t *work_end   = nullptr
+                  uint64_t out[],
+                  uint64_t *work_begin = nullptr,
+                  uint64_t *work_end   = nullptr
         )
         {
             const size_t out_len = get_mul_len(len1, len2);
@@ -2133,9 +2241,9 @@ namespace HyperInt
         inline void abs_mul64_karatsuba_buffered(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
-            uint64_t out[],
-            uint64_t *buffer_begin = nullptr,
-            uint64_t *buffer_end = nullptr
+                  uint64_t out[],
+                  uint64_t *buffer_begin = nullptr,
+                  uint64_t *buffer_end = nullptr
         )
         {
             const size_t out_len = get_mul_len(len1, len2);
@@ -2151,8 +2259,7 @@ namespace HyperInt
                 std::fill_n(out, out_len, uint64_t(0));
                 return;
             }
-            constexpr size_t KARATSUBA_THRESHOLD = 24;
-            if (len2 < KARATSUBA_THRESHOLD)
+            if (len2 < KARATSUBA_MIN_THRESHOLD)
             {
                 abs_mul64_classic(in1, len1, in2, len2, out, buffer_begin, buffer_end);
                 std::fill(out + len1 + len2, out + out_len, uint64_t(0));
@@ -2160,7 +2267,13 @@ namespace HyperInt
             }
             // Split A * B -> (AH * BASE + AL) * (BH * BASE + BL)
             // (AH * BASE + AL) * (BH * BASE + BL) = AH * BH * BASE^2 + (AH * BL + AL * BH) * BASE + AL * BL
-            // Let M = AL * BL, N = AH * BH, K1 = (AH - AL), K2 = (BH - BL), K = K1 * K2 = AH * BH - (AH * BL + AL * BH) + AL * BL
+            // Let M  = AL * BL, 
+            //     N  = AH * BH, 
+            //     K1 = (AH - AL), 
+            //     K2 = (BH - BL), 
+            //     K  = K1 * K2 
+            //        = AH * BH - (AH * BL + AL * BH) + AL * BL
+            //
             // A * B = N * BASE^2 + (M + N - K) * BASE + M
             const size_t base_len = (len1 + 1) / 2;
             size_t len1_low = base_len, len1_high = len1 - base_len;
@@ -2259,6 +2372,8 @@ namespace HyperInt
             }
         }
 
+        
+
         inline void abs_mul64_karatsuba(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[])
         {
             abs_mul64_karatsuba_buffered(in1, len1, in2, len2, out, nullptr, nullptr);
@@ -2300,7 +2415,11 @@ namespace HyperInt
         }
 
         // NTT multiplication
-        inline void abs_mul64_ntt(const uint64_t in1[], size_t len1, const uint64_t in2[], size_t len2, uint64_t out[])
+        inline void abs_mul64_ntt(
+            const uint64_t in1[], size_t len1, 
+            const uint64_t in2[], size_t len2, 
+                  uint64_t out[]
+        )
         {
             if (0 == len1 || 0 == len2 || in1 == nullptr || in2 == nullptr)
             {
@@ -2344,6 +2463,123 @@ namespace HyperInt
             }
             out[conv_len] = uint64_t(carry);
         }
+
+        inline void abs_mul64_ntt_unbalanced(
+            const uint64_t in1[], size_t len1,
+            const uint64_t in2[], size_t len2,
+                  uint64_t out[]
+        )
+        {
+            assert(in1 != in2 && len1 > len2);
+            using namespace HyperInt::Transform::NumberTheoreticTransform;
+
+            uint64_t min_sum = 2 * len2; 
+
+            min_sum -= ((min_sum & (min_sum - 1)) == 0) ? len1 : 0; 
+
+            int highest_bit = 63 - hint_clz(min_sum); 
+            uint64_t next_power = 1ULL << (highest_bit + 1);
+
+            size_t balance_len  = next_power,
+                   conv_len     = balance_len - 1,
+                   single_len   = balance_len - len2;
+            assert(single_len <= len1 && "please use balanced version");
+
+            size_t ntt_len = HyperInt::int_ceil2(conv_len),
+                   rem     = len1 % single_len;
+
+            std::vector<NTT0::ModIntType> buffer1(ntt_len);
+            std::vector<NTT0::ModIntType> buffer2(ntt_len);
+            std::copy(in2, in2 + len2, buffer2.begin());
+            std::copy(in1, in1 + single_len, buffer1.begin());
+            NTT0::convolutionRecursion(buffer1.data(), buffer2.data(), buffer1.data(), ntt_len);
+
+            std::vector<NTT1::ModIntType> buffer3(ntt_len);
+            std::vector<NTT1::ModIntType> buffer4(ntt_len);
+            std::copy(in2, in2 + len2, buffer4.begin());
+            std::copy(in1, in1 + single_len, buffer3.begin());
+            NTT1::convolutionRecursion(buffer3.data(), buffer4.data(), buffer3.data(), ntt_len);
+
+            std::vector<NTT2::ModIntType> buffer5(ntt_len);
+            std::vector<NTT2::ModIntType> buffer6(ntt_len);
+            std::copy(in2, in2 + len2, buffer6.begin());
+            std::copy(in1, in1 + single_len, buffer5.begin());
+            NTT2::convolutionRecursion(buffer5.data(), buffer6.data(), buffer5.data(), ntt_len);
+
+            std::vector<uint64_t> balance_prod(balance_len);
+            
+            InternalUInt192 carry = 0;
+            for (size_t i = 0; i < conv_len; i++)
+            {
+                carry += crt3(buffer1[i], buffer3[i], buffer5[i]);
+                out[i] = uint64_t(carry);
+                carry = carry.rShift64();
+            }
+            out[conv_len] = uint64_t(carry);
+            //
+            //             len2 = 2
+            // balance_prod_len = 4
+            // +---+---+---+---+
+            // | 1 | 2 | 3 | 4 |
+            // +---+---+---+---+
+            //         |              prod
+            //         +---+---+---+---+
+            //         | 2 | 3 | 4 | 5 |
+            //         +---+---+---+---+
+            //                 |   out+len2    out
+            //                 +---+---+---+---+
+            //                 | 3 | 4 | 5 | 6 |
+            //                 +---+---+---+---+
+            size_t len = single_len;
+            auto in1_p = in1;
+            for ( ; len < len1 - rem; len += single_len )
+            {
+                in1_p += single_len;
+                std::fill(buffer1.begin() + single_len, buffer1.begin() + ntt_len, NTT0::ModIntType(0));
+                std::fill(buffer3.begin() + single_len, buffer3.begin() + ntt_len, NTT1::ModIntType(0));
+                std::fill(buffer5.begin() + single_len, buffer5.begin() + ntt_len, NTT2::ModIntType(0));
+
+                std::copy(in1_p, in1_p + single_len, buffer1.begin());
+                NTT0::convolutionRecursion_rep(buffer2.data(), buffer1.data(), buffer1.data(), ntt_len);
+                std::copy(in1_p, in1_p + single_len, buffer3.begin());
+                NTT1::convolutionRecursion_rep(buffer4.data(), buffer3.data(), buffer3.data(), ntt_len);
+                std::copy(in1_p, in1_p + single_len, buffer5.begin());
+                NTT2::convolutionRecursion_rep(buffer6.data(), buffer5.data(), buffer5.data(), ntt_len);
+                carry = 0;
+                for (size_t i = 0; i < conv_len; i++)
+                {
+                    carry += crt3(buffer1[i], buffer3[i], buffer5[i]);
+                    balance_prod[i] = uint64_t(carry);
+                    carry = carry.rShift64();
+                }
+                balance_prod[conv_len] = uint64_t(carry);
+                abs_add_binary_half(balance_prod.data(), balance_len, out + len, len2, out + len);
+            }
+            if (rem > 0)
+            {
+                in1_p = in1 + len;
+                std::fill(buffer1.begin() + rem, buffer1.begin() + ntt_len, NTT0::ModIntType(0));
+                std::fill(buffer3.begin() + rem, buffer3.begin() + ntt_len, NTT1::ModIntType(0));
+                std::fill(buffer5.begin() + rem, buffer5.begin() + ntt_len, NTT2::ModIntType(0));
+                std::copy(in1_p, in1_p + rem, buffer1.begin());
+                NTT0::convolutionRecursion_rep(buffer2.data(), buffer1.data(), buffer1.data(), ntt_len);
+                std::copy(in1_p, in1_p + rem, buffer3.begin());
+                NTT1::convolutionRecursion_rep(buffer4.data(), buffer3.data(), buffer3.data(), ntt_len);
+                std::copy(in1_p, in1_p + rem, buffer5.begin());
+                NTT2::convolutionRecursion_rep(buffer6.data(), buffer5.data(), buffer5.data(), ntt_len);
+                carry = 0;
+                for (size_t i = 0; i < conv_len; i++)
+                {
+                    carry += crt3(buffer1[i], buffer3[i], buffer5[i]);
+                    balance_prod[i] = uint64_t(carry);
+                    carry = carry.rShift64();
+                }
+                balance_prod[conv_len] = uint64_t(carry);
+                // 注意这两个加数不可调换，否则越界
+                abs_add_binary_half(out + len, len2, balance_prod.data(), len2 + rem, out + len);
+            }
+        }
+
         // NTT square 在 base_num进制下
         inline void abs_sqr64_ntt_base(const uint64_t in[], size_t len, uint64_t out[], const uint64_t base_num)
         {
@@ -2383,7 +2619,7 @@ namespace HyperInt
         inline void abs_mul64_ntt_base(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
-            uint64_t out[],
+                  uint64_t out[],
             const uint64_t base_num
         )
         {
@@ -2433,9 +2669,9 @@ namespace HyperInt
         inline void abs_mul64_balanced(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
-            uint64_t out[],
-            uint64_t *work_begin = nullptr,
-            uint64_t *work_end = nullptr
+                  uint64_t out[],
+                  uint64_t *work_begin = nullptr,
+                  uint64_t *work_end   = nullptr
         )
         {
             if (len1 < len2)
@@ -2443,11 +2679,11 @@ namespace HyperInt
                 std::swap(in1, in2);
                 std::swap(len1, len2);
             }
-            if (len2 <= 24)
+            if (len2 <= KARATSUBA_MIN_THRESHOLD)
             {
                 abs_mul64_classic(in1, len1, in2, len2, out, work_begin, work_end);
             }
-            else if (len2 <= 1536)
+            else if (len2 <= KARATSUBA_MAX_THRESHOLD)
             {
                 abs_mul64_karatsuba_buffered(in1, len1, in2, len2, out, work_begin, work_end);
             }
@@ -2456,6 +2692,9 @@ namespace HyperInt
                 abs_mul64_ntt(in1, len1, in2, len2, out);
             }
         }
+
+        
+
 
         inline void abs_mul64(
             const uint64_t in1[], size_t len1,
@@ -2470,9 +2709,17 @@ namespace HyperInt
                 std::swap(in1, in2);
                 std::swap(len1, len2);
             }
-            if (len2 <= 24)
+            if (len2 <= KARATSUBA_MIN_THRESHOLD)
             {
-                abs_mul64_balanced(in1, len1, in2, len2, out, work_begin, work_end);
+                abs_mul64_classic(in1, len1, in2, len2, out, work_begin, work_end);
+                return;
+            }
+            else if (len2 >= KARATSUBA_MAX_THRESHOLD)
+            {
+                if (len1 >= 2 * len2)
+                    abs_mul64_ntt_unbalanced(in1, len1, in2, len2, out);
+                else
+                    abs_mul64_ntt(in1, len1, in2, len2, out);
                 return;
             }
             // Get enough work memory
@@ -2499,6 +2746,7 @@ namespace HyperInt
             if (rem > 0)
             {
                 abs_mul64(in2, len2, in1 + i, rem, balance_prod, work_begin + work_size, work_end);
+                // 注意这两个加数不可调换
                 abs_add_binary_half(total_prod + i, len2, balance_prod, len2 + rem, total_prod + i);
             }
             std::copy(total_prod, total_prod + len1 + len2, out);
@@ -2819,13 +3067,13 @@ namespace HyperInt
             }
         }
         inline void abs_div64_recursive_core(
-            uint64_t dividend[],
-            size_t dividend_len,
+                  uint64_t dividend[],
+                  size_t   dividend_len,
             const uint64_t divisor[],
-            size_t divisor_len,
-            uint64_t quotient[],
-            uint64_t *work_begin = nullptr,
-            uint64_t *work_end = nullptr
+                  size_t   divisor_len,
+                  uint64_t quotient[],
+                  uint64_t *work_begin = nullptr,
+                  uint64_t *work_end = nullptr
         )
         {
             if (nullptr == dividend || dividend_len <= divisor_len)
@@ -3056,22 +3304,12 @@ namespace HyperInt
                 template <uint64_t Base>
                 struct ShortBaseInfo
                 {
-                    // 静态断言确保基数在2-36范围内
                     static_assert(Base >= 2 && Base <= 36, "Base must be in [2, 36]");
-
-                    // 编译期计算索引（Base-2对应table1/table2的下标）
                     static constexpr size_t index = Base - 2;
-
-                    // 编译期初始化成员变量
                     static constexpr uint64_t base_num = table1[index][0];
                     static constexpr size_t base_len = table1[index][1];
                     static constexpr double base_d = table2[index];
-
-                    // 编译期反转base_d的方法
-                    static constexpr double base_d_inv()
-                    {
-                        return 1.0 / base_d;
-                    }
+                    static constexpr double base_d_inv() { return 1.0 / base_d; }
                 };
 
             } // namespace BaseTable

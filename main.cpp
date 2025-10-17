@@ -180,17 +180,18 @@
 
 int	main()
 {
-	test_factorial(2000000);
+	// test_factorial(2000000);
 	
-	// 配置测试长度，可以根据需要调整
-	std::vector<int> test_lengths = {2000, 3000, 4000};
-	// std::vector<int> test_lengths = { 320000, 360000, 400000, 440000, 480000, 520000, 560000, 600000, 640000 };
+	// // 配置测试长度，可以根据需要调整
+	// std::vector<int> test_lengths = {2000, 3000, 4000};
+	// // std::vector<int> test_lengths = { 320000, 360000, 400000, 440000, 480000, 520000, 560000, 600000, 640000 };
 
-	//每个测试重复的次数，用于计算统计值
-	const int repetitions = 3;
+	// //每个测试重复的次数，用于计算统计值
+	// const int repetitions = 3;
 
-	const std::string csv_path = "test_results.csv";
-	// 运行测试并保存结果
-	run_tests_and_save( csv_path, test_lengths, repetitions);
+	// const std::string csv_path = "test_results.csv";
+	// // 运行测试并保存结果
+	// run_tests_and_save( csv_path, test_lengths, repetitions);
+	test_mul_balance();
 	return 0;
 }

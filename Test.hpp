@@ -402,3 +402,44 @@ void test_factorial(size_t n)
     std::cout << "factorial of " << n << " computed." << std::endl;
     std::cout << "time: " << duration.count() << " us" << std::endl;
 }
+
+void test_mul_balance(){
+    using namespace HyperInt::Arithmetic;
+    using namespace HyperInt::Arithmetic::Numeral;
+    size_t len2 = 1436;
+    size_t len1 = 500 * len2 + 60;
+    std::vector<uint64_t> vec1 = generateRandomIntVector(len1);
+    std::vector<uint64_t> vec2 = generateRandomIntVector(len2);
+    size_t res_len = get_mul_len(len1, len2);
+    std::vector<uint64_t> res1(res_len, 0), res2(res_len, 0), res3(res_len, 0);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    abs_mul64_ntt(vec1.data(), len1, vec2.data(), len2, res1.data());
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "time1: " << duration.count() << " us" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    abs_mul64_ntt_unbalanced(vec1.data(), len1, vec2.data(), len2, res2.data());
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "time2: " << duration.count() << " us" << std::endl;
+
+    start = std::chrono::high_resolution_clock::now();
+    abs_mul64(vec1.data(), len1, vec2.data(), len2, res3.data());
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "time3: " << duration.count() << " us" << std::endl;
+
+
+    for (size_t i = 0; i < res_len; ++i)
+    {
+        if (res1[i] != res2[i])
+        {
+            std::cout << "error: " << i << std::endl;
+            break;
+        }
+    }
+    return;
+}
+
