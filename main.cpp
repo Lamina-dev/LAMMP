@@ -17,11 +17,9 @@
 包含：BigInt.hpp hint.hpp
 
 文件名：BigFrac.cpp
-包含：BigFrac.hpp 
+包含：BigFrac.hpp
 
 */
-
-
 
 // double test_time(size_t bits)
 // {
@@ -155,7 +153,7 @@
 // 	std::vector<uint64_t> res(res_len, 0);
 // 	res_len = num2base(_vec.data(), _vec_len, base_num, res.data());
 // 	std::cout << "res_len: " << res_len << std::endl;
-// 	for (size_t i = res_len - 30; i < res_len; i++)	
+// 	for (size_t i = res_len - 30; i < res_len; i++)
 // 	{
 // 		std::cout << "i :" << i << " " << res[i] << " " << vec[i] << std::endl;
 // 	}
@@ -176,12 +174,12 @@
 // 	std::cout << carry << std::endl;
 // }
 
-
-
-int	main()
+int main()
 {
-	// test_factorial(2000000);
-	
+	// 2000000! 6715996 us
+	// 1000000！4067552 us
+	// test_factorial(1000000);
+
 	// // 配置测试长度，可以根据需要调整
 	// std::vector<int> test_lengths = {2000, 3000, 4000};
 	// // std::vector<int> test_lengths = { 320000, 360000, 400000, 440000, 480000, 520000, 560000, 600000, 640000 };

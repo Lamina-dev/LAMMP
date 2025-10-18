@@ -2467,26 +2467,26 @@ namespace HyperInt
         inline void abs_mul64_ntt_unbalanced(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
+            const uint64_t M,
                   uint64_t out[]
         )
         {
             assert(in1 != in2 && len1 > len2);
             using namespace HyperInt::Transform::NumberTheoreticTransform;
+            uint64_t min_sum = len2 + std::max(len2, M);
 
-            uint64_t min_sum = 2 * len2; 
+            min_sum -= ((min_sum & (min_sum - 1)) == 0) ? len1 : 0;
 
-            min_sum -= ((min_sum & (min_sum - 1)) == 0) ? len1 : 0; 
-
-            int highest_bit = 63 - hint_clz(min_sum); 
+            int highest_bit = 63 - hint_clz(min_sum);
             uint64_t next_power = 1ULL << (highest_bit + 1);
 
-            size_t balance_len  = next_power,
-                   conv_len     = balance_len - 1,
-                   single_len   = balance_len - len2;
+            size_t balance_len = next_power,
+                   conv_len = balance_len - 1,
+                   single_len = balance_len - len2;
             assert(single_len <= len1 && "please use balanced version");
 
             size_t ntt_len = HyperInt::int_ceil2(conv_len),
-                   rem     = len1 % single_len;
+                   rem = len1 % single_len;
 
             std::vector<NTT0::ModIntType> buffer1(ntt_len);
             std::vector<NTT0::ModIntType> buffer2(ntt_len);
@@ -2507,7 +2507,7 @@ namespace HyperInt
             NTT2::convolutionRecursion(buffer5.data(), buffer6.data(), buffer5.data(), ntt_len);
 
             std::vector<uint64_t> balance_prod(balance_len);
-            
+
             InternalUInt192 carry = 0;
             for (size_t i = 0; i < conv_len; i++)
             {
@@ -2532,7 +2532,7 @@ namespace HyperInt
             //                 +---+---+---+---+
             size_t len = single_len;
             auto in1_p = in1;
-            for ( ; len < len1 - rem; len += single_len )
+            for (; len < len1 - rem; len += single_len)
             {
                 in1_p += single_len;
                 std::fill(buffer1.begin() + single_len, buffer1.begin() + ntt_len, NTT0::ModIntType(0));
@@ -2716,11 +2716,20 @@ namespace HyperInt
             }
             else if (len2 >= KARATSUBA_MAX_THRESHOLD)
             {
-                if (len1 >= 2 * len2)
-                    abs_mul64_ntt_unbalanced(in1, len1, in2, len2, out);
-                else
+                size_t M = len1 / len2;
+                if (M >= 2 && M <= 9){
+                    abs_mul64_ntt_unbalanced(in1, len1, in2, len2, 0, out);
+                    return;
+                }
+                else if (M > 9){
+                    M = sqrt(len1 / len2);
+                    abs_mul64_ntt_unbalanced(in1, len1, in2, len2, M, out);
+                    return;
+                }
+                else{
                     abs_mul64_ntt(in1, len1, in2, len2, out);
-                return;
+                    return;
+                }
             }
             // Get enough work memory
             std::vector<uint64_t> work_mem;
