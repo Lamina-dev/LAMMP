@@ -176,10 +176,10 @@
 
 int main()
 {
-	// 2000000! 6715996 us
-	// 1000000！4067552 us
+	// 2000000! 859027 us
+	// 1000000！486652 us
 	// test_factorial(1000000);
-
+	std::cout << test_num2binary(40000) << std::endl;
 	// // 配置测试长度，可以根据需要调整
 	// std::vector<int> test_lengths = {2000, 3000, 4000};
 	// // std::vector<int> test_lengths = { 320000, 360000, 400000, 440000, 480000, 520000, 560000, 600000, 640000 };
@@ -190,6 +190,6 @@ int main()
 	// const std::string csv_path = "test_results.csv";
 	// // 运行测试并保存结果
 	// run_tests_and_save( csv_path, test_lengths, repetitions);
-	test_mul_balance();
+	//test_mul_balance();
 	return 0;
 }

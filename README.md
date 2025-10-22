@@ -1,5 +1,5 @@
 # Lamina_BigNum
-Lamina的任意精度计算库。header only，文件组成简单。
+Lamina的任意精度计算库。
 
 主要实现算法：卡拉楚巴乘法、三模数ntt-crt乘法、分治除法、牛顿除法、快速幂、分治进制转换、分治阶乘、拓展GCD算法等
 

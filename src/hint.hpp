@@ -3840,7 +3840,6 @@ namespace HyperInt
 
                 for (size_t current_len = len; current_len > MIN_LEN;)
                 {
-
                     size_t current_index = 63ull - hint_clz(current_len);
                     size_t pri_len       = 1ull << current_index;
                     size_t buffer_len    = get_buffer_size(pri_len, info.base_d) + pow_len;
