@@ -2695,7 +2695,6 @@ namespace HyperInt
 
         
 
-
         inline void abs_mul64(
             const uint64_t in1[], size_t len1,
             const uint64_t in2[], size_t len2,
