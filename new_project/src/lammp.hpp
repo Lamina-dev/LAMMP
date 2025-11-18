@@ -2032,9 +2032,8 @@ inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len) {
 
 inline lamp_ui get_div_len(lamp_ui l_len, lamp_ui r_len) { return l_len - r_len + 1; }
 
-template <typename WordTy>
-constexpr WordTy lshift_in_word_half(const WordTy in[], lamp_ui len, WordTy out[], int shift) {
-    constexpr int WORD_BITS = sizeof(WordTy) * CHAR_BIT;
+constexpr lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
+    constexpr int WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
     assert(shift >= 0 && shift < WORD_BITS);
     if (0 == len) {
         return 0;
@@ -2044,31 +2043,29 @@ constexpr WordTy lshift_in_word_half(const WordTy in[], lamp_ui len, WordTy out[
         return 0;
     }
     // [n,last] -> [?,n >> shift_rem | last << shift]
-    WordTy last = in[len - 1], ret = last;
+    lamp_ui last = in[len - 1], ret = last;
     const int shift_rem = WORD_BITS - shift;
     lamp_ui i = len - 1;
     while (i > 0) {
         i--;
-        WordTy n = in[i];
+        lamp_ui n = in[i];
         out[i + 1] = (last << shift) | (n >> shift_rem);
         last = n;
     }
     out[0] = last << shift;
     return ret >> shift_rem;
 }
-template <typename WordTy>
-constexpr void lshift_in_word(const WordTy in[], lamp_ui len, WordTy out[], int shift) {
+constexpr void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     if (0 == len) {
         return;
     }
-    assert(shift >= 0 && lamp_ui(shift) < sizeof(WordTy) * CHAR_BIT);
-    uint64_t last = lshift_in_word_half(in, len, out, shift);
+    assert(shift >= 0 && lamp_ui(shift) < sizeof(lamp_ui) * CHAR_BIT);
+    lamp_ui last = lshift_in_word_half(in, len, out, shift);
     out[len] = last;
 }
 
-template <typename WordTy>
-constexpr void rshift_in_word(const WordTy in[], lamp_ui len, WordTy out[], int shift) {
-    constexpr int WORD_BITS = sizeof(WordTy) * CHAR_BIT;
+constexpr void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
+    constexpr int WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
     if (0 == len) {
         return;
     }
@@ -2076,11 +2073,11 @@ constexpr void rshift_in_word(const WordTy in[], lamp_ui len, WordTy out[], int 
         std::copy(in, in + len, out);
         return;
     }
-    assert(shift >= 0 && lamp_ui(shift) < sizeof(WordTy) * CHAR_BIT);
-    WordTy last = in[0];
+    assert(shift >= 0 && lamp_ui(shift) < sizeof(lamp_ui) * CHAR_BIT);
+    lamp_ui last = in[0];
     const int shift_rem = WORD_BITS - shift;
     for (lamp_ui i = 1; i < len; i++) {
-        WordTy n = in[i];
+        lamp_ui n = in[i];
         out[i - 1] = (last >> shift) | (n << shift_rem);
         last = n;
     }
@@ -2088,93 +2085,95 @@ constexpr void rshift_in_word(const WordTy in[], lamp_ui len, WordTy out[], int 
 }
 
 // Binary absolute addtion a+b=sum, return the carry
-template <typename UintTy>
-constexpr bool abs_add_binary_half(const UintTy a[], lamp_ui len_a, const UintTy b[], lamp_ui len_b, UintTy sum[]) {
+constexpr bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {
     bool carry = false;
     lamp_ui i = 0, min_len = std::min(len_a, len_b);
     for (; i < min_len; i++) {
         sum[i] = add_carry(a[i], b[i], carry);
     }
     for (; i < len_a; i++) {
-        sum[i] = add_half(a[i], UintTy(carry), carry);
-    }
+        sum[i] = add_half(a[i], lamp_ui(carry), carry);
+    }   
     for (; i < len_b; i++) {
-        sum[i] = add_half(b[i], UintTy(carry), carry);
+        sum[i] = add_half(b[i], lamp_ui(carry), carry);
     }
     return carry;
 }
-template <typename UintTy>
-constexpr bool abs_add_half_base(const UintTy a[], lamp_ui len_a,
-                                 const UintTy b[], lamp_ui len_b,
-                                 UintTy sum[],
-                                 const UintTy& base_num) {
+
+constexpr bool abs_add_half_base(
+          lamp_ptr a, lamp_ui len_a,
+          lamp_ptr b, lamp_ui len_b,
+          lamp_ptr sum,
+    const lamp_ui base_num
+) {
     bool carry = false;
     lamp_ui i = 0, min_len = std::min(len_a, len_b);
     for (; i < min_len; i++) {
         sum[i] = add_carry_base(a[i], b[i], carry, base_num);
     }
     for (; i < len_a; i++) {
-        sum[i] = add_half_base(a[i], UintTy(carry), carry, base_num);
+        sum[i] = add_half_base(a[i], lamp_ui(carry), carry, base_num);
     }
     for (; i < len_b; i++) {
-        sum[i] = add_half_base(b[i], UintTy(carry), carry, base_num);
+        sum[i] = add_half_base(b[i], lamp_ui(carry), carry, base_num);
     }
     return carry;
 }
 // Binary absolute addtion a+b=sum, return the carry
-template <typename UintTy>
-constexpr void abs_add_binary(const UintTy a[], lamp_ui len_a, const UintTy b[], lamp_ui len_b, UintTy sum[]) {
+constexpr void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {
     bool carry = abs_add_binary_half(a, len_a, b, len_b, sum);
     sum[std::max(len_a, len_b)] = carry;
 }
-template <typename UintTy>
-constexpr void abs_add_base(const UintTy a[], lamp_ui len_a,
-                            const UintTy b[], lamp_ui len_b,
-                            UintTy sum[],
-                            UintTy base_num) {
-    UintTy carry = abs_add_half_base(a, len_a, b, len_b, sum, base_num);
-    sum[std::max(len_a, len_b)] = UintTy(carry);
+
+constexpr void abs_add_base(
+    lamp_ptr a, lamp_ui len_a,
+    lamp_ptr b, lamp_ui len_b,
+    lamp_ptr sum,
+    lamp_ui base_num
+) {
+    lamp_ui carry = abs_add_half_base(a, len_a, b, len_b, sum, base_num);
+    sum[std::max(len_a, len_b)] = carry;
 }
 
 // Binary absolute subtraction a-b=diff, return the borrow
-template <typename UintTy>
-constexpr bool abs_sub_binary(const UintTy a[], lamp_ui len_a,
-                              const UintTy b[], lamp_ui len_b,
-                              UintTy diff[], bool assign_borow = false) {
+constexpr bool abs_sub_binary(
+    lamp_ptr a, lamp_ui len_a,
+    lamp_ptr b, lamp_ui len_b,
+    lamp_ptr diff, 
+    bool assign_borow = false
+) {
     bool borrow = false;
     lamp_ui i = 0, min_len = std::min(len_a, len_b);
     for (; i < min_len; i++) {
         diff[i] = sub_borrow(a[i], b[i], borrow);
     }
     for (; i < len_a; i++) {
-        diff[i] = sub_half(a[i], UintTy(borrow), borrow);
+        diff[i] = sub_half(a[i], lamp_ui(borrow), borrow);
     }
     for (; i < len_b; i++) {
-        diff[i] = sub_half(UintTy(0) - UintTy(borrow), b[i], borrow);
+        diff[i] = sub_half(lamp_ui(0) - lamp_ui(borrow), b[i], borrow);
     }
     if (assign_borow) {
-        diff[i] = UintTy(borrow);  // 借位
+        diff[i] = lamp_ui(borrow);  // 借位
     }
     return borrow;
 }
 
 // a - num
-template <typename UintTy>
-constexpr bool abs_sub_binary_num(const UintTy a[], lamp_ui len_a, UintTy num, UintTy diff[]) {
+constexpr bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_ptr diff) {
     assert(len_a > 0);
     bool borrow = false;
     lamp_ui i = 1;
     diff[0] = sub_half(a[0], num, borrow);
     for (; i < len_a; i++) {
-        diff[i] = sub_half(a[i], UintTy(borrow), borrow);
+        diff[i] = sub_half(a[i], lamp_ui(borrow), borrow);
     }
     return borrow;
 }
 
 // Absolute compare, return 1 if a > b, -1 if a < b, 0 if a == b
 // Return the diffence length if a != b
-template <typename T>
-[[nodiscard]] constexpr auto abs_compare(const T in1[], const T in2[], lamp_ui len) {
+[[nodiscard]] constexpr auto abs_compare(const lamp_ptr in1, const lamp_ptr in2, lamp_ui len) {
     struct CompareResult {
         lamp_ui diff_len;
         int cmp = 0;
@@ -2191,8 +2190,7 @@ template <typename T>
 }
 
 // Absolute compare, return 1 if a > b, -1 if a < b, 0 if a == b
-template <typename T>
-[[nodiscard]] constexpr int abs_compare(const T in1[], lamp_ui len1, const T in2[], lamp_ui len2) {
+[[nodiscard]] constexpr int abs_compare(const lamp_ptr in1, lamp_ui len1, const lamp_ptr in2, lamp_ui len2) {
     if (len1 != len2) {
         return len1 > len2 ? 1 : -1;
     }
@@ -2202,11 +2200,11 @@ template <typename T>
 /**
  * @brief 计算两个二进制表示的大整数的绝对值差，并返回符号
  *
- * 该函数用于处理以数组形式存储的大整数（每个元素为 UintTy 类型的数字片段），
+ * 该函数用于处理以数组形式存储的大整数（每个元素为 lamp_ui 类型的数字片段），
  * 计算两者的绝对值差并存储到输出数组中，同时通过返回值指示原始两个数的大小关系。
  * 内部确保用大数减去小数，避免负数结果，简化差值计算逻辑。
  *
- * @tparam UintTy 无符号整数类型（如 uint32_t、uint64_t），用于存储大整数的片段
+ * @tparam lamp_ui 数组元素类型，必须为无符号整数类型
  * @param[in] a 第一个大整数的二进制表示数组
  * @param[in] len1 a 数组的长度（元素个数）
  * @param[in] b 第二个大整数的二进制表示数组
@@ -2218,15 +2216,16 @@ template <typename T>
  *         - 0 表示 a == b（diff 存储全 0）
  * @warning diff 数组的长度需至少为两个输入数组中的最大长度，将不会进行越界检查。
  */
-template <typename UintTy>
-[[nodiscard]] constexpr int abs_difference_binary(const UintTy a[], lamp_ui len1,
-                                                  const UintTy b[], lamp_ui len2,
-                                                  UintTy diff[]) {
+[[nodiscard]] constexpr int abs_difference_binary(
+    lamp_ptr a, lamp_ui len1,
+    lamp_ptr b, lamp_ui len2,
+    lamp_ptr diff
+) {
     int sign = 1;
     if (len1 == len2) {
         auto cmp = abs_compare(a, b, len1);
         sign = cmp.cmp;
-        std::fill(diff + cmp.diff_len, diff + len1, UintTy(0));
+        std::fill(diff + cmp.diff_len, diff + len1, lamp_ui(0));
         len1 = len2 = cmp.diff_len;
         if (sign < 0) {
             std::swap(a, b);
@@ -2240,8 +2239,10 @@ template <typename UintTy>
     return sign;
 }
 
-inline lamp_ui abs_mul_add_num64_half(const lamp_ptr in, lamp_ui len,
-                                            lamp_ptr out, lamp_ui num_add, lamp_ui num_mul) {
+inline lamp_ui abs_mul_add_num64_half(
+    const lamp_ptr in,  lamp_ui len,
+          lamp_ptr out, lamp_ui num_add, lamp_ui num_mul
+) {
     lamp_ui i = 0;
     lamp_ui prod_lo, prod_hi;
     for (const lamp_ui rem_len = len - len % 4; i < rem_len; i += 4) {
