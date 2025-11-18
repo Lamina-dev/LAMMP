@@ -47,17 +47,21 @@ SOFTWARE.
 #ifndef __LAMMP_HPP__
 #define __LAMMP_HPP__
 
+#include <math.h>
+
+#include <array>
+#include <cassert>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
-#include <memory>
-#include <vector>
 #include <iostream>
-#include <string>
+#include <memory>
 #include <new>
-#include <cassert>
+#include <string>
 #include <type_traits>
 #include <utility>
+#include <vector>
+
 
 // Windows 64bit fast multiply macro.
 #if defined(_WIN64)
@@ -2551,7 +2555,6 @@ inline void abs_mul64_ntt(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2
     using namespace lammp::Transform::number_theory;
     lamp_ui out_len = len1 + len2, conv_len = out_len - 1;
     lamp_ui ntt_len = int_ceil2(conv_len);
-    auto start = std::chrono::high_resolution_clock::now();
     std::vector<NTT0::ModIntType> buffer1(ntt_len);
     {
         std::vector<NTT0::ModIntType> buffer2(ntt_len);
@@ -2573,10 +2576,6 @@ inline void abs_mul64_ntt(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2
         std::copy(in1, in1 + len1, buffer5.begin());
         NTT2::convolutionRecursion(buffer5.data(), buffer6.data(), buffer5.data(), ntt_len);
     };
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "NTT time: " << duration << " microseconds" << std::endl;
-    start = std::chrono::high_resolution_clock::now();
     _uint192 carry = 0;
     for (lamp_ui i = 0; i < conv_len; i++) {
         carry += crt3(buffer1[i], buffer3[i], buffer5[i]);
@@ -2584,9 +2583,6 @@ inline void abs_mul64_ntt(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2
         carry = carry.rShift64();
     }
     out[conv_len] = lamp_ui(carry);
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "CRT time: " << duration << " microseconds" << std::endl;
 }
 
 inline void abs_mul64_ntt_unbalanced(lamp_ptr in1,
@@ -2807,7 +2803,7 @@ inline void abs_mul64(lamp_ptr in1, lamp_ui len1,
             abs_mul64_ntt_unbalanced(in1, len1, in2, len2, 0, out);
             return;
         } else if (M > 9) {
-            M = sqrt(len1 / len2);
+            M = std::sqrt(len1 / len2);
             abs_mul64_ntt_unbalanced(in1, len1, in2, len2, M, out);
             return;
         } else {

@@ -5,7 +5,7 @@ project ("LargeDynamicBitSetAndIntegerNumber")
 #set(CMAKE_BUILD_TYPE Release)
 
 # 设置 C++ 标准
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
@@ -64,7 +64,7 @@ endif()
 
 # 目标属性
 set_target_properties(BigNumberSystem Test PROPERTIES
-    CXX_STANDARD 20
+    CXX_STANDARD 17
     CXX_STANDARD_REQUIRED ON
     CXX_EXTENSIONS OFF
 )
