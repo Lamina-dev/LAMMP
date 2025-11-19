@@ -2032,6 +2032,19 @@ inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len) {
 
 inline lamp_ui get_div_len(lamp_ui l_len, lamp_ui r_len) { return l_len - r_len + 1; }
 
+/*
+ * @brief 左移大整数的每个部分（半移位器）
+ *
+ * 该函数将一个以64位无符号整数数组表示的大整数左移指定的位数，并将结果存储到另一个数组中。
+ * 如果左移操作导致高位溢出，溢出的部分会被返回。
+ *
+ * @param in 指向输入数组的指针，存储需要左移的整数。
+ * @param len 输入数组的长度，即需要左移的64位无符号整数个数。
+ * @param out 指向输出数组的指针，存储左移后的整数。
+ * @param shift 左移的位数。
+ * @return lamp_ui 左移操作后被丢弃的高位部分。
+ * @warning shift 必须在0到63（对于64位整数）之间。
+ */
 constexpr lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     constexpr int WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
     assert(shift >= 0 && shift < WORD_BITS);
@@ -2055,6 +2068,18 @@ constexpr lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, in
     out[0] = last << shift;
     return ret >> shift_rem;
 }
+/*
+ * @brief 左移大整数的每个部分（全移位器）
+ *
+ * 该函数将一个以64位无符号整数数组表示的大整数左移指定的位数，并将结果存储到另一个数组中。
+ * 如果左移操作导致高位溢出，溢出的部分会被赋值给最后一个输出元素。
+ * 
+ * @param in 指向输入数组的指针，存储需要左移的整数。
+ * @param len 输入数组的长度，即需要左移的64位无符号整数个数。
+ * @param out 指向输出数组的指针，存储左移后的整数。
+ * @param shift 左移的位数。
+ * @warning shift 必须在0到63（对于64位整数）之间。且输出数组必须至少有 len+1 个元素。
+ */
 constexpr void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     if (0 == len) {
         return;
@@ -2064,6 +2089,18 @@ constexpr void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift)
     out[len] = last;
 }
 
+/*
+ * @brief 右移大整数的每个部分（全移位器）
+ * 
+ * 该函数将一个以64位无符号整数数组表示的大整数右移指定的位数，并将结果存储到另一个数组中。
+ * 如果右移操作导致低位溢出，溢出的部分会被舍弃。
+ * 
+ * @param in 指向输入数组的指针，存储需要右移的整数。
+ * @param len 输入数组的长度，即需要右移的64位无符号整数个数。
+ * @param out 指向输出数组的指针，存储右移后的整数。
+ * @param shift 右移的位数。
+ * @warning shift 必须在0到63（对于64位整数）之间。且输出数组必须至少有 len+1 个元素。
+ */
 constexpr void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     constexpr int WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
     if (0 == len) {
@@ -2211,9 +2248,9 @@ constexpr bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_p
  * @param[in] len2 b 数组的长度（元素个数）
  * @param[out] diff 输出参数，用于存储 a 和 b 的绝对值差结果（需提前分配足够空间）
  * @return int 符号：
- *         - 1 表示 a > b（diff 存储 a - b）
- *         - -1 表示 a < b（diff 存储 b - a）
- *         - 0 表示 a == b（diff 存储全 0）
+ *          1 表示 a > b（diff 存储 a - b）
+ *          -1 表示 a < b（diff 存储 b - a）
+ *          0 表示 a == b（diff 存储全 0）
  * @warning diff 数组的长度需至少为两个输入数组中的最大长度，将不会进行越界检查。
  */
 [[nodiscard]] constexpr int abs_difference_binary(
@@ -2903,23 +2940,25 @@ class DivSupporter {
     }
 };
 
-/// @brief 将一个表示为64位块数组的大整数除以一个64位除数
-/// @param in 表示要被除的大整数的输入数组。数组的每个元素都是该整数的一个64位块
-/// @param length 输入数组中64位块的数量
-/// @param out 存储除法结果的输出数组。除法后，out将表示商（*this / divisor）
-/// @param divisor 用于除大整数的64位数字
-/// @return 除法的余数（*this % divisor），为64位值
-/// @details
-/// 该函数对由多个64位块表示的大整数执行除法操作：
-/// 1. 将`remainder_high64bit`初始化为0
-/// 2. 对于大整数的每个块，从最高有效块（索引`length-1`）到最低有效块（索引0）：
-///    a. 组合当前块`in[length]`和当前`remainder_high64bit`以形成128位值
-///    b. 对这个128位值调用`selfDivRem(divisor)`：
-///       - 用64位`divisor`除以128位值
-///       - 用商更新`out[llength]`中的当前块
-///       - 用余数更新`remainder_high64bit`
-/// 3. 处理完所有块后，`remainder_high64bit`的最终值就是整个除法的余数
-/// 4. 返回`remainder_high64bit`
+/*
+ * @brief 将一个表示为64位块数组的大整数除以一个64位除数
+ * @param in 表示要被除的大整数的输入数组。数组的每个元素都是该整数的一个64位块
+ * @param length 输入数组中64位块的数量
+ * @param out 存储除法结果的输出数组。除法后，out将表示商（*this / divisor）
+ * @param divisor 用于除大整数的64位数字
+ * @return 除法的余数（*this % divisor），为64位值
+ * @details
+ * 该函数对由多个64位块表示的大整数执行除法操作：
+ * 1. 将`remainder_high64bit`初始化为0
+ * 2. 对于大整数的每个块，从最高有效块（索引`length-1`）到最低有效块（索引0）：
+ *    a. 组合当前块`in[length]`和当前`remainder_high64bit`以形成128位值
+ *    b. 对这个128位值调用`selfDivRem(divisor)`：
+ *       - 用64位`divisor`除以128位值
+ *       - 用商更新`out[llength]`中的当前块
+ *       - 用余数更新`remainder_high64bit`
+ * 3. 处理完所有块后，`remainder_high64bit`的最终值就是整个除法的余数
+ * 4. 返回`remainder_high64bit`
+ */
 inline lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor) {
     lamp_ui remainder_high64bit = 0;
     assert(divisor != 0);
@@ -2948,258 +2987,56 @@ inline lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp
     }
 }
 
-template <typename T>
-inline T divisor_normalize(T divisor[], lamp_ui len, T base) {
-    if (0 == len || nullptr == divisor) {
-        return 0;
+inline lamp_ui barrett_2powN_div_num(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    assert(in != nullptr && out!= nullptr);
+    assert(N > 1);
+    assert(in[len - 1] > (1ull << 63) && "Input number is too large to be represented by 64-bit words.");
+    lamp_ui out_len = N - len;
+    _internal_buffer<0> _2powN(N + 1, 0);
+    _2powN.set(N, 1);
+    abs_div_rem_num64(_2powN.data(), out_len + 1, out, in[len - 1]); 
+
+    _2powN.set(N, 2); // now _2powN = 2^(64*N+1)
+    lamp_ui mul_buf_len = get_mul_len(out_len, N + 1);
+    lamp_ui diff_buf_len = N + 1;
+    _internal_buffer<0> mul_buf(mul_buf_len, 0), diff_buf(diff_buf_len, 0);
+    
+    while(true) {
+        abs_mul64(out, out_len, in, len, mul_buf.data());
+        mul_buf_len = rlz(mul_buf.data(), mul_buf_len);
+        /*
+         * 当乘积恰好为2^(64*N+1)时，牛顿迭代收敛，此时应停止循环
+         */
+        bool can_break = true;
+        for (lamp_ui i = 0; i < mul_buf_len - 1; i++) {
+            if (mul_buf[i] != 0) {
+                can_break = false;
+                break;
+            } 
+        }
+        if (can_break && mul_buf[mul_buf_len - 1] == 1) {
+            break;
+        }
+
+        bool success = abs_difference_binary(_2powN.data(), N + 1, mul_buf.data(), mul_buf_len, diff_buf.data());
+        assert(success == true && "2* 2^(64*N) > in * out");
+        diff_buf_len = rlz(diff_buf.data(), diff_buf_len);
+
+        abs_mul64(diff_buf.data(), diff_buf_len, out, out_len, mul_buf.data());
+        mul_buf_len = rlz(mul_buf.data(), get_mul_len(diff_buf_len, out_len));
+        std::copy(mul_buf.data() + N, mul_buf.data() + mul_buf_len, out);
     }
-    if (divisor[len - 1] >= base / 2) {
-        return 1;
-    }
-    T first = divisor[len - 1];
-    T factor = 1;
-    while (first < base / 2) {
-        factor *= 2;
-        first *= 2;
-    }
-    const DivSupporter<lamp_ui, _uint128> base_supporter(base);
-    lamp_ui carry = 0;
-    for (lamp_ui i = 0; i < len; i++) {
-        _uint128 temp = _uint128(divisor[i]) * factor + carry;
-        carry = base_supporter.divMod(temp);
-        divisor[i] = T(temp);
-    }
-    assert(carry == 0);
-    assert(divisor[len - 1] >= base / 2);
-    return factor;
+    return rlz(out, out_len);
 }
 
-constexpr int divisor_normalize64(lamp_ptr in, lamp_ui len, lamp_ptr out) {
-    constexpr lamp_ui BASE_HALF = lamp_ui(1) << 63;
-    if (0 == len || nullptr == in) {
-        return 0;
-    }
-    if (in[len - 1] >= BASE_HALF) {
-        std::copy(in, in + len, out);
-        return 0;
-    }
-    lamp_ui first = in[len - 1];
-    assert(first > 0);
-    const int leading_zeros = lammp_clz(first);
-    lshift_in_word_half(in, len, out, leading_zeros);
-    assert(out[len - 1] >= BASE_HALF);
-    return leading_zeros;
-}
-
-// 只处理商的长度为dividend_len-divisor_len的情况
-inline void abs_div64_classic_core(
-    lamp_ptr dividend, lamp_ui dividend_len,
-    lamp_ptr divisor,  lamp_ui divisor_len,
-    lamp_ptr quotient,
-    lamp_ptr work_begin = nullptr, lamp_ptr work_end = nullptr
+inline lamp_ui abs_div_kunth(
+    lamp_ptr in,      lamp_ui len,
+    lamp_ptr divisor, lamp_ui divisor_len, 
+    lamp_ptr out // 商的输出数组，长度为len-divisor_len+1
 ) {
-    if (nullptr == dividend || dividend_len <= divisor_len) {
-        return;
-    }
-    assert(divisor[divisor_len - 1] >= lamp_ui(1) << 63);  // 除数最高位为1
-    assert(divisor_len > 0);
-    lamp_ui pre_dividend_len = dividend_len;
-    dividend_len = rlz(dividend, dividend_len);  // 去除前导0
-    while (dividend_len < pre_dividend_len && dividend_len >= divisor_len) {
-        lamp_ui quot_i = dividend_len - divisor_len;
-        if (abs_compare(dividend + quot_i, divisor_len, divisor, divisor_len) >= 0) {
-            quotient[quot_i] = 1;
-            abs_sub_binary(dividend + quot_i, divisor_len, divisor, divisor_len, dividend + quot_i);
-        }
-        pre_dividend_len = dividend_len;
-        dividend_len = rlz(dividend, dividend_len);  // 去除前导0
-    }
-    if (dividend_len < divisor_len) {
-        return;
-    }
-    if (1 == divisor_len) {
-        lamp_ui rem = abs_div_rem_num64(dividend, dividend_len, quotient, divisor[0]);
-        dividend[0] = rem;
-        return;
-    }
-    // Get enough work memory
-    _internal_buffer<0> work_mem(0);
-    const lamp_ui work_size = divisor_len + 1;
-    if (work_begin + work_size > work_end) {
-        work_mem.resize(work_size);
-        work_begin = work_mem.data();
-        work_end = work_begin + work_mem.capacity();
-    }
-    const lamp_ui divisor_1 = divisor[divisor_len - 1];
-    const lamp_ui divisor_0 = divisor[divisor_len - 2];
-    const DivSupporter<lamp_ui, _uint128> div(divisor_1);
-    lamp_ui i = dividend_len - divisor_len;
-    while (i > 0) {
-        i--;
-        lamp_ui qhat = 0, rhat = 0;
-        const lamp_ui dividend_2 = dividend[divisor_len + i];
-        const lamp_ui dividend_1 = dividend[divisor_len + i - 1];
-        assert(dividend_2 <= divisor_1);
-        _uint128 dividend_num = _uint128(dividend_1, dividend_2);
-        if (dividend_2 == divisor_1) {
-            qhat = UINT64_MAX;
-            rhat = uint64_t(dividend_num - _uint128(divisor_1) * qhat);
-        } else {
-            qhat = div.divMod(dividend_num);
-            rhat = uint64_t(dividend_num);
-        }
-        {  // 3 words / 2 words refine
-            dividend_num = _uint128(dividend[divisor_len + i - 2], rhat);
-            _uint128 prod = _uint128(divisor_0) * qhat;
-            if (prod > dividend_num) {
-                qhat--;
-                prod -= divisor_0;
-                dividend_num += _uint128(0, divisor_1);
-                if (dividend_num > _uint128(0, divisor_1) && prod > dividend_num) {
-                    qhat--;
-                }
-            }
-        }
-        if (qhat > 0) {
-            auto prod = work_begin;
-            auto rem = dividend + i;
-            abs_mul_add_num64(divisor, divisor_len, prod, 0, qhat);
-            lamp_ui len_prod = rlz(prod, divisor_len + 1);
-            lamp_ui len_rem = rlz(rem, divisor_len + 1);
-            int count = 0;
-            while (abs_compare(prod, len_prod, rem, len_rem) > 0) {
-                qhat--;
-                abs_sub_binary(prod, len_prod, divisor, divisor_len, prod);
-                len_prod = rlz(prod, len_prod);
-                assert(count < 2);
-                count++;
-            }
-            if (qhat > 0) {
-                abs_sub_binary(rem, len_rem, prod, len_prod, rem);
-            }
-        }
-        quotient[i] = qhat;
-    }
+    return 0;
 }
 
-inline void abs_div64_recursive_core(
-    lamp_ptr dividend, lamp_ui dividend_len,
-    lamp_ptr divisor,  lamp_ui divisor_len,
-    lamp_ptr quotient,
-    lamp_ptr work_begin = nullptr, lamp_ptr work_end = nullptr
-) {
-    if (nullptr == dividend || dividend_len <= divisor_len) {
-        return;
-    }
-    assert(divisor_len > 0);
-    assert(divisor[divisor_len - 1] >= lamp_ui(1) << 63);  // 除数最高位为1
-    if (divisor_len <= 32 || (dividend_len <= divisor_len + 16)) {
-        abs_div64_classic_core(dividend, dividend_len, divisor, divisor_len, quotient, work_begin, work_end);
-        return;
-    }
-    // 被除数分段处理
-    if (dividend_len > divisor_len * 2) {
-        lamp_ui rem = dividend_len % divisor_len, shift = dividend_len - divisor_len - rem;
-        if (rem > 0) {
-            abs_div64_recursive_core(dividend + shift, divisor_len + rem, divisor, divisor_len, quotient + shift,
-                                     work_begin, work_end);
-        }
-        while (shift > 0) {
-            shift -= divisor_len;
-            abs_div64_recursive_core(dividend + shift, divisor_len * 2, divisor, divisor_len, quotient + shift,
-                                     work_begin, work_end);
-        }
-    } else if (dividend_len < divisor_len * 2) {
-        assert(dividend_len > divisor_len);
-        // 进行估商处理
-        lamp_ui shift_len =
-            divisor_len * 2 - dividend_len;  // 进行截断处理,使得截断后被除数的长度为除数的两倍,以进行估商
-        lamp_ui next_divisor_len = divisor_len - shift_len;
-        lamp_ui next_dividend_len = dividend_len - shift_len;
-        lamp_ui quot_len = next_dividend_len - next_divisor_len;
-        // Get enough work memory
-        _internal_buffer<0> work_mem(0);
-        const lamp_ui work_size = quot_len + shift_len;
-        if (work_begin + work_size > work_end) {
-            work_mem.resize(work_size * 3);
-            work_begin = work_mem.data();
-            work_end = work_begin + work_mem.capacity();
-        }
-        auto prod = work_begin;
-        abs_div64_recursive_core(dividend + shift_len, next_dividend_len, divisor + shift_len, next_divisor_len,
-                                 quotient, work_begin, work_end);
-        abs_mul64(divisor, shift_len, quotient, quot_len, prod, work_begin + work_size, work_end);
-        lamp_ui prod_len = rlz(prod, quot_len + shift_len),
-               rem_len = rlz(dividend, divisor_len);
-        // 修正
-        int count = 0;
-        while (abs_compare(prod, prod_len, dividend, rem_len) > 0) {
-            abs_sub_binary_num(quotient, quot_len, lamp_ui(1), quotient);
-            abs_sub_binary(prod, prod_len, divisor, shift_len, prod);
-            bool carry = abs_add_binary_half(dividend + shift_len, rem_len - shift_len, divisor + shift_len, quot_len,
-                                             dividend + shift_len);
-            if (carry) {
-                if (rem_len < dividend_len)  // 防止溢出
-                {
-                    dividend[rem_len] = 1;
-                    rem_len++;
-                } else {
-                    // 说明此时rem_len = dividend_len + 1
-                    // prod_len <= quot_len + shift_len = dividend_len - divisor_len + divisor_len * 2 - dividend_len =
-                    // divisor_len <= dividend_len 故此时prod_len < rem_len
-                    break;
-                }
-            }
-            rem_len = rlz(dividend, rem_len);
-            prod_len = rlz(prod, prod_len);
-            assert(count < 2);
-            count++;
-        }
-        abs_sub_binary(dividend, rem_len, prod, prod_len, dividend);
-    } else {
-        // 进行两次递归处理
-        lamp_ui quot_lo_len = divisor_len / 2, quot_hi_len = divisor_len - quot_lo_len;
-        lamp_ui dividend_len1 = divisor_len + quot_hi_len, dividend_len2 = divisor_len + quot_lo_len;
-        abs_div64_recursive_core(dividend + quot_lo_len, dividend_len1, divisor, divisor_len, quotient + quot_lo_len,
-                                 work_begin, work_end);  // 求出高位的商
-        abs_div64_recursive_core(dividend, dividend_len2, divisor, divisor_len, quotient, work_begin,
-                                 work_end);  // 求出低位的商
-    }
-}
-
-inline void abs_div64(
-    lamp_ptr dividend, lamp_ui dividend_len,
-    lamp_ptr divisor,  lamp_ui divisor_len,
-    lamp_ptr quotient
-) {
-    std::fill_n(quotient, get_div_len(dividend_len, divisor_len), lamp_ui(0));
-    dividend_len = rlz(dividend, dividend_len);
-    divisor_len = rlz(divisor, divisor_len);
-
-    lamp_ui norm_dividend_len = dividend_len + 1, norm_divisor_len = divisor_len;
-    _internal_buffer<0> dividend_v(norm_dividend_len), divisor_v(norm_divisor_len);
-
-    auto norm_dividend = dividend_v.data(), norm_divisor = divisor_v.data();
-
-    int leading_zero = divisor_normalize64(divisor, divisor_len, norm_divisor);
-    lshift_in_word(dividend, dividend_len, norm_dividend, leading_zero);
-    norm_dividend_len = rlz(norm_dividend, norm_dividend_len);
-    // 解决商最高位为1的情况
-    if (norm_dividend_len == dividend_len) {
-        lamp_ui quot_len = norm_dividend_len - norm_divisor_len;
-        if (abs_compare(norm_dividend + quot_len, norm_divisor_len, norm_divisor, norm_divisor_len) >= 0) {
-            quotient[quot_len] = 1;
-            abs_sub_binary(norm_dividend + quot_len, norm_divisor_len, norm_divisor, norm_divisor_len,
-                           norm_dividend + quot_len);
-        }
-    }
-    // 剩余的商长度为quot_len
-    abs_div64_recursive_core(norm_dividend, norm_dividend_len, norm_divisor, norm_divisor_len, quotient);
-
-    norm_divisor_len = rlz(norm_dividend, norm_divisor_len);  // 余数在被除数上
-    rshift_in_word(norm_dividend, norm_divisor_len, dividend, leading_zero);
-    std::fill(dividend + norm_divisor_len, dividend + dividend_len, lamp_ui(0));
-}
 
 namespace Numeral {
 namespace BaseTable {
