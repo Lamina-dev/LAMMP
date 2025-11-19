@@ -10,6 +10,6 @@ using namespace lammp::Transform::number_theory;
 
 int main()
 {
-    //std::cout << "time of test_div(64, 32) = " << test_div(64, 32);
+    test_barrett_2powN_div_num();
     return 0;
 }

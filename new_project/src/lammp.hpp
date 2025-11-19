@@ -2991,41 +2991,34 @@ inline lamp_ui barrett_2powN_div_num(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_p
     assert(in != nullptr && out!= nullptr);
     assert(N > 1);
     assert(in[len - 1] > (1ull << 63) && "Input number is too large to be represented by 64-bit words.");
-    lamp_ui out_len = N - len;
+    lamp_ui out_len = N - len + 1;
     _internal_buffer<0> _2powN(N + 1, 0);
     _2powN.set(N, 1);
-    abs_div_rem_num64(_2powN.data(), out_len + 1, out, in[len - 1]); 
+    abs_div_rem_num64(_2powN.data() + len - 1, N - len + 2, out, in[len - 1]);
 
     _2powN.set(N, 2); // now _2powN = 2^(64*N+1)
     lamp_ui mul_buf_len = get_mul_len(out_len, N + 1);
     lamp_ui diff_buf_len = N + 1;
-    _internal_buffer<0> mul_buf(mul_buf_len, 0), diff_buf(diff_buf_len, 0);
-    
+    _internal_buffer<0> mul_buf(mul_buf_len + 1, 0);
+    _internal_buffer<0> diff_buf(diff_buf_len + 1, 0);
+
     while(true) {
         abs_mul64(out, out_len, in, len, mul_buf.data());
-        mul_buf_len = rlz(mul_buf.data(), mul_buf_len);
-        /*
-         * 当乘积恰好为2^(64*N+1)时，牛顿迭代收敛，此时应停止循环
-         */
-        bool can_break = true;
-        for (lamp_ui i = 0; i < mul_buf_len - 1; i++) {
-            if (mul_buf[i] != 0) {
-                can_break = false;
-                break;
-            } 
-        }
-        if (can_break && mul_buf[mul_buf_len - 1] == 1) {
+        mul_buf_len = rlz(mul_buf.data(), get_mul_len(out_len, len));
+        if (N == mul_buf_len)
             break;
-        }
 
         bool success = abs_difference_binary(_2powN.data(), N + 1, mul_buf.data(), mul_buf_len, diff_buf.data());
         assert(success == true && "2* 2^(64*N) > in * out");
         diff_buf_len = rlz(diff_buf.data(), diff_buf_len);
 
         abs_mul64(diff_buf.data(), diff_buf_len, out, out_len, mul_buf.data());
+        std::fill(diff_buf.begin(), diff_buf.end(), 0);
         mul_buf_len = rlz(mul_buf.data(), get_mul_len(diff_buf_len, out_len));
+    
         std::copy(mul_buf.data() + N, mul_buf.data() + mul_buf_len, out);
     }
+    
     return rlz(out, out_len);
 }
 

@@ -29,3 +29,5 @@ void test_mul_128();
 void test_mul_192();
 inline void mul64x64to128_buildin(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
 void test_mod_div();
+
+void test_barrett_2powN_div_num();

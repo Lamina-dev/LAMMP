@@ -673,3 +673,29 @@ void test_mod_div() {
         }
     }
 }
+
+void test_barrett_2powN_div_num() {
+    using namespace lammp;
+    using namespace lammp::Arithmetic;
+    size_t N = 11292;
+    size_t len = 1112;
+    size_t res_len = get_div_len(N + 1, len);
+    auto vec1 = generateRandomIntVector_(len);
+
+    std::vector<lamp_ui> res1(res_len, 0), res2(N + 2, 0);
+    vec1[len - 1] = 0xe2fffffffffffff2;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    res_len = barrett_2powN_div_num(N, vec1.data(), len, res1.data());
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "barrett_2powN_div_num time: " << duration.count() << " us" << std::endl;
+
+    abs_mul64(res1.data(), res_len, vec1.data(), len, res2.data());
+    size_t res2_len = rlz(res2.data(), get_mul_len(res_len, len));
+    for (size_t i = res2_len - 5; i < res2_len; i++) {
+        std::cout << i << ": " << res2[i] << std::endl;
+    }
+    std::cout << std::endl;
+    return;
+}
