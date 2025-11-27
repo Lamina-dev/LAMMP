@@ -677,25 +677,67 @@ void test_mod_div() {
 void test_barrett_2powN_div_num() {
     using namespace lammp;
     using namespace lammp::Arithmetic;
-    size_t N = 11292;
-    size_t len = 1112;
-    size_t res_len = get_div_len(N + 1, len);
-    auto vec1 = generateRandomIntVector_(len);
 
-    std::vector<lamp_ui> res1(res_len, 0), res2(N + 2, 0);
-    vec1[len - 1] = 0xe2fffffffffffff2;
+    size_t len = 2;
+    size_t bit = len * 2;
+    size_t res_len = bit - len + 1;
+    std::vector<lamp_ui> vec1 = generateRandomIntVector_(len), vec2(len, 0);
+    std::vector<lamp_ui> res1(res_len + 3, 0), res2(bit + 1, 0), res3(bit + 1, 0);
+
+    vec1[len - 1] = 0xffff111122227777;
+    std::copy(vec1.begin(), vec1.end(), vec2.begin());
+
+
 
     auto start = std::chrono::high_resolution_clock::now();
-    res_len = barrett_2powN_div_num(N, vec1.data(), len, res1.data());
+    //res_len = barrett_2powN_div_num_(bit * 64, 0, vec1.data(), len);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "barrett_2powN_div_num time: " << duration.count() << " us" << std::endl;
 
-    abs_mul64(res1.data(), res_len, vec1.data(), len, res2.data());
+    abs_mul64(vec1.data(), len, vec2.data(), len, res2.data());
     size_t res2_len = rlz(res2.data(), get_mul_len(res_len, len));
-    for (size_t i = res2_len - 5; i < res2_len; i++) {
-        std::cout << i << ": " << res2[i] << std::endl;
+
+    std::vector<lamp_ui> one(1, 1);
+    abs_add_binary(vec1.data(), res_len, one.data(), 1, res1.data());
+    abs_mul64(res1.data(), res_len, vec2.data(), len, res3.data());
+    size_t res3_len = rlz(res3.data(), get_mul_len(res_len, len));
+    for (size_t i = 0; i < res3_len; i++) {
+        std::cout << i << ": " << res2[i] << " " << res3[i] << std::endl;
     }
     std::cout << std::endl;
+
     return;
 }
+
+void test_kunth_div() {
+    using namespace lammp;
+    using namespace lammp::Arithmetic;
+
+    size_t in_len = 203;
+    size_t divi_len = 121;
+    size_t out_len = in_len - divi_len + 1;
+    size_t rem_len = divi_len;
+    std::vector<lamp_ui> in_vec = generateRandomIntVector_(in_len), divi_vec = generateRandomIntVector_(divi_len);
+    std::vector<lamp_ui> out_vec(out_len, 0), rem_vec(rem_len, 0);
+    std::vector<lamp_ui> in_vec2(in_len, 0), res(in_len + 1, 0);
+    std::copy(in_vec.begin(), in_vec.end(), in_vec2.begin());
+
+    divi_vec[divi_len - 1] = 0xafffffffffffffff;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    abs_div_kunth(in_vec.data(), in_len, divi_vec.data(), divi_len, out_vec.data(), rem_vec.data());
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "kunth_div time: " << duration.count() << " us" << std::endl;
+
+    abs_mul64(out_vec.data(), out_len, divi_vec.data(), divi_len, res.data());
+    abs_add_binary(rem_vec.data(), rem_len, res.data(), get_mul_len(out_len, divi_len), res.data());
+    size_t res_len = rlz(res.data(), in_len);
+    for (size_t i = res_len - 5; i < res_len; i++) {
+        std::cout << i << ": " << in_vec2[i] << " " << res[i] << std::endl;
+    }
+    return;
+}
+
+

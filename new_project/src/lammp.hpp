@@ -1197,6 +1197,10 @@ class _uint192 {
         return divid0;
     }
     constexpr _uint192 rShift64() const { return _uint192(mid, high, 0); }
+    constexpr _uint192 lShift64() const { return _uint192(0, low, high); }
+    constexpr void set_low(uint64_t low) { this->low = low; }
+    constexpr void set_mid(uint64_t mid) { this->mid = mid; }
+    constexpr void set_high(uint64_t high) { this->high = high; }
 
     constexpr operator uint64_t() const { return low; }
 
@@ -2032,6 +2036,32 @@ inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len) {
 
 inline lamp_ui get_div_len(lamp_ui l_len, lamp_ui r_len) { return l_len - r_len + 1; }
 
+inline void set_bit(lamp_ptr in_out, lamp_ui len, lamp_ui bit_pos, bool value = true) {
+    assert(bit_pos < len * 64);
+    const lamp_ui word_pos = bit_pos / 64;
+    const lamp_ui bit_in_word_pos = bit_pos % 64;
+    in_out[word_pos] |= (value ? 1ull : 0ull) << bit_in_word_pos;
+}
+
+inline void set_bit(lamp_ptr in_out, lamp_ui len, lamp_ui word_pos, lamp_ui bit_pos, bool value = true) {
+    assert(word_pos * 64 + bit_pos < len * 64);
+    in_out[word_pos] |= (value ? 1ull : 0ull) << bit_pos;
+}
+
+inline bool get_bit(const lamp_ptr in, lamp_ui len, lamp_ui bit_pos) {
+    assert(bit_pos < len * 64);
+    const lamp_ui word_pos = bit_pos / 64;
+    const lamp_ui bit_in_word_pos = bit_pos % 64;
+    return (in[word_pos] >> bit_in_word_pos) & 1;
+}
+
+inline lamp_ui bit_length(lamp_ptr in, lamp_ui len) {
+    constexpr lamp_ui WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
+    assert(in!= nullptr);
+    len = rlz(in, len);
+    return len * WORD_BITS - lammp_clz(in[len - 1]);
+}
+
 /*
  * @brief 左移大整数的每个部分（半移位器）
  *
@@ -2119,6 +2149,28 @@ constexpr void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift)
         last = n;
     }
     out[len - 1] = last >> shift;
+}
+
+constexpr void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
+    lamp_ui shr_word = shift / 64;
+    lamp_ui shr_bits = shift % 64;
+    assert(shr_word < len);
+    if (shr_bits == 0) {
+        std::copy(in + shr_word, in + len, out);
+    } else {
+        rshift_in_word(in + shr_word, len - shr_word, out, shr_bits);
+    }
+}
+
+constexpr void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
+    lamp_ui shr_word = shift / 64;
+    lamp_ui shr_bits = shift % 64;
+    assert(shr_word < len);
+    if (shr_bits == 0) {
+        std::copy(in + shr_word, in + len, out);
+    } else {
+        rshift_in_word(in + shr_word, len - shr_word, out, shr_bits);
+    }
 }
 
 // Binary absolute addtion a+b=sum, return the carry
@@ -2253,7 +2305,7 @@ constexpr bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_p
  *          0 表示 a == b（diff 存储全 0）
  * @warning diff 数组的长度需至少为两个输入数组中的最大长度，将不会进行越界检查。
  */
-[[nodiscard]] constexpr int abs_difference_binary(
+[[nodiscard]] constexpr lamp_si abs_difference_binary(
     lamp_ptr a, lamp_ui len1,
     lamp_ptr b, lamp_ui len2,
     lamp_ptr diff
@@ -2987,47 +3039,116 @@ inline lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp
     }
 }
 
-inline lamp_ui barrett_2powN_div_num(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out) {
-    assert(in != nullptr && out!= nullptr);
-    assert(N > 1);
-    assert(in[len - 1] > (1ull << 63) && "Input number is too large to be represented by 64-bit words.");
-    lamp_ui out_len = N - len + 1;
-    _internal_buffer<0> _2powN(N + 1, 0);
-    _2powN.set(N, 1);
-    abs_div_rem_num64(_2powN.data() + len - 1, N - len + 2, out, in[len - 1]);
+inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    using _uint192 = lammp::Transform::number_theory::_uint192;
+    assert(in != nullptr && len > 0);
 
-    _2powN.set(N, 2); // now _2powN = 2^(64*N+1)
-    lamp_ui mul_buf_len = get_mul_len(out_len, N + 1);
-    lamp_ui diff_buf_len = N + 1;
-    _internal_buffer<0> mul_buf(mul_buf_len + 1, 0);
-    _internal_buffer<0> diff_buf(diff_buf_len + 1, 0);
+    if (len == 1) {
+        assert(false && "This function should not be called with len == 1");
+        _uint192 n(0, 0, 1);
+        n.self_div_rem(in[0]);
+        out[0] = n.low64();
+        out[1] = n.mid64();
+        out[2] = n.high64();
+        return rlz(out, 3);
+    } else if (len <= 2) {
+        /*
+         * floor(2^256 , in)
+         */
+        lamp_ui _in[2] = { in[0], in[1] };
+        lamp_ui shift = lammp_clz(in[1]);
+        _uint128 dividend(0, 1ull << (64 - shift));
+        _in[1] <<= shift;
+        _in[1] |= in[0] >> (64 - shift);
+        _in[0] <<= shift;
+        
+        lamp_ui q_hat = dividend.self_div_rem(_in[1]);
+        
 
-    while(true) {
-        abs_mul64(out, out_len, in, len, mul_buf.data());
-        mul_buf_len = rlz(mul_buf.data(), get_mul_len(out_len, len));
-        if (N == mul_buf_len)
-            break;
-
-        bool success = abs_difference_binary(_2powN.data(), N + 1, mul_buf.data(), mul_buf_len, diff_buf.data());
-        assert(success == true && "2* 2^(64*N) > in * out");
-        diff_buf_len = rlz(diff_buf.data(), diff_buf_len);
-
-        abs_mul64(diff_buf.data(), diff_buf_len, out, out_len, mul_buf.data());
-        std::fill(diff_buf.begin(), diff_buf.end(), 0);
-        mul_buf_len = rlz(mul_buf.data(), get_mul_len(diff_buf_len, out_len));
-    
-        std::copy(mul_buf.data() + N, mul_buf.data() + mul_buf_len, out);
+        out[0] = dividend.self_div_rem(_in[0]);
+        
     }
-    
-    return rlz(out, out_len);
+
+    _internal_buffer<0> out_hat;
 }
 
-inline lamp_ui abs_div_kunth(
+inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    lamp_ui N = len;
+    return 0;
+}
+
+inline void abs_div_kunth(
     lamp_ptr in,      lamp_ui len,
     lamp_ptr divisor, lamp_ui divisor_len, 
-    lamp_ptr out // 商的输出数组，长度为len-divisor_len+1
+    lamp_ptr out, // 商的输出数组，长度为len-divisor_len+1
+    lamp_ptr remainder // 余数的输出数组，长度为divisor_len
 ) {
-    return 0;
+    assert(in != nullptr && len > 0 && divisor != nullptr && divisor_len > 0);
+    assert(divisor_len <= len);
+    assert(divisor[divisor_len - 1] >= (1ull << 63));
+
+    if (divisor_len == 1) {
+        remainder[0] = abs_div_rem_num64(in, len, out, divisor[0]);
+        return;
+    }
+    if (len == divisor_len) {
+        lamp_si sign = abs_compare(in, len, divisor, divisor_len);
+        if (sign > 0) {
+            out[0] = 1;
+            abs_sub_binary(in, len, divisor, divisor_len, remainder);
+        }
+        else if (sign == 0){
+            out[0] = 1;
+            remainder[0] = 0;
+        }
+        else {
+            out[0] = 0;
+            std::copy(in, in + len, remainder);
+        }
+        return;
+    }
+
+    lamp_ui out_len = get_div_len(len, divisor_len);
+    lamp_ui _dividend_len = len + 1; // 由于kunth除法一定高估，所以需要多分配一个元素
+    _internal_buffer<0> _dividend(_dividend_len, 0);
+
+    for (lamp_ui i = out_len - 1; i-- != 0; ) {
+        if (len < divisor_len) {
+            break;
+        }
+        _uint128 _dividend_i(in[len - 2], in[len - 1]);
+
+        _dividend_i.self_div_rem(divisor[divisor_len - 1]);
+
+        lamp_ui q_hat[2] = {_dividend_i.low64(), _dividend_i.high64()};
+        lamp_ui q_hat_len = rlz(q_hat, 2);
+        
+        abs_mul64_classic(q_hat, q_hat_len, divisor, divisor_len, _dividend.data() + i, nullptr, nullptr);
+        _dividend_len = rlz(_dividend.data(), i + get_mul_len(divisor_len, q_hat_len));
+        lamp_si sign = abs_compare(_dividend.data(), _dividend_len, in, len);
+        if (sign > 0) {
+            _dividend_i -= 1;
+            lamp_si sub_flag = abs_difference_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
+                                                     _dividend.data() + i);
+            assert(sub_flag == 1);
+            _dividend_len = rlz(_dividend.data(), _dividend_len);
+            sign = abs_compare(_dividend.data(), _dividend_len, in, len);
+            if (sign > 0) {
+                _dividend_i -= 1;
+                sub_flag = abs_difference_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
+                                                 _dividend.data() + i);
+                assert(sub_flag == 1);
+            }
+        }
+        
+        lamp_si sus_flag = abs_difference_binary(in, len, _dividend.data(), _dividend_len, in);
+        assert(sus_flag >= 0);
+        out[i + 1] = (_dividend_i.high64() == 0) ? out[i + 1] : _dividend_i.high64();
+        out[i] = _dividend_i.low64();
+        len = rlz(in, len);
+        std::fill(_dividend.data() + i, _dividend.data() + _dividend_len, 0);
+    }
+    std::copy(in, in + len, remainder);
 }
 
 

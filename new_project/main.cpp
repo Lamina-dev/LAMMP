@@ -10,6 +10,6 @@ using namespace lammp::Transform::number_theory;
 
 int main()
 {
-    test_barrett_2powN_div_num();
+    test_kunth_div();
     return 0;
 }
