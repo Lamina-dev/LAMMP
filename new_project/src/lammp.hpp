@@ -3077,6 +3077,9 @@ inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     return 0;
 }
 
+/*
+ in 输入会被更改，且输入in的缓冲区长度应为len+1
+ */
 inline void abs_div_knuth(
     lamp_ptr in,      lamp_ui len,
     lamp_ptr divisor, lamp_ui divisor_len, 
@@ -3140,8 +3143,8 @@ inline void abs_div_knuth(
                 assert(sub_flag == 1);
             }
         }
-        
-        lamp_si sus_flag = abs_difference_binary(in, len, _dividend.data(), _dividend_len, in);
+        lamp_si sus_flag =
+            abs_difference_binary(in + i, len - i, _dividend.data() + i, _dividend_len - i, in + i);
         assert(sus_flag >= 0);
         out[i + 1] = (_dividend_i.high64() == 0) ? out[i + 1] : _dividend_i.high64();
         out[i] = _dividend_i.low64();

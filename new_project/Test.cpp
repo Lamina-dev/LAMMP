@@ -714,13 +714,14 @@ void test_kunth_div() {
     using namespace lammp;
     using namespace lammp::Arithmetic;
 
-    size_t in_len = 203;
-    size_t divi_len = 121;
+    size_t in_len = 4001;
+    size_t divi_len = 1002;
     size_t out_len = in_len - divi_len + 1;
     size_t rem_len = divi_len;
-    std::vector<lamp_ui> in_vec = generateRandomIntVector_(in_len), divi_vec = generateRandomIntVector_(divi_len);
+    std::vector<lamp_ui> in_vec = generateRandomIntVector_(in_len + 1), divi_vec = generateRandomIntVector_(divi_len);
+    in_vec[in_len] = 0;
     std::vector<lamp_ui> out_vec(out_len, 0), rem_vec(rem_len, 0);
-    std::vector<lamp_ui> in_vec2(in_len, 0), res(in_len + 1, 0);
+    std::vector<lamp_ui> in_vec2(in_len + 1, 0), res(in_len + 1, 0);
     std::copy(in_vec.begin(), in_vec.end(), in_vec2.begin());
 
     divi_vec[divi_len - 1] = 0xafffffffffffffff;
