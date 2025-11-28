@@ -726,7 +726,7 @@ void test_kunth_div() {
     divi_vec[divi_len - 1] = 0xafffffffffffffff;
 
     auto start = std::chrono::high_resolution_clock::now();
-    abs_div_kunth(in_vec.data(), in_len, divi_vec.data(), divi_len, out_vec.data(), rem_vec.data());
+    abs_div_knuth(in_vec.data(), in_len, divi_vec.data(), divi_len, out_vec.data(), rem_vec.data());
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "kunth_div time: " << duration.count() << " us" << std::endl;

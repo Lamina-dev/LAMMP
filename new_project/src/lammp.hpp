@@ -3077,7 +3077,7 @@ inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     return 0;
 }
 
-inline void abs_div_kunth(
+inline void abs_div_knuth(
     lamp_ptr in,      lamp_ui len,
     lamp_ptr divisor, lamp_ui divisor_len, 
     lamp_ptr out, // 商的输出数组，长度为len-divisor_len+1
