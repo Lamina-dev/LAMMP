@@ -32,5 +32,5 @@ void test_mod_div();
 
 void test_barrett_2powN_div_num();
 
-void test_kunth_div();
+void test_knuth_div();
 

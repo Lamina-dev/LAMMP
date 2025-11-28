@@ -3039,83 +3039,61 @@ inline lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp
     }
 }
 
-inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
-    using _uint192 = lammp::Transform::number_theory::_uint192;
-    assert(in != nullptr && len > 0);
-
-    if (len == 1) {
-        assert(false && "This function should not be called with len == 1");
-        _uint192 n(0, 0, 1);
-        n.self_div_rem(in[0]);
-        out[0] = n.low64();
-        out[1] = n.mid64();
-        out[2] = n.high64();
-        return rlz(out, 3);
-    } else if (len <= 2) {
-        /*
-         * floor(2^256 , in)
-         */
-        lamp_ui _in[2] = { in[0], in[1] };
-        lamp_ui shift = lammp_clz(in[1]);
-        _uint128 dividend(0, 1ull << (64 - shift));
-        _in[1] <<= shift;
-        _in[1] |= in[0] >> (64 - shift);
-        _in[0] <<= shift;
-        
-        lamp_ui q_hat = dividend.self_div_rem(_in[1]);
-        
-
-        out[0] = dividend.self_div_rem(_in[0]);
-        
-    }
-
-    _internal_buffer<0> out_hat;
-}
-
-inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
-    lamp_ui N = len;
-    return 0;
-}
-
 /*
  in 输入会被更改，且输入in的缓冲区长度应为len+1
  */
 inline void abs_div_knuth(
     lamp_ptr in,      lamp_ui len,
-    lamp_ptr divisor, lamp_ui divisor_len, 
-    lamp_ptr out, // 商的输出数组，长度为len-divisor_len+1
-    lamp_ptr remainder // 余数的输出数组，长度为divisor_len
+    lamp_ptr divisor, lamp_ui divisor_len,
+    lamp_ptr out,                 // 商的输出数组，长度为len-divisor_len+1
+    lamp_ptr remainder = nullptr  // 余数的输出数组，长度为divisor_len
 ) {
     assert(in != nullptr && len > 0 && divisor != nullptr && divisor_len > 0);
     assert(divisor_len <= len);
     assert(divisor[divisor_len - 1] >= (1ull << 63));
 
     if (divisor_len == 1) {
-        remainder[0] = abs_div_rem_num64(in, len, out, divisor[0]);
+        if (remainder != nullptr) {
+            remainder[0] = abs_div_rem_num64(in, len, out, divisor[0]);
+        } else {
+            lamp_ui rem = abs_div_rem_num64(in, len, out, divisor[0]);
+            std::fill(in, in + len, 0);
+            in[0] = rem;
+        }
         return;
     }
     if (len == divisor_len) {
         lamp_si sign = abs_compare(in, len, divisor, divisor_len);
-        if (sign > 0) {
-            out[0] = 1;
-            abs_sub_binary(in, len, divisor, divisor_len, remainder);
-        }
-        else if (sign == 0){
-            out[0] = 1;
-            remainder[0] = 0;
-        }
-        else {
-            out[0] = 0;
-            std::copy(in, in + len, remainder);
+        if (remainder != nullptr) {
+            if (sign > 0) {
+                out[0] = 1;
+                abs_sub_binary(in, len, divisor, divisor_len, remainder);
+            } else if (sign == 0) {
+                out[0] = 1;
+                remainder[0] = 0;
+            } else {
+                out[0] = 0;
+                std::copy(in, in + len, remainder);
+            }
+        } else {
+            if (sign > 0) {
+                out[0] = 1;
+                abs_sub_binary(in, len, divisor, divisor_len, in);
+            } else if (sign == 0) {
+                out[0] = 1;
+                std::fill(in, in + len, 0);
+            } else {
+                out[0] = 0;
+            }
         }
         return;
     }
 
     lamp_ui out_len = get_div_len(len, divisor_len);
-    lamp_ui _dividend_len = len + 1; // 由于kunth除法一定高估，所以需要多分配一个元素
+    lamp_ui _dividend_len = len + 1;  // 由于kunth除法一定高估，所以需要多分配一个元素
     _internal_buffer<0> _dividend(_dividend_len, 0);
 
-    for (lamp_ui i = out_len - 1; i-- != 0; ) {
+    for (lamp_ui i = out_len - 1; i-- != 0;) {
         if (len < divisor_len) {
             break;
         }
@@ -3125,7 +3103,7 @@ inline void abs_div_knuth(
 
         lamp_ui q_hat[2] = {_dividend_i.low64(), _dividend_i.high64()};
         lamp_ui q_hat_len = rlz(q_hat, 2);
-        
+
         abs_mul64_classic(q_hat, q_hat_len, divisor, divisor_len, _dividend.data() + i, nullptr, nullptr);
         _dividend_len = rlz(_dividend.data(), i + get_mul_len(divisor_len, q_hat_len));
         lamp_si sign = abs_compare(_dividend.data(), _dividend_len, in, len);
@@ -3143,16 +3121,71 @@ inline void abs_div_knuth(
                 assert(sub_flag == 1);
             }
         }
-        lamp_si sus_flag =
-            abs_difference_binary(in + i, len - i, _dividend.data() + i, _dividend_len - i, in + i);
+        lamp_si sus_flag = abs_difference_binary(in + i, len - i, _dividend.data() + i, _dividend_len - i, in + i);
         assert(sus_flag >= 0);
         out[i + 1] = (_dividend_i.high64() == 0) ? out[i + 1] : _dividend_i.high64();
         out[i] = _dividend_i.low64();
         len = rlz(in, len);
         std::fill(_dividend.data() + i, _dividend.data() + _dividend_len, 0);
     }
-    std::copy(in, in + len, remainder);
+    if (remainder != nullptr) {
+        std::copy(in, in + len, remainder);
+    }
 }
+
+inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    using _uint192 = lammp::Transform::number_theory::_uint192;
+    assert(in != nullptr && len > 0);
+
+    if (len == 1) {
+        assert(false && "This function should not be called with len == 1");
+        _uint192 n(0, 0, 1);
+        n.self_div_rem(in[0]);
+        out[0] = n.low64();
+        out[1] = n.mid64();
+        out[2] = n.high64();
+        return rlz(out, 3);
+    } else if (len == 2) {
+        /*
+         * floor(2^256 , in)
+         */
+        lamp_ui _2_256[6] = { 0, 0, 0, 0, 0, 0 }; // 2^256，多出一位为knuth除法的缓冲区
+        lamp_ui _in[3] = { in[0], in[1], 0 };
+        lamp_si shift = lammp_clz(in[1]);
+        lshift_in_word(_in, 3, _in, shift);
+        set_bit(_2_256, 5, 4, shift, true);
+        abs_div_knuth(_2_256, 5, _in, 2, out, nullptr);
+        lamp_ui out_len = rlz(out, len + 1);
+        return out_len;
+    }
+
+    lamp_ui _len = len / 2 + 1;
+    lamp_ui rem_len = len - _len;
+
+    _internal_buffer<0> q_hat(len + 1, 0);
+    lamp_ui q_hat_len = barrett_2powN_recursive(in + rem_len, _len, q_hat.data() + rem_len);
+    q_hat_len += rem_len;
+
+    lamp_ui _2len = 2 * len, _2_powN_len = _2len + len + 1;
+    _internal_buffer<0> _2_powN(_2_powN_len, 0), _q_mul_in(q_hat_len + len, 0);
+    _2_powN.set(_2len, 2);
+
+    abs_mul64(q_hat.data(), q_hat_len, in, len, _q_mul_in.data());
+    lamp_ui _q_mul_in_len = rlz(_q_mul_in.data(), len + q_hat_len);
+    lamp_si suss = abs_difference_binary(_2_powN.data(), _2len + 1, _q_mul_in.data(), _q_mul_in_len, _2_powN.data());
+    assert(suss >= 0);
+    _2_powN_len = rlz(_2_powN.data(), _2len + 1);
+    abs_mul64(q_hat.data(), q_hat_len, _2_powN.data(), _2_powN_len, _2_powN.data());
+    _2_powN_len = rlz(_2_powN.data(), get_mul_len(q_hat_len, _2_powN_len));
+    std::copy(_2_powN.data() + _2len, _2_powN.data() + _2_powN_len, out);
+    return rlz(out, _2_powN_len - _2len);
+}
+
+inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    lamp_ui N = len;
+    return 0;
+}
+
 
 
 namespace Numeral {
