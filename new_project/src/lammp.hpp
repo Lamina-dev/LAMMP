@@ -2211,7 +2211,9 @@ constexpr bool abs_add_half_base(
 // Binary absolute addtion a+b=sum, return the carry
 constexpr void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {
     bool carry = abs_add_binary_half(a, len_a, b, len_b, sum);
-    sum[std::max(len_a, len_b)] = carry;
+    if (carry) {
+        sum[std::max(len_a, len_b)] = carry;
+    }
 }
 
 constexpr void abs_add_base(
@@ -2889,7 +2891,7 @@ inline void abs_mul64(lamp_ptr in1, lamp_ui len1,
         return;
     } else if (len2 >= KARATSUBA_MAX_THRESHOLD) {
         lamp_ui M = len1 / len2;
-        if (M >= 2 && M <= 9) {
+        if (M >= 3 && M <= 9) {
             abs_mul64_ntt_unbalanced(in1, len1, in2, len2, 0, out);
             return;
         } else if (M > 9) {
@@ -3133,6 +3135,9 @@ inline void abs_div_knuth(
     }
 }
 
+/*
+ 当 len == 3时， out 需要额外一个长度
+ */
 inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     using _uint192 = lammp::Transform::number_theory::_uint192;
     assert(in != nullptr && len > 0);
@@ -3145,16 +3150,14 @@ inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
         out[1] = n.mid64();
         out[2] = n.high64();
         return rlz(out, 3);
-    } else if (len == 2) {
-        /*
-         * floor(2^256 , in)
-         */
-        lamp_ui _2_256[6] = { 0, 0, 0, 0, 0, 0 }; // 2^256，多出一位为knuth除法的缓冲区
-        lamp_ui _in[3] = { in[0], in[1], 0 };
-        lamp_si shift = lammp_clz(in[1]);
-        lshift_in_word(_in, 3, _in, shift);
-        set_bit(_2_256, 5, 4, shift, true);
-        abs_div_knuth(_2_256, 5, _in, 2, out, nullptr);
+    } else if (len <= 16) {
+        lamp_ui _2_powN_len = len * 2 + 1;
+        _internal_buffer<0> _2_powN(_2_powN_len + 1, 0);
+        lamp_si shift = lammp_clz(in[len - 1]);
+        _2_powN.set(_2_powN_len - 1, (1ull << shift));
+        _internal_buffer<0> _in(len + 1, 0); /* 此处加一没有用，主要因为lsift强制要求导致的 */
+        lshift_in_word(in, len, _in.data(), shift);
+        abs_div_knuth(_2_powN.data(), _2_powN_len, _in.data(), len, out, nullptr);
         lamp_ui out_len = rlz(out, len + 1);
         return out_len;
     }
@@ -3162,12 +3165,13 @@ inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     lamp_ui _len = len / 2 + 1;
     lamp_ui rem_len = len - _len;
 
-    _internal_buffer<0> q_hat(len + 1, 0);
+    _internal_buffer<0> q_hat(len + 2, 0); /* q_hat 长度应于 out 长度一致，同时必须多分配一个 */
     lamp_ui q_hat_len = barrett_2powN_recursive(in + rem_len, _len, q_hat.data() + rem_len);
     q_hat_len += rem_len;
 
     lamp_ui _2len = 2 * len, _2_powN_len = _2len + len + 1;
-    _internal_buffer<0> _2_powN(_2_powN_len, 0), _q_mul_in(q_hat_len + len, 0);
+    /* q_hat 多分配一个， 相应的 _2_powN 和 _q_mul_in 也要多分配一个 */
+    _internal_buffer<0> _2_powN(_2_powN_len + 1, 0), _q_mul_in(q_hat_len + len + 1, 0);
     _2_powN.set(_2len, 2);
 
     abs_mul64(q_hat.data(), q_hat_len, in, len, _q_mul_in.data());
@@ -3180,10 +3184,50 @@ inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     std::copy(_2_powN.data() + _2len, _2_powN.data() + _2_powN_len, out);
     return rlz(out, _2_powN_len - _2len);
 }
+/*
+ * @brief 计算 ceil(base^N / in)，使用牛顿迭代法
+ * @param N 指数
+ * @param in 被除数
+ * @param len 被除数的长度
+ * @param out 商的输出数组，长度至少 N + 1 - len
+ * @return 商的长度
+ * @details
+ * 该函数计算 base^N / in，其中 base 为 2^64，in 为一个大整数。
+ * 主要调用 barrett_2powN_recursive 函数。
+ */
+inline lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out) {
+    assert(in != nullptr && len > 0);
+    assert(N >= 2 * len);
 
-inline lamp_ui barrett_2powN(lamp_ptr in, lamp_ui len, lamp_ptr out) {
-    lamp_ui N = len;
-    return 0;
+    lamp_ui carry_flag = in[len - 1] & (in[len - 1] - 1);
+    for (lamp_ui i = 0; i < len - 1; i++) {
+        carry_flag |= in[i];
+    }
+    if (carry_flag == 0) {
+    /*
+     * carry_flag == 0 表示 in 为二的幂
+     */    
+        lamp_ui in_bits = len * 64 - lammp_clz(in[len - 1]);
+        lamp_ui out_bits = 64 * N + 1 - in_bits;
+        lamp_ui word_shr = out_bits / 64;
+        lamp_ui bit_shr = out_bits % 64;
+        std::fill(out, out + word_shr, 0);
+        out[word_shr] = 1ull << bit_shr;
+        return rlz(out, word_shr + 1);
+    }
+
+    lamp_ui offset = N - 2 * len;
+
+    lamp_ui _in_len = len + 2 + offset;
+    _internal_buffer<0> _in(_in_len + 1, 0);
+    std::copy(in, in + len, _in.data() + 2 + offset);
+    _internal_buffer<0> _out(_in_len + 2, 0);
+    lamp_ui _out_len = barrett_2powN_recursive(_in.data(), _in_len, _out.data());
+    lamp_ui one[1] = {1};
+    std::copy(_out.data() + 2, _out.data() + _out_len, out);
+    lamp_ui out_len = rlz(out, _out_len - 2);
+    abs_add_binary(out, _out_len, one, 1, out);
+    return rlz(out, out_len + 1);
 }
 
 

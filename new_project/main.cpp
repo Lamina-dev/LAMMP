@@ -11,6 +11,9 @@ using namespace lammp::Transform::number_theory;
 int main()
 {
     //test_knuth_div();
-    test_barrett_2powN_div_num();
+    int len = 10000000 / 64;
+    std::cout << test_mul(len, len) << std::endl;
+    test_barrett_2powN();
+    //test_barrett_2powN_div_num();
     return 0;
 }
