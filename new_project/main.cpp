@@ -10,10 +10,11 @@ using namespace lammp::Transform::number_theory;
 
 int main()
 {
-    //test_knuth_div();
-    int len = 10000000 / 64;
-    std::cout << test_mul(len, len) << std::endl;
-    test_barrett_2powN();
-    //test_barrett_2powN_div_num();
+    for (int i = 1; i < 50; i += 2) {
+        int N = 1000 * i;
+        int len = 500 * i;
+        std::cout << "N = " << N << ", len = " << len 
+            << ", time = " << (int)test_barrett_pre_div(N, len) << " us" << std::endl;
+    }
     return 0;
 }

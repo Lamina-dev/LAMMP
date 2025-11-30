@@ -20,6 +20,7 @@ double test_add(int len1, int len2);
 double test_sub(int len1, int len2);
 double test_mul(int len1, int len2);
 double test_div(int len1, int len2);
+double test_barrett_pre_div(int N, int len);
 double test_num2binary(int len);
 double test_binary2num(int len);
 void run_tests_and_save(const std::string& filename, const std::vector<int>& lengths, int repetitions = 5);
