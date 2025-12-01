@@ -112,7 +112,7 @@ double test_barrett_pre_div(int N, int len) {
 
     auto vec1 = generateRandomIntVector_(len);
     size_t res_len = N - len + 1;
-    std::vector<lamp_ui> res1(res_len, 0), res2(N + 1, 0);
+    std::vector<lamp_ui> res1(res_len + 1, 0), res2(N + 1, 0);
 
     auto start = std::chrono::high_resolution_clock::now();
     barrett_2powN(N, vec1.data(), len, res1.data());
@@ -690,43 +690,6 @@ void test_mod_div() {
 }
 
 void test_barrett_2powN_div_num() {
-    using namespace lammp;
-    using namespace lammp::Arithmetic;
-
-    size_t len = 76;
-    size_t _len = len * 2;
-    size_t res_len = _len - len + 1;
-    size_t vec2_len = len + 2;
-    size_t res2_len = vec2_len + 1;
-    std::vector<lamp_ui> vec1 = generateRandomIntVector_(len), vec2(vec2_len, 0);
-    std::vector<lamp_ui> res1(res_len, 0), res2(res2_len, 0), res3(_len + 1 + 1, 0), res4(_len + 1 + 1, 0);
-    
-    std::copy(vec1.begin(), vec1.end(), vec2.begin() + 2);
-    
-
-
-    auto start = std::chrono::high_resolution_clock::now();
-    res2_len = barrett_2powN_recursive(vec2.data(), vec2_len, res2.data());
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "barrett_2powN_div_num time: " << duration.count() << " us" << std::endl;
-
-    std::copy(res2.begin() + 2, res2.begin() + res2_len, res1.begin());
-
-    lamp_ui res1_len = res2_len - 2;
-    abs_mul64(vec1.data(), len, res1.data(), res1_len, res3.data());
-    size_t res3_len = rlz(res2.data(), get_mul_len(res2_len - 2, len));
-    res3_len += 0;
-    std::vector<lamp_ui> one(1, 1);
-    abs_add_binary(res1.data(), res1_len, one.data(), 1, res4.data());
-    size_t res4_len = rlz(res4.data(), res1_len + 1);
-
-    abs_mul64(res4.data(), res4_len, vec1.data(), len, res4.data());
-    res4_len = rlz(res4.data(), get_mul_len(res4_len, len));
-    for (size_t i = 0; i < res4_len; i++) {
-        std::cout << i << ": " << res3[i] << " " << res4[i] << std::endl;
-    }
-    std::cout << std::endl;
 
     return;
 }
@@ -735,14 +698,14 @@ void test_barrett_2powN() {
     using namespace lammp;
     using namespace lammp::Arithmetic;
 
-    size_t len = 78125;
+    size_t len = 75;
     size_t N = len * 3;
-    auto vec1 = generateRandomIntVector_(len);
+    std::vector<lamp_ui> vec1 = generateRandomIntVector_(len);
     size_t res_len = N - len + 1;
-    std::vector<lamp_ui> res1(res_len, 0), res2(N + 1, 0);
+    std::vector<lamp_ui> res1(res_len + 1, 0), res2(N + 2, 0);
 
     auto start = std::chrono::high_resolution_clock::now();
-    barrett_2powN(N, vec1.data(), len, res1.data());
+    res_len = barrett_2powN(N, vec1.data(), len, res1.data());
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "barrett_2powN time: " << duration.count() << " us" << std::endl;

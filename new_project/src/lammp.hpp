@@ -2212,7 +2212,7 @@ constexpr bool abs_add_half_base(
 constexpr void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {
     bool carry = abs_add_binary_half(a, len_a, b, len_b, sum);
     if (carry) {
-        sum[std::max(len_a, len_b)] = carry;
+        sum[std::max(len_a, len_b)] = (lamp_ui)carry;
     }
 }
 
@@ -3111,20 +3111,19 @@ inline void abs_div_knuth(
         lamp_si sign = abs_compare(_dividend.data(), _dividend_len, in, len);
         if (sign > 0) {
             _dividend_i -= 1;
-            lamp_si sub_flag = abs_difference_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
-                                                     _dividend.data() + i);
-            assert(sub_flag == 1);
+            lamp_si sub_flag = abs_sub_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
+                                              _dividend.data() + i);
+            assert(sub_flag == 0);
             _dividend_len = rlz(_dividend.data(), _dividend_len);
             sign = abs_compare(_dividend.data(), _dividend_len, in, len);
             if (sign > 0) {
-                _dividend_i -= 1;
-                sub_flag = abs_difference_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
-                                                 _dividend.data() + i);
-                assert(sub_flag == 1);
+                sub_flag = abs_sub_binary(_dividend.data() + i, _dividend_len - i, divisor, divisor_len,
+                                          _dividend.data() + i);
+                assert(sub_flag == 0);
             }
         }
-        lamp_si sus_flag = abs_difference_binary(in + i, len - i, _dividend.data() + i, _dividend_len - i, in + i);
-        assert(sus_flag >= 0);
+        lamp_si sus_flag = abs_sub_binary(in + i, len - i, _dividend.data() + i, _dividend_len - i, in + i);
+        assert(sus_flag == 0);
         out[i + 1] = (_dividend_i.high64() == 0) ? out[i + 1] : _dividend_i.high64();
         out[i] = _dividend_i.low64();
         len = rlz(in, len);
@@ -3135,9 +3134,6 @@ inline void abs_div_knuth(
     }
 }
 
-/*
- 当 len == 3时， out 需要额外一个长度
- */
 inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     using _uint192 = lammp::Transform::number_theory::_uint192;
     assert(in != nullptr && len > 0);
@@ -3165,31 +3161,65 @@ inline lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out) {
     lamp_ui _len = len / 2 + 1;
     lamp_ui rem_len = len - _len;
 
-    _internal_buffer<0> q_hat(len + 2, 0); /* q_hat 长度应于 out 长度一致，同时必须多分配一个 */
-    lamp_ui q_hat_len = barrett_2powN_recursive(in + rem_len, _len, q_hat.data() + rem_len);
-    q_hat_len += rem_len;
+    _internal_buffer<0> q_hat(_len + 2, 0); /* q_hat 减去了 rem_len，同时必须多分配一个 */
+    lamp_ui q_hat_len = barrett_2powN_recursive(in + rem_len, _len, q_hat.data());
 
-    lamp_ui _2len = 2 * len, _2_powN_len = _2len + len + 1;
-    /* q_hat 多分配一个， 相应的 _2_powN 和 _q_mul_in 也要多分配一个 */
-    _internal_buffer<0> _2_powN(_2_powN_len + 1, 0), _q_mul_in(q_hat_len + len + 1, 0);
-    _2_powN.set(_2len, 2);
+    lamp_ui q_hat_sqr_in_len = get_mul_len(q_hat_len * 2, len);
+    _internal_buffer<0> q_hat_sqr_in(q_hat_sqr_in_len + 1, 0);
+    abs_mul64(q_hat.data(), q_hat_len, q_hat.data(), q_hat_len, q_hat_sqr_in.data());
+    abs_mul64(q_hat_sqr_in.data(), 2 * q_hat_len, in, len, q_hat_sqr_in.data());
+    q_hat_sqr_in_len = rlz(q_hat_sqr_in.data(), q_hat_sqr_in_len);
+    /*
+    x = q * ( 2 * B^2N - q * x ) ./ B^2N
+    x = 2 * q - q * q * x / B^2N
+    */
 
-    abs_mul64(q_hat.data(), q_hat_len, in, len, _q_mul_in.data());
-    lamp_ui _q_mul_in_len = rlz(_q_mul_in.data(), len + q_hat_len);
-    lamp_si suss = abs_difference_binary(_2_powN.data(), _2len + 1, _q_mul_in.data(), _q_mul_in_len, _2_powN.data());
+    /*
+    q_hat:
+
+                   data         data + q_hat_len
+    |----rem_len----|----_len + 1-----|
+    +---------------+-----------------+
+    | 0000000000000 |ttttttttttttttttt|
+    +---------------+-----------------+
+
+    q_hat_sqr_in:
+                                    data              data + q_hat_sqr_in_len
+    |----rem_len----|----rem_len----|-----2 * q_hat_len + len-----|
+    +---------------+---------------+-----------------------------+
+    | 0000000000000 | 0000000000000 |aaaaaaaaaaaaaaaaaaaaaaaaaaaaa|
+    +---------------+---------------+----+------------+-----------+
+    |                  delete            |    copy    |    diff   |
+    +------------------------------------+------------+-----------+
+                                         |            | 
+                            data + 2*N-2*rem_len  data + 2*N-rem_len  
+
+    out:  2 * q_hat - q_hat * q_hat * x / B^2N
+
+    |---- rem_len ----|---- out_len - rem_len -----|
+    +-----------------+----------------------------+
+    |aaaaaaaaaaaaaaaaa|         2t - a             |
+    +-----------------+----------------------------+
+
+    */
+    lamp_ui _2len = len << 1, diff_len = q_hat_sqr_in_len - _2len + rem_len;
+    lshift_in_word(q_hat.data(), q_hat_len, q_hat.data(), 1);
+    assert(q_hat_len + 1 <= q_hat.capacity());
+    q_hat_len = rlz(q_hat.data(), q_hat_len + 1);
+    std::copy(q_hat_sqr_in.data() + _2len - 2 * rem_len, q_hat_sqr_in.data() + _2len - rem_len, out);
+    lamp_si suss = abs_sub_binary(q_hat.data(), q_hat_len, q_hat_sqr_in.data() + _2len - rem_len, diff_len,
+                                  out + rem_len);
     assert(suss >= 0);
-    _2_powN_len = rlz(_2_powN.data(), _2len + 1);
-    abs_mul64(q_hat.data(), q_hat_len, _2_powN.data(), _2_powN_len, _2_powN.data());
-    _2_powN_len = rlz(_2_powN.data(), get_mul_len(q_hat_len, _2_powN_len));
-    std::copy(_2_powN.data() + _2len, _2_powN.data() + _2_powN_len, out);
-    return rlz(out, _2_powN_len - _2len);
+    lamp_ui out_len = rlz(out, len + 1);
+    return out_len;
 }
+
 /*
  * @brief 计算 ceil(base^N / in)，使用牛顿迭代法
  * @param N 指数
  * @param in 被除数
  * @param len 被除数的长度
- * @param out 商的输出数组，长度至少 N + 1 - len
+ * @param out 商的输出数组，长度至少 N + 1 - len + 1
  * @return 商的长度
  * @details
  * 该函数计算 base^N / in，其中 base 为 2^64，in 为一个大整数。
@@ -3221,12 +3251,16 @@ inline lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out) 
     lamp_ui _in_len = len + 2 + offset;
     _internal_buffer<0> _in(_in_len + 1, 0);
     std::copy(in, in + len, _in.data() + 2 + offset);
-    _internal_buffer<0> _out(_in_len + 2, 0);
+    _internal_buffer<0> _out(_in_len + 1, 0);
     lamp_ui _out_len = barrett_2powN_recursive(_in.data(), _in_len, _out.data());
     lamp_ui one[1] = {1};
     std::copy(_out.data() + 2, _out.data() + _out_len, out);
     lamp_ui out_len = rlz(out, _out_len - 2);
-    abs_add_binary(out, _out_len, one, 1, out);
+    bool carry = abs_add_binary_half(out, out_len, one, 1, out);
+    if (carry) {
+        out[out_len] = carry;
+    }
+    //abs_add_binary(out, _out_len, one, 1, out);
     return rlz(out, out_len + 1);
 }
 
