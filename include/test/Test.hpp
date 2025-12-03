@@ -1,3 +1,22 @@
+/*
+ * [LAMMP]
+ * Copyright (C) [2025] [HJimmyK/LAMINA]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
@@ -8,7 +27,7 @@
 #include <string>
 #include <vector>
 
-#include "src/lammp.hpp"
+#include "../lammp/lammp.hpp"
 
 bool is_writable(const std::filesystem::path& p);
 
@@ -31,7 +50,6 @@ void test_mul_192();
 inline void mul64x64to128_buildin(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
 void test_mod_div();
 
-void test_barrett_2powN_div_num();
 void test_barrett_2powN();
 void test_knuth_div();
 
