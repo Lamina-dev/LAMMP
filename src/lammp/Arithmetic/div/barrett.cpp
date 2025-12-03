@@ -18,6 +18,7 @@
 
 
 #include "../../../../include/lammp/lammp.hpp"
+#include "../../../../include/lammp/uint192.hpp"
 
 namespace lammp::Arithmetic {
 

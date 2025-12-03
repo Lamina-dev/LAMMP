@@ -17,6 +17,7 @@
  */
 
 #include "../../../../include/lammp/lammp.hpp"
+#include "../../../../include/lammp/base_cal.hpp"
 
 namespace lammp::Arithmetic::Numeral {
 

@@ -16,6 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "../../include/test/Test.hpp"
+
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
@@ -26,8 +28,9 @@
 #include <string>
 #include <vector>
 
-#include "../../include/test/Test.hpp"
 #include "../../include/lammp/lammp.hpp"
+#include "../../include/lammp/uint192.hpp"
+#include "../../include/lammp/num_theo.hpp"
 
 bool is_writable(const std::filesystem::path& p) {
     std::filesystem::perms perm = std::filesystem::status(p).permissions();
