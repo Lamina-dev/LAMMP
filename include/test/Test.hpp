@@ -8,7 +8,7 @@
 #include <string>
 #include <vector>
 
-#include <lammp/lammp.hpp>
+#include "../lammp/lammp.hpp"
 
 bool is_writable(const std::filesystem::path& p);
 

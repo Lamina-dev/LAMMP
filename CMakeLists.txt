@@ -12,10 +12,10 @@ if(MINGW)
     add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
 endif()
 
-include_directories(
-    ${PROJECT_SOURCE_DIR}/include  # 已包含 include/，无需修改
-    ${PROJECT_SOURCE_DIR}/src/lammp
-)
+# include_directories(
+#     ${PROJECT_SOURCE_DIR}/include  # 已包含 include/，无需修改
+#     ${PROJECT_SOURCE_DIR}/src/lammp
+# )
 
 # 修正1：仅收集核心库源码（排除 test）
 file(GLOB_RECURSE LAMMP_SOURCES

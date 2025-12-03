@@ -107,8 +107,8 @@ static inline void umul128_to_256(uint64_t a_high, uint64_t a_low, uint64_t b_hi
 
 };  // namespace lammp
 
-#include "../../src/lammp/bits/bits.inl"
-#include "../../src/lammp/bits/carry.inl"
-#include "../../src/lammp/bits/u128.inl"
+#include "../../src/lammp/base_cal/bits.inl"
+#include "../../src/lammp/base_cal/carry.inl"
+#include "../../src/lammp/base_cal/u128.inl"
 
 #endif // __LAMMP_BASE_CAL_HPP__

@@ -28,10 +28,33 @@
 #endif
 
 namespace lammp {
+    
+// 默认分配器
 class _default_allocator {
    public:
-    static void* allocate(size_t size, size_t alignment);
-    static void deallocate(void* ptr);
+    static void* allocate(size_t size, size_t alignment) {
+#ifdef _ISOC11_SOURCE
+        return aligned_alloc(alignment, size);
+#else
+#ifdef _WIN32
+        return _aligned_malloc(size, alignment);
+#else
+        void* ptr = nullptr;
+        if (posix_memalign(&ptr, alignment, size) == 0) {
+            return ptr;
+        }
+        return nullptr;
+#endif
+#endif
+    }
+
+    static void deallocate(void* ptr) {
+#ifdef _WIN32
+        _aligned_free(ptr);
+#else
+        free(ptr);
+#endif
+    }
 };
 
 // 主模板 - 适用于 StackCapacity > 0 的情况

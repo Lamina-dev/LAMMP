@@ -16,228 +16,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-/*
-MIT License
-
-Copyright (c) 2024-2050 Twilight-Dream & With-Sky & HJimmyK
-
-https://github.com/Twilight-Dream-Of-Magic/
-https://github.com/With-Sky
-https://github.com/HJimmyK
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
 #ifndef __LAMMP_HPP__
 #define __LAMMP_HPP__
 
 #include <math.h>
 
-#include <array>
 #include <cassert>
-#include <cstddef>
-#include <cstdint>
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
 #include <memory>
 #include <new>
-#include <string>
 #include <type_traits>
-#include <utility>
 #include <vector>
 #include "alloc.hpp"
-#include "integer.hpp"
+#include "uint192.hpp"
+#include "spe_int.hpp"
 #include "base_cal.hpp"
-
+#include "num_theo.hpp"
 
 namespace lammp {
-
-
-namespace Transform {
-namespace number_theory {
-
-constexpr uint64_t MOD0 = 2485986994308513793ull, ROOT0 = 5ull;
-constexpr uint64_t MOD1 = 1945555039024054273ull, ROOT1 = 5ull;
-constexpr uint64_t MOD2 = 4179340454199820289ull, ROOT2 = 3ull;
-constexpr uint64_t MOD3 = 754974721ull, ROOT3 = 11ull;
-constexpr uint64_t MOD4 = 469762049ull, ROOT4 = 3ull;
-constexpr uint64_t MOD5 = 3489660929ull, ROOT5 = 3ull;
-constexpr uint64_t MOD6 = 3221225473ull, ROOT6 = 5ull;
-
-
-template <typename Int128Type>
-constexpr uint64_t high64(const Int128Type& n) {
-    return n >> 64;
-}
-constexpr uint64_t high64(const _uint128& n) { return n.high64(); }
-
-#ifdef UINT128T
-using uint128_default = __uint128_t;
-#else
-using uint128_default = _uint128;
-#endif
-
-
-template <typename IntType>
-constexpr bool check_inv(uint64_t n, uint64_t n_inv, uint64_t mod);
-
-template <typename ModInt1, typename ModInt2, typename ModInt3>
-inline _uint192 crt3(ModInt1 n1, ModInt2 n2, ModInt3 n3);
-
-namespace SplitRadix {
-
-template <typename T>
-inline void transform2(T& sum, T& diff);
-
-template <uint64_t ROOT, typename ModIntType>
-inline ModIntType mul_w41(ModIntType n);
-
-template <uint64_t ROOT, typename ModIntType>
-inline void dit_butterfly244(ModIntType& in_out0, ModIntType& in_out1, ModIntType& in_out2, ModIntType& in_out3);
-
-template <uint64_t ROOT, typename ModIntType>
-inline void dif_butterfly244(ModIntType& in_out0, ModIntType& in_out1, ModIntType& in_out2, ModIntType& in_out3);
-
-template <typename ModIntType>
-inline void dit_butterfly2(ModIntType& in_out0, ModIntType& in_out1, const ModIntType& omega);
-
-template <typename ModIntType>
-inline void dif_butterfly2(ModIntType& in_out0, ModIntType& in_out1, const ModIntType& omega);
-
-template <size_t MAX_LEN, uint64_t ROOT, typename ModIntType>
-struct NTTShort {
-    static constexpr size_t NTT_LEN = MAX_LEN;
-    static constexpr int LOG_LEN = lammp_log2(NTT_LEN);
-    struct TableType {
-        std::array<ModIntType, NTT_LEN> omega_table;
-        TableType();
-        constexpr ModIntType& operator[](size_t i);
-        constexpr const ModIntType& operator[](size_t i) const;
-        constexpr const ModIntType* getOmegaIt(size_t len) const;
-    };
-
-    static TableType table;
-
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <size_t LEN, uint64_t ROOT, typename ModIntType>
-typename NTTShort<LEN, ROOT, ModIntType>::TableType NTTShort<LEN, ROOT, ModIntType>::table;
-template <size_t LEN, uint64_t ROOT, typename ModIntType>
-constexpr size_t NTTShort<LEN, ROOT, ModIntType>::NTT_LEN;
-template <size_t LEN, uint64_t ROOT, typename ModIntType>
-constexpr int NTTShort<LEN, ROOT, ModIntType>::LOG_LEN;
-
-template <uint64_t ROOT, typename ModIntType>
-struct NTTShort<0, ROOT, ModIntType> {
-    static void dit(ModIntType in_out[]);
-    static void dif(ModIntType in_out[]);
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <uint64_t ROOT, typename ModIntType>
-struct NTTShort<1, ROOT, ModIntType> {
-    static void dit(ModIntType in_out[]);
-    static void dif(ModIntType in_out[]);
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <uint64_t ROOT, typename ModIntType>
-struct NTTShort<2, ROOT, ModIntType> {
-    static void dit(ModIntType in_out[]);
-    static void dif(ModIntType in_out[]);
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <uint64_t ROOT, typename ModIntType>
-struct NTTShort<4, ROOT, ModIntType> {
-    static void dit(ModIntType in_out[]);
-    static void dif(ModIntType in_out[]);
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <uint64_t ROOT, typename ModIntType>
-struct NTTShort<8, ROOT, ModIntType> {
-    static void dit(ModIntType in_out[]);
-    static void dif(ModIntType in_out[]);
-    static void dit(ModIntType in_out[], size_t len);
-    static void dif(ModIntType in_out[], size_t len);
-};
-
-template <uint64_t MOD, uint64_t ROOT, typename Int128Type = uint128_default>
-struct NTT {
-    static constexpr uint64_t mod();
-    static constexpr uint64_t root();
-    static constexpr uint64_t rootInv();
-    static_assert(root() < mod(), "ROOT must be smaller than MOD");
-    static_assert(check_inv<Int128Type>(root(), rootInv(), mod()), "IROOT * ROOT % MOD must be 1");
-    static constexpr int MOD_BITS = lammp_log2(mod()) + 1;
-    static constexpr int MAX_LOG_LEN = lammp_ctz(mod() - 1);
-    static constexpr size_t getMaxLen();
-    static constexpr size_t NTT_MAX_LEN = getMaxLen();
-
-    using INTT = NTT<mod(), rootInv(), Int128Type>;
-    using ModInt64Type = MontInt64Lazy<MOD, Int128Type>;
-    using ModIntType = ModInt64Type;
-    using IntType = typename ModIntType::IntType;
-
-    static constexpr size_t L2_BYTE = size_t(1) << 20;
-    static constexpr size_t LONG_THRESHOLD = std::min(L2_BYTE / sizeof(ModIntType), NTT_MAX_LEN);
-    using NTTTemplate = NTTShort<LONG_THRESHOLD, root(), ModIntType>;
-
-    static void dit244(ModIntType in_out[], size_t ntt_len);
-    static void dif244(ModIntType in_out[], size_t ntt_len);
-    static void convolution(ModIntType in1[], ModIntType in2[], ModIntType out[], size_t ntt_len, bool normlize = true);
-
-    static void convolutionRecursion(ModIntType in1[],
-                                     ModIntType in2[],
-                                     ModIntType out[],
-                                     size_t ntt_len,
-                                     bool normlize = true);
-    static void convolutionRecursion_rep(const ModIntType in1[],
-                                         ModIntType in2[],
-                                         ModIntType out[],
-                                         size_t ntt_len,
-                                         bool normlize = true);
-};
-
-template <uint64_t MOD, uint64_t ROOT, typename Int128Type>
-constexpr int NTT<MOD, ROOT, Int128Type>::MOD_BITS;
-template <uint64_t MOD, uint64_t ROOT, typename Int128Type>
-constexpr int NTT<MOD, ROOT, Int128Type>::MAX_LOG_LEN;
-template <uint64_t MOD, uint64_t ROOT, typename Int128Type>
-constexpr size_t NTT<MOD, ROOT, Int128Type>::NTT_MAX_LEN;
-};  // namespace SplitRadix
-
-using NTT0 = SplitRadix::NTT<MOD0, ROOT0>;
-using NTT1 = SplitRadix::NTT<MOD1, ROOT1>;
-using NTT2 = SplitRadix::NTT<MOD2, ROOT2>;
-
-};  // namespace number_theory
-};  // namespace Transform
-
 namespace Arithmetic {
 typedef uint64_t lamp_ui;
 typedef uint64_t* lamp_ptr;
@@ -245,51 +42,51 @@ typedef int64_t lamp_si;
 
 class lampz {
    protected:
-    lamp_si _len;
-    _internal_buffer<0> _lamp_data;
-
+    lamp_si _len;                   /* 绝对值表示大整数的非前导零长度，负值即代表为负数 */
+    _internal_buffer<0> _lamp_data; /*数组缓冲区*/
    public:
-    lamp_ptr get_ptr();
-    lamp_ui get_len() const;
-    lamp_si get_sign() const;
-};
+    lamp_ptr get_ptr() { return _lamp_data.data(); }
+    lamp_ui get_len() const { return std::abs(_len); }
+    lamp_si get_sign() const { return _len < 0 ? -1 : 1; }
+};  // class lampz
 
 constexpr lamp_ui rlz(const lamp_ptr array, lamp_ui length);
 inline lamp_ui get_add_len(lamp_ui l_len, lamp_ui r_len);
 inline lamp_ui get_sub_len(lamp_ui l_len, lamp_ui r_len);
 inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len);
 inline lamp_ui get_div_len(lamp_ui l_len, lamp_ui r_len);
+
 inline void set_bit(lamp_ptr in_out, lamp_ui len, lamp_ui bit_pos, bool value = true);
 inline void set_bit(lamp_ptr in_out, lamp_ui len, lamp_ui word_pos, lamp_ui bit_pos, bool value = true);
 inline bool get_bit(const lamp_ptr in, lamp_ui len, lamp_ui bit_pos);
 inline lamp_ui bit_length(lamp_ptr in, lamp_ui len);
 
-constexpr lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
-constexpr void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
-constexpr void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
-constexpr void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
-constexpr void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
+lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
+void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
+void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
+void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
+void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
 
-constexpr bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
-constexpr bool abs_add_half_base(lamp_ptr a,
+bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
+bool abs_add_half_base(lamp_ptr a,
                                  lamp_ui len_a,
                                  lamp_ptr b,
                                  lamp_ui len_b,
                                  lamp_ptr sum,
                                  const lamp_ui base_num);
-constexpr void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
-constexpr void abs_add_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, lamp_ui base_num);
-constexpr bool abs_sub_binary(lamp_ptr a,
+void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
+void abs_add_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, lamp_ui base_num);
+bool abs_sub_binary(lamp_ptr a,
                               lamp_ui len_a,
                               lamp_ptr b,
                               lamp_ui len_b,
                               lamp_ptr diff,
                               bool assign_borow = false);
-constexpr bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_ptr diff);
+bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_ptr diff);
 
-[[nodiscard]] constexpr auto abs_compare(const lamp_ptr in1, const lamp_ptr in2, lamp_ui len);
-[[nodiscard]] constexpr int abs_compare(const lamp_ptr in1, lamp_ui len1, const lamp_ptr in2, lamp_ui len2);
-[[nodiscard]] constexpr lamp_si abs_difference_binary(lamp_ptr a,
+[[nodiscard]] auto abs_compare(const lamp_ptr in1, const lamp_ptr in2, lamp_ui len);
+[[nodiscard]] int abs_compare(const lamp_ptr in1, lamp_ui len1, const lamp_ptr in2, lamp_ui len2);
+[[nodiscard]] lamp_si abs_difference_binary(lamp_ptr a,
                                                       lamp_ui len1,
                                                       lamp_ptr b,
                                                       lamp_ui len2,
@@ -346,22 +143,7 @@ void abs_mul64(lamp_ptr in1,
                       lamp_ptr work_begin = nullptr,
                       lamp_ptr work_end = nullptr);
 
-template <typename NumTy, typename ProdTy>
-class DivSupporter {
-   private:
-    NumTy divisor = 0;
-    NumTy inv = 0;
-    int shift = 0, shift1 = 0, shift2 = 0;
-    enum : int { NUM_BITS = sizeof(NumTy) * CHAR_BIT };
-
-   public:
-    constexpr DivSupporter(NumTy divisor_in);
-    NumTy divMod(ProdTy& dividend) const;
-    void prodDivMod(NumTy a, NumTy b, NumTy& quot, NumTy& rem) const;
-    NumTy div(ProdTy dividend) const;
-    NumTy mod(ProdTy dividend) const;
-    static constexpr NumTy getInv(NumTy divisor, int& leading_zero);
-};
+#include "../../src/lammp/Arithmetic/div/div_supp.inl"
 
 lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor);
 
@@ -399,26 +181,7 @@ constexpr double table2[35] = {
     1.025114624994631e+00, 1.010581620377160e+00, 1.073744206698002e+00, 1.060126912180660e+00, 1.047365186724249e+00,
     1.039781450100194e+00, 1.031607485958778e+00};
 
-struct BaseInfo {
-    lamp_ui base_num;
-    lamp_ui base_len;
-    double base_d;
-    BaseInfo(lamp_ui base);
-    void base_d_inv();
-};
-
-template <lamp_ui Base>
-struct ShortBaseInfo {
-    static_assert(Base >= 2 && Base <= 36, "Base must be in [2, 36]");
-    static constexpr lamp_ui index = Base - 2;
-    static constexpr lamp_ui base_num = table1[index][0];
-    static constexpr lamp_ui base_len = table1[index][1];
-    static constexpr double base_d = table2[index];
-    static constexpr double base_d_inv();
-};
-};  // namespace BaseTable
-
-
+};  // namespace BaseTable 
 std::string to_string_base(lamp_ui num, const lamp_ui base, const lamp_ui base_len);
 
 lamp_ui num2base_classic(lamp_ptr in, lamp_ui len, const lamp_ui base_num, lamp_ptr res);
@@ -445,8 +208,13 @@ typedef struct base_index_node {
     base_index_node* front;
     base_index_node* back;
     _internal_buffer<0> base_index;
-
-    base_index_node(lamp_ui _index, double base_d);
+    base_index_node(lamp_ui _index, double base_d) {
+        index = _index;
+        length = get_buffer_size(_index, base_d);
+        base_index.resize(length);
+        front = nullptr;
+        back = nullptr;
+    }
 }* _2pow64_index_list;
 
 typedef struct base_index_node* _base_index_list;
@@ -469,7 +237,7 @@ lamp_ui base_num_recursive_core(lamp_ptr in,
                                 lamp_ptr out,
                                 const _base_index_list list);
 
-_base_index_list create_base_index_list(lamp_ui max_index, const lamp_ui base_num, const double base_d);
+_base_index_list create_base_index_list(lamp_ui max_index, const double base_d, const lamp_ui base_num);
 
 _2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index);
 
@@ -481,5 +249,7 @@ lamp_ui base2num(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 };  // namespace Arithmetic
 };  // namespace lammp
 
+#include "../../src/lammp/getlen/getlen.inl"
+#include "../../src/lammp/Arithmetic/bit/bit.inl"
 
 #endif  // __LAMMP_HPP__
