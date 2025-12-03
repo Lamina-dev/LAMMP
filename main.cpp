@@ -1,11 +1,7 @@
-#include <iostream>
-#include <cstdint>
-#include <cassert>
-#include <chrono>
-#include <random>
+
 #include "./include/test/Test.hpp"
 
 int main() {
-    
+    test_mul_192();
     return 0;
 }

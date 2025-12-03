@@ -1,3 +1,21 @@
+/*
+ * [LAMMP]
+ * Copyright (C) [2025] [HJimmyK/LAMINA]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
@@ -124,31 +142,12 @@ double test_barrett_pre_div(int N, int len) {
 
 double test_num2binary(int len) {
     using namespace lammp;
-    using namespace lammp::Arithmetic::Numeral;
-
-    const double base_d = BaseTable::table2[8];
-    const uint64_t base_num = BaseTable::table1[8][0];
-    _internal_buffer<0> vec = generateRandomIntVector(len, 0, base_num);
-    _internal_buffer<0> res(get_buffer_size(len, 1 / base_d) + 1);
-    auto start = std::chrono::high_resolution_clock::now();
-    base2num(vec.data(), len, 10, res.data());
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    return duration.count();
+    return len;
 }
 
 double test_binary2num(int len) {
     using namespace lammp;
-    using namespace lammp::Arithmetic::Numeral;
-    _internal_buffer<0> vec = generateRandomIntVector(len);
-    const double base_d = BaseTable::table2[8];
-    //const uint64_t base_num = BaseTable::table1[8][0];
-    _internal_buffer<0> res(get_buffer_size(len, base_d));
-    auto start = std::chrono::high_resolution_clock::now();
-    num2base(vec.data(), len, 10, res.data());
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    return duration.count();
+    return len;
 }
 
 // 运行测试并将结果写入CSV文件

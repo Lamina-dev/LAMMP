@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if(MINGW)
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
     set(CMAKE_SHARED_LIBRARY_SUFFIX ".dll")
-    add_compile_options(-Wall -Wextra -Wpedantic -O2 -fPIC -m64)
+    add_compile_options(-Wall -Wextra -Wpedantic -O3 -fPIC -m64)
     add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
 endif()
 
