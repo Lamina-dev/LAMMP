@@ -55,6 +55,9 @@ SOFTWARE.
 
 namespace lammp {
 
+/*
+ * 并不能完整代替 __uint128_t，不要轻易使用，开销基本相当，但计算部分逻辑有所不同
+ */
 class _uint128 {
    private:
     uint64_t low, high;

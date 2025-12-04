@@ -32,22 +32,11 @@
 #include "inter_buffer.hpp"
 #include "base_cal.hpp"
 
-
 namespace lammp {
 namespace Arithmetic {
 typedef uint64_t lamp_ui;
 typedef uint64_t* lamp_ptr;
 typedef int64_t lamp_si;
-
-class lampz {
-   protected:
-    lamp_si _len;                   /* 绝对值表示大整数的非前导零长度，负值即代表为负数 */
-    _internal_buffer<0> _lamp_data; /*数组缓冲区*/
-   public:
-    lamp_ptr get_ptr() { return _lamp_data.data(); }
-    lamp_ui get_len() const { return std::abs(_len); }
-    lamp_si get_sign() const { return _len < 0 ? -1 : 1; }
-};  // class lampz
 
 constexpr lamp_ui rlz(const lamp_ptr array, lamp_ui length);
 inline lamp_ui get_add_len(lamp_ui l_len, lamp_ui r_len);
@@ -139,7 +128,6 @@ lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 namespace Numeral {
 
-std::string to_string_base(lamp_ui num, const lamp_ui base, const lamp_ui base_len);
 
 lamp_ui num2base_classic(lamp_ptr in, lamp_ui len, const lamp_ui base_num, lamp_ptr res);
 
@@ -198,9 +186,9 @@ _base_index_list create_base_index_list(lamp_ui max_index, const double base_d, 
 
 _2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index);
 
-lamp_ui num2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
+lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 
-lamp_ui base2num(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
+lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 
 };  // namespace Numeral
 };  // namespace Arithmetic
