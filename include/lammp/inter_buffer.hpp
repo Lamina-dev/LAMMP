@@ -16,45 +16,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __LAMMP_ALLOC_HPP__
-#define __LAMMP_ALLOC_HPP__
+#ifndef __LAMMP_INTER_BUFFER_HPP__
+#define __LAMMP_INTER_BUFFER_HPP__
+#include "lampz.h"
+#include <cassert>
 #include <cstddef>
 #include <cstdint>
-#include <cstdlib> 
-#include <algorithm>
-#include <cassert>
-#ifdef _WIN32
-#include <malloc.h>
-#endif
 
 namespace lammp {
-    
+
 // 默认分配器
 class _default_allocator {
    public:
-    static void* allocate(size_t size, size_t alignment) {
-#ifdef _ISOC11_SOURCE
-        return aligned_alloc(alignment, size);
-#else
-#ifdef _WIN32
-        return _aligned_malloc(size, alignment);
-#else
-        void* ptr = nullptr;
-        if (posix_memalign(&ptr, alignment, size) == 0) {
-            return ptr;
-        }
-        return nullptr;
-#endif
-#endif
-    }
+    static void* allocate(size_t size, size_t alignment) { return LAMMP_ALLOC(alignment, size); }
 
-    static void deallocate(void* ptr) {
-#ifdef _WIN32
-        _aligned_free(ptr);
-#else
-        free(ptr);
-#endif
-    }
+    static void deallocate(void* ptr) { return LAMMP_FREE(ptr); }
 };
 
 // 主模板 - 适用于 StackCapacity > 0 的情况
@@ -333,4 +309,4 @@ class _internal_buffer<0, Alignment, Allocator> {
 };  // end define _internal_buffer<0, Alignment, Allocator>
 
 };  // namespace lammp
-#endif // __LAMMP_ALLOC_HPP__
+#endif  // __LAMMP_INTER_BUFFER_HPP__

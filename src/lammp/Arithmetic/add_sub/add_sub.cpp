@@ -85,9 +85,7 @@ bool abs_add_half_base(lamp_ptr a,
 // Binary absolute addtion a+b=sum, return the carry
 void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {
     bool carry = abs_add_binary_half(a, len_a, b, len_b, sum);
-    if (carry) {
-        sum[std::max(len_a, len_b)] = (lamp_ui)carry;
-    }
+    sum[std::max(len_a, len_b)] = (lamp_ui)carry;
 }
 
 void abs_add_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, lamp_ui base_num) {

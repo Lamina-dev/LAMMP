@@ -17,84 +17,14 @@
  */
 
 #include "../../../../include/lammp/lammp.hpp"
+#include "../../../../include/lammp/base_cal.hpp"
+#include "../../../../include/lammp/numeral_table.h"
 
 namespace lammp::Arithmetic::Numeral {
 
 namespace BaseTable {
 
-constexpr lamp_ui table1[35][2] = {
-    {9223372036854775808ull, 63ull},  {12157665459056928801ull, 40ull}, {4611686018427387904ull, 31ull},
-    {7450580596923828125ull, 27ull},  {4738381338321616896ull, 24ull},  {3909821048582988049ull, 22ull},
-    {9223372036854775808ull, 21ull},  {12157665459056928801ull, 20ull}, {10000000000000000000ull, 19ull},
-    {5559917313492231481ull, 18ull},  {2218611106740436992ull, 17ull},  {8650415919381337933ull, 17ull},
-    {2177953337809371136ull, 16ull},  {6568408355712890625ull, 16ull},  {1152921504606846976ull, 15ull},
-    {2862423051509815793ull, 15ull},  {6746640616477458432ull, 15ull},  {15181127029874798299ull, 15ull},
-    {1638400000000000000ull, 14ull},  {3243919932521508681ull, 14ull},  {6221821273427820544ull, 14ull},
-    {11592836324538749809ull, 14ull}, {876488338465357824ull, 13ull},   {1490116119384765625ull, 13ull},
-    {2481152873203736576ull, 13ull},  {4052555153018976267ull, 13ull},  {6502111422497947648ull, 13ull},
-    {10260628712958602189ull, 13ull}, {15943230000000000000ull, 13ull}, {787662783788549761ull, 12ull},
-    {1152921504606846976ull, 12ull},  {1667889514952984961ull, 12ull},  {2386420683693101056ull, 12ull},
-    {3379220508056640625ull, 12ull},  {4738381338321616896ull, 12ull}};
-constexpr double table2[35] = {
-    1.015873015873016e+00, 1.009487605714332e+00, 1.032258064516129e+00, 1.020862952470265e+00, 1.031607485958778e+00,
-    1.036239089768792e+00, 1.015873015873016e+00, 1.009487605714332e+00, 1.013995774868147e+00, 1.027786049130268e+00,
-    1.050138148333665e+00, 1.017367169608733e+00, 1.050598140148774e+00, 1.023832099239262e+00, 1.066666666666667e+00,
-    1.043842313037765e+00, 1.023199857357361e+00, 1.004411363697657e+00, 1.057728974444613e+00, 1.040778279757500e+00,
-    1.025114624994631e+00, 1.010581620377160e+00, 1.073744206698002e+00, 1.060126912180660e+00, 1.047365186724249e+00,
-    1.039781450100194e+00, 1.031607485958778e+00};
-
-struct BaseInfo {
-    lamp_ui base_num;
-    lamp_ui base_len;
-    double base_d;
-    BaseInfo(lamp_ui base) {
-        assert(base != 0 && base != 1);
-        if (base > 1 && base <= 36) {
-            base_num = table1[base - 2][0];
-            base_len = table1[base - 2][1];
-            base_d = table2[base - 2];
-            return;
-        } else {
-            lamp_ui t = 0xFFFFFFFFFFFFFFFFull;
-            base_len = 0;
-            while (t >= base) {  // 使用>=确保最后一次除法有效
-                t /= base;
-                base_len++;
-            }
-            /*
-            warning：使用pow函数计算base_num的幂，可能会导致溢出，因此使用乘法计算
-            */
-            base_num = 1;
-            for (lamp_ui i = 0; i < base_len; i++) base_num *= base;
-            base_d = double(64.0) / (base_len * std::log2(double(base)));
-            return;
-        }
-    }
-    void base_d_inv() { base_d = 1.0 / base_d; }
 };
-
-template <lamp_ui Base>
-struct ShortBaseInfo {
-    static_assert(Base >= 2 && Base <= 36, "Base must be in [2, 36]");
-    static constexpr lamp_ui index = Base - 2;
-    static constexpr lamp_ui base_num = table1[index][0];
-    static constexpr lamp_ui base_len = table1[index][1];
-    static constexpr double base_d = table2[index];
-    static constexpr double base_d_inv() { return 1.0 / base_d; }
-};
-};
-
-// 返回逆序的字符串，低位数字在前
-// 对于10进制以上的进制，使用大写字母A-Z，A表示10，B表示11，以此类推
-std::string to_string_base(lamp_ui num, const lamp_ui base, const lamp_ui base_len) {
-    std::string res(base_len, '0');
-    for (lamp_ui i = 0; i < base_len; ++i) {
-        num %= base;
-        res[i] = (num < 10) ? ('0' + num) : ('A' + num - 10);
-        num /= base;
-    }
-    return res;
-}
 
 // 将in数组表示的数从2^64进制转换为base_num进制，存储在res数组中，返回值为res的长度
 // in数组会被修改
@@ -385,7 +315,7 @@ _2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index) {
 /// @note
 ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
 ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
-lamp_ui num2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
+lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
     // 1. 分割策略：按 2 的幂次方长度分割
     //         每次处理的子部分长度都是 2^k（num_base_recursive_core会递归处理这部分），
     //         通过`63ull - hint_clz(current_len)` 计算当前最大可能的 2 的幂指数
@@ -495,7 +425,7 @@ lamp_ui num2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
 /// @note
 ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
 ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
-lamp_ui base2num(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
+lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
     BaseTable::BaseInfo info(base);
     info.base_d_inv();
     const lamp_ui max_len_base_index = 63ull - lammp_clz(len);
@@ -561,4 +491,6 @@ lamp_ui base2num(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
     assert(false);
     return 0;
 }
+
+
 };  // namespace Numeral

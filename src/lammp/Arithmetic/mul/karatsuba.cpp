@@ -45,6 +45,8 @@ SOFTWARE.
 */
 
 #include "../../../../include/lammp/lammp.hpp"
+#include "../../../../include/lammp/base_cal.hpp"
+#include "../../../../include/lammp/uint128.hpp"
 
 namespace lammp::Arithmetic {
 // Karatsuba 乘法

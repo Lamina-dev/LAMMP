@@ -28,27 +28,15 @@
 #include <new>
 #include <type_traits>
 #include <vector>
-#include "alloc.hpp"
-#include "uint192.hpp"
-#include "spe_int.hpp"
+
+#include "inter_buffer.hpp"
 #include "base_cal.hpp"
-#include "num_theo.hpp"
 
 namespace lammp {
 namespace Arithmetic {
 typedef uint64_t lamp_ui;
 typedef uint64_t* lamp_ptr;
 typedef int64_t lamp_si;
-
-class lampz {
-   protected:
-    lamp_si _len;                   /* 绝对值表示大整数的非前导零长度，负值即代表为负数 */
-    _internal_buffer<0> _lamp_data; /*数组缓冲区*/
-   public:
-    lamp_ptr get_ptr() { return _lamp_data.data(); }
-    lamp_ui get_len() const { return std::abs(_len); }
-    lamp_si get_sign() const { return _len < 0 ? -1 : 1; }
-};  // class lampz
 
 constexpr lamp_ui rlz(const lamp_ptr array, lamp_ui length);
 inline lamp_ui get_add_len(lamp_ui l_len, lamp_ui r_len);
@@ -68,30 +56,15 @@ void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
 void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
 
 bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
-bool abs_add_half_base(lamp_ptr a,
-                                 lamp_ui len_a,
-                                 lamp_ptr b,
-                                 lamp_ui len_b,
-                                 lamp_ptr sum,
-                                 const lamp_ui base_num);
+bool abs_add_half_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, const lamp_ui base_num);
 void abs_add_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
 void abs_add_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, lamp_ui base_num);
-bool abs_sub_binary(lamp_ptr a,
-                              lamp_ui len_a,
-                              lamp_ptr b,
-                              lamp_ui len_b,
-                              lamp_ptr diff,
-                              bool assign_borow = false);
+bool abs_sub_binary(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr diff, bool assign_borow = false);
 bool abs_sub_binary_num(lamp_ptr a, lamp_ui len_a, lamp_ui num, lamp_ptr diff);
 
 [[nodiscard]] auto abs_compare(const lamp_ptr in1, const lamp_ptr in2, lamp_ui len);
 [[nodiscard]] int abs_compare(const lamp_ptr in1, lamp_ui len1, const lamp_ptr in2, lamp_ui len2);
-[[nodiscard]] lamp_si abs_difference_binary(lamp_ptr a,
-                                                      lamp_ui len1,
-                                                      lamp_ptr b,
-                                                      lamp_ui len2,
-                                                      lamp_ptr diff);
-
+[[nodiscard]] lamp_si abs_difference_binary(lamp_ptr a, lamp_ui len1, lamp_ptr b, lamp_ui len2, lamp_ptr diff);
 
 lamp_ui abs_mul_add_num64_half(const lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui num_add, lamp_ui num_mul);
 
@@ -111,56 +84,50 @@ void abs_mul64_classic(lamp_ptr in1,
                        lamp_ptr work_end);
 
 void abs_mul64_karatsuba_buffered(lamp_ptr in1,
-                                         lamp_ui len1,
-                                         lamp_ptr in2,
-                                         lamp_ui len2,
-                                         lamp_ptr out,
-                                         lamp_ptr buffer_begin,
-                                         lamp_ptr buffer_end);
+                                  lamp_ui len1,
+                                  lamp_ptr in2,
+                                  lamp_ui len2,
+                                  lamp_ptr out,
+                                  lamp_ptr buffer_begin,
+                                  lamp_ptr buffer_end);
 void abs_mul64_karatsuba(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2, lamp_ptr out);
 void abs_sqr64_ntt(lamp_ptr in, lamp_ui len, lamp_ptr out);
 void abs_mul64_ntt(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2, lamp_ptr out);
 void abs_mul64_ntt_unbalanced(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2, lamp_ui M, lamp_ptr out);
 void abs_sqr64_ntt_base(lamp_ptr in, lamp_ui len, lamp_ptr out, const lamp_ui base_num);
-void abs_mul64_ntt_base(lamp_ptr in1,
-                               lamp_ui len1,
-                               lamp_ptr in2,
-                               lamp_ui len2,
-                               lamp_ptr out,
-                               const lamp_ui base_num);
+void abs_mul64_ntt_base(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2, lamp_ptr out, const lamp_ui base_num);
 void abs_mul64_balanced(lamp_ptr in1,
-                               lamp_ui len1,
-                               lamp_ptr in2,
-                               lamp_ui len2,
-                               lamp_ptr out,
-                               lamp_ptr work_begin = nullptr,
-                               lamp_ptr work_end = nullptr);
+                        lamp_ui len1,
+                        lamp_ptr in2,
+                        lamp_ui len2,
+                        lamp_ptr out,
+                        lamp_ptr work_begin = nullptr,
+                        lamp_ptr work_end = nullptr);
 void abs_mul64(lamp_ptr in1,
-                      lamp_ui len1,
-                      lamp_ptr in2,
-                      lamp_ui len2,
-                      lamp_ptr out,
-                      lamp_ptr work_begin = nullptr,
-                      lamp_ptr work_end = nullptr);
+               lamp_ui len1,
+               lamp_ptr in2,
+               lamp_ui len2,
+               lamp_ptr out,
+               lamp_ptr work_begin = nullptr,
+               lamp_ptr work_end = nullptr);
 
 #include "../../src/lammp/Arithmetic/div/div_supp.inl"
 
 lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor);
 
 void abs_div_knuth(lamp_ptr in,
-                          lamp_ui len,
-                          lamp_ptr divisor,
-                          lamp_ui divisor_len,
-                          lamp_ptr out,
-                          lamp_ptr remainder = nullptr);
+                   lamp_ui len,
+                   lamp_ptr divisor,
+                   lamp_ui divisor_len,
+                   lamp_ptr out,
+                   lamp_ptr remainder = nullptr);
 
 lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 namespace Numeral {
-    
-std::string to_string_base(lamp_ui num, const lamp_ui base, const lamp_ui base_len);
+
 
 lamp_ui num2base_classic(lamp_ptr in, lamp_ui len, const lamp_ui base_num, lamp_ptr res);
 
@@ -173,7 +140,7 @@ lamp_ui base_power_index_classic(const lamp_ui base_num, const lamp_ui index, la
 lamp_ui get_buffer_size(lamp_ui len, double base_d);
 
 void abs_mul2pow64_base(lamp_ptr in, lamp_ui len, const lamp_ui base_num);
- 
+
 void abs_mul_base(lamp_ptr in, lamp_ui len, const lamp_ui base_num);
 
 lamp_ui _2_64_power_index(const lamp_ui base_num, const lamp_ui index, lamp_ptr res, lamp_ui res_len);
@@ -219,15 +186,16 @@ _base_index_list create_base_index_list(lamp_ui max_index, const double base_d, 
 
 _2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index);
 
-lamp_ui num2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
+lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 
-lamp_ui base2num(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
+lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 
 };  // namespace Numeral
 };  // namespace Arithmetic
 };  // namespace lammp
 
-#include "../../src/lammp/getlen/getlen.inl"
 #include "../../src/lammp/Arithmetic/bit/bit.inl"
+#include "../../src/lammp/getlen/getlen.inl"
+
 
 #endif  // __LAMMP_HPP__
