@@ -18,7 +18,7 @@
 
 #ifndef __LAMMP_INTER_BUFFER_HPP__
 #define __LAMMP_INTER_BUFFER_HPP__
-#include "alloc.h"
+#include "lampz.h"
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
