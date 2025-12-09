@@ -1,3 +1,12 @@
+/*
+ * [LAMMP]
+ * Copyright (C) [2025] [HJimmyK/LAMINA]
+ *
+ * This program is a part of the LAMMP package.
+ * you can see more details about LAMMP at:
+ * <https://github.com/Lamina-dev/LAMMP>
+ */
+
 #ifndef __LAMMP_NUMERAL_TABLE_H__
 #define __LAMMP_NUMERAL_TABLE_H__
 

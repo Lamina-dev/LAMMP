@@ -2,18 +2,9 @@
  * [LAMMP]
  * Copyright (C) [2025] [HJimmyK/LAMINA]
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ * This program is a part of the LAMMP package.
+ * you can see more details about LAMMP at:
+ * <https://github.com/Lamina-dev/LAMMP>
  */
 
 /*
@@ -21,9 +12,7 @@ MIT License
 
 Copyright (c) 2024-2050 Twilight-Dream & With-Sky & HJimmyK
 
-https://github.com/Twilight-Dream-Of-Magic/
-https://github.com/With-Sky
-https://github.com/HJimmyK
+https://github.com/Twilight-Dream-Of-Magic/Easy-BigInteger
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
