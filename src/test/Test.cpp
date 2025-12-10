@@ -429,7 +429,7 @@ void test_div_128() {
     using namespace lammp::Transform;
     using namespace lammp::Transform::number_theory;
     size_t len = 1000000;
-    auto vec1 = generateRandomIntVector_(len, 0, 1000000);
+    auto vec1 = generateRandomIntVector_(len, 0, UINT32_MAX - 1);
     auto vec2 = generateRandomIntVector_(len, 0, UINT64_MAX);
     auto vec3 = generateRandomIntVector_(len, UINT32_MAX, UINT64_MAX);
     std::vector<uint64_t> res1(len), res2(len), res3(len), res4(len);
