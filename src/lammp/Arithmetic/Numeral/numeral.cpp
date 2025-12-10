@@ -339,22 +339,23 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
     //
     // 5. 终止条件：小规模使用经典算法 当剩余长度 <= MIN_LEN时，不再分割，直接调用 num2base_classic 处理。
 
-    BaseTable::BaseInfo info(base);
+    lamp_ui base_num = GET_BASE_NUM(base);
+    double base_d = GET_BASE_D(base);
     const lamp_ui max_len_2pow_index = 63ull - lammp_clz(len);
 
     if (len <= 2 * MIN_LEN) {
-        return num2base_classic(in, len, info.base_num, res);
+        return num2base_classic(in, len, base_num, res);
     }
-    _2pow64_index_list head = create_2pow64_index_list(1ull << max_len_2pow_index, info.base_num, info.base_d);
+    _2pow64_index_list head = create_2pow64_index_list(1ull << max_len_2pow_index, base_num, base_d);
     lamp_ptr current_in = in;
 
     lamp_ui pow_len = 0, res_len = 0;
-    _internal_buffer<0> base_pow(get_buffer_size(len, info.base_d), 0);
+    _internal_buffer<0> base_pow(get_buffer_size(len, base_d), 0);
 
     for (lamp_ui current_len = len; current_len > MIN_LEN;) {
         lamp_ui current_index = 63ull - lammp_clz(current_len);
         lamp_ui pri_len = 1ull << current_index;
-        lamp_ui buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
+        lamp_ui buffer_len = get_buffer_size(pri_len, base_d) + pow_len;
 
         _2pow64_index_list current_list = find_head(head, pri_len);
         assert(current_list != nullptr);
@@ -363,23 +364,23 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         // 计算 base_pow 并计算 buffer * base_pow => res
         if (pow_len == 0) {
             res_len =
-                num_base_recursive_core(current_in, pri_len, info.base_num, info.base_d, res, current_list->front);
+                num_base_recursive_core(current_in, pri_len, base_num, base_d, res, current_list->front);
             std::copy(current_list->base_index.begin(), current_list->base_index.end(), base_pow.begin());
             pow_len = current_list->length;
         } else {
             _internal_buffer<0> buffer(buffer_len, 0);
-            buffer_len = num_base_recursive_core(current_in, pri_len, info.base_num, info.base_d, buffer.data(),
+            buffer_len = num_base_recursive_core(current_in, pri_len, base_num, base_d, buffer.data(),
                                                  current_list->front);
             // ntt 只是权宜之计，目前没有适配的任意基数卡拉楚巴乘法
-            abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), info.base_num);
+            abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), base_num);
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));
-            abs_add_base(buffer.data(), buffer_len, res, res_len, res, info.base_num);
+            abs_add_base(buffer.data(), buffer_len, res, res_len, res, base_num);
             res_len = rlz(res, get_add_len(res_len, buffer_len));
 
             // 更新 base_pow
             // 同上上述，这里的 ntt 也只是权宜之计，没有适配的任意基数卡拉楚巴乘法
             abs_mul64_ntt_base(base_pow.data(), pow_len, current_list->base_index.data(), current_list->length,
-                               base_pow.data(), info.base_num);
+                               base_pow.data(), base_num);
             pow_len = rlz(base_pow.data(), get_mul_len(pow_len, current_list->length));
         }
 
@@ -391,14 +392,14 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         }
 
         if (current_len <= MIN_LEN) {
-            buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
+            buffer_len = get_buffer_size(pri_len, base_d) + pow_len;
             _internal_buffer<0> buffer(buffer_len, 0);
-            buffer_len = num2base_classic(current_in, current_len, info.base_num, buffer.data());
+            buffer_len = num2base_classic(current_in, current_len, base_num, buffer.data());
 
             // ntt 只是权宜之计，目前没有适配的任意基数卡拉楚巴乘法
-            abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), info.base_num);
+            abs_mul64_ntt_base(buffer.data(), buffer_len, base_pow.data(), pow_len, buffer.data(), base_num);
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));
-            abs_add_base(buffer.data(), buffer_len, res, res_len, res, info.base_num);
+            abs_add_base(buffer.data(), buffer_len, res, res_len, res, base_num);
             res_len = rlz(res, get_add_len(res_len, buffer_len));
             return res_len;
         }
@@ -417,23 +418,23 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
 ///  1. 该函数不会对 res 进行边界检查，调用者需要确保res有足够的空间来存储转换后的结果
 ///  2. 该函数会修改输入数组 in 的内容（正确计算后，应为全零），因此如果需要保留原始数据，调用者应在调用前进行备份
 lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) {
-    BaseTable::BaseInfo info(base);
-    info.base_d_inv();
+    lamp_ui base_num = GET_BASE_NUM(base);
+    double base_d = 1.0 / GET_BASE_D(base);
     const lamp_ui max_len_base_index = 63ull - lammp_clz(len);
 
     if (len <= 2 * MIN_LEN) {
-        return base2num_classic(in, len, info.base_num, res);
+        return base2num_classic(in, len, base_num, res);
     }
-    _base_index_list head = create_base_index_list(1ull << max_len_base_index, info.base_d, info.base_num);
+    _base_index_list head = create_base_index_list(1ull << max_len_base_index, base_d, base_num);
     lamp_ptr current_in = in;
 
     lamp_ui pow_len = 0, res_len = 0;
-    _internal_buffer<0> _2_64_pow(get_buffer_size(len, info.base_d), 0);
+    _internal_buffer<0> _2_64_pow(get_buffer_size(len, base_d), 0);
 
     for (lamp_ui current_len = len; current_len > MIN_LEN;) {
         lamp_ui current_index = 63ull - lammp_clz(current_len);
         lamp_ui pri_len = 1ull << current_index;
-        lamp_ui buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
+        lamp_ui buffer_len = get_buffer_size(pri_len, base_d) + pow_len;
 
         _base_index_list current_list = find_head(head, pri_len);
         assert(current_list != nullptr);
@@ -442,12 +443,12 @@ lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         // 计算 base_pow 并计算 buffer * base_pow => res
         if (pow_len == 0) {
             res_len =
-                base_num_recursive_core(current_in, pri_len, info.base_num, info.base_d, res, current_list->front);
+                base_num_recursive_core(current_in, pri_len, base_num, base_d, res, current_list->front);
             std::copy(current_list->base_index.begin(), current_list->base_index.end(), _2_64_pow.begin());
             pow_len = current_list->length;
         } else {
             _internal_buffer<0> buffer(buffer_len, 0);
-            buffer_len = base_num_recursive_core(current_in, pri_len, info.base_num, info.base_d, buffer.data(),
+            buffer_len = base_num_recursive_core(current_in, pri_len, base_num, base_d, buffer.data(),
                                                  current_list->front);
             abs_mul64(buffer.data(), buffer_len, _2_64_pow.data(), pow_len, buffer.data());
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));
@@ -468,9 +469,9 @@ lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         }
 
         if (current_len <= MIN_LEN) {
-            buffer_len = get_buffer_size(pri_len, info.base_d) + pow_len;
+            buffer_len = get_buffer_size(pri_len, base_d) + pow_len;
             _internal_buffer<0> buffer(buffer_len, 0);
-            buffer_len = base2num_classic(current_in, current_len, info.base_num, buffer.data());
+            buffer_len = base2num_classic(current_in, current_len, base_num, buffer.data());
 
             abs_mul64(buffer.data(), buffer_len, _2_64_pow.data(), pow_len, buffer.data());
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));

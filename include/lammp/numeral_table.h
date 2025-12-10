@@ -32,25 +32,14 @@ constexpr double table2[35] = {
     1.025114624994631e+00, 1.010581620377160e+00, 1.073744206698002e+00, 1.060126912180660e+00, 1.047365186724249e+00,
     1.039781450100194e+00, 1.031607485958778e+00};
 
-struct BaseInfo {
-    unsigned long long base_num;
-    unsigned long long base_len;
-    double base_d;
-    BaseInfo(unsigned long long base) {
-        if (base > 1 && base <= 36) {
-            base_num = table1[base - 2][0];
-            base_len = table1[base - 2][1];
-            base_d = table2[base - 2];
-            return;
-        } 
-        base_num = 0;
-        base_len = 0;
-        base_d = 0.0;
-    }
-    void base_d_inv() { base_d = 1.0 / base_d; }
-};
-
 };  // namespace lammp::Arithmetic::Numeral::BaseTble
 
+
+#define GET_BASE_LEN(base)                                                     \
+  lammp::Arithmetic::Numeral::BaseTable::table1[base - 2][1]
+#define GET_BASE_D(base)                                                       \
+  lammp::Arithmetic::Numeral::BaseTable::table2[base - 2]
+#define GET_BASE_NUM(base)                                                     \
+  lammp::Arithmetic::Numeral::BaseTable::table1[base - 2][0]
 
 #endif // __LAMMP_NUMERAL_TABLE_H__

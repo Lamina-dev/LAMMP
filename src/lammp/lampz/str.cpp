@@ -11,9 +11,6 @@
 #include "../../../include/lammp/lampz.h"
 #include "../../../include/lammp/numeral_table.h"
 
-#define GET_BASE_LEN(base) lammp::Arithmetic::Numeral::BaseTable::table1[base - 2][1]
-#define GET_BASE_D(base) lammp::Arithmetic::Numeral::BaseTable::table2[base - 2]
-
 void str_reverse(char* s) {
     if (s == NULL || *s == '\0') { 
         return;
@@ -47,13 +44,13 @@ lamp_ui lampz_to_str_len(const lampz_t z, size_t base) {
     } else {
         if (len <= 1) {
             res = GET_BASE_LEN(base);
-        } else if (len <= 2) {
+        } else if (len == 2) {
             res = 2 * GET_BASE_LEN(base);
         } else {
             res = ceil((double)len * double(LAMPUI_BITS) / log2(base)) + GET_BASE_LEN(base);
         }
     }
-    return res;
+    return res + 2; // 加上'\0'和'-'符号位
 }
 
 /*
