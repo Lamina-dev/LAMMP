@@ -747,4 +747,76 @@ void test_knuth_div() {
     return;
 }
 
+void test_div_128_support() {
+    using namespace lammp;
+
+    size_t len = 1000000;
+    const lamp_ui MOD_num[20] = {12738213ull,
+                                 8072ull,
+                                 987654321012345ull,
+                                 4294967295ull,
+                                 18446744073709551615ull,
+                                 777888999000111ull,
+                                 1024ull,
+                                 1230ull,
+                                 5678901234567890ull,
+                                 1234567890987654321ull,
+                                 8888888888888888ull,
+                                 9999999999999999999ull,
+                                 112ull,
+                                 65535ull,
+                                 4294967296ull,
+                                 789012345678901234ull,
+                                 3141592653589793ull,
+                                 2718281828459045ull,
+                                 112233445566778899ull,
+                                 5555555555555555555ull};
+    double time1[20], time2[20];
+    for (size_t index = 0; index < 20; index++) {
+        lamp_ui mod_num = MOD_num[index];
+        _64x64div64_t mod_div(mod_num);
+        std::vector<lamp_ui> high = generateRandomIntVector_(len, 0, mod_num - 1);
+        std::vector<lamp_ui> low = generateRandomIntVector_(len, 0, mod_num - 1);
+        std::vector<lamp_ui> res1(len, 0), res2(len, 0);
+        auto start = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < len; i++) {
+            lamp_ui div[2] = {low[i], high[i]};
+            res2[i] = mod_div.div(div);
+        }
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        time1[index] = duration.count();
+        start = std::chrono::high_resolution_clock::now();
+        for (size_t i = 0; i < len; i++) {
+            lamp_ui tmp = low[i];
+            res1[i] = div128by64to64(high[i], tmp, mod_num);
+        }
+        end = std::chrono::high_resolution_clock::now();
+        duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        time2[index] = duration.count();
+        for (size_t i = 0; i < len; i++) {
+            if (res1[i] != res2[i]) {
+                std::cout << "error: " << i << std::endl;
+                std::cout << "res1: " << res1[i] << std::endl;
+                std::cout << "res2: " << res2[i] << std::endl;
+                break;
+            }
+        }
+    }
+    const int COL1_WIDTH = 22;  
+    const int COL2_WIDTH = 12;  
+    const int COL3_WIDTH = 12; 
+
+    std::cout << std::left 
+              << std::setw(COL1_WIDTH) << "mod_num" << std::setw(COL2_WIDTH) << "time1(ns)" << std::setw(COL3_WIDTH)
+              << "time2(ns)" << std::endl;
+    std::cout << std::string(COL1_WIDTH + COL2_WIDTH + COL3_WIDTH, '-') << std::endl;
+
+    for (size_t index = 0; index < 20; index++) {
+        std::cout << std::left << std::setw(COL1_WIDTH) << MOD_num[index]  
+                  << std::setw(COL2_WIDTH) << time1[index]/1000.0                
+                  << std::setw(COL3_WIDTH) << time2[index]/1000.0                 
+                  << std::endl;
+    }
+}
 

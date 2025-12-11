@@ -33,6 +33,6 @@ int main() {
 }
 */
 int main() {
-    test_div_128();
+    test_div_128_support();
     return 0;
 }
