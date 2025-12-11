@@ -36,6 +36,7 @@ SOFTWARE.
 #ifndef __LAMMP_SPE_INT_HPP__
 #define __LAMMP_SPE_INT_HPP__
 #include <cstdint>
+//#include "base_cal.hpp"
 #include "uint128.hpp"
 
 namespace lammp {
@@ -139,6 +140,108 @@ class MontInt64Lazy {
         return redc(prod);
     }
 };  // class MontInt64Lazy
+
+class _64x64div64_t {
+#define _uint128_lshr(x, n)                                            \
+    do {                                                               \
+        (*((x) + 1)) = ((*(x)) >> (64 - (n))) | ((*((x) + 1)) << (n)); \
+        (*(x)) = (*(x)) << (n);                                        \
+    } while (0)
+
+#define _uint128_rshr(x, n)                                      \
+    do {                                                         \
+        (*(x)) = ((*(x)) >> (n)) | ((*((x) + 1)) << (64 - (n))); \
+        (*((x) + 1)) = (*((x) + 1)) >> (n);                      \
+    } while (0)
+
+#define _uint128_high(x) (*((x) + 1))
+
+#define _uint128_low(x) (*(x))
+
+#define _uint128_add(x, y)                                                      \
+    do {                                                                        \
+        (*(x)) = *(x) + *(y);                                                   \
+        (*((x) + 1)) = (*((x) + 1)) + (*((y) + 1)) + ((*(x)) < (*(y)) ? 1 : 0); \
+    } while (0)
+
+   private:
+    uint64_t divisor = 0;
+    uint64_t inv = 0;
+    int shift = 0, shift1 = 0, shift2 = 0;
+    enum : int { NUM_BITS = 64 };
+
+   public:
+    constexpr _64x64div64_t(uint64_t divisor_in) : divisor(divisor_in) {
+        inv = getInv(divisor, shift);
+        divisor <<= shift;
+        shift1 = shift / 2;
+        shift2 = shift - shift1;
+    }
+
+    uint64_t divMod(uint64_t* dividend) const {
+        assert(shift >= 0 && shift < 64);
+        _uint128_lshr(dividend, shift);
+        uint64_t r = _uint128_low(dividend);
+        uint64_t rej[2] = {0, 0};
+        mul64x64to128(_uint128_high(dividend), inv, rej[0], rej[1]);
+        _uint128_add(dividend, rej);
+        uint64_t q1 = _uint128_high(dividend) + 1;
+        r -= q1 * divisor;
+        if (r > _uint128_low(dividend)) {
+            q1--;
+            r += divisor;
+        }
+        if (r >= divisor) {
+            q1++;
+            r -= divisor;
+        }
+        _uint128_high(dividend) = 0;
+        _uint128_low(dividend) = r >> shift;
+        return q1;
+    }
+
+    void prodDivMod(uint64_t a, uint64_t b, uint64_t& quot, uint64_t& rem) const {
+        uint64_t dividend[2] = {0, 0};
+        mul64x64to128(a, b, dividend[0], dividend[1]);
+        assert(shift1 + shift2 < 64);
+        _uint128_lshr(dividend, shift1 + shift2);
+        rem = _uint128_low(dividend);
+        uint64_t rej[2] = {0, 0};
+        mul64x64to128(_uint128_high(dividend), inv, rej[0], rej[1]);
+        _uint128_add(dividend, rej);
+        quot = _uint128_high(dividend) + 1;
+        rem -= quot * divisor;
+        if (rem > _uint128_low(dividend)) {
+            quot--;
+            rem += divisor;
+        }
+        if (rem >= divisor) {
+            quot++;
+            rem -= divisor;
+        }
+        rem >>= shift;
+    }
+
+    uint64_t div(uint64_t* dividend) const { return divMod(dividend); }
+
+    uint64_t mod(uint64_t* dividend) const {
+        divMod(dividend);
+        return _uint128_low(dividend);
+    }
+
+    static constexpr uint64_t getInv(uint64_t divisor, int& leading_zero) {
+        uint64_t MAX = all_one<uint64_t>(NUM_BITS);
+        leading_zero = lammp_clz(divisor);
+        divisor <<= leading_zero;
+        __uint128_t x = __uint128_t(MAX - divisor) << NUM_BITS;
+        return (uint64_t)(__uint128_t(x + MAX) / divisor);
+    }
+#undef _uint128_lshr
+#undef _uint128_rshr
+#undef _uint128_high
+#undef _uint128_low
+#undef _uint128_add
+};  // class _64x64div64_t
 
 };  // namespace lammp
 

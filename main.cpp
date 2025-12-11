@@ -4,8 +4,8 @@
 #include <string>
 #include <algorithm>
 #include "include/lammp/lampz.h"
-
-
+#include "include/test/Test.hpp"
+/*
 int main() {
     lampz_t z = nullptr;
     std::string str = "0123781792787672657497878419374891734891374913874";
@@ -29,5 +29,10 @@ int main() {
     std::cout << std::endl;
 
     lampz_free(z);
+    return 0;
+}
+*/
+int main() {
+    test_div_128_support();
     return 0;
 }
