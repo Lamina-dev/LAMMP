@@ -233,8 +233,8 @@ class _64x64div64_t {
         uint64_t MAX = all_one<uint64_t>(NUM_BITS);
         leading_zero = lammp_clz(divisor);
         divisor <<= leading_zero;
-        __uint128_t x = __uint128_t(MAX - divisor) << NUM_BITS;
-        return (uint64_t)(__uint128_t(x + MAX) / divisor);
+        _uint128 x = _uint128(MAX - divisor) << NUM_BITS;
+        return ((x + MAX) / divisor).low64();
     }
 #undef _uint128_lshr
 #undef _uint128_rshr
