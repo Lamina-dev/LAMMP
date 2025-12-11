@@ -12,7 +12,7 @@
 
 #include <array>
 #include "uint192.hpp"
-#include "spe_int.hpp"
+#include "mont64_div64.hpp"
 
 namespace lammp {
 namespace Transform {

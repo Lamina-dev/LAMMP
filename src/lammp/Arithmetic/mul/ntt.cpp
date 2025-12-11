@@ -36,7 +36,7 @@ SOFTWARE.
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/uint128.hpp"
 #include "../../../../include/lammp/num_theo.hpp"
-#include "../../../../include/lammp/spe_int.hpp"
+#include "../../../../include/lammp/mont64_div64.hpp"
 
 #include <vector>
 
