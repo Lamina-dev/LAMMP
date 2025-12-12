@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "../lammp/lammp.hpp"
-
+#include "../lammp/inter_buffer.hpp"
 bool is_writable(const std::filesystem::path& p);
 
 // 生成固定长度的随机整数向量

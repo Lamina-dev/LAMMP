@@ -47,9 +47,9 @@ constexpr lamp_ui rlz(const lamp_ptr array, lamp_ui length) {
     return length;
 }
 
-inline lamp_ui get_add_len(lamp_ui l_len, lamp_ui r_len) { return std::max(l_len, r_len) + 1; }
+inline lamp_ui get_add_len(lamp_ui l_len, lamp_ui r_len) { return ((l_len < r_len) ? r_len : l_len) + 1; }
 
-inline lamp_ui get_sub_len(lamp_ui l_len, lamp_ui r_len) { return std::max(l_len, r_len); }
+inline lamp_ui get_sub_len(lamp_ui l_len, lamp_ui r_len) { return (l_len < r_len) ? r_len : l_len; }
 
 inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len) {
     if (l_len == 0 || r_len == 0) {

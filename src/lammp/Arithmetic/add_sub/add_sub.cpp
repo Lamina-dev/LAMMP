@@ -34,7 +34,7 @@ SOFTWARE.
 */
 
 #include "../../../../include/lammp/lammp.hpp"
-
+#include <algorithm>
 namespace lammp::Arithmetic {
 // Binary absolute addtion a+b=sum, return the carry
 bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum) {

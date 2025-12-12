@@ -7,8 +7,10 @@
  * <https://github.com/Lamina-dev/LAMMP>
  */
 
+#include "../../../../include/lammp/inter_buffer.hpp"
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/uint192.hpp"
+
 
 namespace lammp::Arithmetic {
 

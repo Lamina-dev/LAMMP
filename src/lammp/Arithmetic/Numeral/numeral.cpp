@@ -10,12 +10,26 @@
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/base_cal.hpp"
 #include "../../../../include/lammp/numeral_table.h"
+#include "../../../../include/lammp/inter_buffer.hpp"
 #include "math.h"
-namespace lammp::Arithmetic::Numeral {
+namespace lammp::Arithmetic::Numeral {    
 
-namespace BaseTable {
+typedef struct base_index_node {
+    lamp_ui index;
+    lamp_ui length;
+    base_index_node* front;
+    base_index_node* back;
+    _internal_buffer<0> base_index;
+    base_index_node(lamp_ui _index, double base_d) {
+        index = _index;
+        length = get_buffer_size(_index, base_d);
+        base_index.resize(length);
+        front = nullptr;
+        back = nullptr;
+    }
+}* _2pow64_index_list;
 
-};
+typedef struct base_index_node* _base_index_list;
 
 // 将in数组表示的数从2^64进制转换为base_num进制，存储在res数组中，返回值为res的长度
 // in数组会被修改
@@ -80,7 +94,6 @@ lamp_ui base_power_index_classic(const lamp_ui base_num, const lamp_ui index, la
 }
 
 // 进制转换后的长度，额外加一防止溢出
-lamp_ui get_buffer_size(lamp_ui len, double base_d) { return static_cast<lamp_ui>(std::ceil(base_d * len)) + 1; }
 
 // 计算 in * 2^64，并存储在 in 数组中，in 数组会被修改
 // in 数组为 base_num 进制下的数
@@ -297,6 +310,14 @@ _2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index) {
     return nullptr;
 }
 
+void destroy_list(_2pow64_index_list head) {
+    while (head != nullptr) {
+        _2pow64_index_list next = head->back;
+        delete head;
+        head = next;
+    }
+}
+
 /// @brief 将一个表示为64位块数组的大整数从二进制（基数2^64）转换为指定的较小基数
 /// @param in 表示要转换的大整数的输入数组。数组的每个元素都是该整数的一个64位块
 /// @param len 输入数组中64位块的数量
@@ -388,6 +409,7 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         current_in += pri_len;
 
         if (current_len == 0) {
+            destroy_list(head);
             return res_len;
         }
 
@@ -401,9 +423,11 @@ lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));
             abs_add_base(buffer.data(), buffer_len, res, res_len, res, base_num);
             res_len = rlz(res, get_add_len(res_len, buffer_len));
+            destroy_list(head);
             return res_len;
         }
     }
+    destroy_list(head);
     assert(false);
     return 0;
 }
@@ -465,6 +489,7 @@ lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
         current_in += pri_len;
 
         if (current_len == 0) {
+            destroy_list(head);
             return res_len;
         }
 
@@ -477,9 +502,11 @@ lamp_ui base2binary(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res) 
             buffer_len = rlz(buffer.data(), get_mul_len(buffer_len, pow_len));
             abs_add_binary(buffer.data(), buffer_len, res, res_len, res);
             res_len = rlz(res, get_add_len(res_len, buffer_len));
+            destroy_list(head);
             return res_len;
         }
     }
+    destroy_list(head);
     assert(false);
     return 0;
 }

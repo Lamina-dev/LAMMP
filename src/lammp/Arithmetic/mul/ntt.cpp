@@ -37,7 +37,7 @@ SOFTWARE.
 #include "../../../../include/lammp/uint128.hpp"
 #include "../../../../include/lammp/num_theo.hpp"
 #include "../../../../include/lammp/mont64_div64.hpp"
-
+#include "../../../../include/lammp/inter_buffer.hpp"
 #include <vector>
 
 namespace lammp::Arithmetic {
