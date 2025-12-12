@@ -814,8 +814,8 @@ void test_div_128_support() {
 
     for (size_t index = 0; index < 20; index++) {
         std::cout << std::left << std::setw(COL1_WIDTH) << MOD_num[index]  
-                  << std::setw(COL2_WIDTH) << time1[index]/1000.0                
-                  << std::setw(COL3_WIDTH) << time2[index]/1000.0                 
+                  << std::setw(COL2_WIDTH) << time1[index]/(len/1000.0)                
+                  << std::setw(COL3_WIDTH) << time2[index]/(len/1000.0)                 
                   << std::endl;
     }
 }

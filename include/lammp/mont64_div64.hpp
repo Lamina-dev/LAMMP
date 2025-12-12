@@ -167,7 +167,6 @@ class _64x64div64_t {
     uint64_t divisor = 0;
     uint64_t inv = 0;
     int shift = 0, shift1 = 0, shift2 = 0;
-    enum : int { NUM_BITS = 64 };
 
    public:
     constexpr _64x64div64_t(uint64_t divisor_in) : divisor(divisor_in) {
@@ -229,10 +228,10 @@ class _64x64div64_t {
     }
 
     static constexpr uint64_t getInv(uint64_t divisor, int& leading_zero) {
-        uint64_t MAX = all_one<uint64_t>(NUM_BITS);
+        uint64_t MAX = UINT64_MAX;
         leading_zero = lammp_clz(divisor);
         divisor <<= leading_zero;
-        _uint128 x = _uint128(MAX - divisor) << NUM_BITS;
+        _uint128 x = _uint128(MAX - divisor) << 64;
         return ((x + MAX) / divisor).low64();
     }
 #undef _uint128_lshr
