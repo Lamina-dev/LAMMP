@@ -35,10 +35,8 @@ SOFTWARE.
 
 #ifndef __LAMMP_UINT128_HPP__
 #define __LAMMP_UINT128_HPP__
-#include <cstdint>
 #include <iostream>
 #include <string>
-#include <utility>
 #include <cassert>
 #include "base_cal.hpp"
 

@@ -651,48 +651,6 @@ void test_mul_192() {
     return;
 }
 
-void test_mod_div() {
-    using namespace lammp;
-    using namespace lammp::Arithmetic;
-    lamp_ui mod_num = 0x005978fe8134ff32;
-    DivSupporter<lamp_ui, _uint128> div(mod_num);
-    size_t num = 1000000;
-    auto vec1 = generateRandomIntVector_(num, 0, mod_num);
-    auto vec2 = generateRandomIntVector_(num, 0, mod_num);
-    std::vector<lamp_ui> res1(num), res2(num), res3(num), res4(num);
-
-    auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < num; i++) {
-        div.prodDivMod(vec1[i], vec2[i], res1[i], res2[i]);
-    }
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "div supporter1 time: " << duration.count() << " us" << std::endl;
-
-    start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 0; i < num; i++) {
-        uint64_t tmp_high, tmp_low;
-        mul64x64to128(vec1[i], vec2[i], tmp_low, tmp_high);
-        res4[i] = div128by64to64(tmp_high, tmp_low, mod_num);
-        res3[i] = tmp_low;
-    }
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "div128by64to64 time: " << duration.count() << " us" << std::endl;
-
-    for (size_t i = 0; i < num; i++) {
-        if (res1[i] != res4[i] || res2[i] != res3[i]) {
-            std::cout << "error: " << i << std::endl;
-            std::cout << "res1: " << res1[i] << std::endl;
-            std::cout << "res2: " << res2[i] << std::endl;
-            std::cout << "res3: " << res3[i] << std::endl;
-            std::cout << "res4: " << res4[i] << std::endl;
-            break;
-        }
-    }
-}
-
-
 void test_barrett_2powN() {
     using namespace lammp;
     using namespace lammp::Arithmetic;

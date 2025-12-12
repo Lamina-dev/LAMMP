@@ -35,7 +35,7 @@ SOFTWARE.
 
 #ifndef __LAMMP_MONT64_DIV64_HPP__
 #define __LAMMP_MONT64_DIV64_HPP__
-#include <cstdint>
+
 #include "uint128.hpp"
 
 namespace lammp {

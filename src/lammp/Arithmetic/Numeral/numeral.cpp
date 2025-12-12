@@ -10,7 +10,7 @@
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/base_cal.hpp"
 #include "../../../../include/lammp/numeral_table.h"
-
+#include "math.h"
 namespace lammp::Arithmetic::Numeral {
 
 namespace BaseTable {

@@ -10,16 +10,6 @@
 #ifndef __LAMMP_HPP__
 #define __LAMMP_HPP__
 
-#include <math.h>
-
-#include <cassert>
-#include <cstring>
-#include <iostream>
-#include <memory>
-#include <new>
-#include <type_traits>
-#include <vector>
-
 #include "inter_buffer.hpp"
 #include "base_cal.hpp"
 

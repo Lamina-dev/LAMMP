@@ -11,9 +11,8 @@
 #define __LAMMP_INTER_BUFFER_HPP__
 #include "lampz.h"
 #include <cassert>
-#include <cstddef>
 #include <cstdint>
-
+#include <algorithm>
 namespace lammp {
 
 // 默认分配器
