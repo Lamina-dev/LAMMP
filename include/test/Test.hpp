@@ -1,12 +1,3 @@
-/*
- * [LAMMP]
- * Copyright (C) [2025] [HJimmyK/LAMINA]
- *
- * This program is a part of the LAMMP package.
- * you can see more details about LAMMP at:
- * <https://github.com/Lamina-dev/LAMMP>
- */
-
 #include <chrono>
 #include <cstdio>
 #include <filesystem>
