@@ -1,10 +1,9 @@
 /*
- * [LAMMP]
- * Copyright (C) [2025] [HJimmyK/LAMINA]
+ * Copyright (C) 2025 HJimmyK/LAMINA
  *
- * This program is a part of the LAMMP package.
- * you can see more details about LAMMP at:
- * <https://github.com/Lamina-dev/LAMMP>
+ * This file is part of LAMMP, which is licensed under the GNU LGPL v2.1.
+ * See the LICENSE file in the project root for full license details, or visit:
+ * <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>
  */
 
 #ifndef __LAMMP_HPP__
@@ -107,7 +106,7 @@ lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 namespace Numeral {
 
-inline lamp_ui get_buffer_size(lamp_ui len, double base_d) { return static_cast<lamp_ui>(base_d * len) + 2; }
+inline lamp_ui get_buffer_size(lamp_ui len, double base_d);
 
 constexpr lamp_ui MIN_LEN = 64;
 

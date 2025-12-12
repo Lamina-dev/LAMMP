@@ -1,18 +1,20 @@
 /*
- * [LAMMP]
- * Copyright (C) [2025] [HJimmyK/LAMINA]
- *
- * This program is a part of the LAMMP package.
- * you can see more details about LAMMP at:
- * <https://github.com/Lamina-dev/LAMMP>
- */
+===============================================================================
+【1. LGPL v2.1 LICENSED CODE (LAMMP Project)】
+Copyright (c) 2025-2026 HJimmyK/LAMINA
+This file is part of LAMMP (LGPL v2.1 License)
+Full LGPL v2.1 License Text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
+LAMMP Repository: https://github.com/Lamina-dev/LAMMP
 
-/*
+Modification Note: This file contains modifications to the original MIT-licensed code to adapt to LAMMP's LGPL v2.1
+environment.
+
+===============================================================================
+【2. MIT LICENSED CODE (Original Source)】
 MIT License
 
 Copyright (c) 2024-2050 Twilight-Dream & With-Sky & HJimmyK
-
-https://github.com/Twilight-Dream-Of-Magic/Easy-BigInteger
+Project URL: https://github.com/Twilight-Dream-Of-Magic/Easy-BigInteger
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -59,5 +61,11 @@ inline lamp_ui get_mul_len(lamp_ui l_len, lamp_ui r_len) {
 }
 
 inline lamp_ui get_div_len(lamp_ui l_len, lamp_ui r_len) { return l_len - r_len + 1; }
+
+namespace Numeral {
+
+    inline lamp_ui get_buffer_size(lamp_ui len, double base_d) { return static_cast<lamp_ui>(base_d * len) + 2; }
+
+};  // namespace Numeral
 };  // namespace lammp::Arithmetic
 #endif  // __LAMMP_GETLEN_INL__

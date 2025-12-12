@@ -1,10 +1,9 @@
 /*
- * [LAMMP]
- * Copyright (C) [2025] [HJimmyK/LAMINA]
+ * Copyright (C) 2025 HJimmyK/LAMINA
  *
- * This program is a part of the LAMMP package.
- * you can see more details about LAMMP at:
- * <https://github.com/Lamina-dev/LAMMP>
+ * This file is part of LAMMP, which is licensed under the GNU LGPL v2.1.
+ * See the LICENSE file in the project root for full license details, or visit:
+ * <https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html>
  */
 
 #ifndef __LAMMP_NUMERAL_TABLE_H__
