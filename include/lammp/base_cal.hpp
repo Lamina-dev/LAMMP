@@ -11,7 +11,6 @@
 #define __LAMMP_BASE_CAL_HPP__
 #include <cstdint>
 #include <string>
-
 #if defined(_WIN64)
 #include <intrin.h>
 #define UMUL128

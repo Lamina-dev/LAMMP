@@ -10,7 +10,9 @@
 #include "../../../include/lammp/lammp.hpp"
 #include "../../../include/lammp/lampz.h"
 #include "../../../include/lammp/numeral_table.h"
-
+#include "math.h"
+#include <stdexcept>
+#include <cstring>
 void str_reverse(char* s) {
     if (s == NULL || *s == '\0') { 
         return;

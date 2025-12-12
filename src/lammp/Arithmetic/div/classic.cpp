@@ -33,6 +33,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include "../../../../include/lammp/inter_buffer.hpp"
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/uint128.hpp"
 

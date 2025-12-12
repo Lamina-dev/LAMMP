@@ -34,7 +34,7 @@ SOFTWARE.
 */
 
 #include "../../../../include/lammp/lammp.hpp"
-
+#include <algorithm>
 namespace lammp::Arithmetic {
 /*
  * @brief 左移大整数的每个部分（半移位器）

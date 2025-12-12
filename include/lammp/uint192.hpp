@@ -136,7 +136,6 @@ class _uint192 {
         return res;
     }
     static _uint192 mul64x64x64_fast(uint64_t a, uint64_t b, uint64_t c) {
-        // 默认实现（保持原逻辑）
         uint64_t p1, p2, p3;
         _uint192 res;
         mul64x64to128(a, b, p1, p2);

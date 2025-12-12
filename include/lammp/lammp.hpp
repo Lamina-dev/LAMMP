@@ -10,19 +10,9 @@
 #ifndef __LAMMP_HPP__
 #define __LAMMP_HPP__
 
-#include <math.h>
-
+#include <cstdint>
 #include <cassert>
-#include <cstring>
-#include <iostream>
-#include <memory>
-#include <new>
-#include <type_traits>
-#include <vector>
-
-#include "inter_buffer.hpp"
 #include "base_cal.hpp"
-
 namespace lammp {
 namespace Arithmetic {
 typedef uint64_t lamp_ui;
@@ -102,8 +92,6 @@ void abs_mul64(lamp_ptr in1,
                lamp_ptr work_begin = nullptr,
                lamp_ptr work_end = nullptr);
 
-#include "../../src/lammp/Arithmetic/div/div_supp.inl"
-
 lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor);
 
 void abs_div_knuth(lamp_ptr in,
@@ -119,63 +107,9 @@ lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 namespace Numeral {
 
+inline lamp_ui get_buffer_size(lamp_ui len, double base_d) { return static_cast<lamp_ui>(base_d * len) + 2; }
 
-lamp_ui num2base_classic(lamp_ptr in, lamp_ui len, const lamp_ui base_num, lamp_ptr res);
-
-lamp_ui base2num_classic(lamp_ptr in, lamp_ui len, const lamp_ui base_num, lamp_ptr res);
-
-lamp_ui _2_64power_index_classic(const lamp_ui base_num, const lamp_ui index, lamp_ptr res);
-
-lamp_ui base_power_index_classic(const lamp_ui base_num, const lamp_ui index, lamp_ptr res);
-
-lamp_ui get_buffer_size(lamp_ui len, double base_d);
-
-void abs_mul2pow64_base(lamp_ptr in, lamp_ui len, const lamp_ui base_num);
-
-void abs_mul_base(lamp_ptr in, lamp_ui len, const lamp_ui base_num);
-
-lamp_ui _2_64_power_index(const lamp_ui base_num, const lamp_ui index, lamp_ptr res, lamp_ui res_len);
-
-lamp_ui base_power_index(const lamp_ui base_num, const lamp_ui index, lamp_ptr res, lamp_ui res_len);
-
-typedef struct base_index_node {
-    lamp_ui index;
-    lamp_ui length;
-    base_index_node* front;
-    base_index_node* back;
-    _internal_buffer<0> base_index;
-    base_index_node(lamp_ui _index, double base_d) {
-        index = _index;
-        length = get_buffer_size(_index, base_d);
-        base_index.resize(length);
-        front = nullptr;
-        back = nullptr;
-    }
-}* _2pow64_index_list;
-
-typedef struct base_index_node* _base_index_list;
-
-constexpr size_t MIN_LEN = 64ull;
-
-lamp_ui num_base_recursive_core(lamp_ptr in,
-                                lamp_ui len,
-                                const lamp_ui base_num,
-                                const double base_d,
-                                lamp_ptr out,
-                                const _2pow64_index_list list);
-
-_2pow64_index_list create_2pow64_index_list(lamp_ui max_index, const lamp_ui base_num, const double base_d);
-
-lamp_ui base_num_recursive_core(lamp_ptr in,
-                                lamp_ui len,
-                                const lamp_ui base_num,
-                                const double base_d,
-                                lamp_ptr out,
-                                const _base_index_list list);
-
-_base_index_list create_base_index_list(lamp_ui max_index, const double base_d, const lamp_ui base_num);
-
-_2pow64_index_list find_head(_2pow64_index_list head, lamp_ui index);
+constexpr lamp_ui MIN_LEN = 64;
 
 lamp_ui binary2base(lamp_ptr in, lamp_ui len, const lamp_ui base, lamp_ptr res);
 

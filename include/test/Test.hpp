@@ -18,7 +18,7 @@
 #include <vector>
 
 #include "../lammp/lammp.hpp"
-
+#include "../lammp/inter_buffer.hpp"
 bool is_writable(const std::filesystem::path& p);
 
 // 生成固定长度的随机整数向量
@@ -39,7 +39,6 @@ void test_mul_128();
 void test_mul_192();
 void test_div_128_support();
 inline void mul64x64to128_buildin(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
-void test_mod_div();
 
 void test_barrett_2powN();
 void test_knuth_div();
