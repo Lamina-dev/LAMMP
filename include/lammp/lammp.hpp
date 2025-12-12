@@ -102,8 +102,6 @@ void abs_mul64(lamp_ptr in1,
                lamp_ptr work_begin = nullptr,
                lamp_ptr work_end = nullptr);
 
-#include "../../src/lammp/Arithmetic/div/div_supp.inl"
-
 lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor);
 
 void abs_div_knuth(lamp_ptr in,
