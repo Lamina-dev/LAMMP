@@ -29,12 +29,6 @@ void str_reverse(char* s) {
     }
 }
 
-/*
- * @brief 大整数 z 转字符串，字符串需要的长度
- * @param z 输入：大整数
- * @param base 输入：进制，2-36
- * @return int 字符串长度
- */
 lamp_ui lampz_to_str_len(const lampz_t z, size_t base) {
     lamp_ui len = lampz_get_len(z);
     lamp_ui res = 0;
@@ -250,14 +244,7 @@ void get_bin_str(lampz_t z, char* str, size_t str_len) {
     }
 }
 
-/**
- * @brief 将二进制字符串赋值给大整数（64位小端数组存储）
- * @param z 目标大整数（必须已通过 lampz_new 创建，且字长足够）
- * @param str 二进制字符串（可保留前导零，默认小端序）
- * @param base 必须为2（二进制）
- * @note 1. 字符串无效/空时，z 设为0；2. 自动处理符号（z的符号由原有 sign 字段决定，字符串仅含数值位）
- */
-void lampz_set_str(lampz_t& z, const char* str, lamp_ui base) {
+void lampz_set_str(lampz_t& z, const char* str, lamp_ui str_len, lamp_ui base) {
     assert(base >= 2 && base <= 36 && "set_str: only support base 2-36");
     
     if (str == nullptr || *str == '\0') {
@@ -266,11 +253,11 @@ void lampz_set_str(lampz_t& z, const char* str, lamp_ui base) {
         return;
     }
 
-    char const* endptr = str + strlen(str);
+    char const* endptr = str + str_len;
     --endptr;  // 指向字符串末尾，跳过'\0'
     while (*endptr == '0' && endptr != str) endptr--;  // 去除前导0
 
-    const lamp_ui str_len = (lamp_ui)(endptr - str + 1);
+    str_len = (lamp_ui)(endptr - str + 1);
 
     if (str_len == 0) {
         z->len = 1;
