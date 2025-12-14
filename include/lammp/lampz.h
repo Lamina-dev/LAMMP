@@ -88,6 +88,10 @@ typedef max_align_t lamp_align_t;  // 最大对齐类型（用于对齐检查）
 #define LAMPSI_SIZE 8       // 有符号长度的字节宽（与 lamp_si 一致）
 #define LAMPZ_MIN_LEN 1     // 大整数最小字长（至少1个64位字）
 #define LAMMP_TALLOC_LEN 4  // 尾部赋值缓冲区长度（用于尾部赋值）
+#define LAMMP_UI_MAX 0xffffffffffffffffull  // 最大无符号64位整数值
+#define LAMMP_UI_MIN 0x0ull                 // 最小无符号64位整数值
+#define LAMMP_SI_MAX 0x7fffffffffffffffll   // 最大有符号64位整数值
+#define LAMMP_SI_MIN (int64_t(0x8000000000000000ull)) // 最小有符号64位整数值
 
 // 大整数核心结构体（指针类型 lampz_t 直接操作）
 typedef struct lampz {
@@ -316,19 +320,19 @@ void lampz_mul_xy(lampz_t& z, const lampz_t x, const lampz_t y);
  * @brief 二元运算：z = x / y（整数除法，向下取整，z
  * 的容量如果不够，会自动分配新内存）
  */
-void lampz_div_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+//void lampz_div_xy(lampz_t& z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x % y（取余，结果符号与 x 一致，z
  * 的容量如果不够，会自动分配新内存）
  */
-void lampz_mod_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+//void lampz_mod_xy(lampz_t& z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：q = x / y，r = x % y（同时计算商和余数，q,r
  * 的容量如果不够，会自动分配新内存）
  */
-void lampz_div_mod_xy(lampz_t& q, lampz_t& r, const lampz_t x, const lampz_t y);
+//void lampz_div_mod_xy(lampz_t& q, lampz_t& r, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 一元运算：z += x（z 自身累加 x，z 的容量如果不够，会自动分配新内存）
@@ -349,30 +353,99 @@ void lampz_mul_x(lampz_t& z, const lampz_t x);
  * @brief 一元运算：z = x * x（平方，效率高于普通乘法，z
  * 的容量如果不够，会自动分配新内存）
  */
-void lampz_sqr_x(lampz_t& z, const lampz_t x);
+//void lampz_sqr_x(lampz_t& z, const lampz_t x);
 
 /**
  * @brief 一元运算：z /= x（z 自身除以 x，z 将会自动分配新内存）
  */
-void lampz_div_x(lampz_t& z, const lampz_t x);
+//void lampz_div_x(lampz_t& z, const lampz_t x);
 
 /**
  * @brief 一元运算：z = z % x（z 自身取余 x，z 将会自动分配新内存）
  */
-void lampz_mod_x(lampz_t& z, const lampz_t x);
+//void lampz_mod_x(lampz_t& z, const lampz_t x);
 
+/** 
+ * @brief 一元运算：判断 z 是否为 0
+ * @return 1=非零，0=零
+ * @note 为 nullptr 时，返回 1
+ */
 lamp_si lampz_is_zero(const lampz_t z);
 
+/**
+ * @brief 赋值：z = value（z 的容量如果不够，会自动分配新内存）
+ */
 void lampz_set_ui(lampz_t& z, lamp_ui value);
+
+/**
+ * @brief 赋值：z = value（z 的容量如果不够，会自动分配新内存）
+ */
 void lampz_set_si(lampz_t& z, lamp_si value);
-void lampz_set_str(lampz_t& z, const char* str, lamp_ui base);
 
+/**
+ * @brief 将二进制字符串赋值给大整数（64位小端数组存储）
+ * @param z 目标大整数（若为容量不够，则自动分配内存）
+ * @param str 二进制字符串（可保留前导零，默认小端序）
+ * @param str_len 字符串长度
+ * @param base 必须为2（二进制）
+ * @note 1. 字符串无效/空时，z 设为0；2. 强制设为非负数符号（z的符号将会被设为非负）
+ * @warning 若 z 原有内存分配足够，且进行了赋值将可能导致计算错误。
+ * @warning 若 str 含有非法字符，则行为未定义；若 str 实际长度不足，将导致溢出。
+ */
+void lampz_set_str(lampz_t& z, const char* str, lamp_ui str_len, lamp_ui base);
+
+/** 
+ * @brief 大整数 z 转字符串，字符串需要的长度
+ * @param z 输入：大整数
+ * @param base 输入：进制，2-36
+ * @return 字符串长度
+ */
 lamp_ui lampz_to_str_len(const lampz_t z, lamp_ui base);
-lamp_ui lampz_to_str(char* str, const lamp_ui str_len, const lampz_t z, lamp_ui base);
-void lampz_clean(lampz_t& z);
 
+/**
+ * @brief 大整数 z 转字符串
+ * @param z 目标大整数
+ * @param str 二进制字符串（请通过 lampz_to_str_len 获得长度）
+ * @param str_len 字符串长度（通过 lampz_to_str_len 获得）
+ * @param base 进制 2-36
+ * @note 字符串将会以小端序存储，且为绝对值，即改变 z 的符号将不影响输出结果
+ * @warning 若 str 未分配足够内存，将导致溢出。
+ */
+lamp_ui lampz_to_str(char* str, const lamp_ui str_len, const lampz_t z, lamp_ui base);
+
+/**
+ * @brief 大整数 z 转整数
+ * @param z 目标大整数
+ * @return 整数值
+ * @note 若 z 大于 LAMMP_SI_MAX 或为 nullptr，则返回 LAMMP_SI_MAX
+ * @note 若 z 为小于 LAMMP_SI_MIN，则返回 LAMP_SI_MIN
+ */
+lamp_si lampz_to_si(const lampz_t z);
+
+/**
+ * @brief 大整数 z 转无符号整数
+ * @param z 目标大整数
+ * @return 无符号整数值
+ * @note 若 z 大于 LAMMP_UI_MAX 或为 nullptr，则返回 LAMMP_UI_MAX
+ * @warning 若 z 为负数，将会与 z 的符号无关，即返回值仅取决于 z 的绝对值
+ */
+lamp_ui lampz_to_ui(const lampz_t z);
+
+/**
+ * @brief 复制赋值：z1 = z2（z1 的容量如果不够，会自动分配新内存）
+ * @note z2 不会被释放，而是被复制到 z1 中
+ */
 void lampz_copy(lampz_t& z1, const lampz_t z2);
+
+/** 
+ * @brief 移动赋值：z1 = z2（z1 的原有内存会被释放，并指向 z2 的内存）
+ */
 void lampz_move(lampz_t& z1, lampz_t& z2);
+
+/** 
+ * @brief 交换赋值：z1 <-> z2（z1 和 z2 的内存地址交换）
+ * @note 等价于 std::swap(z1, z2)
+ */
 void lampz_swap(lampz_t& z1, lampz_t& z2);
 
 /*
