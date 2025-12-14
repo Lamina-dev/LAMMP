@@ -5,7 +5,7 @@
 #include <algorithm>
 #include "include/lammp/lampz.h"
 #include "include/test/Test.hpp"
-/*
+
 int main() {
     lampz_t z = nullptr;
     std::string str = "0123781792787672657497878419374891734891374913874";
@@ -14,7 +14,7 @@ int main() {
     std::reverse(str_copy.begin(), str_copy.end());
     std::cout << "computer " << str_copy << " + " << str_copy << " = " << std::endl;
 
-    lampz_set_str(z, str.data(), 10);
+    lampz_set_str(z, str.data(), str.size(), 10);
     if (z == nullptr) {
         std::cout << "Error: memory allocation failed" << std::endl;
         return 1;
@@ -29,10 +29,5 @@ int main() {
     std::cout << std::endl;
 
     lampz_free(z);
-    return 0;
-}
-*/
-int main() {
-    test_div_128_support();
     return 0;
 }
