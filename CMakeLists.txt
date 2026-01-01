@@ -1,134 +1,71 @@
-# cmake_minimum_required(VERSION 3.15)
-# project(lammp LANGUAGES C CXX)
+# 1. 指定CMake最低版本
+cmake_minimum_required(VERSION 3.10)
 
-# set(CMAKE_C_STANDARD 11)
-# set(CMAKE_C_STANDARD_REQUIRED ON)
-# set(CMAKE_C_EXTENSIONS ON)
+# 2. 设置项目名称和编程语言
+project(Lammp LANGUAGES CXX)
 
-# set(CMAKE_CXX_STANDARD 17)
-# set(CMAKE_CXX_STANDARD_REQUIRED ON)
-# set(CMAKE_CXX_EXTENSIONS OFF)
 
-# # 1. Release模式
-# set(CMAKE_BUILD_TYPE Release CACHE STRING "强制Release模式（性能最优）" FORCE)
+# 1. 设置默认构建类型为 Release（若用户未指定，自动使用 Release）
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type: Release" FORCE)
+endif()
 
-# # 2. 编译选项
-# if(MSVC)
-#     # MSVC：(/O2) + (/Gy) + (/GF)
-#     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /O2 /Gy /GF /GL")
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /O2 /Gy /GF /GL")
-#     # 禁用调试信息（MSVC）
-#     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /Zi-")
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Zi-")
-# else()
-#     # GCC/Clang/MinGW：-O3（性能最优），拆分函数/数据段
-#     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -O3 -fPIC -ffunction-sections -fdata-sections")
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -fPIC -ffunction-sections -fdata-sections")
-#     # 隐藏非导出符号
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fvisibility=hidden -fvisibility-inlines-hidden")
-#     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fvisibility=hidden")
-#     # 禁用调试信息
-#     set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -g0")
-#     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -g0")
-# endif()
+# 2. 可选：限制用户只能选择合法的构建类型（避免无效输入）
+set(VALID_BUILD_TYPES Debug Release RelWithDebInfo MinSizeRel)
+if(NOT CMAKE_BUILD_TYPE IN_LIST VALID_BUILD_TYPES)
+    message(FATAL_ERROR "Invalid CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}, valid types are: ${VALID_BUILD_TYPES}")
+endif()
 
-# # 3. 链接选项
-# if(MSVC)
-#     # MSVC：剔除未引用代码(/OPT:REF) + 合并重复函数(/OPT:ICF) + 链接时优化(/LTCG)
-#     set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG")
-#     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /OPT:REF /OPT:ICF /LTCG")
-# elseif(MINGW)
-#     # MinGW 专属链接选项（移除--icf=safe，保留其他有效优化）
-#     set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,--gc-sections -flto -s")
-#     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Wl,--gc-sections -flto -s")
-# else()
-#     # Linux/macOS (GCC/Clang)：保留所有兼容优化
-#     set(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} -Wl,--gc-sections -Wl,--icf=safe -flto -s")
-#     set(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} -Wl,--gc-sections -Wl,--icf=safe -flto -s")
-# endif()
+# 3. 针对不同构建类型，设置差异化编译选项（自动适配）
+# Debug 模式：无优化（-O0）+ 生成调试信息（-g）+ 开启调试宏（-DDEBUG）
+# Release 模式：最高优化（-O3）+ 关闭断言（-DNDEBUG）+ 你原本的优化选项
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    add_compile_options(-O0 -g -DDEBUG -Wall -Wextra -Wpedantic -fPIC -m64)
+else() # Release/RelWithDebInfo/MinSizeRel 共用基础优化选项
+    add_compile_options(-O3 -DNDEBUG -Wall -Wextra -Wpedantic -fPIC -m64)
+    # RelWithDebInfo 额外保留调试信息
+    if(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+        add_compile_options(-g)
+    endif()
+    # MinSizeRel 优先最小体积（替换 -O3 为 -Os）
+    if(CMAKE_BUILD_TYPE STREQUAL "MinSizeRel")
+        string(REPLACE "-O3" "-Os" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    endif()
+endif()
 
-# if(MINGW)
-#     set(CMAKE_SHARED_LIBRARY_PREFIX "")
-#     set(CMAKE_SHARED_LIBRARY_SUFFIX ".dll")
-#     add_compile_options(-Wall -Wextra -Wpedantic -m64)
-#     add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
-# endif()
 
-# # 源码收集（保持原有逻辑）
-# file(GLOB_RECURSE LAMMP_SOURCES
-#     ${PROJECT_SOURCE_DIR}/src/lammp/*.cpp
-#     ${PROJECT_SOURCE_DIR}/src/lammp/*.cc
-# )
-
-# file(GLOB_RECURSE TEST_SOURCES
-#     ${PROJECT_SOURCE_DIR}/src/test/*.cpp
-#     ${PROJECT_SOURCE_DIR}/src/test/*.cc
-# )
-
-# # 编译库和可执行文件
-# add_library(${PROJECT_NAME} SHARED ${LAMMP_SOURCES})
-
-# install(
-#     TARGETS ${PROJECT_NAME}
-#     RUNTIME DESTINATION bin
-#     LIBRARY DESTINATION lib
-#     ARCHIVE DESTINATION lib
-# )
-
-# install(
-#     FILES ${PROJECT_SOURCE_DIR}/include/lammp/lammp.hpp
-#     DESTINATION include/lammp
-# )
-
-# add_executable(test_exec main.cpp ${TEST_SOURCES})
-# target_link_libraries(test_exec PRIVATE ${PROJECT_NAME})
-
-cmake_minimum_required(VERSION 3.15)
-project(lammp LANGUAGES C CXX)
-
-# 跨平台标准配置
-set(CMAKE_C_STANDARD 11)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS ON)
-
+# 3. 设置C++标准
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# MinGW 平台
-if(MINGW)
-    set(CMAKE_SHARED_LIBRARY_PREFIX "")
-    set(CMAKE_SHARED_LIBRARY_SUFFIX ".dll")
-    # 编译选项
-    add_compile_options(-Wall -Wextra -Wpedantic -O3 -fPIC -m64)
-    add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
+# 4. 全局编译优化选项（可选：全局生效，也可移到src/lammp中局部生效）
+# add_compile_options(-Wall -Wextra -Wpedantic -O3 -fPIC -m64)
+
+# 5. 全局链接选项（可选：全局生效，也可移到src/lammp中局部生效）
+# add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
+
+# 6. 配置编译产物输出目录（指向dist/lammp，隔离其他库）
+set(OUTPUT_DIR ${CMAKE_SOURCE_DIR}/dist/lammp)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${OUTPUT_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${OUTPUT_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${OUTPUT_DIR}/lib)
+
+# 7. 包含公共头文件目录（全局生效，所有子模块均可引用）
+include_directories(${CMAKE_SOURCE_DIR}/include)
+
+# 8. 【核心修改】引入src/lammp目录（编译核心动态库）
+# 这一步会自动执行src/lammp/CMakeLists.txt中的配置
+add_subdirectory(src/lammp)
+
+# 9. 可选：生成项目主可执行文件（若根目录有main.cpp）
+if(EXISTS ${CMAKE_SOURCE_DIR}/main.cpp)
+    add_executable(LammpMain ${CMAKE_SOURCE_DIR}/main.cpp)
+    # 链接核心动态库（库名称LammpCore由src/lammp/CMakeLists.txt定义）
+    target_link_libraries(LammpMain PRIVATE LammpCore)
 endif()
 
-# 源码收集
-file(GLOB_RECURSE LAMMP_SOURCES
-    ${PROJECT_SOURCE_DIR}/src/lammp/*.cpp
-    ${PROJECT_SOURCE_DIR}/src/lammp/*.cc
-)
-
-file(GLOB_RECURSE TEST_SOURCES
-    ${PROJECT_SOURCE_DIR}/src/test/*.cpp
-    ${PROJECT_SOURCE_DIR}/src/test/*.cc
-)
-
-# 编译库和可执行文件
-add_library(${PROJECT_NAME} SHARED ${LAMMP_SOURCES})
-
-install(
-    TARGETS ${PROJECT_NAME}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib
-)
-
-install(
-    FILES ${PROJECT_SOURCE_DIR}/include/lammp/lammp.hpp
-    DESTINATION include/lammp
-)
-
-add_executable(test_exec main.cpp ${TEST_SOURCES})
-target_link_libraries(test_exec PRIVATE ${PROJECT_NAME})
+# 10. 引入其他子模块（无修改）
+add_subdirectory(benchmark/lammp)
+add_subdirectory(example/lammp)
+add_subdirectory(test/lammp)

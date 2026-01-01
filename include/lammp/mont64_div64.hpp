@@ -143,27 +143,38 @@ class MontInt64Lazy {
 };  // class MontInt64Lazy
 
 class _64x64div64_t {
+    
+#ifndef _uint128_lshr
 #define _uint128_lshr(x, n)                                            \
     do {                                                               \
         (*((x) + 1)) = ((*(x)) >> (64 - (n))) | ((*((x) + 1)) << (n)); \
         (*(x)) = (*(x)) << (n);                                        \
     } while (0)
+#endif  // _uint128_lshr
 
+#ifndef _uint128_rshr
 #define _uint128_rshr(x, n)                                      \
     do {                                                         \
         (*(x)) = ((*(x)) >> (n)) | ((*((x) + 1)) << (64 - (n))); \
         (*((x) + 1)) = (*((x) + 1)) >> (n);                      \
     } while (0)
+#endif  // _uint128_rshr
 
+#ifndef _uint128_high
 #define _uint128_high(x) (*((x) + 1))
+#endif  // _uint128_high
 
+#ifndef _uint128_low
 #define _uint128_low(x) (*(x))
+#endif  // _uint128_low
 
+#ifndef _uint128_add
 #define _uint128_add(x, y)                                                      \
     do {                                                                        \
         (*(x)) = *(x) + *(y);                                                   \
         (*((x) + 1)) = (*((x) + 1)) + (*((y) + 1)) + ((*(x)) < (*(y)) ? 1 : 0); \
     } while (0)
+#endif  // _uint128_add
 
    private:
     uint64_t divisor = 0;

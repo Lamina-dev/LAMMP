@@ -21,18 +21,18 @@ lamp_si lampz_is_zero(const lampz_t z) {
     }
 }
 
-void lampz_set_ui(lampz_t& z, lamp_ui value) {
-    if (z == nullptr) {
-        z = __lampz_malloc(1);
+void lampz_set_ui(lampz_t z, lamp_ui value) {
+    if (z->begin == nullptr) {
+        __lampz_malloc(z, 1);
     }
     z->len = 1;
     z->begin[0] = value;
     return;
 }
 
-void lampz_set_si(lampz_t& z, lamp_si value) {
-    if (z == nullptr) {
-        z = __lampz_malloc(1);
+void lampz_set_si(lampz_t z, lamp_si value) {
+    if (z->begin == nullptr) {
+        __lampz_malloc(z, 1);
     }
     if (value < 0) {
         z->len = -1;
@@ -45,59 +45,59 @@ void lampz_set_si(lampz_t& z, lamp_si value) {
 }
 
 lamp_si lampz_to_si(const lampz_t z) {
-    if (z == nullptr) {
-        return LAMMP_SI_MAX;
+    if (z->begin == nullptr) {
+        return LAMP_SI_MAX;
     }
     const int arr_len = abs(z->len);         
     const int sign = (z->len > 0) ? 1 : -1; 
     if (arr_len != 1) {
         if (z->len == 0) {
-            return LAMMP_SI_MAX;
+            return LAMP_SI_MAX;
         }
-        return (sign > 0) ? LAMMP_SI_MAX : LAMMP_SI_MIN;
+        return (sign > 0) ? LAMP_SI_MAX : LAMP_SI_MIN;
     }
     const uint64_t abs_val = z->begin[0];
     if (sign > 0) { 
-        if (abs_val > (uint64_t)LAMMP_SI_MAX) {
-            return LAMMP_SI_MAX;
+        if (abs_val > (uint64_t)LAMP_SI_MAX) {
+            return LAMP_SI_MAX;
         }
         return (lamp_si)abs_val;
     } else { 
         if (abs_val == 0) {
             return 0;
         }
-        if (abs_val == (uint64_t)LAMMP_SI_MIN) {
-            return LAMMP_SI_MIN;
+        if (abs_val == (uint64_t)LAMP_SI_MIN) {
+            return LAMP_SI_MIN;
         }
-        if (abs_val > (uint64_t)LAMMP_SI_MAX) {
-            return LAMMP_SI_MIN;
+        if (abs_val > (uint64_t)LAMP_SI_MAX) {
+            return LAMP_SI_MIN;
         }
         return -(lamp_si)abs_val;
     }
-    return LAMMP_SI_MAX;
+    return LAMP_SI_MAX;
 }
 
 lamp_ui lampz_to_ui(const lampz_t z) {
-    if (z == nullptr || z->len < -1 || z->len > 1) {
-        return LAMMP_UI_MAX;
+    if (z->begin == nullptr || z->len > 1) {
+        return LAMP_UI_MAX;
+    }
+    if (z->len < 0) {
+        return 0;
     }
     return z->begin[0];
 }
 
-void lampz_copy(lampz_t &z1, const lampz_t z2) {
-    if (z2 == nullptr) {
-        z1 = nullptr;
-        return;
-    }
-    if (z1 == nullptr) {
-        z1 = __lampz_malloc(z2->len);
+void lampz_copy(lampz_t z1, const lampz_t z2) {
+    lamp_sz z2_len = lampz_get_len(z2);
+    if (__lampz_get_capacity(z1) < z2_len) {
+        __lampz_malloc(z1, z2_len);
     }
     z1->len = z2->len;
-    std::copy(z2->begin, z2->end, z1->begin);
+    std::copy(z2->begin, z2->begin + z2_len, z1->begin);
     return;
 }
 
-void lampz_move(lampz_t &z1, lampz_t &z2) {
+void lampz_move(lampz_t z1, lampz_t z2) {
     if (z1 == z2) {
         return;
     }
@@ -109,14 +109,14 @@ void lampz_move(lampz_t &z1, lampz_t &z2) {
         z2->begin = nullptr;
         z2->end = nullptr;
         z2->len = 0;
-        z2 = nullptr;
         return;
     }
-    z1 = z2;
-    z2 = nullptr;
     return;
 }
 
-void lampz_swap(lampz_t &z1, lampz_t &z2) {
-    std::swap(z1, z2);
+void lampz_swap(lampz_t z1, lampz_t z2) {
+    std::swap(z1->len, z2->len);
+    std::swap(z1->begin, z2->begin);
+    std::swap(z1->end, z2->end);
+    return;
 }
