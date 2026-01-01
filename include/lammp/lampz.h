@@ -89,10 +89,10 @@ typedef max_align_t lamp_align_t;  // 最大对齐类型（用于对齐检查）
 #define LAMPSI_SIZE 8       // 有符号长度的字节宽（与 lamp_si 一致）
 #define LAMPZ_MIN_LEN 1     // 大整数最小字长（至少1个64位字）
 #define LAMMP_TALLOC_LEN 4  // 尾部赋值缓冲区长度（用于尾部赋值）
-#define LAMMP_UI_MAX 0xffffffffffffffffull  // 最大无符号64位整数值
-#define LAMMP_UI_MIN 0x0ull                 // 最小无符号64位整数值
-#define LAMMP_SI_MAX 0x7fffffffffffffffll   // 最大有符号64位整数值
-#define LAMMP_SI_MIN (int64_t(0x8000000000000000ull)) // 最小有符号64位整数值
+#define LAMP_UI_MAX 0xffffffffffffffffull  // 最大无符号64位整数值
+#define LAMP_UI_MIN 0x0ull                 // 最小无符号64位整数值
+#define LAMP_SI_MAX 0x7fffffffffffffffll   // 最大有符号64位整数值
+#define LAMP_SI_MIN (int64_t(0x8000000000000000ull)) // 最小有符号64位整数值
 
 // 大整数核心结构体（指针类型 lampz_t 直接操作）
 struct __struct_lampz {
@@ -109,7 +109,7 @@ typedef struct __struct_lampz lampz_t[1];
  * @param z 大整数对象
  * @return 成功返回 lamp_ui[] 指针，失败返回 NULL
  */
-static inline lamp_ptr __lampz_get_ptr(lampz_t z) { return (z != nullptr && z->begin != nullptr) ? z->begin : nullptr; }
+static inline lamp_ptr __lampz_get_ptr(const lampz_t z) { return (z != nullptr && z->begin != nullptr) ? z->begin : nullptr; }
 
 /**
  * @brief 获取大整数的缓冲区长度
@@ -408,7 +408,7 @@ void lampz_set_si(lampz_t z, lamp_si value);
  * @param str_len 字符串长度
  * @param base 必须为2（二进制）
  * @note 1. 字符串无效/空时，z 设为0；2. 强制设为非负数符号（z的符号将会被设为非负）
- * @warning 若 z 原有内存分配足够，且进行了赋值将可能导致计算错误。
+ * @warning 若 z 原有内存分配足够，且进行了非零赋值将会导致未定义行为，z的值可能异常。
  * @warning 若 str 含有非法字符，则行为未定义；若 str 实际长度不足，将导致溢出。
  */
 void lampz_set_str(lampz_t z, const char* str, lamp_sz str_len, lamp_sz base);
@@ -436,8 +436,9 @@ lamp_sz lampz_to_str(char* str, const lamp_sz str_len, const lampz_t z, lamp_sz 
  * @brief 大整数 z 转整数
  * @param z 目标大整数
  * @return 整数值
- * @note 若 z 大于 LAMMP_SI_MAX 或为 nullptr，则返回 LAMMP_SI_MAX
+ * @note 若 z 大于 LAMP_SI_MAX 或为 nullptr，则返回 LAMP_SI_MAX
  * @note 若 z 为小于 LAMMP_SI_MIN，则返回 LAMP_SI_MIN
+ * @warning 若 z 未赋值，将会返回 LAMP_SI_MAX
  */
 lamp_si lampz_to_si(const lampz_t z);
 
@@ -445,8 +446,9 @@ lamp_si lampz_to_si(const lampz_t z);
  * @brief 大整数 z 转无符号整数
  * @param z 目标大整数
  * @return 无符号整数值
- * @note 若 z 大于 LAMMP_UI_MAX 或为 nullptr，则返回 LAMMP_UI_MAX
- * @warning 若 z 为负数，将会与 z 的符号无关，即返回值仅取决于 z 的绝对值
+ * @note 若 z 大于 LAMP_UI_MAX 或为 nullptr，则返回 LAMP_UI_MAX
+ * @warning 若 z 为负数，将会返回 0，
+ * @warning 若 z 未赋值，将会返回 LAMP_UI_MAX
  */
 lamp_ui lampz_to_ui(const lampz_t z);
 
@@ -458,12 +460,12 @@ void lampz_copy(lampz_t z1, const lampz_t z2);
 
 /** 
  * @brief 移动赋值：z1 = z2（z1 的原有内存会被释放，并指向 z2 的内存）
+ * @note z2 将会被清空，内部数组将指向 nullptr，以保证 z1 的专属权
  */
 void lampz_move(lampz_t z1, lampz_t z2);
 
 /** 
  * @brief 交换赋值：z1 <-> z2（z1 和 z2 的内存地址交换）
- * @note 等价于 std::swap(z1, z2)
  */
 void lampz_swap(lampz_t z1, lampz_t z2);
 

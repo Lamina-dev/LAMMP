@@ -45,41 +45,44 @@ void lampz_set_si(lampz_t z, lamp_si value) {
 }
 
 lamp_si lampz_to_si(const lampz_t z) {
-    if (z == nullptr) {
-        return LAMMP_SI_MAX;
+    if (z->begin == nullptr) {
+        return LAMP_SI_MAX;
     }
     const int arr_len = abs(z->len);         
     const int sign = (z->len > 0) ? 1 : -1; 
     if (arr_len != 1) {
         if (z->len == 0) {
-            return LAMMP_SI_MAX;
+            return LAMP_SI_MAX;
         }
-        return (sign > 0) ? LAMMP_SI_MAX : LAMMP_SI_MIN;
+        return (sign > 0) ? LAMP_SI_MAX : LAMP_SI_MIN;
     }
     const uint64_t abs_val = z->begin[0];
     if (sign > 0) { 
-        if (abs_val > (uint64_t)LAMMP_SI_MAX) {
-            return LAMMP_SI_MAX;
+        if (abs_val > (uint64_t)LAMP_SI_MAX) {
+            return LAMP_SI_MAX;
         }
         return (lamp_si)abs_val;
     } else { 
         if (abs_val == 0) {
             return 0;
         }
-        if (abs_val == (uint64_t)LAMMP_SI_MIN) {
-            return LAMMP_SI_MIN;
+        if (abs_val == (uint64_t)LAMP_SI_MIN) {
+            return LAMP_SI_MIN;
         }
-        if (abs_val > (uint64_t)LAMMP_SI_MAX) {
-            return LAMMP_SI_MIN;
+        if (abs_val > (uint64_t)LAMP_SI_MAX) {
+            return LAMP_SI_MIN;
         }
         return -(lamp_si)abs_val;
     }
-    return LAMMP_SI_MAX;
+    return LAMP_SI_MAX;
 }
 
 lamp_ui lampz_to_ui(const lampz_t z) {
-    if (z == nullptr || z->len < -1 || z->len > 1) {
-        return LAMMP_UI_MAX;
+    if (z->begin == nullptr || z->len > 1) {
+        return LAMP_UI_MAX;
+    }
+    if (z->len < 0) {
+        return 0;
     }
     return z->begin[0];
 }
