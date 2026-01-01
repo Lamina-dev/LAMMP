@@ -70,13 +70,14 @@ extern "C" {
 #endif
 
 #include <memory.h>
-#include <stdbool.h>
+#include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 
 typedef int64_t lamp_si;           // 有符号整数：用于长度标记（正负表符号）、索引
 typedef uint64_t lamp_ui;          // 无符号64位：大整数的单个“字”（word）类型
+typedef size_t lamp_sz;            // 无符号整数：内存大小
 typedef lamp_ui* lamp_ptr;         // 大整数的内存指针：指向 lamp_ui 数组
 typedef max_align_t lamp_align_t;  // 最大对齐类型（用于对齐检查）
 
@@ -94,12 +95,14 @@ typedef max_align_t lamp_align_t;  // 最大对齐类型（用于对齐检查）
 #define LAMMP_SI_MIN (int64_t(0x8000000000000000ull)) // 最小有符号64位整数值
 
 // 大整数核心结构体（指针类型 lampz_t 直接操作）
-typedef struct lampz {
+struct __struct_lampz {
     lamp_ptr begin;  // 指向大整数的字数组（lamp_ui[]）起始地址
     lamp_ptr end;    // 指向字数组末尾的下一个位置（end = begin + 实际字长）
     lamp_si len;     // 长度标记：正负表符号（正=非负，负=负），绝对值=字数组长度（count
                      // of lamp_ui）
-}* lampz_t;
+};
+
+typedef struct __struct_lampz lampz_t[1];
 
 /**
  * @brief 获取大整数的字数组指针（安全封装）
@@ -113,8 +116,8 @@ static inline lamp_ptr __lampz_get_ptr(lampz_t z) { return (z != nullptr && z->b
  * @param z 大整数对象
  * @return 字长（count of lamp_ui），失败返回 0
  */
-static inline lamp_ui __lampz_get_capacity(const lampz_t z) {
-    return z != nullptr ? (lamp_ui)(z->end - z->begin + 1) : 0;
+static inline lamp_sz __lampz_get_capacity(const lampz_t z) {
+    return z != nullptr ? (lamp_sz)(z->end - z->begin + 1) : 0;
 }
 
 /**
@@ -122,7 +125,7 @@ static inline lamp_ui __lampz_get_capacity(const lampz_t z) {
  * @param z 大整数对象
  * @return 字长（count of lamp_ui），失败返回 0
  */
-static inline lamp_ui lampz_get_len(const lampz_t z) { return z != nullptr ? (lamp_ui)llabs(z->len) : 0; }
+static inline lamp_sz lampz_get_len(const lampz_t z) { return z != nullptr ? (lamp_ui)llabs(z->len) : 0; }
 
 /**
  * @brief 获取大整数的符号
@@ -169,19 +172,26 @@ static inline void lampz_set_sign(lampz_t z, lamp_si sign) {
     }
 }
 
+static inline void __lampz_init(lampz_t z) {
+    z->begin = nullptr;
+    z->end = nullptr;
+    z->len = 0;
+}
+
 /**
  * @brief 创建一个新的大整数对象
+ * @param z 空的大整数对象（如果非空，则先释放原对象）
  * @param bit 大整数所需的最小二进制位宽（例如：要存储200位的数，bit=200）
- * @return 成功返回 lampz_t 对象，失败返回 NULL（内存分配失败）
+ * @return 成功返回 1，失败返回 0（内存分配失败）
  * @note 内部会自动向上对齐到 lamp_ui 字长，且内存按 LAMPZ_ALIGN 对齐
  */
-static inline lampz_t lampz_new(lamp_ui bit = 0) {
-    lamp_si req_len;
+static inline lamp_sz lampz_new(lampz_t z, lamp_sz bit = 0) {
+    lamp_sz req_len;
     if (bit == 0) {
         req_len = LAMPZ_MIN_LEN;  // 位宽为0时，默认1个word（存储0）
     } else {
         // ceil(bit / LAMPUI_BITS) = (bit + LAMPUI_BITS - 1) / LAMPUI_BITS
-        req_len = (lamp_si)((bit + LAMPUI_BITS - 1) / LAMPUI_BITS);
+        req_len = (lamp_sz)((bit + LAMPUI_BITS - 1) / LAMPUI_BITS);
     }
     if (req_len < LAMPZ_MIN_LEN) {
         req_len = LAMPZ_MIN_LEN;
@@ -191,96 +201,104 @@ static inline lampz_t lampz_new(lamp_ui bit = 0) {
 
     lamp_ptr word_ptr = (lamp_ptr)LAMMP_ALLOC(LAMPZ_ALIGN, alloc_bytes);
     if (word_ptr == nullptr) {
-        return nullptr;  // 内存分配失败
+        return 0;  // 内存分配失败
     }
 
-    lampz_t z = (lampz_t)malloc(sizeof(lampz));
-    if (z == nullptr) {
-        LAMMP_FREE(word_ptr);  // 结构体分配失败，释放已分配的字数组内存
-        return nullptr;
+    if (z->begin != nullptr) {
+        LAMMP_FREE(z->begin);  // 先释放原字数组内存
     }
-
     z->begin = word_ptr;
     z->end = word_ptr + req_len;
     z->len = 0;
-
     memset(z->begin, 0, alloc_bytes);  // 字数组内存初始化为0
-    return z;
+    return 1;
 }
 
-static inline lampz_t __lampz_malloc(lamp_ui word_len) {
+static inline lamp_sz __lampz_malloc(lampz_t z, lamp_sz word_len) {
     if (word_len < LAMPZ_MIN_LEN) {
         word_len = LAMPZ_MIN_LEN;
     }
-    const size_t alloc_bytes = (size_t)word_len * LAMPUI_SIZE;
+    const lamp_sz alloc_bytes = (lamp_sz)word_len * LAMPUI_SIZE;
     lamp_ptr word_ptr = (lamp_ptr)LAMMP_ALLOC(LAMPZ_ALIGN, alloc_bytes);
     if (word_ptr == nullptr) {
-        return nullptr;  // 内存分配失败
+        return 0;  // 内存分配失败
     }
-    lampz_t z = (lampz_t)malloc(sizeof(lampz));
-    if (z == nullptr) {
-        LAMMP_FREE(word_ptr);  // 结构体分配失败，释放已分配的字数组内存
-        return nullptr;
+    if (z->begin != nullptr) {
+        LAMMP_FREE(z->begin);  // 先释放原字数组内存
     }
     z->begin = word_ptr;
     z->end = word_ptr + word_len;
     z->len = 0;
-    return z;
+    return 1;
 }
 
-static inline void __lampz_calloc(lampz_t& z, lamp_ui word_len) {
+static inline lamp_sz __lampz_calloc(lampz_t z, lamp_sz word_len) {
     if (word_len < LAMPZ_MIN_LEN) {
         word_len = LAMPZ_MIN_LEN;
     }
-    const size_t alloc_bytes = (size_t)word_len * LAMPUI_SIZE;
+    const lamp_sz alloc_bytes = (lamp_sz)word_len * LAMPUI_SIZE;
     if (__lampz_get_capacity(z) < word_len) {
         lamp_ptr word_ptr = (lamp_ptr)LAMMP_ALLOC(LAMPZ_ALIGN, alloc_bytes);
         if (word_ptr == nullptr) {
             z = nullptr;  // 内存分配失败
-            return;
+            return 0;
         }
         memset(word_ptr + z->len, 0, alloc_bytes);  // 字数组尾部初始化为0
         memcpy(word_ptr, z->begin, z->len * LAMPUI_SIZE);
-        LAMMP_FREE(z->begin);  // 释放旧字数组内存
+        if (z->begin != nullptr) {
+            LAMMP_FREE(z->begin); // 释放旧字数组内存
+        }
         z->begin = word_ptr;
         z->end = word_ptr + word_len;
-        return;
+        return 1;
     }
-    return;
+    return 1;
 }
 
 /**
  * @brief 创建一个新的大整数对象（尾部赋值缓冲区）
- * @param word_len 大整数所需的字长
+ * @param z 空的大整数对象（如果非空，则先释放原对象）
+ * @param word_len 大整数扩充的字长
  * @param talloc_len 尾部赋值缓冲区长度（默认 LAMMP_TALLOC_LEN）
- * @return 成功返回 lampz_t 对象，失败返回 NULL（内存分配失败）
+ * @return 成功返回 1，失败返回 0（内存分配失败）
  * @note 内部会自动向上对齐到 lamp_ui 字长，且内存按 LAMPZ_ALIGN 对齐
  * @note 尾部赋值缓冲区初始化，用于减少赋零初始化的开销操作
  * @warning 不建议外部使用，除非你知道自己在做什么
  */
-static inline lampz_t __lampz_talloc(lamp_ui word_len, lamp_ui talloc_len = LAMMP_TALLOC_LEN) {
+static inline lamp_sz __lampz_talloc(lampz_t z, lamp_sz word_len, lamp_sz talloc_len = LAMMP_TALLOC_LEN) {
     if (word_len < LAMPZ_MIN_LEN) {
         word_len = LAMPZ_MIN_LEN;
     }
-    const size_t alloc_bytes = (size_t)word_len * sizeof(lamp_ui);
+    const lamp_sz alloc_bytes = (lamp_sz)word_len * sizeof(lamp_ui);
     lamp_ptr word_ptr = (lamp_ptr)LAMMP_ALLOC(LAMPZ_ALIGN, alloc_bytes);
     if (word_ptr == nullptr) {
-        return nullptr;  // 内存分配失败
+        return 0;  // 内存分配失败
     }
-    lampz_t z = (lampz_t)malloc(sizeof(lampz));
-    if (z == nullptr) {
-        LAMMP_FREE(word_ptr);  // 结构体分配失败，释放已分配的字数组内存（避免泄漏）
-        return nullptr;
-    }
-    z->begin = word_ptr;
-    z->end = word_ptr + word_len;
-    z->len = 0;
-    if (word_len < talloc_len) {
-        memset(z->begin, 0, alloc_bytes);  // 字数组内存初始化为0
+    if (z->begin != nullptr) {
+        lamp_sz z_len = lampz_get_len(z);
+        assert(z_len <= word_len);
+        memcpy(word_ptr, z->begin, z_len * LAMPUI_SIZE);
+        LAMMP_FREE(z->begin);  // 释放旧字数组内存
+        z->begin = word_ptr;
+        z->end = word_ptr + word_len;
+        if (word_len - z_len < talloc_len) {
+            memset(z->begin + word_len, 0, (word_len - z_len) * LAMPUI_SIZE);  // 字数组内存初始化为0
+        } else {
+            memset(z->end - talloc_len, 0, talloc_len * LAMPUI_SIZE);
+        }
+        return 1;
     } else {
-        memset(z->end - talloc_len, 0, talloc_len * LAMPUI_SIZE);
+        z->begin = word_ptr;
+        z->end = word_ptr + word_len;
+        z->len = 0;
+        if (word_len < talloc_len) {
+            memset(z->begin, 0, alloc_bytes); // 字数组内存初始化为0
+        } else {
+            memset(z->end - talloc_len, 0, talloc_len * LAMPUI_SIZE);
+        }
+        return 1;
     }
-    return z;
+    
 }
 
 /**
@@ -288,12 +306,13 @@ static inline lampz_t __lampz_talloc(lamp_ui word_len, lamp_ui talloc_len = LAMM
  * @param z 大整数对象（可以是 NULL，内部安全处理）
  * @note 必须调用此函数释放，不能直接 free(z)（会泄露数字数组内存）
  */
-static inline void lampz_free(lampz_t& z) {
+static inline void lampz_free(lampz_t z) {
     if (z != nullptr) {
-        LAMMP_FREE(z->begin);  // 先释放字数组内存
-        free(z);               // 再释放结构体本身
+        LAMMP_FREE(z->begin);
+        z->begin = nullptr;
+        z->end = nullptr;
+        z->len = 0;
     }
-    z = nullptr;
 }
 
 // -----------------------------------------------------------------------------
@@ -303,67 +322,67 @@ static inline void lampz_free(lampz_t& z) {
 /**
  * @brief 二元运算：z = x + y（z 的容量如果不够，会自动分配新内存）
  */
-void lampz_add_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+void lampz_add_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x - y（z 的容量如果不够，会自动分配新内存）
  */
-void lampz_sub_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+void lampz_sub_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x * y（z 的容量如果不够，会自动分配新内存）
  * @note 如果 x 和 y 的指针相同，将自动调用 lampz_sqr_x 函数
  */
-void lampz_mul_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+void lampz_mul_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x / y（整数除法，向下取整，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_div_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+//void lampz_div_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x % y（取余，结果符号与 x 一致，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_mod_xy(lampz_t& z, const lampz_t x, const lampz_t y);
+//void lampz_mod_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：q = x / y，r = x % y（同时计算商和余数，q,r
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_div_mod_xy(lampz_t& q, lampz_t& r, const lampz_t x, const lampz_t y);
+//void lampz_div_mod_xy(lampz_t q, lampz_t r, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 一元运算：z += x（z 自身累加 x，z 的容量如果不够，会自动分配新内存）
  */
-void lampz_add_x(lampz_t& z, const lampz_t x);
+void lampz_add_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z -= x（z 自身减去 x，z 的容量如果不够，会自动分配新内存）
  */
-void lampz_sub_x(lampz_t& z, const lampz_t x);
+void lampz_sub_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z *= x（z 自身乘以 x，z 的容量如果不够，会自动分配新内存）
  */
-void lampz_mul_x(lampz_t& z, const lampz_t x);
+void lampz_mul_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z = x * x（平方，效率高于普通乘法，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_sqr_x(lampz_t& z, const lampz_t x);
+//void lampz_sqr_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z /= x（z 自身除以 x，z 将会自动分配新内存）
  */
-//void lampz_div_x(lampz_t& z, const lampz_t x);
+//void lampz_div_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z = z % x（z 自身取余 x，z 将会自动分配新内存）
  */
-//void lampz_mod_x(lampz_t& z, const lampz_t x);
+//void lampz_mod_x(lampz_t z, const lampz_t x);
 
 /** 
  * @brief 一元运算：判断 z 是否为 0
@@ -375,12 +394,12 @@ lamp_si lampz_is_zero(const lampz_t z);
 /**
  * @brief 赋值：z = value（z 的容量如果不够，会自动分配新内存）
  */
-void lampz_set_ui(lampz_t& z, lamp_ui value);
+void lampz_set_ui(lampz_t z, lamp_ui value);
 
 /**
  * @brief 赋值：z = value（z 的容量如果不够，会自动分配新内存）
  */
-void lampz_set_si(lampz_t& z, lamp_si value);
+void lampz_set_si(lampz_t z, lamp_si value);
 
 /**
  * @brief 将二进制字符串赋值给大整数（64位小端数组存储）
@@ -392,7 +411,7 @@ void lampz_set_si(lampz_t& z, lamp_si value);
  * @warning 若 z 原有内存分配足够，且进行了赋值将可能导致计算错误。
  * @warning 若 str 含有非法字符，则行为未定义；若 str 实际长度不足，将导致溢出。
  */
-void lampz_set_str(lampz_t& z, const char* str, lamp_ui str_len, lamp_ui base);
+void lampz_set_str(lampz_t z, const char* str, lamp_sz str_len, lamp_sz base);
 
 /** 
  * @brief 大整数 z 转字符串，字符串需要的长度
@@ -400,7 +419,7 @@ void lampz_set_str(lampz_t& z, const char* str, lamp_ui str_len, lamp_ui base);
  * @param base 输入：进制，2-36
  * @return 字符串长度
  */
-lamp_ui lampz_to_str_len(const lampz_t z, lamp_ui base);
+lamp_sz lampz_to_str_len(const lampz_t z, lamp_sz base);
 
 /**
  * @brief 大整数 z 转字符串
@@ -411,7 +430,7 @@ lamp_ui lampz_to_str_len(const lampz_t z, lamp_ui base);
  * @note 字符串将会以小端序存储，且为绝对值，即改变 z 的符号将不影响输出结果
  * @warning 若 str 未分配足够内存，将导致溢出。
  */
-lamp_ui lampz_to_str(char* str, const lamp_ui str_len, const lampz_t z, lamp_ui base);
+lamp_sz lampz_to_str(char* str, const lamp_sz str_len, const lampz_t z, lamp_sz base);
 
 /**
  * @brief 大整数 z 转整数
@@ -435,18 +454,18 @@ lamp_ui lampz_to_ui(const lampz_t z);
  * @brief 复制赋值：z1 = z2（z1 的容量如果不够，会自动分配新内存）
  * @note z2 不会被释放，而是被复制到 z1 中
  */
-void lampz_copy(lampz_t& z1, const lampz_t z2);
+void lampz_copy(lampz_t z1, const lampz_t z2);
 
 /** 
  * @brief 移动赋值：z1 = z2（z1 的原有内存会被释放，并指向 z2 的内存）
  */
-void lampz_move(lampz_t& z1, lampz_t& z2);
+void lampz_move(lampz_t z1, lampz_t z2);
 
 /** 
  * @brief 交换赋值：z1 <-> z2（z1 和 z2 的内存地址交换）
  * @note 等价于 std::swap(z1, z2)
  */
-void lampz_swap(lampz_t& z1, lampz_t& z2);
+void lampz_swap(lampz_t z1, lampz_t z2);
 
 /*
 bool lampz_is_prime(const lampz_t n);

@@ -100,7 +100,7 @@ if(MINGW)
     set(CMAKE_SHARED_LIBRARY_PREFIX "")
     set(CMAKE_SHARED_LIBRARY_SUFFIX ".dll")
     # 编译选项
-    add_compile_options(-Wall -Wextra -Wpedantic -O3 -fPIC -m64)
+    add_compile_options(-Wall -Wextra -Wpedantic -O0 -fPIC -m64)
     add_link_options(-Wl,--enable-auto-import -Wl,--no-undefined)
 endif()
 
