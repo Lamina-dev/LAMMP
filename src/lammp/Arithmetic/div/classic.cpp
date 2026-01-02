@@ -36,6 +36,7 @@ SOFTWARE.
 #include "../../../../include/lammp/inter_buffer.hpp"
 #include "../../../../include/lammp/lammp.hpp"
 #include "../../../../include/lammp/uint128.hpp"
+#include "../../../../include/lammp/mont64_div64.hpp"
 
 namespace lammp::Arithmetic {
 
@@ -59,8 +60,8 @@ namespace lammp::Arithmetic {
  * 4. 返回`remainder_high64bit`
  */
 lamp_ui abs_div_rem_num64(lamp_ptr in, lamp_ui length, lamp_ptr out, lamp_ui divisor) {
-    lamp_ui remainder_high64bit = 0;
     assert(divisor != 0);
+    lamp_ui remainder_high64bit = 0;
     if (divisor == 1) {
         std::copy(in, in + length, out);
         return 0;

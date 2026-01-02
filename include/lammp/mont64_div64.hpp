@@ -188,7 +188,7 @@ class _64x64div64_t {
         shift1 = shift / 2;
         shift2 = shift - shift1;
     }
-
+    // return q    dividend will be remainder
     uint64_t divMod(uint64_t* dividend) const {
         assert(shift >= 0 && shift < 64);
         _uint128_lshr(dividend, shift);

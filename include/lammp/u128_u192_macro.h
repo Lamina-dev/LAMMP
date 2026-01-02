@@ -43,7 +43,7 @@ SOFTWARE.
 typedef uint64_t u128[2];
 typedef uint64_t u192[3];
 
-static inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
+static inline void _mul64x64to128_(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
     __asm__("mul %[b]"  // 执行 RDX:RAX = RAX * b（a已在RAX中）
             : "=a"(*low),
               "=d"(*high)         // 输出：low = RAX（低64位），high = RDX（高64位）
@@ -80,7 +80,7 @@ static inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t* low, uint64_t
         (*((r) + 1)) = (*((x) + 1)) + (((*(r)) < (_i64)) ? 1 : 0); \
     } while (0)
 
-#define _u128mul(r, x, y) mul64x64to128((x), (y), (r), (((r) + 1)))
+#define _u128mul(r, x, y) _mul64x64to128_((x), (y), (r), (((r) + 1)))
 
 #define _mont64_add(r, x, y, mod2)                   \
     do {                                             \
@@ -168,13 +168,13 @@ def montgomery_mul(a_mont, b_mont, p):
         (x) = (*(_tmp + 1) < (mod)) ? (*(_tmp + 1)) : ((*(_tmp + 1)) - (mod)); \
     } while (0)
 
-#define _u128x64to192(i192, i128, i64)                                \
-    do {                                                              \
-        mul64x64to128((*(i128)), i64, (i192), ((i192) + 1));          \
-        uint64_t _tmp;                                                \
-        mul64x64to128((*((i128) + 1)), i64, (&(_tmp)), ((i192) + 2)); \
-        (*((i192) + 1)) += _tmp;                                      \
-        (*((i192) + 2)) += ((*((i192) + 1)) < _tmp) ? 1 : 0;          \
+#define _u128x64to192(i192, i128, i64)                                  \
+    do {                                                                \
+        _mul64x64to128_((*(i128)), i64, (i192), ((i192) + 1));          \
+        uint64_t _tmp;                                                  \
+        _mul64x64to128_((*((i128) + 1)), i64, (&(_tmp)), ((i192) + 2)); \
+        (*((i192) + 1)) += _tmp;                                        \
+        (*((i192) + 2)) += ((*((i192) + 1)) < _tmp) ? 1 : 0;            \
     } while (0)
 
 #define _u192add(i192, j192)                                   \

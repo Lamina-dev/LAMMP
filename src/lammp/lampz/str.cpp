@@ -261,11 +261,11 @@ void lampz_set_str(lampz_t z, const char* str, lamp_sz str_len, lamp_sz base) {
 
     if (str_len == 0) {
         z->len = 1;
-        *z->begin = 0;
+        z->begin[0] = 0;
         return;
     }
 
-    const lamp_sz req_word_len = to_lampz_len(str_len, base);  // 计算所需字长（含符号位）
+    const lamp_sz req_word_len = to_lampz_len(str_len, base);  // 计算所需字长
     if (req_word_len > __lampz_get_capacity(z)) {
         __lampz_talloc(z, req_word_len);  // 重新分配内存
     }
@@ -289,9 +289,14 @@ void lampz_set_str(lampz_t z, const char* str, lamp_sz str_len, lamp_sz base) {
 }
 
 lamp_sz lampz_to_str(char* str, const lamp_sz str_len, const lampz_t z, lamp_sz base) {
-    assert(base >= 2 && base <= 36 && "to_str: only support base 2-36");
+    if (base < 2 || base > 36) {
+        throw std::invalid_argument("to_str: invalid base");
+    }
     if (str == nullptr || str_len < lampz_to_str_len(z, base)) {
         throw std::invalid_argument("to_str: invalid str_len");
+    }
+    if (lampz_is_nan(z)) {
+        return 0;
     }
     if (str_len <= 128) {
         std::fill(str, str + str_len, '0');

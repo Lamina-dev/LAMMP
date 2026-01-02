@@ -10,14 +10,14 @@
 #include "../../../include/lammp/lammp.hpp"
 
 void lampz_add_xy(lampz_t z, const lampz_t x, const lampz_t y) {
+    if (lampz_is_nan(x) || lampz_is_nan(y)) {
+        lampz_free(z);
+        return;
+    }
     bool x_sign = x->len > 0;
     bool y_sign = y->len > 0;
     lamp_sz len_x = lampz_get_len(x);
     lamp_sz len_y = lampz_get_len(y);
-    if (len_x == 0 || len_y == 0) {
-        lampz_free(z);
-        return;
-    }
     lamp_sz z_cap = __lampz_get_capacity(z);
     lamp_sz z_len = lammp::Arithmetic::get_add_len(len_x, len_y);
     if (z_cap < z_len) {
@@ -36,14 +36,14 @@ void lampz_add_xy(lampz_t z, const lampz_t x, const lampz_t y) {
 }
 
 void lampz_sub_xy(lampz_t z, const lampz_t x, const lampz_t y) {
+    if (lampz_is_nan(x) || lampz_is_nan(y)) {
+        lampz_free(z);
+        return;
+    }
     bool x_sign = x->len > 0;
     bool y_sign = y->len > 0;
     lamp_sz len_x = lampz_get_len(x);
     lamp_sz len_y = lampz_get_len(y);
-    if (len_x == 0 || len_y == 0) {
-        lampz_free(z);
-        return;
-    }
     lamp_sz z_cap = __lampz_get_capacity(z);
     lamp_sz z_len = lammp::Arithmetic::get_sub_len(len_x, len_y);
     if (z_cap < z_len) {
@@ -62,14 +62,14 @@ void lampz_sub_xy(lampz_t z, const lampz_t x, const lampz_t y) {
 }
 
 void lampz_add_x(lampz_t z, const lampz_t x) {
+    if (lampz_is_nan(x) || lampz_is_nan(z)) {
+        lampz_free(z);
+        return;
+    }
     bool x_sign = x->len > 0;
     bool z_sign = z->len > 0;
     lamp_sz len_x = lampz_get_len(x);
     lamp_sz len_z = lampz_get_len(z);
-    if (len_x == 0 || len_z == 0) {
-        lampz_free(z);
-        return;
-    }
     lamp_sz z_len = lammp::Arithmetic::get_add_len(len_x, len_z);
     lamp_sz z_cap = __lampz_get_capacity(z);
     if (z_cap < z_len) {
@@ -88,14 +88,14 @@ void lampz_add_x(lampz_t z, const lampz_t x) {
 }
 
 void lampz_sub_x(lampz_t z, const lampz_t x) {
+    if (lampz_is_nan(x) || lampz_is_nan(z)) {
+        lampz_free(z);
+        return;
+    }
     bool x_sign = x->len > 0;
     bool z_sign = z->len > 0;
     lamp_sz len_x = lampz_get_len(x);
     lamp_sz len_z = lampz_get_len(z);
-    if (len_x == 0 || len_z == 0) {
-        lampz_free(z);
-        return;
-    }
     lamp_sz z_len = lammp::Arithmetic::get_sub_len(len_x, len_z);
     lamp_sz z_cap = __lampz_get_capacity(z);
     if (z_cap < z_len) {

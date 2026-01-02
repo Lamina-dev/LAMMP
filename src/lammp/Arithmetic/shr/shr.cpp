@@ -105,7 +105,7 @@ void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
  * @param len 输入数组的长度，即需要右移的64位无符号整数个数。
  * @param out 指向输出数组的指针，存储右移后的整数。
  * @param shift 右移的位数。
- * @warning shift 必须在0到63（对于64位整数）之间。且输出数组必须至少有 len+1 个元素。
+ * @warning shift 必须在0到63（对于64位整数）之间。且输出数组必须至少有 len 个元素。
  */
 void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     constexpr int WORD_BITS = sizeof(lamp_ui) * CHAR_BIT;
@@ -127,25 +127,25 @@ void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift) {
     out[len - 1] = last >> shift;
 }
 
-void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
-    lamp_ui shr_word = shift / 64;
-    lamp_ui shr_bits = shift % 64;
-    assert(shr_word < len);
-    if (shr_bits == 0) {
-        std::copy(in + shr_word, in + len, out);
+void lshift_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
+    lamp_ui shift_word = shift / 64;
+    lamp_ui shift_bits = shift % 64;
+    assert(shift_word < len);
+    if (shift_bits == 0) {
+        std::copy(in, in + len, out + shift_word);
     } else {
-        rshift_in_word(in + shr_word, len - shr_word, out, shr_bits);
+        lshift_in_word(in, len, out + shift_word, shift_bits);
     }
 }
 
-void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
-    lamp_ui shr_word = shift / 64;
-    lamp_ui shr_bits = shift % 64;
-    assert(shr_word < len);
-    if (shr_bits == 0) {
-        std::copy(in + shr_word, in + len, out);
+void rshift_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift) {
+    lamp_ui shift_word = shift / 64;
+    lamp_ui shift_bits = shift % 64;
+    assert(shift_word < len);
+    if (shift_bits == 0) {
+        std::copy(in + shift_word, in + len, out);
     } else {
-        rshift_in_word(in + shr_word, len - shr_word, out, shr_bits);
+        rshift_in_word(in + shift_word, len - shift_word, out, shift_bits);
     }
 }
 

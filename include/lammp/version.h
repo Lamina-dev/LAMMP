@@ -40,9 +40,9 @@
 #error "LAMMP only supports 64-bit architectures"
 #endif
 
-#define LAMMP_VERSION "0.0.1"
-#define LAMMP_ALPHA_YEAR "2025"
-#define LAMMP_DATE "12-26"
+#define LAMMP_VERSION "1.0.0"
+#define LAMMP_ALPHA_YEAR "2026"
+#define LAMMP_DATE "01-02"
 #define LAMMP_COPYRIGHT "Copyright (C) [2025] [HJimmyK/LAMINA]"
 
 #include <stdio.h>

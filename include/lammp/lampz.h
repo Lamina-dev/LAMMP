@@ -281,7 +281,7 @@ static inline lamp_sz __lampz_talloc(lampz_t z, lamp_sz word_len, lamp_sz talloc
         LAMMP_FREE(z->begin);  // 释放旧字数组内存
         z->begin = word_ptr;
         z->end = word_ptr + word_len;
-        if (word_len - z_len < talloc_len) {
+        if (word_len - z_len <= talloc_len) {
             memset(z->begin + word_len, 0, (word_len - z_len) * LAMPUI_SIZE);  // 字数组内存初始化为0
         } else {
             memset(z->end - talloc_len, 0, talloc_len * LAMPUI_SIZE);
@@ -291,7 +291,7 @@ static inline lamp_sz __lampz_talloc(lampz_t z, lamp_sz word_len, lamp_sz talloc
         z->begin = word_ptr;
         z->end = word_ptr + word_len;
         z->len = 0;
-        if (word_len < talloc_len) {
+        if (word_len <= talloc_len) {
             memset(z->begin, 0, alloc_bytes); // 字数组内存初始化为0
         } else {
             memset(z->end - talloc_len, 0, talloc_len * LAMPUI_SIZE);
@@ -307,7 +307,7 @@ static inline lamp_sz __lampz_talloc(lampz_t z, lamp_sz word_len, lamp_sz talloc
  * @note 必须调用此函数释放，不能直接 free(z)（会泄露数字数组内存）
  */
 static inline void lampz_free(lampz_t z) {
-    if (z != nullptr) {
+    if (z->begin != nullptr) {
         LAMMP_FREE(z->begin);
         z->begin = nullptr;
         z->end = nullptr;
@@ -336,6 +336,18 @@ void lampz_sub_xy(lampz_t z, const lampz_t x, const lampz_t y);
 void lampz_mul_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
+ * @brief 二元运算：z = x << shift（z 的容量如果不够，会自动分配新内存）
+ * @note 移位时，将取绝对值，数学上等价于乘以 2^shift
+ */
+void lampz_lshift_x(lampz_t z, const lampz_t x, lamp_sz shift);
+
+/**
+ * @brief 二元运算：z = x >> shift（z 的容量如果不够，会自动分配新内存）
+ * @note 移位时，将取绝对值，数学上等价于除以 2^shift
+ */
+void lampz_rshift_x(lampz_t z, const lampz_t x, lamp_sz shift);
+
+/**
  * @brief 二元运算：z = x / y（整数除法，向下取整，z
  * 的容量如果不够，会自动分配新内存）
  */
@@ -350,6 +362,7 @@ void lampz_mul_xy(lampz_t z, const lampz_t x, const lampz_t y);
 /**
  * @brief 二元运算：q = x / y，r = x % y（同时计算商和余数，q,r
  * 的容量如果不够，会自动分配新内存）
+ * @warning x 和 y 不可指向同一对象，此为未定义行为
  */
 //void lampz_div_mod_xy(lampz_t q, lampz_t r, const lampz_t x, const lampz_t y);
 
@@ -369,27 +382,45 @@ void lampz_sub_x(lampz_t z, const lampz_t x);
 void lampz_mul_x(lampz_t z, const lampz_t x);
 
 /**
+ * @brief 一元运算：z <<= shift（z 自身左移 shift，z 的容量如果不够，会自动分配新内存）
+ * @note 移位时，将取绝对值，数学上等价于乘以 2^shift
+ */
+void lampz_lshift(lampz_t z, lamp_sz shift);
+
+/**
+ * @brief 一元运算：z >>= shift（z 自身右移 shift，z 的容量如果不够，会自动分配新内存）
+ * @note 移位时，将取绝对值，数学上等价于除以 2^shift
+ */
+void lampz_rshift(lampz_t z, lamp_sz shift);
+
+/**
  * @brief 一元运算：z = x * x（平方，效率高于普通乘法，z
  * 的容量如果不够，会自动分配新内存）
  */
 //void lampz_sqr_x(lampz_t z, const lampz_t x);
 
 /**
- * @brief 一元运算：z /= x（z 自身除以 x，z 将会自动分配新内存）
+ * @brief 一元运算：z /= x（z 自身除以 x）
  */
-//void lampz_div_x(lampz_t z, const lampz_t x);
+void lampz_div_x(lampz_t z, const lampz_t x);
 
 /**
- * @brief 一元运算：z = z % x（z 自身取余 x，z 将会自动分配新内存）
+ * @brief 一元运算：z = z % x（z 自身取余 x）
  */
 //void lampz_mod_x(lampz_t z, const lampz_t x);
 
 /** 
  * @brief 一元运算：判断 z 是否为 0
- * @return 1=非零，0=零
- * @note 为 nullptr 时，返回 1
+ * @return 1=零，0=非零
+ * @note 为 nan 时，返回 0
  */
 lamp_si lampz_is_zero(const lampz_t z);
+
+/**
+ * @brief 一元运算：判断 z 是否为 nan
+ * @return 1=nan，0=非 nan
+ */
+static inline bool lampz_is_nan(const lampz_t z) { return z == nullptr || z->begin == nullptr; }
 
 /**
  * @brief 赋值：z = value（z 的容量如果不够，会自动分配新内存）
@@ -427,6 +458,7 @@ lamp_sz lampz_to_str_len(const lampz_t z, lamp_sz base);
  * @param str 二进制字符串（请通过 lampz_to_str_len 获得长度）
  * @param str_len 字符串长度（通过 lampz_to_str_len 获得）
  * @param base 进制 2-36
+ * @return 实际写入的字符串长度
  * @note 字符串将会以小端序存储，且为绝对值，即改变 z 的符号将不影响输出结果
  * @warning 若 str 未分配足够内存，将导致溢出。
  */
