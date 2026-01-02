@@ -113,7 +113,8 @@ constexpr IntTy mod_inv(IntTy n, IntTy mod);
 constexpr uint64_t inv_mod2pow(uint64_t n, int pow);
 
 constexpr void mul64x64to128_base(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
-static void mul64x64to128(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
+static inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
+static inline void mul64x64to128(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high);
 
 constexpr uint32_t div128by32_base(uint64_t& dividend_hi64, uint64_t& dividend_lo64, uint32_t divisor);
 constexpr uint32_t div96by64to32_base(uint32_t dividend_hi32, uint64_t& dividend_lo64, uint64_t divisor);

@@ -13,7 +13,7 @@
 namespace lammp {
 // Compute Integer multiplication, 64bit x 64bit to 128bit, basic algorithm
 // first is low 64bit, second is high 64bit
-constexpr void mul64x64to128_base(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high) {
+constexpr inline void mul64x64to128_base(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high) {
     /*
     //// 一种更易于读懂的实现，但由于其存在两个分支预测，其性能略低于现行算法。
         const uint64_t al = a >> 32,
@@ -91,6 +91,16 @@ static void mul64x64to128(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high)
     mul64x64to128_base(a, b, low, high);
 #endif
 #endif
+}
+
+static void mul64x64to128(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
+    // GCC/Clang的内联汇编语法
+    __asm__("mul %[b]"  // 执行 RDX:RAX = RAX * b（a已在RAX中）
+            : "=a"(low),
+              "=d"(high)          // 输出：low = RAX（低64位），high = RDX（高64位）
+            : "a"(a), [b] "r"(b)  // 输入：a存入RAX，b存入任意寄存器
+            :                     // 无额外寄存器被修改
+    );
 }
 
 constexpr uint32_t div128by32_base(uint64_t& dividend_hi64, uint64_t& dividend_lo64, uint32_t divisor) {

@@ -4,11 +4,13 @@ cmake_minimum_required(VERSION 3.10)
 # 2. 设置项目名称和编程语言
 project(Lammp LANGUAGES CXX)
 
+set(CMAKE_BUILD_TYPE "Release")
 
 # 1. 设置默认构建类型为 Release（若用户未指定，自动使用 Release）
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type: Release" FORCE)
 endif()
+
 
 # 2. 可选：限制用户只能选择合法的构建类型（避免无效输入）
 set(VALID_BUILD_TYPES Debug Release RelWithDebInfo MinSizeRel)
