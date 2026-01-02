@@ -10,12 +10,12 @@
 #include "../../../include/lammp/lampz.h"
 
 void lampz_mul_xy(lampz_t z, const lampz_t x, const lampz_t y) {
-    lamp_sz len_x = lampz_get_len(x);
-    lamp_sz len_y = lampz_get_len(y);
-    if (len_x == 0 || len_y == 0) {
+    if (lampz_is_nan(x) || lampz_is_nan(y)) {
         lampz_free(z);
         return;
     }
+    lamp_sz len_x = lampz_get_len(x);
+    lamp_sz len_y = lampz_get_len(y);
     lamp_sz z_cap = __lampz_get_capacity(z);
     lamp_sz len_z = lammp::Arithmetic::get_mul_len(len_x, len_y);
     if (len_z > z_cap) {
@@ -29,12 +29,12 @@ void lampz_mul_xy(lampz_t z, const lampz_t x, const lampz_t y) {
 }
 
 void lampz_mul_x(lampz_t z, const lampz_t x) {
-    lamp_sz len_x = lampz_get_len(x);
-    lamp_sz len_z = lampz_get_len(z);
-    if (len_x == 0) {
+    if (lampz_is_nan(x) || lampz_is_zero(z)) {
         lampz_free(z);
         return;
     }
+    lamp_sz len_x = lampz_get_len(x);
+    lamp_sz len_z = lampz_get_len(z);
     lamp_sz z_cap = __lampz_get_capacity(z);
     lamp_sz z_len = lammp::Arithmetic::get_mul_len(len_z, len_x);
     if (z_len > z_cap) {

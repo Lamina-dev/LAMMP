@@ -32,8 +32,8 @@ inline lamp_ui bit_length(lamp_ptr in, lamp_ui len);
 lamp_ui lshift_in_word_half(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
 void lshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
 void rshift_in_word(lamp_ptr in, lamp_ui len, lamp_ptr out, int shift);
-void rshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
-void lshr_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
+void lshift_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
+void rshift_bits(lamp_ptr in, lamp_ui len, lamp_ptr out, lamp_ui shift);
 
 bool abs_add_binary_half(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum);
 bool abs_add_half_base(lamp_ptr a, lamp_ui len_a, lamp_ptr b, lamp_ui len_b, lamp_ptr sum, const lamp_ui base_num);
@@ -103,6 +103,9 @@ void abs_div_knuth(lamp_ptr in,
 lamp_ui barrett_2powN_recursive(lamp_ptr in, lamp_ui len, lamp_ptr out);
 
 lamp_ui barrett_2powN(lamp_ui N, lamp_ptr in, lamp_ui len, lamp_ptr out);
+
+// in1 / in2
+void abs_div64(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui len2, lamp_ptr qr);
 
 namespace Numeral {
 

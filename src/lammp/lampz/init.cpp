@@ -10,14 +10,12 @@
 #include "../../../include/lammp/lampz.h"
 
 lamp_si lampz_is_zero(const lampz_t z) {
-    if (z == nullptr) {
-        return 0;
-    } else if (abs(z->len) == 0){
+    if (lampz_is_nan(z)) {
         return 0;
     } else if (abs(z->len) == 1 && z->begin[0] == 0) {
         return 1;
     } else {
-        return -1;
+        return 0;
     }
 }
 
@@ -45,7 +43,7 @@ void lampz_set_si(lampz_t z, lamp_si value) {
 }
 
 lamp_si lampz_to_si(const lampz_t z) {
-    if (z->begin == nullptr) {
+    if (lampz_is_nan(z)) {
         return LAMP_SI_MAX;
     }
     const int arr_len = abs(z->len);         
@@ -78,7 +76,7 @@ lamp_si lampz_to_si(const lampz_t z) {
 }
 
 lamp_ui lampz_to_ui(const lampz_t z) {
-    if (z->begin == nullptr || z->len > 1) {
+    if (lampz_is_nan(z) || z->len > 1) {
         return LAMP_UI_MAX;
     }
     if (z->len < 0) {
