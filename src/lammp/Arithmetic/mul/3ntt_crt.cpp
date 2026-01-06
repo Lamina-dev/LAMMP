@@ -481,12 +481,12 @@ void abs_mul64_ntt_unbalanced(lamp_ptr in1, lamp_ui len1, lamp_ptr in2, lamp_ui 
     }
     if (rem > 0) {
         in1_p = in1 + len;
-        for (size_t ii = single_len; ii < ntt_len; ii++) {
+        for (size_t ii = rem; ii < ntt_len; ii++) {
             buf1_mont[ii] = 0;
             buf3_mont[ii] = 0;
             buf5_mont[ii] = 0;
         }
-        for (size_t ii = 0; ii < single_len; ii++) {
+        for (size_t ii = 0; ii < rem; ii++) {
             buf1_mont[ii] = in1_p[ii];
             buf3_mont[ii] = in1_p[ii];
             buf5_mont[ii] = in1_p[ii];
