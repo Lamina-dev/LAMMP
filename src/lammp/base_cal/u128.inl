@@ -145,9 +145,9 @@ constexpr uint32_t div96by64to32_base(uint32_t dividend_hi32, uint64_t& dividend
         qhat--;
         product -= divisor;
         divid2 += divis1;
-        // if divid2 <= divis1, the addtion of divid2 is overflow, so product
+        // if divid2 < divis1, the addtion of divid2 is overflow, so product
         // must not be larger than divid2.
-        if ((divid2 > divis1) && (product > divid2)) {
+        if ((divid2 >= divis1) && (product > divid2)) {
             qhat--;
             product -= divisor;
             divid2 += divis1;
