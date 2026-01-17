@@ -3,6 +3,6 @@
 #include "include/test_short.hpp"
 
 int main() {
-    test_umul64to128();
+    test_pow();
     return 0;
 }
