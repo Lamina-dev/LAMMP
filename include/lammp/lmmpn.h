@@ -1,4 +1,22 @@
 /*
+ * [LAMMP]
+ * Copyright (C) [2025] [HJimmyK/LAMINA]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+/*
         本库的实现部分灵感来源于或改编自
 
                 GNU-MP (https://gmplib.org/),
@@ -20,10 +38,12 @@
 #define LAMMP_LMMPN_H
 
 #include <malloc.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lmmp.h"
+
 
 // 除法阈值：当操作数规模超过此值时，使用优化的除法算法
 #define DIV_DIVIDE_THRESHOLD 50
@@ -84,6 +104,11 @@
 extern "C" {
 #endif
 
+INLINE_ bool lmmp_endian(void) {
+    int num = 1;
+    return (*(char*)&num) == 0; 
+}
+
 /**
  * @brief 计算满足 2^k > x 的最小自然数k
  * @param x 输入的64位无符号整数
@@ -126,92 +151,92 @@ mp_limb_t lmmp_mulh_(mp_limb_t a, mp_limb_t b);
 void lmmp_toom_interp5_(mp_ptr dst, mp_ptr v2, mp_ptr vm1, mp_size_t n, mp_size_t spt, int vm1_neg, mp_limb_t vinf0);
 
 /**
- * @brief 基础平方运算（Basecase）
+ * @brief 基础平方运算 [dst,2*na] = [numa,na]^2
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
- * @param na 输入操作数的单精度数(limb)长度
- * @note 要求：na>0，dst与numa的内存区域不重叠(sep(dst,numa))
- * @return 无返回值，结果存储在dst中，[dst,2*na] = [numa,na]^2
+ * @param na 输入操作数的 limb 长度
+ * @warning na>0，sep(dst,numa)
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief Toom-2平方运算
- * @param dst 输出结果缓冲区，长度至少为2*na
+ * @brief Toom-2平方运算 [dst,2*na] = [numa,na]^2
+ * @param dst 输出结果缓冲区，长度至少为 2*na
  * @param numa 输入操作数，长度为na
- * @param na 输入操作数的单精度数(limb)长度
- * @note 要求：na>0，dst与numa的内存区域不重叠，na需大于特定阈值
- * @return 无返回值，结果存储在dst中，[dst,2*na] = [numa,na]^2
+ * @param na 输入操作数的 limb 长度
+ * @warning na>0，sep(dst,numa)，na需大于特定阈值
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief Toom-3平方运算
+ * @brief Toom-3平方运算 [dst,2*na] = [numa,na]^2
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的单精度数(limb)长度
- * @note 要求：na>0，dst与numa的内存区域不重叠，na需大于特定阈值
- * @return 无返回值，结果存储在dst中，[dst,2*na] = [numa,na]^2
+ * @warning na>0，sep(dst,numa)，na需大于特定阈值
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief 基础乘法运算（Basecase）
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：0<nb<=na，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief 基础乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 0<nb<=na，sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-22乘法运算
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：4/5<=nb/na<=1，nb>=5，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-22乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @note 要求：4/5<=nb/na<=1，nb>=5，sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-32乘法运算
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：5/9<=nb/na<=4/5，nb>=12，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-32乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @note 要求：5/9<=nb/na<=4/5，nb>=12，sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-33乘法运算
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：4/5<=nb/na<=1，nb>=26，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-33乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @note 要求：4/5<=nb/na<=1，nb>=26，sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-42乘法运算
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：1/3<=nb/na<=5/9，nb>=20，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-42乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @note 要求：1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
@@ -224,40 +249,40 @@ void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
 mp_size_t lmmp_fft_next_size_(mp_size_t n);
 
 /**
- * @brief 费马数模乘法 (mod B^rn+1)
- * @param dst 输出结果缓冲区，长度至少为rn+1
+ * @brief 费马数模乘法 [dst,rn+1]=[numa,na]*[numb,nb] mod B^rn+1
+ * @param dst 输出结果缓冲区，长度至少为 rn+1
  * @param rn 模运算的阶数参数
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：0<=[numa,na]<2*B^rn，0<=[numb,nb]<2*B^rn
- * @return 无返回值，结果存储在dst中，[dst,rn+1] = [numa,na]*[numb,nb] mod B^rn+1
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief 梅森数模乘法 (mod B^rn-1)
- * @param dst 输出结果缓冲区，长度至少为rn
+ * @brief 梅森数模乘法 [dst,rn] = [numa,na]*[numb,nb] mod B^rn-1
+ * @param dst 输出结果缓冲区，长度至少为 rn
  * @param rn 模运算的阶数参数
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：0<=[numa,na]<B^rn，0<=[numb,nb]<B^rn
- * @return 无返回值，结果存储在dst中，[dst,rn] = [numa,na]*[numb,nb] mod B^rn-1
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中，
  */
 void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief FFT乘法运算
- * @param dst 输出结果缓冲区，长度至少为na+nb
- * @param numa 第一个输入操作数，长度为na
- * @param na 第一个操作数的单精度数(limb)长度
- * @param numb 第二个输入操作数，长度为nb
- * @param nb 第二个操作数的单精度数(limb)长度
- * @note 要求：nb>=特定阈值且nb<=na，dst与numa/numb的内存区域不重叠
- * @return 无返回值，结果存储在dst中，[dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @note 要求：???<=nb<=na, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
@@ -337,9 +362,9 @@ mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr n
  * @brief 优化除法运算（Divide）
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
- * @param na 被除数的单精度数(limb)长度
+ * @param na 被除数的 limb 长度
  * @param numb 输入除数，长度为nb
- * @param nb 除数的单精度数(limb)长度
+ * @param nb 除数的 limb 长度
  * @param inv21 除数的2-1阶逆元（提前计算好的inv21([numb+nb-2,2])）
  * @return 商的最高位（qh）
  * @note 要求：na>=nb*2，nb>=6，numb最高有效位为1，所有缓冲区内存不重叠

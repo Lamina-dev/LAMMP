@@ -113,18 +113,18 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
             lmmp_mul_fft_(dst, numa, na, numb, nb);
         else {
             mp_ptr ws = ALLOC_TYPE(nb, mp_limb_t);
-            lmmp_mul_fft_(dst, numa, 10 * nb, numb, nb);
-            dst += 10 * nb;
-            numa += 10 * nb;
-            na -= 10 * nb;
+            lmmp_mul_fft_(dst, numa, 3 * nb, numb, nb);
+            dst += 3 * nb;
+            numa += 3 * nb;
+            na -= 3 * nb;
             lmmp_copy(ws, dst, nb);
-            while (2 * na >= 20 * nb) {
-                lmmp_mul_fft_(dst, numa, 10 * nb, numb, nb);
+            while (2 * na >= 7 * nb) {
+                lmmp_mul_fft_(dst, numa, 3 * nb, numb, nb);
                 if (lmmp_add_n_(dst, dst, ws, nb))
                     lmmp_inc(dst + nb);
-                dst += 10 * nb;
-                numa += 10 * nb;
-                na -= 10 * nb;
+                dst += 3 * nb;
+                numa += 3 * nb;
+                na -= 3 * nb;
                 lmmp_copy(ws, dst, nb);
             }
             // 0.5 nb <= na < 3.5 nb
