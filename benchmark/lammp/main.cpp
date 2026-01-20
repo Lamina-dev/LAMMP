@@ -9,7 +9,6 @@ int main() {
     //         std::cout << bench_mul(a, b) << ";";
     //     }
     // }
-    int a = 1<<20;
-    std::cout << bench_mul(a, a) << std::endl;
+    std::cout << bench_powmod_ulong(1000000) << std::endl;
     return 0;
 }

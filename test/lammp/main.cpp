@@ -3,6 +3,6 @@
 #include "include/test_short.hpp"
 
 int main() {
-    test_pow();
+    test_isprime_ulong();
     return 0;
 }

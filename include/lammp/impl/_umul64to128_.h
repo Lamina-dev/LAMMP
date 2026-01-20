@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef _UMUL64TO128_H_
-#define _UMUL64TO128_H_
+#ifndef __UMUL64TO128_H__
+#define __UMUL64TO128_H__
 
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
 #pragma message("Using __asm__ to compute 64bit x 64bit to 128bit")
@@ -62,4 +62,4 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
 }
 #endif
  
-#endif // _UMUL64TO128_H_
+#endif // __UMUL64TO128_H__

@@ -2,6 +2,9 @@
 #include "../../include/lammp/lmmpn.h"
 
 mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
+    lmmp_debug_assert(na >= nb);
+    lmmp_debug_assert(nb >= 3);
+    lmmp_debug_assert(numb[nb - 1] >= 0x8000000000000000);
     mp_size_t nq = na - nb;
 
     numa += na;

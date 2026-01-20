@@ -1,12 +1,6 @@
 #include "../../../include/lammp/numth.h"
-#include <math.h>
 
-mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, mp_limb_t exp) {
-    mp_size_t rn = exp * (n - 1) * LIMB_BITS + ceil((double)exp * log2(base[n - 1]));
-    return (rn + LIMB_BITS - 1) / LIMB_BITS + 1; /* more one limb for carry */
-}
-
-mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, mp_limb_t exp) {
+mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
     TEMP_DECL;
     mp_size_t rn = lmmp_pow_size_(base, n, exp);
     mp_size_t sqn = n, dsn = 1;

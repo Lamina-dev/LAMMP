@@ -7,3 +7,7 @@ void test_add_nc();
 void test_umul64to128();
 void test_sqrt();
 void test_pow();
+void test_pri_short();
+void test_pri_int();
+void test_powmod();
+void test_isprime_ulong();

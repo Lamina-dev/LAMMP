@@ -42,6 +42,8 @@ void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
 }
 
 void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    lmmp_debug_assert(na >= nb);
+    lmmp_debug_assert(nb > 0);
     if (na == nb) {
         if (numa == numb)
             lmmp_sqr_(dst, numa, na);
