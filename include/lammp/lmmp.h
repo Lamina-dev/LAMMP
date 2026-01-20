@@ -46,11 +46,6 @@ typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
 typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
 typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
 
-typedef uint32_t uint;
-typedef uint64_t ulong;
-typedef int32_t sint;
-typedef int64_t slong;
-
 #ifdef __cplusplus
 extern "C" {
 #endif

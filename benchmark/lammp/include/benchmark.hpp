@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
 
 bool is_writable(const std::filesystem::path& p);
 
@@ -23,18 +24,9 @@ long long bench_sub(int len1, int len2);
 long long bench_mul(int len1, int len2);
 long long bench_sqr(int len1);
 long long bench_div(int len1, int len2);
-long long bench_barrett_pre_div(int N, int len);
-long long bench_num2binary(int len);
-long long bench_binary2num(int len);
-void run_benchmarks_and_save(const std::string& filename, const std::vector<int>& lengths, int repetitions = 5);
-void bench_mul_balance();
+long long bench_pow(int len1, int len2);
+long long bench_powmod_ulong(int len);
 void bench_div_128();
-void bench_mul_128();
-void bench_mul_192();
-void bench_div_128_support();
-inline void mul64x64to128_buildin(uint64_t a, uint64_t b, uint64_t& low, uint64_t& high);
 
-void bench_barrett_2powN();
-void bench_knuth_div();
 
 #endif  // __BENCHMARK_HPP__

@@ -139,6 +139,15 @@ int lmmp_tailing_zeros_(mp_limb_t x);
 mp_limb_t lmmp_mulh_(mp_limb_t a, mp_limb_t b);
 
 /**
+ * @brief 计算两个64位无符号整数相乘的128位结果 (a*b)
+ * @param dst 输出结果缓冲区，存储乘积结果，长度为 2
+ * @param a 第一个64位无符号整数
+ * @param b 第二个64位无符号整数
+ * @return 无返回值
+ */
+void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr dst);
+
+/**
  * @brief Toom插值计算（5点插值），用于Toom-33和Toom-42乘法算法
  * @param dst 输出结果缓冲区，存储插值计算结果
  * @param v2 输入参数：v(2)插值点值
@@ -403,8 +412,8 @@ void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
  * @return 商的最高位（qh）
  * @note 要求：na>=nb>=ni>0，numb最高有效位为1，所有缓冲区内存不重叠
  */
-mp_limb_t
-lmmp_div_mulinv_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_srcptr invappr, mp_size_t ni);
+mp_limb_t lmmp_div_mulinv_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_srcptr invappr,
+                           mp_size_t ni);
 
 /**
  * @brief 单精度数除法（符号版，除数为1个limb）
@@ -566,13 +575,28 @@ void lmmp_temp_free_(void*);
 #define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)
 // 内存置零宏：将n个limb置零（每个8字节）
 #define lmmp_zero(dst, n) memset(dst, 0, (n) << 3)
-// 断言宏：检查条件x是否成立，不成立则触发段错误（用于调试）
+// 内存设置宏：将n个limb的值设置为val（每个8字节）
+#define lmmp_set(dst, val, n) memset(dst, val, (n) << 3)
+
+// 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
+// RELEASE 版本也会检查
 #define lmmp_assert(x)          \
     do {                        \
         if (!(x)) {             \
             *(mp_limb_t*)0 = 0; \
         }                       \
     } while (0)
+// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
+#ifdef DEBUG
+#define lmmp_debug_assert(x) \
+    do {                \
+        if (!(x)) {     \
+            abort();    \
+        }               \
+    } while (0)
+#else
+#define lmmp_debug_assert(x) ((void)0)
+#endif
 
 /**
  * @brief 大数加1宏（预期无进位）

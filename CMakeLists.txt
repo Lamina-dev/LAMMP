@@ -3,7 +3,7 @@ project(Lammp LANGUAGES CXX C ASM_MASM)
 
 # 设置默认构建类型为 Release
 if(NOT CMAKE_BUILD_TYPE)
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Default build type: Release" FORCE)
+    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Default build type: Release" FORCE)
 endif()
 
 # 限制合法的构建类型
