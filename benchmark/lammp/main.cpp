@@ -9,6 +9,10 @@ int main() {
     //         std::cout << bench_mul(a, b) << ";";
     //     }
     // }
-    std::cout << bench_powmod_ulong(1000000) << std::endl;
+    // for (int i = 0; i < 300; i++) {
+    //     unsigned len1 = 1000 + i * 4000;
+    //     std::cout << len1 << "," << bench_factorial(len1) << ";";
+    // }
+    std::cout << bench_factorial(1000000) << ";";
     return 0;
 }
