@@ -13,7 +13,7 @@ mp_size_t lmmp_pow_win3_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
 
 #define b1 base
 #define b1n n
-#define new_b(_i_) mp_ptr b##_i_ = TALLOC_TYPE(b##_i_##n, mp_limb_t)
+#define new_b(_i_) mp_ptr b##_i_ = BALLOC_TYPE(b##_i_##n, mp_limb_t)
 
     mp_size_t b2n = n << 1, b3n = b2n + n, b4n = b2n << 1;
     mp_size_t b5n = b2n + b3n, b6n = b3n << 1, b7n = b6n + b1n;
@@ -44,7 +44,7 @@ mp_size_t lmmp_pow_win3_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
     b7n -= b7[b7n - 1] == 0 ? 1 : 0;
 
     mp_size_t dsn = lmmp_pow_size_(base, n, exp);
-    mp_ptr sq = TALLOC_TYPE(dsn, mp_limb_t);
+    mp_ptr sq = BALLOC_TYPE(dsn, mp_limb_t);
     dsn = 1;
     dst[0] = 1;
     mp_size_t i = 21;

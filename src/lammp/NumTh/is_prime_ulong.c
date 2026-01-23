@@ -18,6 +18,10 @@ ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod) {
 #define qmul(a, b, c) lmmp_mulmod_ulong_(a, b, c, &q)
 
 bool lmmp_is_prime_ulong_(ulong n) {
+    /** 
+     *  Miller-Rabin primality test
+     *  in 2^64 range, using the 7th Miller-Rabin test, and is precise 
+     */
     static const ulong a[7] = {2, 325, 9375, 28178, 450775, 9780504, 1795265022};
     ulong q = 0;
     if (n < 3 || n % 2 == 0)

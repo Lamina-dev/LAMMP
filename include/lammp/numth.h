@@ -1,4 +1,4 @@
-/*
+﻿/*
  * [LAMMP]
  * Copyright (C) [2025] [HJimmyK/LAMINA]
  *
@@ -20,6 +20,12 @@
 #define LAMMP_NUMTH_H
 
 #include "lmmpn.h"
+
+// 阶乘计算中，大于此阈值的质数幂将使用快速幂算法
+#define FACTORIAL_PRIME_POW_THRESHOLD 20
+
+// 阶乘计算中，朴素连乘的乘法空间长度阈值
+#define FACTORIAL_MUL_MAX_THRESHOLD 20
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,8 +88,10 @@ ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
  */
 INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
     mp_size_t rn = exp * (n - 1) * LIMB_BITS + ceil((double)exp * log2(base[n - 1]));
-    return (rn + LIMB_BITS - 1) / LIMB_BITS + 1; /* more one limb for carry */
+    return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
 }
+
+#define lmmp_pow_1_size_(base, exp) (( ceil((double)(exp) * log2((double)base)) + LIMB_BITS - 1 ) / LIMB_BITS + 2)
 
 /**
  * @brief 计算幂次方朴素快速幂算法 [dst,rn] = [base,n] ^ exp
@@ -105,7 +113,7 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp)
  * @warning base<=0xf, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, uchar base, ulong exp);
+mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -116,7 +124,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, uchar base, ulong exp);
  * @warning base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, uchar base, ulong exp);
+mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -127,7 +135,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, uchar base, ulong exp);
  * @warning base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ushort base, ulong exp);
+mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -138,7 +146,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ushort base, ulong exp);
  * @warning base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, uint base, ulong exp);
+mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -159,9 +167,7 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning base>1, sep[dst|base], exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_limb_t base, ulong exp) {
-    mp_size_t rn = ceil((double)exp * log2(base));
-    rn = (rn + LIMB_BITS - 1) / LIMB_BITS + 1; /* more one limb for carry */
+INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
     if (base <= (mp_limb_t)0xf) {
         return lmmp_1_pow_1_(dst, rn, base, exp);
     } else if (base <= (mp_limb_t)0xff) {
@@ -173,7 +179,6 @@ INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_limb_t base, ulong exp) {
     } else {
         return lmmp_16_pow_1_(dst, rn, base, exp);
     }
-    return 0;
 }
 
 /**
@@ -214,15 +219,36 @@ typedef struct prime_int {
     uint N;       // 不超过 N 的素数表
 } pri_int;
 
-extern uchar lmmp_pri_char_table[];
-
 #define PRI_MMP_ZERO 3 // 位图的初始化值 11000000...
 
+/**
+ * @brief 计算素数表大小
+ * @param n 初始化不超过 n 的素数表
+ * @return 素数表大小
+ */
 INLINE_ size_t lmmp_prime_size_(ulong n) {
-    if (n < 100) {
-        return n / 3 + 2;
+    /*
+     * 这是一个不会低估的素数计数估计函数，使用了一些经验数据，其估计的数据可以参考：
+     * 总样本数: 9800001（500000000-10000000 之间以 50 为步长）
+     * 平均相对误差: 0.0830378%
+     * 最大相对误差: 0.123542%
+     * 最小相对误差: 0.0565845%
+     * 平均绝对误差: 11190.7
+     * 最大绝对误差: 22288
+     * 低估次数: 0 (0%)
+     */
+    if (n < 50) {
+        return (double)n / 3 + 2;
+    } else if (n < 500000) {
+        return ceil(1.002 * (double)n / (log(n) - 1.095));
+    } else if (n < 2500000) {
+        return ceil((double)n / (log(n) - 1.095));
+    } else if (n < 10000000) {
+        return ceil((double)n / (log(n) - 1.087));
+    } else if (n < 100000000) {
+        return ceil((double)n / (log(n) - 1.085));
     } else {
-        return ceil(1.05 *(double)n / (log(n) - 1.1));
+        return ceil((double)n / (log(n) - 1.075));
     }
 }
 
@@ -258,6 +284,82 @@ void lmmp_prime_int_free_(pri_int* p);
  * @return 若 n 为素数，返回 true，否则返回 false
  */
 bool lmmp_is_prime_ulong_(ulong n);
+
+typedef struct num_node {
+    mp_ptr num;
+    mp_size_t n;
+} num_node;
+
+typedef num_node* num_node_ptr;
+
+typedef struct num_heap {
+    num_node_ptr head;
+    size_t size;
+    size_t cap;
+} num_heap;
+
+/**
+ * @brief 初始化优先队列
+ * @param pq 优先队列指针
+ * @param capa 优先队列容量
+ */
+INLINE_ void lmmp_num_heap_init_(num_heap* pq, size_t capa) {
+    pq->head = ALLOC_TYPE(capa, num_node);
+    for (size_t i = 0; i < capa; ++i) {
+        pq->head[i].num = NULL;
+        pq->head[i].n = 0;
+    }
+    pq->cap = capa;
+    pq->size = 0;
+}
+
+/**
+ * @brief 释放优先队列
+ * @param pq 优先队列指针
+ */
+INLINE_ void lmmp_num_heap_free_(num_heap* pq) {
+    lmmp_debug_assert(pq->size == 0);
+    FREE(pq->head);
+    pq->cap = 0;
+    pq->size = 0;
+    pq->head = NULL;
+}
+
+/**
+ * @brief 入队
+ * @param pq 优先队列指针
+ * @param elem 待入队的元素
+ */
+void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n);
+
+/**
+ * @brief 出队
+ * @param pq 优先队列指针
+ * @param elem 出队的元素指针
+ * @return 若队列为空，返回 false，否则返回 true
+ */
+bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr elem);
+
+/**
+ * @brief 计算 n! 阶乘的 limb 长度
+ * @param n 阶乘的阶数
+ * @return n! 阶乘的 limb 长度
+ */
+INLINE_ mp_size_t lmmp_factorial_size_(uint n) {
+    double ln_fact = lgamma(n + 1.0);       
+    double log2_fact = ln_fact / log(2.0);
+    mp_size_t rn = ceil(log2_fact / LIMB_BITS) + 2; /* more two limbs */
+    return rn;
+}
+
+/**
+ * @brief 计算 n! 阶乘
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n 阶乘的阶数
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n);
 
 #ifdef INLINE_
 #undef INLINE_

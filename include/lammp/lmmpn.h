@@ -41,11 +41,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <stdio.h>
 #include "lmmp.h"
 
 
-// 除法阈值：当操作数规模超过此值时，使用优化的除法算法
+// 除法阈值：当操作数规模超过此值时，使用分治除法算法
 #define DIV_DIVIDE_THRESHOLD 50
 // 乘法逆元L阈值：用于选择乘法逆元计算策略的临界值（L维度）
 #define DIV_MULINV_L_THRESHOLD 477
@@ -65,13 +65,13 @@
 // 模M牛顿迭代开方阈值：超过此规模使用模M优化的牛顿迭代开方
 #define SQRT_NEWTON_MODM_THRESHOLD 734
 
-// Toom-22乘法阈值：超过此规模使用Toom-22乘法算法
+// Toom-22乘法阈值：超过此规模使用Toom-22乘法
 #define MUL_TOOM22_THRESHOLD 20
-// Toom-X2乘法阈值：超过此规模使用Toom-X2乘法算法
+// Toom-X2乘法阈值：较短乘数小于此值使用Toom-X2不平衡乘法
 #define MUL_TOOMX2_THRESHOLD 30
-// Toom-33乘法阈值：超过此规模使用Toom-33乘法算法
+// Toom-33乘法阈值：超过此规模使用Toom-33乘法
 #define MUL_TOOM33_THRESHOLD 65
-// FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法算法
+// FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法
 #define MUL_FFT_THRESHOLD 1736
 
 // 模F FFT乘法阈值：用于模F场景下的FFT乘法策略选择
@@ -89,7 +89,7 @@
 #define INLINE_ static inline
 
 // L1缓存大小，请将此值设置为实际单核CPU的L1缓存大小（字节数）
-// 8192 字节通常已经远远小于现代CPU的L1缓存大小，但仍然可以满足分块需要了
+// 8192 字节通常远远小于现代CPU的L1缓存大小，但仍然可以满足分块需要了
 #define L1_CACHE_SIZE 8192
 
 #define LIMB_BITS 64
@@ -99,6 +99,7 @@
 
 // L1缓存分块大小
 #define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 4)
+
 
 #ifdef __cplusplus
 extern "C" {
@@ -115,6 +116,12 @@ INLINE_ bool lmmp_endian(void) {
  * @return 满足条件的最小自然数k
  */
 int lmmp_limb_bits_(mp_limb_t x);
+/**
+ * @brief 计算一个64位无符号整数中1的个数
+ * @param x 输入的64位无符号整数
+ * @return 1的个数
+ */
+int lmmp_limb_popcnt_(mp_limb_t x);
 
 /**
  * @brief 计算一个单精度数(limb)中前导零的个数
@@ -368,7 +375,7 @@ void lmmp_div_2_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_ptr numb);
 mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21);
 
 /**
- * @brief 优化除法运算（Divide）
+ * @brief 分治除法运算（Divide）
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
  * @param na 被除数的 limb 长度
@@ -448,10 +455,6 @@ mp_limb_t lmmp_div_2_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb);
  * @note 要求：na>=nb>0，numb最高有效位为1，所有缓冲区内存不重叠
  */
 mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-#ifdef __cplusplus
-}  // extern "C"
-#endif
 
 typedef struct lmmp_mp_base_t_ {
     // 单个limb能容纳的基数的最大幂次
@@ -565,7 +568,7 @@ void lmmp_temp_free_(void*);
     } while (0)
 
 // 类型化内存分配：分配n个type类型的内存（堆）
-#define ALLOC_TYPE(n, type) ((type*)lmmp_alloc((n) * sizeof(type)))
+#define ALLOC_TYPE(n, type) ((type*)lmmp_alloc((size_t)(n) * sizeof(type)))
 // 类型化内存重分配：将p指向的内存重分配为new_size个type类型
 #define REALLOC_TYPE(p, new_size, type) ((type*)lmmp_realloc((p), (new_size) * sizeof(type)))
 // 内存释放：释放ptr指向的内存
@@ -587,12 +590,13 @@ void lmmp_temp_free_(void*);
         }                       \
     } while (0)
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
-#ifdef DEBUG
-#define lmmp_debug_assert(x) \
-    do {                \
-        if (!(x)) {     \
-            abort();    \
-        }               \
+#if LAMMP_DEBUG == 1
+#define lmmp_debug_assert(x)                                                          \
+    do {                                                                              \
+        if (!(x)) {                                                                   \
+            fprintf(stderr, "Assertion failed: %s:%d: %s\n", __FILE__, __LINE__, #x); \
+            abort();                                                                  \
+        }                                                                             \
     } while (0)
 #else
 #define lmmp_debug_assert(x) ((void)0)
@@ -776,6 +780,10 @@ INLINE_ mp_limb_t lmmp_add_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_
  * @note 使用LMMP_AORS_1_宏和LMMP_SUBCB_宏处理借位逻辑
  */
 INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x) { LMMP_AORS_1_(-, LMMP_SUBCB_); }
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
 
 #undef LMMP_ADDCB_
 #undef LMMP_SUBCB_

@@ -4,7 +4,7 @@ void lmmp_prime_int_init_(pri_int* p, uint n) {
     p->N = n;
     size_t pri_est = lmmp_prime_size_(n);
     p->pri = ALLOC_TYPE(pri_est, uint);
-    p->mmp_cal = (n + ULONG_BITS - 1) / ULONG_BITS;
+    p->mmp_cal = (n + ULONG_BITS - 1) / ULONG_BITS + 1;
     p->mmp = ALLOC_TYPE(p->mmp_cal, ulong);
 
 // 1=非质数，0=质数
@@ -20,6 +20,7 @@ void lmmp_prime_int_init_(pri_int* p, uint n) {
     for (ulong num = 2; num <= p->N; ++num) {
         if (!is_not_prime(num / ULONG_BITS, num % ULONG_BITS)) {
             p->pri[p->prin++] = num;
+            lmmp_debug_assert(p->prin <= pri_est);
         }
 
         for (size_t j = 0; j < p->prin; ++j) {

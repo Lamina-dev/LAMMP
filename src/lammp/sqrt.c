@@ -24,9 +24,12 @@ static const mp_byte_t lmmp_invsqrt_table_[] = {
     0x06, 0x06, 0x05, 0x05, 0x05, 0x04, 0x04, 0x04, 0x04, 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x01, 0x01,
     0x01, 0x01, 0x00, 0x00};
 
+#define B_4 (1ull << 62)  // B/4
+
 //[dsts,1]=floor(sqrt(x)), return remainder
 // need(x>=B/4)
 mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x) {
+    lmmp_debug_assert(x >= B_4);
     mp_limb_t v, xh = x >> 24, s, s2;
     mp_slimb_t t;
 
@@ -58,6 +61,7 @@ mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x) {
 //[dsts,1]=floor(sqrt([numa,2])), rh:[dstr,1]=remainder, return rh
 // need(numa[1]>=B/4)
 mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
+    lmmp_debug_assert(numa[1] >= B_4);
     mp_limb_t rl, s, q, al, u;
     mp_slimb_t rh;
 
@@ -94,6 +98,9 @@ mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
 // else [dsts,ns]=floor(sqrt([numa,2*ns])), return 1
 // need(ns>0, numa[2*ns-1]>=B/4, 0<=nsh<LIMB_BITS)
 mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int nsh) {
+    lmmp_debug_assert(ns > 0);
+    lmmp_debug_assert(nsh >= 0 && nsh < LIMB_BITS);
+    lmmp_debug_assert(numa[2 * ns - 1] >= B_4);
     mp_slimb_t rh;
     if (ns == 1) {
         rh = lmmp_sqrt_2_(dsts, numa, numa);
@@ -131,6 +138,9 @@ mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int nsh) {
 //[dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
 // need(ns>=3, na>0, numa[na-1]>=B/4)
 void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
+    lmmp_debug_assert(ns >= 3);
+    lmmp_debug_assert(na > 0);
+    lmmp_debug_assert(numa[na - 1] >= B_4);
     mp_size_t nr = ns, namax = na, mn;
     mp_size_t sizes[LIMB_BITS], *sizp = sizes;
 
@@ -302,6 +312,8 @@ void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf) 
 }
 
 void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
+    lmmp_debug_assert(na > 0);
+    lmmp_debug_assert(numa[na - 1] > 0);
     mp_limb_t high = numa[na - 1];
     int nsh = lmmp_leading_zeros_(high) / 2;
     mp_size_t nl = na + 2 * nf;
