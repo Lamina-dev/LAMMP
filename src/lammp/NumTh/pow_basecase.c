@@ -2,12 +2,14 @@
 
 mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
     TEMP_DECL;
+
     mp_size_t rn = lmmp_pow_size_(base, n, exp);
     mp_size_t sqn = n, dsn = 1;
     bool sq = true;
-    mp_ptr sq1 = TALLOC_TYPE(rn, mp_limb_t);
-    mp_ptr sq2 = TALLOC_TYPE(rn, mp_limb_t);
-    mp_ptr re = TALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr sq1 = BALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr sq2 = BALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr re = BALLOC_TYPE(rn, mp_limb_t);
+
     lmmp_zero(sq1 + n, rn - n);
     lmmp_copy(sq1, base, n);
     //lmmp_zero(sq2, rn); // not necessary

@@ -24,22 +24,22 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
 
 #define b1 base
 #define b1n n
-#define new_b(_i_) mp_ptr b##_i_ = TALLOC_TYPE(b##_i_##n, mp_limb_t)
+#define new_b(_i_) mp_ptr b##_i_ = BALLOC_TYPE(b##_i_##n, mp_limb_t)
 
     mp_size_t b2n = n << 1, b3n = b2n + n;
     new_b(2);
     new_b(3);
 
     lmmp_sqr_basecase_(b2, b1, b1n);
-    b2n = n << 1;
+    b2n = b1n << 1;
     b2n -= b2[b2n - 1] == 0 ? 1 : 0;
     lmmp_mul_basecase_(b3, b2, b2n, b1, b1n);
-    b3n = b2n + n;
+    b3n = b2n + b1n;
     b3n -= b3[b3n - 1] == 0 ? 1 : 0;
 
     mp_size_t dsn = lmmp_pow_size_(base, n, exp);
     bool rsq = true;
-    mp_ptr sq = TALLOC_TYPE(dsn, mp_limb_t);
+    mp_ptr sq = BALLOC_TYPE(dsn, mp_limb_t);
     dsn = 1;
     sq[0] = 1;
     mp_size_t i = 31;

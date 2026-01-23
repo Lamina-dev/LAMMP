@@ -27,6 +27,13 @@ lmmp_tailing_zeros_ proc
 	cmovnz rax,rx0
 	ret
 lmmp_tailing_zeros_ endp
+	
+	ALIGN 16
+lmmp_limb_popcnt_ proc
+    xor rax, rax
+    popcnt rax, rx0
+    ret
+lmmp_limb_popcnt_ endp
 
 	ALIGN 16
 lmmp_mulh_ proc
@@ -36,13 +43,18 @@ lmmp_mulh_ proc
 	ret
 lmmp_mulh_ endp
 
+	ALIGN 16
 lmmp_mullh_ proc
     mov rax, rcx    
     mul rdx        
     mov [r8], rax   
     mov [r8+8], rdx 
     ret          
+
+	ALIGN 16
 lmmp_mullh_ endp
+
+	ALIGN 16
 lmmp_mulmod_ulong_ proc
     push rbx
     mov rbx, r8       

@@ -38,6 +38,13 @@
 #include <stddef.h> 
 #include <stdint.h>
 
+#define LAMMP_DEBUG 0
+#define MEMORY_CHECK 0
+
+#if MEMORY_CHECK == 1
+#include "impl/safe_memory.h"
+#endif 
+
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
 typedef uint64_t mp_size_t;          // 表示limb数量的无符号整数类型
@@ -52,7 +59,10 @@ extern "C" {
 
 _STATIC_ASSERT(sizeof(void*) == 8);  // only 64-bit systems are supported
 
-// ===================== lmmp 内存管理安全函数 =====================
+
+#if MEMORY_CHECK == 1
+#define lmmp_alloc(size) my_malloc_debug((size), __FILE__, __LINE__)
+#else
 /**
  * 内存分配函数
  * @param size 要分配的内存字节数
@@ -60,7 +70,11 @@ _STATIC_ASSERT(sizeof(void*) == 8);  // only 64-bit systems are supported
  * @note 是标准malloc的安全封装版本
  */
 void* lmmp_alloc(size_t);
+#endif 
 
+#if MEMORY_CHECK == 1
+#define lmmp_realloc(ptr, size) my_realloc_debug((ptr), (size), __FILE__, __LINE__)
+#else
 /**
  * 内存重分配函数
  * @param ptr 已分配的内存指针
@@ -69,13 +83,19 @@ void* lmmp_alloc(size_t);
  * @note 是标准realloc的安全封装版本
  */
 void* lmmp_realloc(void*, size_t);
+#endif 
 
+
+#if MEMORY_CHECK == 1
+#define lmmp_free(ptr) my_free_debug((ptr), __FILE__, __LINE__)
+#else
 /**
  * 内存释放函数
  * @param ptr 要释放的内存指针
  * @note 是标准free的安全封装版本，确保空指针释放安全
  */
 void lmmp_free(void*);
+#endif
 
 // ===================== lmmp_ 底层不安全运算函数 =====================
 /**

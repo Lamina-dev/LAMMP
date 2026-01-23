@@ -16,7 +16,6 @@ set_target_properties(LammpCore PROPERTIES
     VERSION 2.0.1
     SOVERSION 1
 )
-
 # ===================== 局部编译/链接选项 =====================
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     target_compile_options(LammpCore PRIVATE

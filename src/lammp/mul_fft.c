@@ -239,7 +239,7 @@ void lmmp_fft_shr_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shr) {
 
 /**
  * @brief FFT蝶形运算（Butterfly Operation）
- * 数学原理：(a,b) = (a + b, (a-b) << w ) mod 2^n+1
+ * (a,b) = (a + b, (a-b) << w ) mod 2^n+1
  * a=[coef[0],ms->lenw+1], b=[coef[wing],ms->lenw+1], n=ms->lenw * LIMB_BITS
  * @param ms - 内存栈结构体指针
  * @param coef - 系数数组指针数组（coef[0]=a, coef[wing]=b）
@@ -340,7 +340,7 @@ void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) 
 
 /**
  * @brief FFT蝶形运算（Butterfly Operation）
- * 数学原理：(a,b) = (a+(b>>w), a-(b>>w)) mod 2^n+1
+ * (a,b) = (a+(b>>w), a-(b>>w)) mod 2^n+1
  * a=[coef[0],ms->lenw+1], b=[coef[wing],ms->lenw+1], n=ms->lenw * LIMB_BITS
  * @param ms - 内存栈结构体指针
  * @param coef - 系数数组指针数组（coef[0]=a, coef[wing]=b）
@@ -377,15 +377,15 @@ void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w)
         acyo = lmmp_sub_nc_(numa + off, numa + off, numb + off - (l - w), cursize, acyo);
     }
 
-    // 第二阶段：处理 0 <= off < l - w 的区域（非循环部分）
+    // 处理 0 <= off < l - w 的区域（非循环部分）
     for (mp_size_t off = 0; off < l - w; off += PART_SIZE) {
         mp_size_t cursize = MIN(l - w - off, PART_SIZE);
-        // 1. 对numb执行右移（带进位）
+        // 对numb执行右移（带进位）
         if (shr)
             lmmp_shr_c_(numb + w + off, numb + w + off, cursize, shr, numb[off + w + cursize] << (LIMB_BITS - shr));
-        // 2. 计算 numc[off ...] = numa[off ...] - (b>>w)（带借位）
+        // 计算 numc[off ...] = numa[off ...] - (b>>w)（带借位）
         bcyo = lmmp_sub_nc_(numc + off, numa + off, numb + w + off, cursize, bcyo);
-        // 3. 计算 numa[off ...] = numa[off ...] + (b>>w)（带进位）
+        // 计算 numa[off ...] = numa[off ...] + (b>>w)（带进位）
         acyo = lmmp_add_nc_(numa + off, numa + off, numb + w + off, cursize, acyo);
     }
 
@@ -662,7 +662,7 @@ void lmmp_mul_fermat_recombine_(fft_memstack* ms,
 }
 
 /**
- * @brief 费马数乘法递归函数（核心乘法逻辑）
+ * @brief 费马变换乘法递归函数（核心乘法逻辑）
  * @param ms - 内存栈结构体指针
  * @param pc1 - 第一个数的FFT系数数组指针数组
  * @param pc2 - 第二个数的FFT系数数组指针数组
@@ -700,7 +700,6 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
         mp_size_t N = rn * LIMB_BITS;        // 总比特数
         mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
         mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
-        // 断言：N必须是K的整数倍
         lmmp_assert(!(N & (K - 1)));
         mp_size_t M = N >> k;         // 每个块的比特数（N/K）
         mp_size_t n = 2 * M + k + 2;  // 扩展系数长度（保证归一化）
@@ -717,17 +716,14 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
         // - (1 << (k + nsqr))：指针数组（2^(k+nsqr) 个指针）
         // - nlen：临时系数
         ms->temp_coef = (mp_ptr)lmmp_fft_memstack_(ms, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
-        // 初始化指针数组：pfca指向第一个数的系数
         mp_ptr *pfca = (mp_ptr*)(ms->temp_coef + nlen), *pfcb = pfca;
         // 为每个FFT块分配系数数组
         for (mp_size_t i = 0; i < K; ++i) pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
-        // 若不是平方运算：为第二个数分配系数数组
         if (nsqr) {
-            pfcb += (nlen + 1) << k;  // 偏移指针数组
+            pfcb += (nlen + 1) << k;  
             for (mp_size_t i = 0; i < K; ++i) pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
         }
 
-        // 遍历所有待乘块
         for (mp_size_t j = 0; j < K0; ++j) {
             mp_ptr numa = pc1[j]; 
             mp_ptr numb = pc2[j];  
@@ -743,7 +739,6 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
             // 执行FFT：将时域转换为频域（乘法变点积）
             lmmp_fft_(ms, pfca, k, n >> (k - 1));
 
-            // 若不是平方运算，提取第二个数的FFT系数
             if (nsqr) {
                 for (mp_size_t i = 0; i < K; ++i) {
                     lmmp_fft_extract_coef_(pfcb[i], numb, M * i, M + (i == K - 1), ms->lenw);
@@ -971,6 +966,8 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 }
 
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    lmmp_debug_assert(na > 0 && nb > 0);
+    lmmp_debug_assert(na >= nb);
     mp_size_t hn = lmmp_fft_next_size_((na + nb + 1) >> 1);
     lmmp_assert(na + nb > hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
