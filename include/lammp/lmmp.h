@@ -61,7 +61,7 @@ _STATIC_ASSERT(sizeof(void*) == 8);  // only 64-bit systems are supported
 
 
 #if MEMORY_CHECK == 1
-#define lmmp_alloc(size) my_malloc_debug((size), __FILE__, __LINE__)
+#define lmmp_alloc(size) lmmp_malloc_debug((size), __FILE__, __LINE__)
 #else
 /**
  * 内存分配函数
@@ -73,7 +73,7 @@ void* lmmp_alloc(size_t);
 #endif 
 
 #if MEMORY_CHECK == 1
-#define lmmp_realloc(ptr, size) my_realloc_debug((ptr), (size), __FILE__, __LINE__)
+#define lmmp_realloc(ptr, size) lmmp_realloc_debug((ptr), (size), __FILE__, __LINE__)
 #else
 /**
  * 内存重分配函数
@@ -87,7 +87,7 @@ void* lmmp_realloc(void*, size_t);
 
 
 #if MEMORY_CHECK == 1
-#define lmmp_free(ptr) my_free_debug((ptr), __FILE__, __LINE__)
+#define lmmp_free(ptr) lmmp_free_debug((ptr), __FILE__, __LINE__)
 #else
 /**
  * 内存释放函数

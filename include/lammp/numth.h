@@ -79,18 +79,25 @@ ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
 ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
 
 /**
- * @brief 计算幂次方需要的limb长度 [base,n] ^ exp
+ * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
  * @param base 底数指针
  * @param n 底数 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, [base,n]>1
- * @return 无返回值，结果储存在dst中
+ * @return 返回值为 [base,n]^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
     mp_size_t rn = exp * (n - 1) * LIMB_BITS + ceil((double)exp * log2(base[n - 1]));
     return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
 }
 
+/**
+ * @brief 计算幂次方需要的limb缓冲区长度 base ^ exp
+ * @param base 底数
+ * @param exp 指数
+ * @warning n>0, base>1
+ * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
+ */
 #define lmmp_pow_1_size_(base, exp) (( ceil((double)(exp) * log2((double)base)) + LIMB_BITS - 1 ) / LIMB_BITS + 2)
 
 /**
@@ -224,7 +231,7 @@ typedef struct prime_int {
 /**
  * @brief 计算素数表大小
  * @param n 初始化不超过 n 的素数表
- * @return 素数表大小
+ * @return 素数表大小（高估素数数量，不会高估太多）
  */
 INLINE_ size_t lmmp_prime_size_(ulong n) {
     /*
@@ -328,7 +335,8 @@ INLINE_ void lmmp_num_heap_free_(num_heap* pq) {
 /**
  * @brief 入队
  * @param pq 优先队列指针
- * @param elem 待入队的元素
+ * @param elem 待入队的元素指针
+ * @param n 元素的 limb 长度
  */
 void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n);
 
@@ -341,9 +349,9 @@ void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n);
 bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr elem);
 
 /**
- * @brief 计算 n! 阶乘的 limb 长度
+ * @brief 计算 n! 阶乘的 limb 缓冲区长度
  * @param n 阶乘的阶数
- * @return n! 阶乘的 limb 长度
+ * @return n! 阶乘的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 INLINE_ mp_size_t lmmp_factorial_size_(uint n) {
     double ln_fact = lgamma(n + 1.0);       

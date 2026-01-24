@@ -1,5 +1,12 @@
 #include "../../../include/lammp/numth.h"
 
+/**
+ * @brief 计算 n! 阶乘
+ * @param dst 结果存储位置
+ * @param rn 结果存储位置的 limb 长度
+ * @param n 阶乘的阶数
+ * @return 结果 dst 的实际 limb 长度
+ */
 mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
     pri_short primes;
     lmmp_prime_short_init_(&primes, n);

@@ -1,15 +1,13 @@
-// 引入lammp大数运算库的头文件
 #include "../../include/lammp/lmmpn.h"
 
-// 宏定义：生成FFT表项，用于快速查找最优FFT参数
-// 公式说明：((mp_size_t)3 << (2 * (n) - 5)) + 1 是预计算的阈值，n是对应的k值
+// ((mp_size_t)3 << (2 * (n) - 5)) + 1 是预计算的阈值，n是对应的k值
 #define _FFT_TABLE_ENTRY(n) {((mp_size_t)3 << (2 * (n) - 5)) + 1, (n)}
 #define _FFT_TABLE_ENTRY4(n) \
     _FFT_TABLE_ENTRY(n), _FFT_TABLE_ENTRY((n) + 1), _FFT_TABLE_ENTRY((n) + 2), _FFT_TABLE_ENTRY((n) + 3)
 
-// 1. 确保 best_k_(next_size_(n)) = best_k_(n)
-// 2. table[i+1][0]-1 必须是 2^(table[i][1]-LOG2_LIMB_BITS) 的整数倍
-// LOG2_LIMB_BITS：每个机器字（limb）的比特数的对数（如64位系统为6）
+// best_k_(next_size_(n)) = best_k_(n)
+// table[i+1][0]-1 必须是 2^(table[i][1]-LOG2_LIMB_BITS) 的整数倍
+// LOG2_LIMB_BITS：每个 limb 的比特数的2对数
 static const mp_size_t lmmp_fft_table_[][2] = {
     {0, 6},                 // 阈值0，对应k=6
     {1597, 7},              // 阈值1597，对应k=7
@@ -51,7 +49,6 @@ static const mp_size_t lmmp_fft_table_[][2] = {
     {(mp_size_t)-1, 127}    
 };
 
-// FFT内存栈结构体：用于管理FFT运算过程中的临时内存
 typedef struct {
     mp_ptr temp_coef;       // 用于数据交换的临时系数数组
     mp_size_t lenw;         // 系数的机器字（limb）长度
@@ -62,9 +59,9 @@ typedef struct {
 } fft_memstack;
 
 /**
- * 功能：查找对于 m>=n 的模 B^m+1 FFT运算的最优k值
- * 参数：n - 输入的机器字长度
- * 返回：最优的k值
+ * @brief 查找对于 m>=n 的模 B^m+1 FFT运算的最优k值
+ * @param n - 输入的机器字长度
+ * @return 最优的k值
  */
 mp_size_t lmmp_fft_best_k_(mp_size_t n) {
     mp_size_t k = 0;
@@ -73,18 +70,15 @@ mp_size_t lmmp_fft_best_k_(mp_size_t n) {
 }
 
 /**
- * 功能：计算FFT运算所需的最小规整化长度（向上取整到2^k的倍数）
- * 参数：n - 原始长度
- * 返回：规整后的长度（满足2^k的倍数，保证FFT并行性）
+ * @brief 计算FFT运算所需的最小规整化长度（向上取整到2^k的倍数）
+ * @param n - 原始长度
+ * @return 规整后的长度（满足2^k的倍数，保证FFT并行性）
  */
 mp_size_t lmmp_fft_next_size_(mp_size_t n) {
-    // 获取当前n对应的最优k值
     mp_size_t k = lmmp_fft_best_k_(n);
-    // 断言：k必须大于等于LOG2_LIMB_BITS（保证每个块至少包含1个机器字）
+    // 保证每个块至少包含1个 limb
     lmmp_assert(k >= LOG2_LIMB_BITS);
-    // 计算偏移量：k' = k - LOG2_LIMB_BITS
     k -= LOG2_LIMB_BITS;
-    // 向上取整到2^k的倍数：((n-1)>>k)+1 是向上取整除法，再左移k位还原
     n = (((n - 1) >> k) + 1) << k;
     return n;
 }
@@ -107,9 +101,9 @@ void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
     } else {    // size=0：释放内存
         if (--ms->tempdepth < 0) {
             for (mp_size_t i = 0; i <= (mp_size_t)(ms->maxdepth); ++i) lmmp_free(ms->mem[i]);
-            ms->maxdepth = -1;  // 重置最大深度
+            ms->maxdepth = -1;  
         }
-        return 0;  // 释放操作返回0
+        return 0; 
     }
 }
 
@@ -161,7 +155,7 @@ void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
     mp_ptr dst = ms->temp_coef;     // 目标临时数组
     mp_limb_t cc, rd;               // 进位变量（cc=carry, rd=read）
 
-    // 情况1：左移的机器字数 >= 系数长度（w >= l）
+    // 左移的机器字数 >= 系数长度（w >= l）
     if (w >= l) {
         w -= l;   
         if (shl) {  // 有比特偏移
@@ -188,7 +182,7 @@ void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
         else
             lmmp_inc_1(dst + w, rd);  // 非溢出，dst[w] + rd
     }
-    // 情况2：左移的机器字数 < 系数长度（w < l）
+    // 左移的机器字数 < 系数长度（w < l）
     else {
         if (shl) {  // 有比特偏移
             // 1. 处理循环部分：src[l-w ... l] 左移shl位并取反
@@ -233,7 +227,6 @@ void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
  * @param shr - 右移的比特数（0 < shr < 2*n）
  */
 void lmmp_fft_shr_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shr) {
-    // 调用左移函数实现右移：2n = 2 * ms->lenw * LIMB_BITS
     lmmp_fft_shl_coef_(ms, coef, 2 * ms->lenw * LIMB_BITS - shr);
 }
 
@@ -673,11 +666,10 @@ void lmmp_mul_fermat_recombine_(fft_memstack* ms,
  */
 void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_size_t K0) {
     int nsqr = pc1 != pc2;  // 判断是否为平方运算
-    // 保存临时系数指针（栈回溯用）
     mp_ptr push_temp_coef = ms->temp_coef;
     mp_size_t rn = ms->lenw;  // 当前系数长度
 
-    // 阈值判断：小于阈值则直接乘法（不使用FFT）
+    // 小于阈值则不使用FFT
     if (rn < MUL_FFT_MODF_THRESHOLD) {
         // 分配临时乘法缓冲区（2*(rn+1)个机器字）
         mp_ptr temp_mul = (mp_ptr)lmmp_fft_memstack_(ms, (rn + 1) * 2 * LIMB_BYTES);
@@ -695,7 +687,6 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
         }
         lmmp_fft_memstack_(ms, 0);  // 释放临时缓冲区
     }
-    // 大于阈值：使用FFT加速乘法
     else {
         mp_size_t N = rn * LIMB_BITS;        // 总比特数
         mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
@@ -736,7 +727,6 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
                 if (i > 0)
                     lmmp_fft_shl_coef_(ms, pfca + i, i * n >> k);
             }
-            // 执行FFT：将时域转换为频域（乘法变点积）
             lmmp_fft_(ms, pfca, k, n >> (k - 1));
 
             if (nsqr) {
@@ -748,13 +738,11 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
                 lmmp_fft_(ms, pfcb, k, n >> (k - 1));
             }
 
-            // 递归执行频域乘法（点积）
+            // dot product
             lmmp_mul_fermat_recurse_(ms, pfca, pfcb, K);
 
-            // 执行逆FFT：频域转回时域
             lmmp_ifft_(ms, pfca, k, n >> (k - 1));
 
-            // 重组结果
             lmmp_mul_fermat_recombine_(ms, numa, pfca, K, k, n, M, rn);
         }
         lmmp_fft_memstack_(ms, 0); 
@@ -769,7 +757,6 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
     mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
     mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
-    // 断言：N必须是K的整数倍
     lmmp_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;         // 每个块的比特数
     mp_size_t n = 2 * M + k + 2;  // 扩展系数长度
@@ -792,7 +779,6 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     mp_ptr *pfca = (mp_ptr*)(msr.temp_coef + nlen), *pfcb = pfca;
     mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;  // 剩余未处理的比特数
 
-    // 第一步：提取第一个数的FFT系数
     for (mp_size_t i = 0; i < K; ++i) {
         mp_size_t coeflen;
         pfca[i] = (mp_ptr)(pfca + K) + i * nlen;  // 分配第i块的系数数组
@@ -800,23 +786,20 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
             // 计算当前块的系数长度
             coeflen = M + (i == K - 1);
             coeflen = MIN(narest, coeflen);
-            narest -= coeflen;  // 减少剩余比特数
-            // 提取系数
+            narest -= coeflen; 
             lmmp_fft_extract_coef_(pfca[i], numa, M * i, coeflen, msr.lenw);
             // 非第一个块：左移补偿
             if (i > 0)
                 lmmp_fft_shl_coef_(&msr, pfca + i, i * n >> k);
         } else {
-            // 剩余比特为0：系数置零
             lmmp_zero(pfca[i], nlen);
         }
     }
     // 执行FFT
     lmmp_fft_(&msr, pfca, k, n >> (k - 1));
 
-    // 第二步：若不是平方运算，提取第二个数的FFT系数
     if (nsqr) {
-        pfcb += (nlen + 1) << k;  // 偏移指针数组
+        pfcb += (nlen + 1) << k;  
         for (mp_size_t i = 0; i < K; ++i) {
             mp_size_t coeflen;
             pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
@@ -831,20 +814,16 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
                 lmmp_zero(pfcb[i], nlen);
             }
         }
-        // 执行FFT
         lmmp_fft_(&msr, pfcb, k, n >> (k - 1));
     }
 
-    // 第三步：递归执行频域乘法
     lmmp_mul_fermat_recurse_(&msr, pfca, pfcb, K);
 
-    // 第四步：执行逆FFT
     lmmp_ifft_(&msr, pfca, k, n >> (k - 1));
 
-    // 第五步：重组结果到dst
     lmmp_mul_fermat_recombine_(&msr, dst, pfca, K, k, n, M, rn);
 
-    // 最终归一化：处理模 B^rn+1 的溢出
+    // 处理模 B^rn+1 的溢出
     if (dst[rn] && !lmmp_zero_q_(dst, rn)) {
         dst[rn] = 0;
         lmmp_dec(dst);  // 整体减1
@@ -881,7 +860,6 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
     mp_ptr *pfca = (mp_ptr*)(msr.temp_coef + nlen), *pfcb = pfca;
     mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;  // 剩余未处理的比特数
 
-    // 第一步：提取第一个数的FFT系数（梅森数无最后一块扩展）
     for (mp_size_t i = 0; i < K; ++i) {
         mp_size_t coeflen;
         pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
@@ -893,10 +871,8 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
             lmmp_zero(pfca[i], nlen);
         }
     }
-    // 执行FFT
     lmmp_fft_(&msr, pfca, k, n >> (k - 1));
 
-    // 第二步：若不是平方运算，提取第二个数的FFT系数
     if (nsqr) {
         pfcb += (nlen + 1) << k;
         for (mp_size_t i = 0; i < K; ++i) {
@@ -910,17 +886,14 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
                 lmmp_zero(pfcb[i], nlen);
             }
         }
-        // 执行FFT
         lmmp_fft_(&msr, pfcb, k, n >> (k - 1));
     }
 
-    // 第三步：递归执行频域乘法
     lmmp_mul_fermat_recurse_(&msr, pfca, pfcb, K);
 
-    // 第四步：执行逆FFT
     lmmp_ifft_(&msr, pfca, k, n >> (k - 1));
 
-    // 第五步：梅森数结果重组（与费马数不同）
+    // 梅森数结果重组
     mp_size_t rhead = 0, maxc = 0;
     for (mp_size_t i = 0; i < K; ++i) {
         // 右移k比特补偿
@@ -930,7 +903,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
         // 归一化处理
         if (nums[nlen - 1]) {
             lmmp_dec(nums);
-            lmmp_assert(nums[nlen - 1] == 1);  // 断言：梅森数归一化标志为1
+            lmmp_assert(nums[nlen - 1] == 1);  // 梅森数归一化标志为1
             nums[nlen - 1] = 0;
         }
 
@@ -939,11 +912,10 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
         mp_size_t shl = roffset & (LIMB_BITS - 1);
         roffset /= LIMB_BITS;
 
-        // 左移对齐
         if (shl)
             lmmp_shl_(nums, nums, nlen, shl);
 
-        // 合并到结果数组（梅森数是加法，费马数是加减法）
+        // 梅森数只需要加法即可
         if (i == 0) {
             lmmp_copy(dst, nums, nlen);
             rhead = nlen;

@@ -1,4 +1,3 @@
-
 #include "../../include/lammp/lmmpn.h"
 
 mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
