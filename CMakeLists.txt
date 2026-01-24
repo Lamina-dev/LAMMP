@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(Lammp LANGUAGES CXX C ASM_MASM)
+project(Lammp LANGUAGES CXX C)
 
 # 设置默认构建类型为 Release
 if(NOT CMAKE_BUILD_TYPE)
@@ -13,19 +13,11 @@ if(NOT CMAKE_BUILD_TYPE IN_LIST VALID_BUILD_TYPES)
 endif()
 
 # ===================== MASM 汇编器链接 =====================
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    enable_language(ASM_MASM)
     # 由于我的环境路径中没有ml64.exe，所以指定了ml64.exe路径
-    set(ML64_PATH "D:/vs2022/IDE/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/ml64.exe")
-    message("please use your own ml64.exe path!")
-    if(NOT EXISTS ${ML64_PATH})
-        message(FATAL_ERROR "ml64.exe not found at: ${ML64_PATH}, please check the path!")
-    endif()
-    set(CMAKE_ASM_MASM_COMPILER ${ML64_PATH})
-
-    set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
-
-    set(CMAKE_ASM_MASM_FLAGS_INIT "${CMAKE_ASM_MASM_FLAGS}")
-    set(CMAKE_ASM_MASM_COMPILE_OBJECT "<CMAKE_ASM_MASM_COMPILER> <FLAGS> /Fo<OBJECT> <SOURCE>")
+    # Set this only if needed or make it optional
+    # set(ML64_PATH ...) 
 endif()
 
 # ===================== C/C++选项 =====================

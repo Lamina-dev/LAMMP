@@ -7,9 +7,10 @@ int test_pow(uint a0, uint exp) {
     mp_size_t bn = lmmp_pow_size_(a, 1, exp);
     mp_ptr b = (mp_ptr)lmmp_alloc(bn * sizeof(mp_limb_t));
     mp_ptr c = (mp_ptr)lmmp_alloc(bn * sizeof(mp_limb_t));
-    //std::cout << "1" << std::endl;
+
     mp_size_t n1 = lmmp_pow_1_(b, bn, a[0], exp);
     mp_size_t n2 = lmmp_pow_win3_(c, a, 1, exp);
+
     if (n1 != n2) {
         FREE(b);
         FREE(c);
