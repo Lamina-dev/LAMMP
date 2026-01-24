@@ -215,7 +215,7 @@ void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @note 要求：4/5<=nb/na<=1，nb>=5，sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1，nb>=5，sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -227,7 +227,7 @@ void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @note 要求：5/9<=nb/na<=4/5，nb>=12，sep(dst,[numa|numb])
+ * @warning 5/9<=nb/na<=4/5，nb>=12，sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -239,7 +239,7 @@ void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @note 要求：4/5<=nb/na<=1，nb>=26，sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1，nb>=26，sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -251,7 +251,7 @@ void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @note 要求：1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
+ * @warning 1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -259,8 +259,7 @@ void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
 /**
  * @brief 计算满足 >=n 的最小费马/梅森乘法可行尺寸
  * @param n 输入的目标尺寸
- * @return 优化后的FFT运算尺寸
- * @note 用于FFT乘法的尺寸优化，确保满足算法的数学特性
+ * @return 满足条件的SSA乘法最小尺寸
  */
 mp_size_t lmmp_fft_next_size_(mp_size_t n);
 
@@ -297,7 +296,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @note 要求：???<=nb<=na, sep(dst,[numa|numb])
+ * @warning ???<=nb<=na, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -306,7 +305,7 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
  * @brief 1阶逆元计算 (inv1)
  * @param x 输入的64位无符号整数，最高位为1(MSB(x)=1)
  * @return 计算结果：(B^2-1)/x - B
- * @note B为单精度数的基数（2^64），要求输入x的最高有效位为1，即x>=2^63
+ * @warning MSB(x)=1, 即x>=2^63
  */
 mp_limb_t lmmp_inv_1_(mp_limb_t x);
 
@@ -315,7 +314,7 @@ mp_limb_t lmmp_inv_1_(mp_limb_t x);
  * @param xh 输入数的高64位部分
  * @param xl 输入数的低64位部分
  * @return 计算结果：(B^3-1)/(xh*B+xl) - B
- * @note B为单精度数的基数（2^64），要求xh的最高有效位为1，即xh>=2^63
+ * @warning MSB(xh)=1, 即xh>=2^63
  */
 mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
 
@@ -323,136 +322,142 @@ mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
  * @brief 近似逆元计算 (invappr)
  * @param dst 输出结果缓冲区，长度为na
  * @param numa 输入操作数，长度为na
- * @param na 输入操作数的单精度数(limb)长度
- * @note 要求：na>0，numa最高有效位为1，dst与numa内存区域不重叠
+ * @param na 输入操作数的 limb 长度
+ * @warning na>0, MSB(numa)=1, sep(dst,numa)
  * @return 无返回值，结果存储在dst中，[dst,na] = (B^(2*na)-1)/[numa,na] - B^na + [0|-1]
  */
 void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief 3/2位除法运算
+ * @brief 3/2位除法运算 [numa,2]=[numa,3] mod [numb,2]
  * @param numa 输入被除数（长度3），运算后存储余数（长度2）
  * @param numb 输入除数（长度2）
  * @param inv21 除数的2-1阶逆元（提前计算好的inv21([numb,2])）
  * @return 商值（单精度数）
- * @note 要求：[numa,3] < [numb,2]*B，numb最高有效位为1
+ * @warning [numa,3]<[numb,2]*B, MSB(numb)=1, inv21=inv21([numb,2])
  */
 mp_limb_t lmmp_div_3_2_(mp_ptr numa, mp_srcptr numb, mp_limb_t inv21);
 
 /**
- * @brief 单精度数除法 (除数为1个limb)
+ * @brief 单精度数除法
  * @param dstq 输出商的缓冲区（可为NULL，此时仅计算余数）
  * @param numa 输入被除数，长度为na
- * @param na 被除数的单精度数(limb)长度
- * @param x 除数（单个64位无符号整数）
- * @return 除法余数（单个64位无符号整数）
- * @note 要求：na>0，x≠0，dstq与numa内存区域不重叠；若dstq非NULL，[dstq,na]存储商
+ * @param na 被除数的 limb 长度
+ * @param x 除数（单个 limb ）
+ * @return 除法余数（单个 limb ）
+ * @warning na>0, x!=0, eqsep(dstq,numa)与numa, dstq>=numa-1 是可以接受的
+ * @note if (dstq!=NULL) [dstq,na] = [numa,na] div x
  */
 mp_limb_t lmmp_div_1_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_limb_t x);
 
 /**
  * @brief 双精度数除法 (除数为2个limb)
  * @param dstq 输出商的缓冲区，长度至少为na-1
- * @param numa 输入被除数（长度na），运算后存储余数（长度2）
- * @param na 被除数的单精度数(limb)长度
- * @param numb 输入除数（长度2）
- * @note 要求：na>=2，numb[1]≠0，dstq与numa内存区域不重叠
- * @return 无返回值，[dstq,na-1]存储商，[numa,2]存储余数
+ * @param numa 输入被除数（长度na）
+ * @param na 被除数的 limb 长度
+ * @param numb 输入除数（长度2）[numb,2]=[numa,na] mod [numb,2]
+ * @warning na>=2, numb[1]!=0, eqsep(dstq,numa), dstq>=numa 是可以接受的
+ * @note if (dstq!=NULL) [dstq,na-1]=[numa,na] div [numb,2]
  */
 void lmmp_div_2_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_ptr numb);
 
 /**
- * @brief 基础除法运算（Basecase）
+ * @brief 基础除法运算
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
  * @param na 被除数的单精度数(limb)长度
  * @param numb 输入除数，长度为nb
  * @param nb 除数的单精度数(limb)长度
- * @param inv21 除数的2-1阶逆元（提前计算好的inv21([numb+nb-2,2])）
+ * @param inv21 除数的2-1阶逆元（inv21([numb+nb-2,2])）
  * @return 商的最高位（qh）
- * @note 要求：na>=nb>=3，numb最高有效位为1，所有缓冲区内存不重叠
+ * @warning na>=nb>=3, MSB(numb)=1, inv21=inv21([numb+nb-2,2]), sep(dstq,numa,numb)
+ * @note qh:[dstq,na-nb]=[numa,na] div [numb,nb], [numa,na-nb]=[numa,na] mod [numb,nb], return qh
  */
 mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21);
 
 /**
- * @brief 分治除法运算（Divide）
+ * @brief 分治除法运算
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
- * @param na 被除数的 limb 长度
+ * @param na 被除数的单精度数(limb)长度
  * @param numb 输入除数，长度为nb
- * @param nb 除数的 limb 长度
- * @param inv21 除数的2-1阶逆元（提前计算好的inv21([numb+nb-2,2])）
+ * @param nb 除数的单精度数(limb)长度
+ * @param inv21 除数的2-1阶逆元（inv21([numb+nb-2,2])）
  * @return 商的最高位（qh）
- * @note 要求：na>=nb*2，nb>=6，numb最高有效位为1，所有缓冲区内存不重叠
+ * @warning na>=2*nb, nb>=6, MSB(numb)=1, inv21=inv21([numb+nb-2,2]), sep(dstq,numa,numb)
+ * @note qh:[dstq,na-nb]=[numa,na] div [numb,nb], [numa,na-nb]=[numa,na] mod [numb,nb], return qh
  */
 mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21);
 
 /**
- * @brief 选择预计算逆元的尺寸
- * @param nq 商的预估长度
- * @param nb 除数的长度
- * @return 最优的预计算逆元尺寸ni（ni<=nb）
+ * @brief 计算预计算逆元的尺寸
+ * @param nq 商的 limb 长度
+ * @param nb 除数的 limb 长度
+ * @return 计算需要预计算逆元尺寸ni（ni<=nb）
  * @note 用于归一化除法([nq+nb]/[nb]=[nq])的逆元预计算优化
  */
 mp_size_t lmmp_div_inv_size_(mp_size_t nq, mp_size_t nb);
 
 /**
- * @brief 除法前的逆元预计算
+ * @brief 除法前的逆元预计算，[dst,ni] = invappr( (ni+1 MSLs of numa) + 1 ) / B
  * @param dst 输出预计算逆元的缓冲区，长度为ni
  * @param numa 输入操作数，长度为na
- * @param na 输入操作数的单精度数(limb)长度
+ * @param na 输入操作数的 limb 长度
  * @param ni 预计算逆元的目标尺寸
- * @note 要求：na>=ni>0，numa最高有效位为1
- * @return 无返回值，[dst,ni] = invappr((ni+1个最高位的numa)+1)/B
+ * @warning na>=ni>0，MSB(numa)=1
  */
 void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
 /**
- * @brief 乘法逆元除法（Mulinv）
+ * @brief 乘法逆元除法
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
- * @param na 被除数的单精度数(limb)长度
+ * @param na 被除数的 limb 长度
  * @param numb 输入除数，长度为nb
  * @param nb 除数的单精度数(limb)长度
  * @param invappr 预计算的近似逆元，长度为ni
  * @param ni 预计算逆元的尺寸
  * @return 商的最高位（qh）
- * @note 要求：na>=nb>=ni>0，numb最高有效位为1，所有缓冲区内存不重叠
+ * @warning na>=nb>=ni>0, MSB(numb)=1, [invappr,ni]=invprediv([numb,nb]), sep(dstq,numa,numb,invappr))
+ * @note qh:[dstq,na-1]=[numa,na] div x, [numa,1]=[numa,na] mod x, return qh
  */
 mp_limb_t lmmp_div_mulinv_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_srcptr invappr,
                            mp_size_t ni);
 
 /**
- * @brief 单精度数除法（符号版，除数为1个limb）
+ * @brief 单精度数除法（除数为1个limb）
  * @param dstq 输出商的缓冲区，长度至少为na-1
  * @param numa 输入被除数（长度na），运算后存储余数（长度1）
- * @param na 被除数的单精度数(limb)长度
- * @param x 除数（单个64位无符号整数）
+ * @param na 被除数的 limb 长度
+ * @param x 除数（单个 limb ）
  * @return 商的最高位（qh）
- * @note 要求：na>1，x最高有效位为1，dstq与numa内存区域不重叠
+ * @warning na>1, MSB(x)=1, sqp(dstq,numa)
+ * @note qh:[dstq,na-1]=[numa,na] div x, [numa,1]=[numa,na] mod x, return qh
  */
 mp_limb_t lmmp_div_1_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_limb_t x);
 
 /**
- * @brief 双精度数除法（符号版，除数为2个limb）
+ * @brief 双精度数除法（除数为2个limb）
  * @param dstq 输出商的缓冲区，长度至少为na-2
  * @param numa 输入被除数（长度na），运算后存储余数（长度2）
- * @param na 被除数的单精度数(limb)长度
+ * @param na 被除数的 limb 长度
  * @param numb 输入除数，长度为2
  * @return 商的最高位（qh）
- * @note 要求：na>2，numb最高有效位为1，所有缓冲区内存不重叠
+ * @warning na>2, MSB(numb)=1, sep(dstq,numa,numb)
+ * @note qh:[dstq,na-2]=[numa,na] div [numb,2], [numa,2]=[numa,na] mod [numb,2], return qh
  */
 mp_limb_t lmmp_div_2_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb);
 
 /**
- * @brief 通用符号除法运算
+ * @brief 除法运算
  * @param dstq 输出商的缓冲区，长度至少为na-nb
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
- * @param na 被除数的单精度数(limb)长度
+ * @param na 被除数的 limb 长度
  * @param numb 输入除数，长度为nb
- * @param nb 除数的单精度数(limb)长度
+ * @param nb 除数的 limb 长度
  * @return 商的最高位（qh）
- * @note 要求：na>=nb>0，numb最高有效位为1，所有缓冲区内存不重叠
+ * @warning na>=nb>0, MSB(numb)=1, sep(dstq,numa,numb)
+ * @note qh:[dstq,na-nb]=[numa,na] div [numb,nb], [numa,nb]=[numa,na] mod [numb,nb], return qh
  */
 mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
@@ -474,37 +479,18 @@ typedef struct lmmp_mp_base_t_ {
     int base;
 } mp_base_t;
 
+extern const mp_base_t lmmp_bases_[257];
 
-/**
- * @struct lmmp_mp_basepow_t_
- * @brief 基数幂(Base Power)相关参数结构体，用于高效处理大基数幂运算
- * @var lmmp_mp_basepow_t_::p
- *      基数幂值（base^digits），去除末尾零后的存储指针
- * @var lmmp_mp_basepow_t_::np
- *      p的单精度数(limb)长度
- * @var lmmp_mp_basepow_t_::invp
- *      归一化后的p的逆元（按需计算）
- * @var lmmp_mp_basepow_t_::ni
- *      invp的单精度数(limb)长度
- * @var lmmp_mp_basepow_t_::zeros
- *      去除的末尾零limb数量
- * @var lmmp_mp_basepow_t_::digits
- *      基数幂的指数（logb(p)）
- * @var lmmp_mp_basepow_t_::norm_cnt
- *      p归一化时的移位位数
- * @var lmmp_mp_basepow_t_::base
- *      基数
- */
 typedef struct lmmp_mp_basepow_t_ {
-    // 基数幂值（base^digits），已去除末尾零
+    // 基数幂值(base^digits)
     mp_ptr p;
-    // p的长度（limb数）
+    // p的 limb 长度
     mp_size_t np;
-    // 归一化p的逆元（按需使用）
+    // 归一化p的逆元
     mp_ptr invp;
-    // invp的长度（limb数）
+    // invp的有效长度
     mp_size_t ni;
-    // 去除的末尾零limb数量
+    // 去除的末尾零 limb 长度
     mp_size_t zeros;
     // 基数幂的指数（log_base(p)）
     mp_size_t digits;
@@ -514,37 +500,37 @@ typedef struct lmmp_mp_basepow_t_ {
     int base;
 } mp_basepow_t;
 
-// 绝对值宏：计算整数的绝对值
+// 计算整数的绝对值
 #define ABS(x) ((x) >= 0 ? (x) : -(x))
-// 最小值宏：返回两个数中的较小值
+// 返回两个数中的较小值
 #define MIN(l, o) ((l) < (o) ? (l) : (o))
-// 最大值宏：返回两个数中的较大值
+// 返回两个数中的较大值
 #define MAX(h, i) ((h) > (i) ? (h) : (i))
-// 交换宏：交换两个同类型变量的值
+// 交换两个同类型变量的值
 #define SWAP(x, y, type)   \
     do {                   \
         type _swap_ = (x); \
         (x) = (y);         \
         (y) = _swap_;      \
     } while (0)
-// 2的幂判断宏：检查n是否为2的整数次幂
+// 检查n是否为2的整数次幂
 #define POW2_Q(n) (((n) & ((n) - 1)) == 0)
-// 向上取整到指定倍数：将a向上取整为m的整数倍
+// 将a向上取整为m的整数倍
 #define ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
 
 /**
  * @brief 临时内存分配函数
- * @param marker 内存标记指针，用于跟踪分配的临时内存
+ * @param pmarker 栈中临时内存分配标记的头指针，用于跟踪分配的临时内存
  * @param n 要分配的字节数
  * @return 分配的内存指针
  */
-void* lmmp_temp_alloc_(void**, size_t);
+void* lmmp_temp_alloc_(void** pmarker, size_t size);
 
 /**
  * @brief 临时内存释放函数
  * @param marker 要释放的临时内存标记
  */
-void lmmp_temp_free_(void*);
+void lmmp_temp_free_(void* marker);
 
 // 临时内存标记声明：用于跟踪临时内存分配
 #define TEMP_DECL void* lmmp_temp_alloc_marker_ = 0
@@ -558,7 +544,7 @@ void lmmp_temp_free_(void*);
 #define SALLOC_TYPE(n, type) ((type*)TEMP_SALLOC((n) * sizeof(type)))
 // 类型化堆内存分配：分配n个type类型的堆内存
 #define BALLOC_TYPE(n, type) ((type*)TEMP_BALLOC((n) * sizeof(type)))
-// 类型化智能临时内存分配：智能选择栈/堆分配n个type类型内存
+// 类型化临时内存分配：智能选择栈/堆分配n个type类型内存
 #define TALLOC_TYPE(n, type) ((type*)TEMP_TALLOC((n) * sizeof(type)))
 // 临时内存释放：释放所有通过TEMP_BALLOC分配的临时内存
 #define TEMP_FREE                                     \
@@ -589,8 +575,9 @@ void lmmp_temp_free_(void*);
             *(mp_limb_t*)0 = 0; \
         }                       \
     } while (0)
-// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
+
 #if LAMMP_DEBUG == 1
+// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
 #define lmmp_debug_assert(x)                                                          \
     do {                                                                              \
         if (!(x)) {                                                                   \
@@ -599,6 +586,7 @@ void lmmp_temp_free_(void*);
         }                                                                             \
     } while (0)
 #else
+// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
 #define lmmp_debug_assert(x) ((void)0)
 #endif
 
@@ -691,7 +679,6 @@ INLINE_ int lmmp_zero_q_(mp_srcptr p, mp_size_t n) {
     return 1;
 }
 
-// 加减运算通用宏：封装加减运算的公共逻辑
 #define LMMP_AORS_(FUNCTION, TEST)               \
     mp_limb_t _x_;                               \
     if (FUNCTION(dst, numa, numb, nb)) {         \
@@ -706,28 +693,28 @@ INLINE_ int lmmp_zero_q_(mp_srcptr p, mp_size_t n) {
     return 0
 
 /**
- * @brief 大数加法函数（内联）
+ * @brief 大数加法静态内联函数 [dst,na]=[numa,na]+[numb,nb]
  * @param dst 输出结果缓冲区，存储numa + numb
  * @param numa 第一个加数，长度为na
- * @param na 第一个加数的单精度数(limb)长度
+ * @param na 第一个加数的 limb 长度
  * @param numb 第二个加数，长度为nb
- * @param nb 第二个加数的单精度数(limb)长度
+ * @param nb 第二个加数的 limb 长度
  * @return 进位标志（1表示有进位，0表示无进位）
- * @note 要求：nb <= na，使用LMMP_AORS_宏处理公共逻辑
+ * @warning 0<nb<=na, eqsep(dst,[numa|numb])
  */
 INLINE_ mp_limb_t lmmp_add_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     LMMP_AORS_(lmmp_add_n_, ((dst[nb++] = _x_ + 1) == 0));
 }
 
 /**
- * @brief 大数减法函数（内联）
+ * @brief 大数减法静态内联函数 [dst,na]=[numa,na]-[numb,nb]
  * @param dst 输出结果缓冲区，存储numa - numb
  * @param numa 被减数，长度为na
- * @param na 被减数的单精度数(limb)长度
+ * @param na 被减数的 limb 长度
  * @param numb 减数，长度为nb
- * @param nb 减数的单精度数(limb)长度
+ * @param nb 减数的 limb 长度
  * @return 借位标志（1表示有借位，0表示无借位）
- * @note 要求：nb <= na 且 numa >= numb，使用LMMP_AORS_宏处理公共逻辑
+ * @warning 0<nb<=na, eqsep(dst,[numa|numb])
  */
 INLINE_ mp_limb_t lmmp_sub_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     LMMP_AORS_(lmmp_sub_n_, ((dst[nb++] = _x_ - 1), _x_ == 0));
@@ -760,26 +747,71 @@ INLINE_ mp_limb_t lmmp_sub_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr 
 #define LMMP_SUBCB_(r, x, y) ((x) < (y))
 
 /**
- * @brief 大数加单精度数函数（内联）
+ * @brief 大数加单精度数静态内联函数 [dst,na]=[numa,na]+x
  * @param dst 输出结果缓冲区，存储numa + x
  * @param numa 被加数，长度为na
- * @param na 被加数的单精度数(limb)长度
- * @param x 加数（单个64位无符号整数）
+ * @param na 被加数的 limb 长度
+ * @param x 加数（单个 limb ）
  * @return 进位标志（1表示有进位，0表示无进位）
- * @note 使用LMMP_AORS_1_宏和LMMP_ADDCB_宏处理进位逻辑
+ * @warning na>0, eqsep(dst,numa)
  */
 INLINE_ mp_limb_t lmmp_add_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x) { LMMP_AORS_1_(+, LMMP_ADDCB_); }
 
 /**
- * @brief 大数减单精度数函数（内联）
+ * @brief 大数减单精度数静态内联函数 [dst,na]=[numa,na]-x
  * @param dst 输出结果缓冲区，存储numa - x
  * @param numa 被减数，长度为na
- * @param na 被减数的单精度数(limb)长度
- * @param x 减数（单个64位无符号整数）
+ * @param na 被减数的 limb 长度
+ * @param x 减数（单个 limb ）
  * @return 借位标志（1表示有借位，0表示无借位）
- * @note 使用LMMP_AORS_1_宏和LMMP_SUBCB_宏处理借位逻辑
+ * @warning na>0, eqsep(dst,numa)
  */
 INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x) { LMMP_AORS_1_(-, LMMP_SUBCB_); }
+
+/**
+ * @brief 计算大数转换为字符串，字符串需要的缓冲区长度
+ * @param numa 输入大数，长度为na
+ * @param na 大数的 limb 长度
+ * @param base 目标基数（2~256）
+ * @return 大数在指定基数下的位数
+ * @warning na>=0, 2<=base<=256
+ * @note 将会忽略numa的前导零，
+ *       1. if (numa!=NULL) 返回的长度可能会多分配一个字符空间
+ *       2. if (numa==NULL) 返回na个limb长度的数的最大可能字符长度（最坏情况）
+ */
+INLINE_ mp_size_t lmmp_digits_(mp_srcptr numa, mp_size_t na, int base) {
+    int mslbits = 0;
+    if (numa) {
+        do {
+            if (na == 0)
+                return 1;
+        } while (numa[--na] == 0);
+        mslbits = lmmp_limb_bits_(numa[na]);
+    }
+    return lmmp_mulh_(na * 64 + mslbits, lmmp_bases_[base].inv_lg_base) + 1;
+}
+
+/**
+ * @brief 计算字符串转大数所需的 limb 缓冲区长度
+ * @param src 输入字符串指针
+ * @param len 字符串长度
+ * @param base 字符串的基数（2~256）
+ * @return 存储该字符串数值所需的 limb 缓冲区长度
+ * @warning len>=0, 2<=base<=256
+ * @note 将会忽略非零字符，
+ *       1. if (src!=NULL) 返回的长度可能会多分配一个 limb 空间
+ *       2. if (src==NULL) 返回len位base进制数的最大可能 limb 长度（最坏情况）
+ */
+INLINE_ mp_size_t lmmp_limbs_(const mp_byte_t* src, mp_size_t len, int base) {
+    if (src) {
+        do {
+            if (len == 0)
+                return 1;
+        } while (src[--len] == 0);
+        ++len;
+    }
+    return lmmp_mulh_(len, lmmp_bases_[base].lg_base) + 1;
+}
 
 #ifdef __cplusplus
 }  // extern "C"
