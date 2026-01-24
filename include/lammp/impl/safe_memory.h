@@ -1,5 +1,5 @@
-#ifndef SAFE_MALLOC_H
-#define SAFE_MALLOC_H
+#ifndef __LAMMP_SAFE_MALLOC_H__
+#define __LAMMP_SAFE_MALLOC_H__
 
 #include <stdarg.h>
 #include <stddef.h>
@@ -100,7 +100,7 @@ static inline int check_rear_guard_overflow(MemHeader* hdr, void* user_ptr) {
 /**
  * 调试版内存分配
  */
-static inline void* my_malloc_debug(size_t size, const char* file, int line) {
+static inline void* lmmp_malloc_debug(size_t size, const char* file, int line) {
     if (size == 0)
         return NULL;
 
@@ -146,7 +146,7 @@ static inline void* my_malloc_debug(size_t size, const char* file, int line) {
 /**
  * 调试版内存释放
  */
-static inline void my_free_debug(void* ptr, const char* file, int line) {
+static inline void lmmp_free_debug(void* ptr, const char* file, int line) {
     if (ptr == NULL) {
         debug_printf("Attempt to free NULL pointer at %s:%d\n", file, line);
         return;
@@ -181,7 +181,7 @@ static inline void my_free_debug(void* ptr, const char* file, int line) {
 /**
  * 调试版内存重新分配
  */
-static inline void* my_realloc_debug(void* ptr, size_t new_size, const char* file, int line) {
+static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* file, int line) {
     if (ptr == NULL) {
         return my_malloc_debug(new_size, file, line);
     }
@@ -236,4 +236,4 @@ static inline int check_memory_overflow(void* ptr) {
 
 #define CHECK_OVERFLOW(ptr) check_memory_overflow(ptr)
 
-#endif  // SAFE_MALLOC_H
+#endif  // __LAMMP_SAFE_MALLOC_H__

@@ -1,6 +1,5 @@
 #include "../../../include/lammp/numth.h"
 
-// 交换两个struct T类型的元素
 static inline void swap_num_node(num_node_ptr a, num_node_ptr b) {
     num_node temp = *a;
     *a = *b;
@@ -9,7 +8,7 @@ static inline void swap_num_node(num_node_ptr a, num_node_ptr b) {
 
 // 向上调整最小堆（插入元素后维护堆性质：len小的在上）
 void heapifyUp(num_heap* pq, size_t index) {
-    size_t parent = (index - 1) / 2;  // 父节点索引
+    size_t parent = (index - 1) / 2; 
 
     // 最小堆：当前节点len < 父节点len 时交换
     while (index > 0 && pq->head[index].n < pq->head[parent].n) {
@@ -47,7 +46,6 @@ void heapifyDown(num_heap* pq, size_t index) {
     }
 }
 
-// 插入结构体T到优先队列
 void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n) {
     lmmp_debug_assert(pq->size < pq->cap);
     pq->head[pq->size].num = elem;

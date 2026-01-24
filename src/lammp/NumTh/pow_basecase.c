@@ -12,8 +12,6 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp)
 
     lmmp_zero(sq1 + n, rn - n);
     lmmp_copy(sq1, base, n);
-    //lmmp_zero(sq2, rn); // not necessary
-    //lmmp_zero(re, rn); // not necessary
     lmmp_zero(dst + 1, rn - 1);
     dst[0] = 1;
     /*

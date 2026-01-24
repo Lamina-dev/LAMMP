@@ -1,4 +1,3 @@
-
 #include "../../include/lammp/lmmpn.h"
 
 // qh:[dstq,n]=[numa,2*n] div [numb,n], [numa,n]=[numa,2*n] mod [numb,n], return qh
