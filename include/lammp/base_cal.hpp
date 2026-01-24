@@ -90,7 +90,7 @@ template <typename UintTy>
 constexpr UintTy add_half(UintTy x, UintTy y, bool& cf);
 
 template <typename UintTy>
-constexpr UintTy sub_half(UintTy x, UintTy y, bool& bf);
+     UintTy sub_half(UintTy x, UintTy y, bool& bf);
 
 template <typename UintTy>
 constexpr UintTy add_carry(UintTy x, UintTy y, bool& cf);

@@ -4,5 +4,6 @@
 
 int main() {
     test_short::test_abs_mul64_base();
+    test_short::test_div();
     return 0;
 }
