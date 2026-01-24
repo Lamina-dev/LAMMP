@@ -351,20 +351,20 @@ void lampz_rshift_x(lampz_t z, const lampz_t x, lamp_sz shift);
  * @brief 二元运算：z = x / y（整数除法，向下取整，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_div_xy(lampz_t z, const lampz_t x, const lampz_t y);
+void lampz_div_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：z = x % y（取余，结果符号与 x 一致，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_mod_xy(lampz_t z, const lampz_t x, const lampz_t y);
+void lampz_mod_xy(lampz_t z, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 二元运算：q = x / y，r = x % y（同时计算商和余数，q,r
  * 的容量如果不够，会自动分配新内存）
  * @warning x 和 y 不可指向同一对象，此为未定义行为
  */
-//void lampz_div_mod_xy(lampz_t q, lampz_t r, const lampz_t x, const lampz_t y);
+void lampz_div_mod_xy(lampz_t q, lampz_t r, const lampz_t x, const lampz_t y);
 
 /**
  * @brief 一元运算：z += x（z 自身累加 x，z 的容量如果不够，会自动分配新内存）
@@ -407,7 +407,7 @@ void lampz_div_x(lampz_t z, const lampz_t x);
 /**
  * @brief 一元运算：z = z % x（z 自身取余 x）
  */
-//void lampz_mod_x(lampz_t z, const lampz_t x);
+void lampz_mod_x(lampz_t z, const lampz_t x);
 
 /** 
  * @brief 一元运算：判断 z 是否为 0
