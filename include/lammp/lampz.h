@@ -397,7 +397,7 @@ void lampz_rshift(lampz_t z, lamp_sz shift);
  * @brief 一元运算：z = x * x（平方，效率高于普通乘法，z
  * 的容量如果不够，会自动分配新内存）
  */
-//void lampz_sqr_x(lampz_t z, const lampz_t x);
+void lampz_sqr_x(lampz_t z, const lampz_t x);
 
 /**
  * @brief 一元运算：z /= x（z 自身除以 x）
@@ -500,6 +500,14 @@ void lampz_move(lampz_t z1, lampz_t z2);
  * @brief 交换赋值：z1 <-> z2（z1 和 z2 的内存地址交换）
  */
 void lampz_swap(lampz_t z1, lampz_t z2);
+
+/**
+ * @brief 三元运算：result = base ^ exponent
+ * @param result 结果
+ * @param base 底数
+ * @param exponent 指数
+ */
+void lampz_pow(lampz_t result, const lampz_t base, const lampz_t exponent);
 
 /*
 bool lampz_is_prime(const lampz_t n);

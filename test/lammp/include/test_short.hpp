@@ -8,5 +8,6 @@ void test_shift_bits();
 void test_abs_mul64();
 void test_abs_mul64_base();
 void test_div();
+void test_pow();
 
 }; // namespace test_short
