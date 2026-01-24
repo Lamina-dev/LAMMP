@@ -4,8 +4,14 @@ file(GLOB_RECURSE LAMMP_CORE_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cxx
     ${CMAKE_CURRENT_SOURCE_DIR}/*.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.asm
 )
+
+if(MSVC AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    file(GLOB_RECURSE LAMMP_CORE_ASM_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.asm)
+    list(APPEND LAMMP_CORE_SRCS ${LAMMP_CORE_ASM_SRCS})
+    # Exclude generic implementation when using MASM
+    list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX "generic_c.c$")
+endif()
 
 # 生成动态库
 add_library(LammpCore SHARED ${LAMMP_CORE_SRCS})
@@ -15,6 +21,7 @@ set_target_properties(LammpCore PROPERTIES
     OUTPUT_NAME "LammpCore"
     VERSION 2.0.1
     SOVERSION 1
+    WINDOWS_EXPORT_ALL_SYMBOLS ON
 )
 # ===================== 局部编译/链接选项 =====================
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU")
