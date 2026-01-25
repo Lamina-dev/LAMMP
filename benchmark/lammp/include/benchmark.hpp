@@ -1,4 +1,4 @@
-#ifndef __BENCHMARK_HPP__
+﻿#ifndef __BENCHMARK_HPP__
 #define __BENCHMARK_HPP__
 
 #include <chrono>

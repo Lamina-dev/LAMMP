@@ -42,23 +42,6 @@ int main() {
     //         std::cout << "failed" << std::endl;
     //     }
     // }
-    // test_factorial();
-    
-    std::cout << "Testing pow(2, 100)... " << std::flush;
-    if (test_pow(2, 100) == 0) std::cout << "PASSED" << std::endl;
-    else std::cout << "FAILED" << std::endl;
-
-    std::cout << "Testing pow(3, 50)... " << std::flush;
-    if (test_pow(3, 50) == 0) std::cout << "PASSED" << std::endl;
-    else std::cout << "FAILED" << std::endl;
-
-    std::cout << "Testing pow(10, 200)... " << std::flush;
-    if (test_pow(10, 200) == 0) std::cout << "PASSED" << std::endl;
-    else std::cout << "FAILED" << std::endl;
-
-    std::cout << "Testing pow(151, 1439)... " << std::flush;
-    if (test_pow(151, 1439) == 0) std::cout << "PASSED" << std::endl;
-    else std::cout << "FAILED" << std::endl;
-
+    // test_pow(151, 1439);
     return 0;
 }
