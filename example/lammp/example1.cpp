@@ -1,11 +1,9 @@
-#include <string.h>
+﻿#include <string.h>
 #include <algorithm>
 #include <iostream>
 #include <string>
 #include <chrono>
-
 #include "../../include/lammp/lmmpn.h"
-
 
 int main() {
     mp_size_t len1 = 50000, len2 = len1 * 500;

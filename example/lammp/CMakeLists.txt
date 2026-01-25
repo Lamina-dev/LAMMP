@@ -1,23 +1,31 @@
-# 示例1：生成独立可执行文件
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/example1.cpp)
-    add_executable(LammpExample1 ${CMAKE_CURRENT_SOURCE_DIR}/example1.cpp)
-    target_link_libraries(LammpExample1 PRIVATE LammpCore)
-endif()
+# 收集所有示例文件
+file(GLOB EXAMPLE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/example*.cpp)
 
-# 示例2：生成独立可执行文件
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/example2.cpp)
-    add_executable(LammpExample2 ${CMAKE_CURRENT_SOURCE_DIR}/example2.cpp)
-    target_link_libraries(LammpExample2 PRIVATE LammpCore)
-endif()
-
-# 示例3：生成独立可执行文件
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/example3.cpp)
-    add_executable(LammpExample3 ${CMAKE_CURRENT_SOURCE_DIR}/example3.cpp)
-    target_link_libraries(LammpExample3 PRIVATE LammpCore)
-endif()
-
-# 示例4：生成独立可执行文件
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/example4.cpp)
-    add_executable(LammpExample4 ${CMAKE_CURRENT_SOURCE_DIR}/example4.cpp)
-    target_link_libraries(LammpExample4 PRIVATE LammpCore)
-endif()
+# 遍历生成示例可执行文件
+foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
+    # 获取文件名（不含路径和扩展名）
+    get_filename_component(EXAMPLE_NAME ${EXAMPLE_FILE} NAME_WE)
+    # 生成可执行文件名称（如Lammpexample1）
+    set(TARGET_NAME "lammp_${EXAMPLE_NAME}")
+    
+    # 添加可执行文件
+    add_executable(${TARGET_NAME} ${EXAMPLE_FILE})
+    
+    # 头文件包含
+    target_include_directories(${TARGET_NAME}
+        PRIVATE
+            ${CMAKE_SOURCE_DIR}/include
+    )
+    
+    # 链接核心动态库
+    target_link_libraries(${TARGET_NAME} PRIVATE LammpCore)
+    
+    # 设置编译器选项
+    set_common_compiler_options(${TARGET_NAME})
+    
+    # 设置输出属性
+    set_target_properties(${TARGET_NAME} PROPERTIES
+        OUTPUT_NAME ${TARGET_NAME}
+        PDB_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    )
+endforeach()
