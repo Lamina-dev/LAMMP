@@ -41,7 +41,7 @@ elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_options(LammpCore PRIVATE
         $<$<COMPILE_LANGUAGE:C,CXX>:/W4>
         $<$<COMPILE_LANGUAGE:C,CXX>:/MP>
-        $<$<COMPILE_LANGUAGE:C,CXX>:/Ox>
+        $<$<AND:$<COMPILE_LANGUAGE:C,CXX>,$<CONFIG:Release>>:/Ox>
         $<$<COMPILE_LANGUAGE:C,CXX>:/fp:fast>
     )
     target_link_options(LammpCore PRIVATE

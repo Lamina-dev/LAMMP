@@ -45,6 +45,21 @@
 #include "impl/safe_memory.h"
 #endif 
 
+#include <stdint.h> // Ensure uint types are available
+#include <assert.h>
+
+#ifndef _STATIC_ASSERT
+#if defined(__cplusplus)
+#define _STATIC_ASSERT(cond) static_assert(cond, #cond)
+#elif defined(_MSC_VER)
+#define _STATIC_ASSERT(cond) static_assert(cond, #cond)
+#elif defined(__IS_MINGW__) || __STDC_VERSION__ >= 201112L
+#define _STATIC_ASSERT(cond) _Static_assert(cond, #cond)
+#else
+#define _STATIC_ASSERT(cond) 
+#endif
+#endif
+
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
 typedef uint64_t mp_size_t;          // 表示limb数量的无符号整数类型
