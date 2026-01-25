@@ -1,7 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.10)
 project(Lammp LANGUAGES C CXX)
 
-# 延迟启用汇编语言，根据编译器类型选择正确的汇编器
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         enable_language(ASM_MASM)
@@ -22,7 +21,7 @@ if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}, valid types are: ${VALID_BUILD_TYPES}")
 endif()
 
-# ===================== MASM 汇编器配置（跨编译器适配） =====================
+# ===================== MASM 汇编器配置 =====================
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         # MSVC原生MASM配置
@@ -87,8 +86,7 @@ function(set_common_compiler_options target)
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
-            # MinGW下MASM的编译选项
-            $<$<COMPILE_LANGUAGE:ASM_MASM>:>
+            $<$<COMPILE_LANGUAGE:ASM_MASM>:/nologo /DWIN64>
         )
         target_link_options(${target} PRIVATE
             -m64 -Wl,--enable-auto-import -Wl,--no-undefined
@@ -117,10 +115,10 @@ function(set_common_compiler_options target)
     endif()
 endfunction()
 
-# ===================== 输出目录配置（核心修复：统一MSVC的DLL/LIB输出） =====================
+# ===================== 输出目录配置 =====================
 set(OUTPUT_ROOT ${CMAKE_SOURCE_DIR}/dist/lammp)
 
-# 对MSVC多配置构建的适配（最关键：分别设置RUNTIME/DLL和ARCHIVE/LIB的输出目录）
+# 对MSVC多配置构建
 foreach(CONFIG_TYPE Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER ${CONFIG_TYPE} CONFIG_TYPE_UPPER)
     # DLL/可执行文件输出目录

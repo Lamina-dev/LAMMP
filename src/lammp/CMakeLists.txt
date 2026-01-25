@@ -1,4 +1,4 @@
-﻿# 递归收集源代码（仅收集未被处理过的文件）
+﻿# 递归收集源代码
 file(GLOB_RECURSE LAMMP_CORE_SRCS 
     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
     LIST_DIRECTORIES FALSE
@@ -21,7 +21,6 @@ if(MASM_SRCS)
     list(APPEND LAMMP_CORE_SRCS ${MASM_SRCS})
 endif()
 
-# ===================== 核心：确保目标只创建一次 =====================
 if(NOT TARGET LammpCore)
     add_library(LammpCore SHARED ${LAMMP_CORE_SRCS})
 endif()
@@ -32,7 +31,7 @@ target_compile_definitions(LammpCore PRIVATE
     $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
 )
 
-# 设置目标属性（仅在目标存在时执行）
+# 设置目标属性
 if(TARGET LammpCore)
     set_target_properties(LammpCore PROPERTIES
         OUTPUT_NAME "LammpCore"
@@ -80,27 +79,6 @@ if(TARGET LammpCore)
 
     # 设置编译器选项
     set_common_compiler_options(LammpCore)
-
-    # 生成导出宏头文件（仅生成一次）
-    set(CONFIG_HEADER_PATH "${CMAKE_SOURCE_DIR}/include/lammp/config.h")
-    if(NOT EXISTS ${CONFIG_HEADER_PATH})
-        file(WRITE ${CONFIG_HEADER_PATH}
-            "#ifndef LAMMP_CONFIG_H\n"
-            "#define LAMMP_CONFIG_H\n"
-            "\n"
-            "#ifdef _WIN32\n"
-            "  #ifdef LAMMP_CORE_EXPORTS\n"
-            "    #define LAMMP_API __declspec(dllexport)\n"
-            "  #else\n"
-            "    #define LAMMP_API __declspec(dllimport)\n"
-            "  #endif\n"
-            "#else\n"
-            "  #define LAMMP_API __attribute__((visibility(\"default\")))\n"
-            "#endif\n"
-            "\n"
-            "#endif // LAMMP_CONFIG_H\n"
-        )
-    endif()
 
     # MSVC下复制DEF文件
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC" AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/LammpCore.def)
