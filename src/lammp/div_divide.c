@@ -43,6 +43,9 @@ mp_limb_t lmmp_div_divide_n_(mp_ptr dstq, mp_ptr numa, mp_srcptr numb, mp_size_t
 }
 
 mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
+    lmmp_debug_assert(na >= 2 * nb);
+    lmmp_debug_assert(nb >= 6);
+    lmmp_debug_assert(numb[nb - 1] >= 0x8000000000000000ull);
     mp_size_t nq = na - nb;
 
     dstq += nq;

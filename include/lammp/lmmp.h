@@ -45,21 +45,6 @@
 #include "impl/safe_memory.h"
 #endif 
 
-#include <stdint.h> // Ensure uint types are available
-#include <assert.h>
-
-#ifndef _STATIC_ASSERT
-#if defined(__cplusplus)
-#define _STATIC_ASSERT(cond) static_assert(cond, #cond)
-#elif defined(_MSC_VER)
-#define _STATIC_ASSERT(cond) static_assert(cond, #cond)
-#elif defined(__IS_MINGW__) || __STDC_VERSION__ >= 201112L
-#define _STATIC_ASSERT(cond) _Static_assert(cond, #cond)
-#else
-#define _STATIC_ASSERT(cond) 
-#endif
-#endif
-
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
 typedef uint64_t mp_size_t;          // 表示limb数量的无符号整数类型
@@ -337,15 +322,6 @@ mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
- * 大数平方操作 [dst,2*na] = [numa,na]^2
- * @warning na>0, sep(dst,numa)
- * @param dst 平方结果输出指针（需要2*na的limb长度）
- * @param numa 源操作数指针
- * @param na limb长度
- */
-void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
-
-/**
  * 大数乘以单limb操作 [dst,na] = [numa,na] * x
  * @warning na>0, eqsep(dst,numa)
  *       支持 dst<=numa+1 的内存布局
@@ -356,18 +332,6 @@ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @return 运算后的进位limb值
  */
 mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
-
-/**
- * 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n] 
- * @warning n>0, sep(dst,[numa|numb])
- *       特殊情况: n==1时dst<=numa+1是允许的
- *                 n==2时dst<=numa是允许的
- * @param dst 乘积结果输出指针（需要 2*n 的 limb 长度）
- * @param numa 第一个乘数指针
- * @param numb 第二个乘数指针
- * @param n limb长度
- */
-void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -445,101 +409,6 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
  * @return 转换后的字符串长度
  */
 mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base);
-
-/**
- * 大数比较操作
- * 功能: 比较两个n位大数的大小
- * 要求: n>0
- * @param numa 第一个比较数指针
- * @param numb 第二个比较数指针
- * @param n 操作数的位数（limb数量）
- * @return 比较结果: 1(numa>numb), 0(numa==numb), -1(numa<numb)
- */
-//int lmmp_cmp_(mp_srcptr numa, mp_srcptr numb, mp_size_t n);
-
-/**
- * 大数判零操作
- * 功能: 判断指定大数是否为零
- * 要求: n>0
- * @param p 大数指针
- * @param n 大数的limb数量
- * @return 判零结果: 1(全零), 0(非零)
- */
-//int lmmp_zero_q_(mp_srcptr p, mp_size_t n);
-
-/**
- * 不等长大数加法
- * 功能: [dst,na] = [numa,na] + [numb,nb]
- * 要求: na>=nb>0, dst与numa/numb的内存区域可以重叠(原地操作)
- * @param dst 结果输出指针
- * @param numa 第一个加数指针（较长的操作数）
- * @param na 第一个操作数的位数（limb数量）
- * @param numb 第二个加数指针（较短的操作数）
- * @param nb 第二个操作数的位数（limb数量）
- * @return 运算后的最终进位值 (0或1)
- */
-//mp_limb_t lmmp_add_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * 不等长大数减法 [dst,na] = [numa,na] - [numb,nb]
- * @warning na>=nb>0, dst与numa/numb的内存区域可以重叠(原地操作)
- * @param dst 结果输出指针
- * @param numa 被减数指针（较长的操作数）
- * @param na 被减数的位数（limb数量）
- * @param numb 减数指针（较短的操作数）
- * @param nb 减数的位数（limb数量）
- * @return 运算后的最终借位值 (0或1)
- */
-//mp_limb_t lmmp_sub_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * 大数加单limb操作
- * 功能: [dst,na] = [numa,na] + x (x为单个limb值)
- * 要求: na>0, dst与numa的内存区域可以重叠(原地操作)
- * @param dst 结果输出指针
- * @param numa 被加数指针
- * @param na 操作数的位数（limb数量）
- * @param x 单个limb加数
- * @return 运算后的最终进位值 (0或1)
- */
-//mp_limb_t lmmp_add_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
-
-/**
- * 大数减单limb操作
- * 功能: [dst,na] = [numa,na] - x (x为单个limb值)
- * 要求: na>0, dst与numa的内存区域可以重叠(原地操作)
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param na 操作数的位数（limb数量）
- * @param x 单个limb减数
- * @return 运算后的最终借位值 (0或1)
- */
-//mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
-
-/**
- * 计算字符串转大数所需的limb数量
- * 功能: 如果src不为NULL: 返回[src,len,base]转换为大数所需的limb数量（可能比精确值大1）
- *       如果src为NULL: 返回len位base进制数的最大可能limb数量
- * 要求: len>=0, 2<=base<=256
- * @param src 字符串源指针（NULL表示计算最大值）
- * @param len 字符串长度
- * @param base 字符串的进制基数
- * @return 所需的limb数量
- */
-//mp_size_t lmmp_limbs_(const mp_byte_t* src, mp_size_t len, int base);
-
-/**
- * 计算大数转字符串所需的字符数量
- * 功能: 如果numa不为NULL: 返回[numa,na]转换为字符串所需的字符数量（可能比精确值大1）
- *       如果numa为NULL: 返回na个limb的大数的最大可能字符数量
- * 要求: na>=0, 2<=base<=256
- * @param numa 大数源指针（NULL表示计算最大值）
- * @param na 大数的limb数量
- * @param base 目标字符串的进制基数
- * @return 所需的字符数量
- */
-//mp_size_t lmmp_digits_(mp_srcptr numa, mp_size_t na, int base);
-
 
 #ifdef __cplusplus
 }  // extern "C"

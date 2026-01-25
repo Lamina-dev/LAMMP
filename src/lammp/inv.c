@@ -1,8 +1,10 @@
 #include "../../include/lammp/lmmpn.h"
 
 // 1:[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]
-// need(na>0, MSB(numa), sep(dst, numa))
+// need(na>0, MSB(numa)=1, sep(dst, numa))
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    lmmp_debug_assert(na > 0);
+    lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
     if (na == 1)
         *dst = lmmp_inv_1_(*numa);
     else {
@@ -29,8 +31,11 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 // 1:[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]+[0|-1]
-// need(na>4, MSB(numa), sep(dst, numa))
+// need(na>4, MSB(numa)=1, sep(dst, numa))
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    lmmp_debug_assert(na > 4);
+    lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
+    
     mp_limb_t cy;
     mp_size_t nr = na, mn;
     mp_size_t sizes[LIMB_BITS], *sizp = sizes;
@@ -137,13 +142,6 @@ void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         nr = na;
     } while (sizp != sizes);
     TEMP_FREE;
-}
-
-void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    if (na < INV_NEWTON_THRESHOLD)
-        lmmp_inv_basecase_(dst, numa, na);
-    else
-        lmmp_invappr_newton_(dst, numa, na);
 }
 
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {

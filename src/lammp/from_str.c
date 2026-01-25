@@ -50,7 +50,7 @@ mp_size_t lmmp_from_str_divide_(mp_ptr dst, const mp_byte_t* src, mp_size_t len,
     mp_size_t limbs;
     int base = pow->base;
 
-    if (lmmp_limbs_(0, len, base) < FROM_STR_DIVIDE_THRESHOLD) {
+    if (lmmp_form_str_len_(0, len, base) < FROM_STR_DIVIDE_THRESHOLD) {
         limbs = lmmp_from_str_basecase_(dst, src, len, base);
     } else {
         mp_size_t pdigits = pow->digits;
@@ -131,7 +131,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
             dst[limbs] = curlimb;
             ++limbs;
         }
-    } else if (lmmp_limbs_(0, len, base) < FROM_STR_BASEPOW_THRESHOLD) {
+    } else if (lmmp_form_str_len_(0, len, base) < FROM_STR_BASEPOW_THRESHOLD) {
         limbs = lmmp_from_str_basecase_(dst, src, len, base);
     } else {
         TEMP_DECL;
@@ -141,7 +141,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
         mp_size_t bexp, lexp = (len - 1) / digitspl + 1;
         mp_size_t tzbit = lmmp_tailing_zeros_(lbase);
         // need 1 extra limb to store result
-        mp_size_t alloc_size = lmmp_limbs_(0, len, base) + 1;
+        mp_size_t alloc_size = lmmp_form_str_len_(0, len, base) + 1;
         mp_limb_t cy;
         mp_ptr tp;
 
@@ -153,7 +153,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
             // we will calculate lbase^(bexp-1) first, and trim it s. t.
             // it contains at most 2 tailing 0 limb, then multiply it by lbase,
             // so we need npow limbs to store lbase^bexp
-            mp_size_t npow = lmmp_limbs_(0, (bexp - 1) * digitspl + 1, base) + 1;
+            mp_size_t npow = lmmp_form_str_len_(0, (bexp - 1) * digitspl + 1, base) + 1;
 
             if (tzbit) {
                 mp_size_t tzlimb = tzbit * (bexp - 1) / LIMB_BITS;

@@ -19,28 +19,6 @@
 0         1/5 1/4  1/3 2/5  1/2 5/9 3/5 2/3 3/4 4/5  9/10   1  nb/na
 */
 
-void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    if (na < MUL_TOOM22_THRESHOLD)
-        lmmp_sqr_basecase_(dst, numa, na);
-    else if (na < MUL_TOOM33_THRESHOLD)
-        lmmp_sqr_toom2_(dst, numa, na);
-    else if (na < MUL_FFT_THRESHOLD)
-        lmmp_sqr_toom3_(dst, numa, na);
-    else
-        lmmp_mul_fft_(dst, numa, na, numa, na);
-}
-
-void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
-    if (n < MUL_TOOM22_THRESHOLD)
-        lmmp_mul_basecase_(dst, numa, n, numb, n);
-    else if (n < MUL_TOOM33_THRESHOLD)
-        lmmp_mul_toom22_(dst, numa, n, numb, n);
-    else if (n < MUL_FFT_THRESHOLD)
-        lmmp_mul_toom33_(dst, numa, n, numb, n);
-    else
-        lmmp_mul_fft_(dst, numa, n, numb, n);
-}
-
 void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     lmmp_debug_assert(na >= nb);
     lmmp_debug_assert(nb > 0);

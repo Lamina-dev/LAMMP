@@ -22,7 +22,7 @@ typedef struct {
  * @param seed_type 随机数发生器类型（0：pcg64_128，1：xorshift256++，2：mt19937-64）
  * @warning seed_type 必须在0到2之间，如果不是，则使用 seed_type%3 作为seed_type
  */
-void lmmp_global_rng_init(uint64_t seed, int seed_type);
+void lmmp_global_rng_init_(uint64_t seed, int seed_type);
 
 /**
  * @brief 生成随机大整数（0 - B^n-1 均匀分布）
@@ -33,7 +33,7 @@ void lmmp_global_rng_init(uint64_t seed, int seed_type);
  * @warning seed_type 必须在0到2之间，如果不是，则使用 seed_type%3 作为seed_type
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_random(mp_ptr dst, mp_size_t n, uint64_t seed, int seed_type);
+mp_size_t lmmp_random_(mp_ptr dst, mp_size_t n, uint64_t seed, int seed_type);
 
 /**
  * @brief 生成随机大整数（0 - B^n-1 均匀分布）
@@ -43,7 +43,7 @@ mp_size_t lmmp_random(mp_ptr dst, mp_size_t n, uint64_t seed, int seed_type);
  *          如果没有进行全局初始化，则使用默认种子（默认为0）和默认发生器类型（默认为xorshift256++）
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_random_default(mp_ptr dst, mp_size_t n);
+mp_size_t lmmp_random_default_(mp_ptr dst, mp_size_t n);
 
 /**
  * @brief 初始化pcg64_128随机数生成器
