@@ -302,6 +302,45 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
+ * 大数平方操作 [dst,2*na] = [numa,na]^2
+ * @warning na>0, sep(dst,numa)
+ * @param dst 平方结果输出指针（需要2*na的limb长度）
+ * @param numa 源操作数指针
+ * @param na limb长度
+ */
+INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    if (na < MUL_TOOM22_THRESHOLD)
+        lmmp_sqr_basecase_(dst, numa, na);
+    else if (na < MUL_TOOM33_THRESHOLD)
+        lmmp_sqr_toom2_(dst, numa, na);
+    else if (na < MUL_FFT_THRESHOLD)
+        lmmp_sqr_toom3_(dst, numa, na);
+    else
+        lmmp_mul_fft_(dst, numa, na, numa, na);
+}
+
+/**
+ * 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
+ * @warning n>0, sep(dst,[numa|numb])
+ *       特殊情况: n==1时dst<=numa+1是允许的
+ *                 n==2时dst<=numa是允许的
+ * @param dst 乘积结果输出指针（需要 2*n 的 limb 长度）
+ * @param numa 第一个乘数指针
+ * @param numb 第二个乘数指针
+ * @param n limb长度
+ */
+INLINE_ void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    if (n < MUL_TOOM22_THRESHOLD)
+        lmmp_mul_basecase_(dst, numa, n, numb, n);
+    else if (n < MUL_TOOM33_THRESHOLD)
+        lmmp_mul_toom22_(dst, numa, n, numb, n);
+    else if (n < MUL_FFT_THRESHOLD)
+        lmmp_mul_toom33_(dst, numa, n, numb, n);
+    else
+        lmmp_mul_fft_(dst, numa, n, numb, n);
+}
+
+/**
  * @brief 1阶逆元计算 (inv1)
  * @param x 输入的64位无符号整数，最高位为1(MSB(x)=1)
  * @return 计算结果：(B^2-1)/x - B
@@ -319,6 +358,26 @@ mp_limb_t lmmp_inv_1_(mp_limb_t x);
 mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
 
 /**
+ * @brief 近似逆元计算（牛顿迭代法）
+ * @param dst 输出结果缓冲区，长度为na
+ * @param numa 输入操作数，长度为na
+ * @param na 输入操作数的 limb 长度
+ * @warning na>4, MSB(numa)=1, sep(dst,numa)
+ * @return 无返回值，结果存储在dst中，[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]
+ */
+void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief 近似逆元计算（牛顿迭代法）
+ * @param dst 输出结果缓冲区，长度为na
+ * @param numa 输入操作数，长度为na
+ * @param na 输入操作数的 limb 长度
+ * @warning na>4, MSB(numa)=1, sep(dst,numa)
+ * @return 无返回值，结果存储在dst中，[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]+[0|-1]
+ */
+void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
  * @brief 近似逆元计算 (invappr)
  * @param dst 输出结果缓冲区，长度为na
  * @param numa 输入操作数，长度为na
@@ -326,7 +385,12 @@ mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
  * @warning na>0, MSB(numa)=1, sep(dst,numa)
  * @return 无返回值，结果存储在dst中，[dst,na] = (B^(2*na)-1)/[numa,na] - B^na + [0|-1]
  */
-void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+INLINE_ void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    if (na < INV_NEWTON_THRESHOLD)
+        lmmp_inv_basecase_(dst, numa, na);
+    else
+        lmmp_invappr_newton_(dst, numa, na);
+}
 
 /**
  * @brief 3/2位除法运算 [numa,2]=[numa,3] mod [numb,2]
@@ -345,7 +409,7 @@ mp_limb_t lmmp_div_3_2_(mp_ptr numa, mp_srcptr numb, mp_limb_t inv21);
  * @param na 被除数的 limb 长度
  * @param x 除数（单个 limb ）
  * @return 除法余数（单个 limb ）
- * @warning na>0, x!=0, eqsep(dstq,numa)与numa, dstq>=numa-1 是可以接受的
+ * @warning na>0, x!=0, eqsep(dstq,numa), dstq>=numa-1 是可以接受的
  * @note if (dstq!=NULL) [dstq,na] = [numa,na] div x
  */
 mp_limb_t lmmp_div_1_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_limb_t x);
@@ -394,9 +458,20 @@ mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr num
  * @param nq 商的 limb 长度
  * @param nb 除数的 limb 长度
  * @return 计算需要预计算逆元尺寸ni（ni<=nb）
- * @note 用于归一化除法([nq+nb]/[nb]=[nq])的逆元预计算优化
+ * @note 用于已归一化除法([nq+nb]/[nb]=[nq])的逆元 ni 尺寸
  */
-mp_size_t lmmp_div_inv_size_(mp_size_t nq, mp_size_t nb);
+INLINE_ mp_size_t lmmp_div_inv_size_(mp_size_t nq, mp_size_t nb) {
+    mp_size_t ni, b;
+    if (nq > nb) {
+        b = (nq - 1) / nb + 1;  // ceil(nq/nb), number of blocks
+        ni = (nq - 1) / b + 1;  // ceil(nq/b)
+    } else if (3 * nq > nb) {
+        ni = (nq - 1) / 2 + 1;  // b=2
+    } else {
+        ni = (nq - 1) / 1 + 1;  // b=1
+    }
+    return ni;
+}
 
 /**
  * @brief 除法前的逆元预计算，[dst,ni] = invappr( (ni+1 MSLs of numa) + 1 ) / B
@@ -779,7 +854,7 @@ INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_
  *       1. if (numa!=NULL) 返回的长度可能会多分配一个字符空间
  *       2. if (numa==NULL) 返回na个limb长度的数的最大可能字符长度（最坏情况）
  */
-INLINE_ mp_size_t lmmp_digits_(mp_srcptr numa, mp_size_t na, int base) {
+INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
     int mslbits = 0;
     if (numa) {
         do {
@@ -788,7 +863,7 @@ INLINE_ mp_size_t lmmp_digits_(mp_srcptr numa, mp_size_t na, int base) {
         } while (numa[--na] == 0);
         mslbits = lmmp_limb_bits_(numa[na]);
     }
-    return lmmp_mulh_(na * 64 + mslbits, lmmp_bases_[base].inv_lg_base) + 1;
+    return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_[base].inv_lg_base) + 1;
 }
 
 /**
@@ -802,7 +877,7 @@ INLINE_ mp_size_t lmmp_digits_(mp_srcptr numa, mp_size_t na, int base) {
  *       1. if (src!=NULL) 返回的长度可能会多分配一个 limb 空间
  *       2. if (src==NULL) 返回len位base进制数的最大可能 limb 长度（最坏情况）
  */
-INLINE_ mp_size_t lmmp_limbs_(const mp_byte_t* src, mp_size_t len, int base) {
+INLINE_ mp_size_t lmmp_form_str_len_(const mp_byte_t* src, mp_size_t len, int base) {
     if (src) {
         do {
             if (len == 0)

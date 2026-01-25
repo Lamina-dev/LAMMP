@@ -149,7 +149,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
         mp_size_t exps[LIMB_BITS];
         mp_limb_t lbase = lmmp_bases_[base].large_base;
         mp_size_t digitspl = lmmp_bases_[base].digits_in_limb;
-        mp_size_t bexp = (lmmp_digits_(numa, na, base) - 1) / digitspl + 1;
+        mp_size_t bexp = (lmmp_to_str_len_(numa, na, base) - 1) / digitspl + 1;
         mp_size_t tzbit = lmmp_tailing_zeros_(lbase);
         // numa 的拷贝空间，多一个 limb 预留规整化移位所需
         mp_size_t alloc_size = na + 1;
@@ -166,7 +166,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
             // we will calculate lbase^(bexp-1) first, and trim it s. t.
             // it contains at most 2 tailing 0 limb, then multiply it by lbase,
             // so we need npow limbs to store lbase^bexp
-            mp_size_t npow = lmmp_limbs_(0, (bexp - 1) * digitspl + 1, base) + 1;
+            mp_size_t npow = lmmp_form_str_len_(0, (bexp - 1) * digitspl + 1, base) + 1;
 
             // space needed for quotients in recursive calls,
             // quotients are smaller than lbase^bexp
