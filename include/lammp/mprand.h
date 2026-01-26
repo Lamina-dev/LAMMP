@@ -1,7 +1,7 @@
 #ifndef LAMMP_MPRAND_H
 #define LAMMP_MPRAND_H
 
-#include "lmmpn.h"
+#include "lmmp.h"
 
 #ifdef __cplusplus
 extern "C" {
