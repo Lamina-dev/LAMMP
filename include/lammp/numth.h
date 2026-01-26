@@ -326,7 +326,7 @@ INLINE_ void lmmp_num_heap_init_(num_heap* pq, size_t capa) {
  */
 INLINE_ void lmmp_num_heap_free_(num_heap* pq) {
     lmmp_debug_assert(pq->size == 0);
-    FREE(pq->head);
+    lmmp_free(pq->head);
     pq->cap = 0;
     pq->size = 0;
     pq->head = NULL;

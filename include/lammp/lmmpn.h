@@ -576,22 +576,22 @@ typedef struct lmmp_mp_basepow_t_ {
 } mp_basepow_t;
 
 // 计算整数的绝对值
-#define ABS(x) ((x) >= 0 ? (x) : -(x))
+#define LMMP_ABS(x) ((x) >= 0 ? (x) : -(x))
 // 返回两个数中的较小值
-#define MIN(l, o) ((l) < (o) ? (l) : (o))
+#define LMMP_MIN(l, o) ((l) < (o) ? (l) : (o))
 // 返回两个数中的较大值
-#define MAX(h, i) ((h) > (i) ? (h) : (i))
+#define LMMP_MAX(h, i) ((h) > (i) ? (h) : (i))
 // 交换两个同类型变量的值
-#define SWAP(x, y, type)   \
+#define LMMP_SWAP(x, y, type)   \
     do {                   \
         type _swap_ = (x); \
         (x) = (y);         \
         (y) = _swap_;      \
     } while (0)
 // 检查n是否为2的整数次幂
-#define POW2_Q(n) (((n) & ((n) - 1)) == 0)
+#define LMMP_POW2_Q(n) (((n) & ((n) - 1)) == 0)
 // 将a向上取整为m的整数倍
-#define ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
+#define LMMP_ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
 
 /**
  * @brief 临时内存分配函数
@@ -632,8 +632,6 @@ void lmmp_temp_free_(void* marker);
 #define ALLOC_TYPE(n, type) ((type*)lmmp_alloc((size_t)(n) * sizeof(type)))
 // 类型化内存重分配：将p指向的内存重分配为new_size个type类型
 #define REALLOC_TYPE(p, new_size, type) ((type*)lmmp_realloc((p), (new_size) * sizeof(type)))
-// 内存释放：释放ptr指向的内存
-#define FREE(ptr) lmmp_free(ptr)
 
 // 内存拷贝宏：拷贝n个limb（每个8字节），使用memmove保证重叠安全
 #define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)

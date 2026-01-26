@@ -259,7 +259,7 @@ void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) 
     // 处理 0 <= off < l - w 的区域
     for (mp_size_t off = 0; off < l - w; off += PART_SIZE) {
         // 每次处理PART_SIZE个机器字
-        mp_size_t cursize = MIN(l - w - off, PART_SIZE);
+        mp_size_t cursize = LMMP_MIN(l - w - off, PART_SIZE);
         // numc[w+off ...] = numa[off ...] - numb[off ...]（带借位）
         scyo = lmmp_sub_nc_(numc + w + off, numa + off, numb + off, cursize, scyo);
         // numa[off ...] = numa[off ...] + numb[off ...]（带进位）
@@ -283,7 +283,7 @@ void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) 
 
     // 处理 l - w <= off < l 的区域（循环部分）
     for (mp_size_t off = l - w; off < l; off += PART_SIZE) {
-        mp_size_t cursize = MIN(l - off, PART_SIZE);
+        mp_size_t cursize = LMMP_MIN(l - off, PART_SIZE);
         // numc[off-(l-w) ...] = numb[off ...] - numa[off ...]（带借位）
         scyo = lmmp_sub_nc_(numc + off - (l - w), numb + off, numa + off, cursize, scyo);
         // numa[off ...] = numa[off ...] + numb[off ...]（带进位）
@@ -359,7 +359,7 @@ void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w)
 
     // 处理 l - w <= off < l 的区域（循环部分）
     for (mp_size_t off = l - w; off < l; off += PART_SIZE) {
-        mp_size_t cursize = MIN(l - off, PART_SIZE);
+        mp_size_t cursize = LMMP_MIN(l - off, PART_SIZE);
         // 对numb执行右移（带进位）
         if (shr)
             lmmp_shr_c_(numb + off - (l - w), numb + off - (l - w), cursize, shr,
@@ -372,7 +372,7 @@ void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w)
 
     // 处理 0 <= off < l - w 的区域（非循环部分）
     for (mp_size_t off = 0; off < l - w; off += PART_SIZE) {
-        mp_size_t cursize = MIN(l - w - off, PART_SIZE);
+        mp_size_t cursize = LMMP_MIN(l - w - off, PART_SIZE);
         // 对numb执行右移（带进位）
         if (shr)
             lmmp_shr_c_(numb + w + off, numb + w + off, cursize, shr, numb[off + w + cursize] << (LIMB_BITS - shr));
@@ -785,7 +785,7 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
         if (narest > 0) {
             // 计算当前块的系数长度
             coeflen = M + (i == K - 1);
-            coeflen = MIN(narest, coeflen);
+            coeflen = LMMP_MIN(narest, coeflen);
             narest -= coeflen; 
             lmmp_fft_extract_coef_(pfca[i], numa, M * i, coeflen, msr.lenw);
             // 非第一个块：左移补偿
@@ -805,7 +805,7 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
             pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
             if (nbrest > 0) {
                 coeflen = M + (i == K - 1);
-                coeflen = MIN(nbrest, coeflen);
+                coeflen = LMMP_MIN(nbrest, coeflen);
                 nbrest -= coeflen;
                 lmmp_fft_extract_coef_(pfcb[i], numb, M * i, coeflen, msr.lenw);
                 if (i > 0)
@@ -864,7 +864,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
         mp_size_t coeflen;
         pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
         if (narest > 0) {
-            coeflen = MIN(narest, M);  // 梅森数固定M长度
+            coeflen = LMMP_MIN(narest, M);  // 梅森数固定M长度
             narest -= coeflen;
             lmmp_fft_extract_coef_(pfca[i], numa, M * i, coeflen, msr.lenw);
         } else {
@@ -879,7 +879,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
             mp_size_t coeflen;
             pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
             if (nbrest > 0) {
-                coeflen = MIN(nbrest, M);
+                coeflen = LMMP_MIN(nbrest, M);
                 nbrest -= coeflen;
                 lmmp_fft_extract_coef_(pfcb[i], numb, M * i, coeflen, msr.lenw);
             } else {
@@ -990,5 +990,5 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
         cy = tp[hn] + lmmp_sub_nc_(tp + na + nb - hn, dst + na + nb - hn, tp + na + nb - hn, 2 * hn - (na + nb), cy);
         cy = lmmp_sub_1_(dst, dst, na + nb, cy);
     }
-    FREE(tp);
+    lmmp_free(tp);
 }

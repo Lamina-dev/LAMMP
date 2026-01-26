@@ -109,7 +109,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
 
     mp_size_t limbs;
 
-    if (POW2_Q(base)) {
+    if (LMMP_POW2_Q(base)) {
         mp_limb_t curlimb = 0;
         const mp_byte_t* srcend = src + len;
         int bitspd = lmmp_bases_[base].large_base;

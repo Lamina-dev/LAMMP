@@ -35,7 +35,7 @@ mp_limb_t lmmp_div_mulinv_(mp_ptr dstq,
     lmmp_debug_assert(na >= nb && nb >= ni);
     lmmp_debug_assert(ni > 0);
     lmmp_debug_assert(numb[nb - 1] >= 0x8000000000000000ull);
-    mp_size_t nq = na - nb, ntp = MIN(ni, nq) + nb;
+    mp_size_t nq = na - nb, ntp = LMMP_MIN(ni, nq) + nb;
     mp_limb_t qh;
     TEMP_DECL;
     mp_ptr tp = TALLOC_TYPE(ntp, mp_limb_t);

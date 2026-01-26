@@ -114,7 +114,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
                 lmmp_mul_(dst, numb, nb, numa, na);
             if (lmmp_add_n_(dst, dst, ws, nb))
                 lmmp_inc(dst + nb);
-            FREE(ws);
+            lmmp_free(ws);
         }
     }
 }

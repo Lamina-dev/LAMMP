@@ -120,7 +120,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
 
     mp_size_t digits;
 
-    if (POW2_Q(base)) {
+    if (LMMP_POW2_Q(base)) {
         mp_limb_t curlimb = numa[na - 1];
         int cnt = lmmp_bases_[base].large_base;
         int bitsh = lmmp_limb_bits_(curlimb);
