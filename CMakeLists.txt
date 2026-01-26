@@ -55,7 +55,6 @@ if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         
         # 确保汇编文件被正确识别
         file(GLOB MASM_FILES ${CMAKE_SOURCE_DIR}/src/lammp/masm/*.asm)
-        # 不需要转换为nasm，直接使用原始asm文件
     endif()
 endif()
 
@@ -142,8 +141,8 @@ include_directories(${CMAKE_SOURCE_DIR}/include)
 # ===================== 构建子模块 =====================
 add_subdirectory(src/lammp)
 
-if(EXISTS ${CMAKE_SOURCE_DIR}/main.cpp)
-    add_executable(LammpMain ${CMAKE_SOURCE_DIR}/main.cpp)
+if(EXISTS ${CMAKE_SOURCE_DIR}/main.c)
+    add_executable(LammpMain ${CMAKE_SOURCE_DIR}/main.c)
     target_link_libraries(LammpMain PRIVATE LammpCore)
     set_common_compiler_options(LammpMain)
 endif()

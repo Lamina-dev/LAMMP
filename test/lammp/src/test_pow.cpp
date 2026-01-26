@@ -11,18 +11,18 @@ int test_pow(uint a0, uint exp) {
     mp_size_t n1 = lmmp_pow_1_(b, bn, a[0], exp);
     mp_size_t n2 = lmmp_pow_win3_(c, a, 1, exp);
     if (n1 != n2) {
-        FREE(b);
-        FREE(c);
+        lmmp_free(b);
+        lmmp_free(c);
         return -1;
     }
     for (size_t i = 0; i != n1 - 1; ++i) {
         if (b[i] != c[i]) {
-            FREE(b);
-            FREE(c);
+            lmmp_free(b);
+            lmmp_free(c);
             return -1;
         }
     }
-    FREE(c);
-    FREE(b);
+    lmmp_free(c);
+    lmmp_free(b);
     return 0;
 }
