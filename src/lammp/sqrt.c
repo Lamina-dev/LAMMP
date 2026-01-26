@@ -179,7 +179,7 @@ void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t 
         //  d = B^(na+2*nr)-an*ir*ir
         //  -4*B^(na+nr) < d < 4*B^(na+nr)
 
-        mp_size_t naz = MIN(na, namax);
+        mp_size_t naz = LMMP_MIN(na, namax);
         //mp_size_t zeros = na - naz;
         mp_size_t nsqr, nres = naz + nr + 1;
         mp_ptr dp = xp + 2 * nr + 1, dip = xp + nr + 1;
@@ -201,7 +201,7 @@ void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t 
         // ir^2*an
         if (naz < SQRT_NEWTON_MODM_THRESHOLD || naz * 8 < nsqr || mn >= nsqr + naz) {
             if (cmod == 0)
-                nsqr = MIN(nsqr, nres);
+                nsqr = LMMP_MIN(nsqr, nres);
             lmmp_mul_(dp, xp, nsqr, numa - naz, naz);
             if (cmod == 1) {
                 if (lmmp_add_(dp, dp, mn, dp + mn, naz))

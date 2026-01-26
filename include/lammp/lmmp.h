@@ -368,7 +368,7 @@ void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr
  *                         也即 [numa,na] × B^(2×nf) = [dsts,nf+na/2+1]^2 + [dstr,nf+na/2+1]
  *                         且 0 <= [dstr,nf+na/2+1] < 2 * [dsts,nf+na/2+1] + 1
  *        如果dstr为NULL:   [dsts,nf+na/2+1] = [round|floor](sqrt([numa,na]*B^(2*nf)))
- * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa))
+ * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa)
  * @param dsts 平方根结果输出指针
  * @param dstr 余数结果输出指针（NULL表示不计算余数）
  * @param numa 源操作数指针
@@ -390,7 +390,7 @@ void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
  * 字符串转大数操作 [src,len,base] to [dst,return value,B]
- * 要求: len>=0, 2<=base<=256 
+ * @warning len>=0, 2<=base<=256 
  * @param dst 大数结果输出指针
  * @param src 字符串源指针
  * @param len 字符串长度
@@ -401,7 +401,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
 
 /**
  * 大数转字符串操作 [numa,na,B] to [dst,return value,base]
- * 要求: na>=0, 2<=base<=256
+ * @warning na>=0, 2<=base<=256
  * @param dst 字符串结果输出指针
  * @param numa 大数源指针
  * @param na 大数的 limb 长度

@@ -36,9 +36,9 @@
 #define LAMMP_COMPILER_VERSION 0
 #endif
 
-#define LAMMP_VERSION "2.0.0"
+#define LAMMP_VERSION "3.0.0"
 #define LAMMP_ALPHA_YEAR "2026"
-#define LAMMP_DATE "01-10"
+#define LAMMP_DATE "01-25"
 #define LAMMP_COPYRIGHT "Copyright (C) [2025] [HJimmyK/LAMINA]"
 
 #endif /* __LAMMP_VERSION_H__ */

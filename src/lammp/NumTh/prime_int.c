@@ -38,8 +38,8 @@ void lmmp_prime_int_init_(pri_int* p, uint n) {
 }
 
 void lmmp_prime_int_free_(pri_int* p) {
-    FREE(p->pri);
-    FREE(p->mmp);
+    lmmp_free(p->pri);
+    lmmp_free(p->mmp);
     p->mmp_cal = 0;
     p->prin = 0;
     p->N = 0;

@@ -71,8 +71,8 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
         }
         mp_ptr prod = ALLOC_TYPE(numa.n + numb.n, mp_limb_t);
         lmmp_mul_(prod, numb.num, numb.n, numa.num, numa.n);
-        FREE(numa.num);
-        FREE(numb.num);
+        lmmp_free(numa.num);
+        lmmp_free(numb.num);
         numa.num = prod;
         numa.n += numb.n;
         numa.n -= numa.num[numa.n - 1] == 0 ? 1 : 0;
@@ -93,7 +93,7 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
     } else {
         sh_w += numa.n;
     }
-    FREE(numa.num);
+    lmmp_free(numa.num);
     lmmp_num_heap_free_(&heap);
     return sh_w;
 }
@@ -185,8 +185,8 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
             }
             mp_ptr prod = ALLOC_TYPE(numa.n + numb.n, mp_limb_t);
             lmmp_mul_(prod, numb.num, numb.n, numa.num, numa.n);
-            FREE(numa.num);
-            FREE(numb.num);
+            lmmp_free(numa.num);
+            lmmp_free(numb.num);
             numa.num = prod;
             numa.n += numb.n;
             numa.n -= prod[numa.n - 1] == 0 ? 1 : 0;
@@ -204,7 +204,7 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
         sh_w += numa.n + 1;
         sh_w -= dst[sh_w - 1] == 0 ? 1 : 0;
 
-        FREE(numa.num);
+        lmmp_free(numa.num);
         lmmp_num_heap_free_(&heap);
         return sh_w;
     }
