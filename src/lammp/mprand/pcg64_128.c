@@ -1,6 +1,7 @@
-#include "../../../include/lammp/mprand.h"
-#include "../../../include/lammp/impl/u128_u192.h"
 #include "../../../include/lammp/impl/_umul64to128_.h"
+#include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/mprand.h"
 
 /**
  * algorithm: PCG-XSL-RR-128/64

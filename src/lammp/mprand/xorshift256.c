@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/mprand.h"
 
 /**
