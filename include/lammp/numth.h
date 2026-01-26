@@ -19,6 +19,7 @@
 #ifndef LAMMP_NUMTH_H
 #define LAMMP_NUMTH_H
 
+#include <math.h>
 #include "lmmpn.h"
 
 // 阶乘计算中，大于此阈值的质数幂将使用快速幂算法
@@ -30,8 +31,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
-
-#include <math.h>
 
 typedef uint8_t uchar;
 typedef int8_t schar;
