@@ -1,64 +1,66 @@
 #include "../../../include/lammp/numth.h"
 
-mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp) {
+#define mul_b(_i_)                                 \
+    lmmp_mul_(sq, dst, rn, b##_i_, b##_i_##n);     \
+    rn += b##_i_##n;                               \
+    rn -= (sq[rn - 1] == 0) ? 1 : 0
+
+mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
+    lmmp_debug_assert(exp >= 3);
+    lmmp_debug_assert(exp % 2 == 1);
     TEMP_DECL;
 
-    mp_size_t rn = lmmp_pow_size_(base, n, exp);
-    mp_size_t sqn = n, dsn = 1;
-    bool sq = true;
-    mp_ptr sq1 = BALLOC_TYPE(rn, mp_limb_t);
-    mp_ptr sq2 = BALLOC_TYPE(rn, mp_limb_t);
-    mp_ptr re = BALLOC_TYPE(rn, mp_limb_t);
+#define b1 base
+#define b1n n
+    mp_ptr sq = TALLOC_TYPE(rn, mp_limb_t);
+    rn = n;
+    lmmp_copy(sq, base, n);
+    lmmp_sqr_(dst, sq, rn);
+    rn <<= 1;
+    rn -= (dst[rn - 1] == 0) ? 1 : 0;
+    mp_size_t lz = lmmp_leading_zeros_(exp);
+    mp_size_t i = 62 - lz;
+    exp <<= lz + 1;
+    
+    for ( ; i > 0; ) {
+        lz = lmmp_leading_zeros_(exp);
+        if (lz == 0) {
+            mul_b(1);
 
-    lmmp_zero(sq1 + n, rn - n);
-    lmmp_copy(sq1, base, n);
-    lmmp_zero(dst + 1, rn - 1);
-    dst[0] = 1;
-    /*
-        while (exp) {
-            if (exp & 1)
-                dst = dst * base
-            base = (base * base) 
-            exp >>= 1;
-        }
-        the last step base will be overflowed, so we use this :
-        while (1) {
-            if (exp & 1)
-                dst = dst * base
-            exp >>= 1;
-            if (exp == 0) break;
-            base = (base * base) 
-        }
-     */
-    while (1) {
-        if (exp & 1) {
-            /* sqn >= dsn */
-            if (sq) {
-                lmmp_mul_(re, sq1, sqn, dst, dsn);
-            } else {
-                lmmp_mul_(re, sq2, sqn, dst, dsn);
-            }
-            dsn += sqn;
-            dsn -= (re[dsn - 1] == 0) ? 1 : 0;
-            lmmp_copy(dst, re, dsn);
-        } 
-
-        exp >>= 1;
-        if (exp == 0) break;
-
-        if (sq) {
-            lmmp_sqr_(sq2, sq1, sqn);
-            sq = false;
-            sqn <<= 1;
-            sqn -= (sq2[sqn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(dst, sq, rn);
+            rn <<= 1;
+            rn -= (dst[rn - 1] == 0) ? 1 : 0;
+            --i;
+            exp <<= 1;
         } else {
-            lmmp_sqr_(sq1, sq2, sqn);
-            sq = true;
-            sqn <<= 1;
-            sqn -= (sq1[sqn - 1] == 0) ? 1 : 0;
-        }  
+            mp_size_t j = 2;
+            for (; j <= lz; j += 2) {
+                lmmp_sqr_(sq, dst, rn);
+                rn <<= 1;
+                rn -= (sq[rn - 1] == 0);
+                lmmp_sqr_(dst, sq, rn);
+                rn <<= 1;
+                rn -= (dst[rn - 1] == 0);
+            }
+            if (lz & 1) {
+                lmmp_sqr_(sq, dst, rn);
+                rn <<= 1;
+                rn -= (sq[rn - 1] == 0);
+                lmmp_copy(dst, sq, rn);
+            }
+            i -= lz;
+            exp <<= lz;
+        }
     }
+    lmmp_debug_assert(exp == 0x8000000000000000ull);
 
+    mul_b(1);
+    lmmp_copy(dst, sq, rn);
+    
     TEMP_FREE;
-    return dsn;
+    return rn;
+
+#undef b1
+#undef b1n
+#undef new_b
 }
