@@ -77,7 +77,7 @@ mp_size_t lmmp_fft_best_k_(mp_size_t n) {
 mp_size_t lmmp_fft_next_size_(mp_size_t n) {
     mp_size_t k = lmmp_fft_best_k_(n);
     // 保证每个块至少包含1个 limb
-    lmmp_assert(k >= LOG2_LIMB_BITS);
+    lmmp_debug_assert(k >= LOG2_LIMB_BITS);
     k -= LOG2_LIMB_BITS;
     n = (((n - 1) >> k) + 1) << k;
     return n;
@@ -96,7 +96,7 @@ void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
             ms->mem[++ms->maxdepth] = lmmp_alloc(size); 
             ms->memsize[ms->maxdepth] = size;           
         }
-        lmmp_assert(ms->memsize[ms->tempdepth] == size);
+        lmmp_debug_assert(ms->memsize[ms->tempdepth] == size);
         return ms->mem[ms->tempdepth];  
     } else {    // size=0：释放内存
         if (--ms->tempdepth < 0) {
@@ -604,13 +604,13 @@ void lmmp_mul_fermat_recombine_(fft_memstack* ms,
             lmmp_dec_1(nums + brshift, (mp_limb_t)1 << bshl);
             ++nums[nlen - 1];
         }
-        borrow = -nums[nlen - 1];  // 更新借位
-        nums[nlen - 1] = 0;        // 清空最高位
+        borrow = -nums[nlen - 1];
+        nums[nlen - 1] = 0;       
 
         // 5. 计算结果偏移：i*M比特（块偏移）
         mp_size_t roffset = i * M;
-        mp_size_t shl = roffset & (LIMB_BITS - 1);  // 比特级偏移
-        roffset /= LIMB_BITS;                       // 机器字级偏移
+        mp_size_t shl = roffset & (LIMB_BITS - 1); 
+        roffset /= LIMB_BITS;                      
 
         // 6. 左移对齐（将当前块移到正确位置）
         if (shl)
@@ -691,7 +691,7 @@ void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_siz
         mp_size_t N = rn * LIMB_BITS;        // 总比特数
         mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
         mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
-        lmmp_assert(!(N & (K - 1)));
+        lmmp_debug_assert(!(N & (K - 1)));
         mp_size_t M = N >> k;         // 每个块的比特数（N/K）
         mp_size_t n = 2 * M + k + 2;  // 扩展系数长度（保证归一化）
 
@@ -757,7 +757,7 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
     mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
     mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
-    lmmp_assert(!(N & (K - 1)));
+    lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;         // 每个块的比特数
     mp_size_t n = 2 * M + k + 2;  // 扩展系数长度
 
@@ -826,7 +826,7 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     // 处理模 B^rn+1 的溢出
     if (dst[rn] && !lmmp_zero_q_(dst, rn)) {
         dst[rn] = 0;
-        lmmp_dec(dst);  // 整体减1
+        lmmp_dec(dst); 
     }
 
     lmmp_fft_memstack_(&msr, 0);
@@ -838,7 +838,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
     mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
     mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
     // 断言：N必须是K的整数倍
-    lmmp_assert(!(N & (K - 1)));
+    lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;     // 每个块的比特数
     mp_size_t n = 2 * M + k;  // 扩展系数长度（梅森数比费马数少2）
 
@@ -903,7 +903,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
         // 归一化处理
         if (nums[nlen - 1]) {
             lmmp_dec(nums);
-            lmmp_assert(nums[nlen - 1] == 1);  // 梅森数归一化标志为1
+            lmmp_debug_assert(nums[nlen - 1] == 1);  // 梅森数归一化标志为1
             nums[nlen - 1] = 0;
         }
 
@@ -941,7 +941,7 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
     lmmp_debug_assert(na > 0 && nb > 0);
     lmmp_debug_assert(na >= nb);
     mp_size_t hn = lmmp_fft_next_size_((na + nb + 1) >> 1);
-    lmmp_assert(na + nb > hn);
+    lmmp_debug_assert(na + nb > hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
 
     mp_srcptr amodm = numa;
