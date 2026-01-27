@@ -1,18 +1,24 @@
+#include <fstream>  
 #include "include/benchmark.hpp"
 
+
 int main() {
-    // for (int i = 0; i < 20; i++) {
-    //     int a = 500 * i + 4000;
-    //     for (int j = 0; j < 10; j++) {
-    //         int b = a * (3 * j + 10);
-    //         std::cout << a << "," << b << ",";
-    //         std::cout << bench_mul(a, b) << ";";
-    //     }
-    // }
-    // for (int i = 0; i < 300; i++) {
-    //     unsigned len1 = 1000 + i * 4000;
-    //     std::cout << len1 << "," << bench_factorial(len1) << ";";
-    // }
-    std::cout << bench_factorial(1000000) << ";";
+    std::ofstream outFile("output.txt");  
+
+    if (!outFile.is_open()) {
+        std::cerr << "无法打开文件 output.txt 以写入！\n";
+        return 1;
+    }
+    for (int i = 0; i < 100; i++) {
+        int a = 25 * i + 100;
+        for (int j = 0; j < 100; j++) {
+            int exp = (5 * j + 20);
+            outFile << a << "," << exp << ",";
+            outFile << bench_pow_win2(a, exp) << ",";
+            outFile << bench_pow_basecase(a, exp) << ";";
+        }
+        outFile << "\n"; 
+    }
+    outFile.close();
     return 0;
 }

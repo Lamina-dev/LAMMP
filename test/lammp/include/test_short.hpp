@@ -6,7 +6,7 @@
 void test_add_nc();
 void test_umul64to128();
 void test_sqrt();
-int test_pow(uint a, uint exp);
+int test_pow(uint len, uint exp);
 void test_pri_short();
 void test_pri_int();
 void test_powmod();

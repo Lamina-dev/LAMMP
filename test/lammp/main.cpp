@@ -4,6 +4,10 @@
 #include <vector>
 
 int main() {
-    test_umul64to128();
+    if (test_pow(12, 65)) {
+        printf("test_pow failed\n");
+    } else {
+        printf("test_pow passed\n");
+    }
     return 0;
 }
