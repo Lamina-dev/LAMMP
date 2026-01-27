@@ -38,7 +38,7 @@
 #include <stddef.h> 
 #include <stdint.h>
 
-#define LAMMP_DEBUG 0
+#define LAMMP_DEBUG 1
 #define MEMORY_CHECK 0
 
 #if MEMORY_CHECK == 1

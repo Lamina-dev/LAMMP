@@ -28,6 +28,9 @@
 // 阶乘计算中，朴素连乘的乘法空间长度阈值
 #define FACTORIAL_MUL_MAX_THRESHOLD 20
 
+// 幂运算中，底数长度为 1 的幂运算指数阈值，低于此阈值使用连乘法
+#define POW_1_EXP_THRESHOLD 10
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -97,18 +100,21 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @warning n>0, base>1
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
-#define lmmp_pow_1_size_(base, exp) (( ceil((double)(exp) * log2((double)base)) + LIMB_BITS - 1 ) / LIMB_BITS + 2)
+INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
+    return (ceil((double)(exp)*log2((double)base)) + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
+}
 
 /**
- * @brief 计算幂次方朴素快速幂算法 [dst,rn] = [base,n] ^ exp
+ * @brief 计算奇数次幂算法 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
+ * @param rn dst 的 limb 缓冲区长度
  * @param base 底数指针
  * @param n 底数的 limb 长度
  * @param exp 指数
- * @warning n>0, base[n-1]!=0, sep[dst|base], [base,n]>1, exp>0
+ * @warning n>0, base[n-1]!=0, sep(dst,base), [base,n]>1, exp>=3, exp%2==1
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp);
+mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -170,7 +176,7 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param dst 结果指针
  * @param base 底数
  * @param exp 指数
- * @warning base>1, sep[dst|base], exp>0
+ * @warning base>1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
@@ -188,26 +194,27 @@ INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong ex
 }
 
 /**
- * @brief 计算幂次方3比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
- * @param dst 结果指针
- * @param base 底数
- * @param n 底数的 limb 长度
- * @param exp 指数
- * @warning n>0, base[n-1]!=0, sep[dst|base], exp>0
- * @return 返回 dst 的实际 limb 长度
- */
-mp_size_t lmmp_pow_win3_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp);
-
-/**
  * @brief 计算幂次方2比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
  * @param base 底数
  * @param n 底数的 limb 长度
  * @param exp 指数
- * @warning 0<n, base[n-1]!=0, sep[dst|base], exp>0
+ * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp);
+
+/**
+ * @brief 计算大整数幂 [dst,rn] = [base,n] ^ exp
+ * @param dst 结果指针
+ * @param rn 结果 limb 长度
+ * @param base 底数
+ * @param n 底数的 limb 长度
+ * @param exp 指数
+ * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 typedef struct prime_short {
     ushortp pri;    // prime 数组指针
