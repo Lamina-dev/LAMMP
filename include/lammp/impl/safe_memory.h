@@ -183,11 +183,11 @@ static inline void lmmp_free_debug(void* ptr, const char* file, int line) {
  */
 static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* file, int line) {
     if (ptr == NULL) {
-        return my_malloc_debug(new_size, file, line);
+        return lmmp_malloc_debug(new_size, file, line);
     }
 
     if (new_size == 0) {
-        my_free_debug(ptr, file, line);
+        lmmp_free_debug(ptr, file, line);
         return NULL;
     }
 
@@ -202,7 +202,7 @@ static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* f
     // 检查尾部溢出
     check_rear_guard_overflow(old_hdr, ptr);
 
-    void* new_ptr = my_malloc_debug(new_size, file, line);
+    void* new_ptr = lmmp_malloc_debug(new_size, file, line);
     if (new_ptr == NULL) {
         return NULL;
     }
@@ -211,7 +211,7 @@ static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* f
     memcpy(new_ptr, ptr, copy_size);
 
     // 释放旧内存块
-    my_free_debug(ptr, file, line);
+    lmmp_free_debug(ptr, file, line);
 
     return new_ptr;
 }
