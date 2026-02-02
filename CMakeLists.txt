@@ -39,6 +39,7 @@ if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
                 "$ENV{ProgramFiles}/Microsoft Visual Studio/*/Community/bin/Hostx64/x64"
                 "${PROGRAMFILES}/Microsoft Visual Studio/*/BuildTools/bin/Hostx64/x64"
                 "${PROGRAMFILES}/Microsoft Visual Studio/*/Community/bin/Hostx64/x64"
+                "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64"
                 "D:/vs2022/IDE/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64"
             REQUIRED
         )
