@@ -98,7 +98,7 @@ EXPORTS
 	lmmp_16_pow_1_
 
 	lmmp_pow_win2_
-
+	lmmp_pow_
 	
 	lmmp_prime_short_init_
 	lmmp_prime_short_free_
@@ -112,5 +112,7 @@ EXPORTS
 	lmmp_num_heap_pop_
 
 	lmmp_factorial_
+	lmmp_binomial_coeff_
+	lmmp_permutation_num_
 
 	lmmp_siphash24_
