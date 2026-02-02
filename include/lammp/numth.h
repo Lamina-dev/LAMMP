@@ -22,6 +22,9 @@
 #include <math.h>
 #include "lmmpn.h"
 
+// 阶乘计算中，小于此阈值的阶乘值将使用朴素算法
+#define FACTORIAL_N_BASECASE_THRESHOLD 30
+
 // 阶乘计算中，大于此阈值的质数幂将使用快速幂算法
 #define FACTORIAL_PRIME_POW_THRESHOLD 20
 
@@ -30,6 +33,12 @@
 
 // 幂运算中，底数长度为 1 的幂运算指数阈值，低于此阈值使用连乘法
 #define POW_1_EXP_THRESHOLD 10
+
+// 幂运算中，指数大于此值可能使用win2算法
+#define POW_WIN2_EXP_THRESHOLD 50
+
+// 幂运算中，底数长度大于此值可能使用win2算法
+#define POW_WIN2_N_THRESHOLD 400
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,6 +88,13 @@ ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @return base^exp 对 mod 取模的结果
  */
 ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
+
+typedef struct {
+    mp_ptr inv;  // 逆元指针
+    mp_ptr div;  // 商指针
+    mp_size_t n; // 长度
+    mp_size_t shift; // 移位数
+} lmmp_inv_t;
 
 /**
  * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
@@ -196,13 +212,14 @@ INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong ex
 /**
  * @brief 计算幂次方2比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
+ * @param rn 结果 limb 长度
  * @param base 底数
  * @param n 底数的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_srcptr base, mp_size_t n, ulong exp);
+mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 计算大整数幂 [dst,rn] = [base,n] ^ exp
@@ -374,6 +391,54 @@ INLINE_ mp_size_t lmmp_factorial_size_(uint n) {
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n);
+
+/**
+ * @brief 计算 nCk 组合数的 limb 缓冲区长度
+ * @param n 组合数的总数
+ * @param k 组合数的选择数
+ * @return nCk 组合数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ */
+INLINE_ mp_size_t lmmp_binomial_coeff_size_(uint n, uint k) {
+    double ln_comb = lgamma(n + 1.0) - lgamma(k + 1.0) - lgamma(n - k + 1.0);
+    double log2_comb = ln_comb / log(2.0);
+    mp_size_t rn = ceil(log2_comb / LIMB_BITS) + 2; /* more two limbs */
+    return rn;
+}
+
+/**
+ * @brief 计算 nCk 组合数 ( nCk = n! / (k!(n-k)!) )
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n 组合数的总数
+ * @param k 组合数的选择数
+ * @return 返回 dst 的实际 limb 长度
+ * @warning n>0, k<=n
+ */
+mp_size_t lmmp_binomial_coeff_(mp_ptr dst, mp_size_t rn, uint n, uint k);
+
+/**
+ * @brief 计算 nPk 排列数的 limb 缓冲区长度
+ * @param n 排列数的总数
+ * @param k 排列数的选择数
+ * @return nPk 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ */
+INLINE_ mp_size_t lmmp_permutation_num_size_(uint n, uint k) {
+    double ln_perm = lgamma(n + 1.0) - lgamma(k + 1.0);
+    double log2_perm = ln_perm / log(2.0);
+    mp_size_t rn = ceil(log2_perm / LIMB_BITS) + 2; /* more two limbs */
+    return rn;
+}
+
+/**
+ * @brief 计算 nPk 排列数 ( nPk = n! / (n-k)! )
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n 排列数的总数
+ * @param k 排列数的选择数
+ * @warning n>0, k<=n
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_permutation_num_(mp_ptr dst, mp_size_t rn, uint n, uint k);
 
 #ifdef INLINE_
 #undef INLINE_

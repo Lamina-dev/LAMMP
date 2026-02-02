@@ -363,7 +363,7 @@ mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
  * @warning na>4, MSB(numa)=1, sep(dst,numa)
- * @return 无返回值，结果存储在dst中，[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]
+ * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]
  */
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
@@ -373,7 +373,7 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
  * @warning na>4, MSB(numa)=1, sep(dst,numa)
- * @return 无返回值，结果存储在dst中，[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]+[0|-1]
+ * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]+[0|-1]
  */
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
@@ -479,7 +479,8 @@ INLINE_ mp_size_t lmmp_div_inv_size_(mp_size_t nq, mp_size_t nb) {
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
  * @param ni 预计算逆元的目标尺寸
- * @warning na>=ni>0，MSB(numa)=1
+ * @warning na>=ni>0, MSB(numa)=1, eqsep(dst,numa)
+ * @note if (ni=na) [dst,na] = (B^(2*na)-1) / [numa,na] - B^na
  */
 void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
