@@ -1,21 +1,22 @@
 #include "../../../include/lammp/numth.h"
 
 /**
- * @brief 计算 n! 阶乘
- * @param dst 结果存储位置
- * @param rn 结果存储位置的 limb 长度
- * @param n 阶乘的阶数
- * @warning n >= 7
- * @return 结果 dst 的实际 limb 长度
+ * @brief 计算 nPk 排列数 (nPk = n! / (n-k)!)
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n 排列数的总数
+ * @param k 排列数的选择数
+ * @warning n>=7, k<=n
+ * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
+mp_size_t lmmp_permutation_num_short_(mp_ptr dst, mp_size_t rn, ushort n, ushort k) {
     if (n <= 0xff) {
         dst[0] = 1;
         rn = 1;
         ulong t = 0;
-        ulong i = 1;
+        ulong i = n - k + 1;
         lmmp_debug_assert(n >= 7);
-        for ( ; i <= (ulong) n - 7; i += 7) {
+        for (; i <= (ulong)n - 7; i += 7) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4) * (i + 5) * (i + 6);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
             ++rn;
@@ -25,14 +26,14 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
             dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-        } 
+        }
         return rn;
     } else if (n <= 0xfff) {
         dst[0] = 1;
         rn = 1;
         ulong t = 0;
-        ulong i = 1;
-        for (; i <= (ulong) n - 4; i += 4) {
+        ulong i = n - k + 1;
+        for (; i <= (ulong)n - 4; i += 4) {
             t = i * (i + 1) * (i + 2) * (i + 3);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
             ++rn;
@@ -50,6 +51,8 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
         num_heap heap;
         lmmp_num_heap_init_(&heap, primes.prin);
 
+        k = n - k;
+
         /* 跳过质数 2 */
         for (uint i = 1; i < primes.prin; ++i) {
             uint pn = n;
@@ -58,7 +61,15 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
                 pn /= primes.pri[i];
                 e += pn;
             }
-            if (e == 1) {
+            pn = k;
+            while (pn > 0) {
+                pn /= primes.pri[i];
+                e -= pn;
+            }
+
+            if (e == 0) {
+                continue;
+            } else if (e == 1) {
                 mp_ptr pe = ALLOC_TYPE(1, mp_limb_t);
                 pe[0] = primes.pri[i];
                 lmmp_num_heap_push_(&heap, pe, 1);
@@ -117,8 +128,8 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
         }
 
         /* 乘以 2 的幂次方 */
-        /* sum( floor(n / 2^k) ) = n - popcnt(n) */
         rn = n - lmmp_limb_popcnt_(n);
+        rn -= k - lmmp_limb_popcnt_(k);
 
         mp_size_t sh_w = rn / LIMB_BITS;
         rn %= LIMB_BITS;
@@ -136,21 +147,34 @@ mp_size_t lmmp_factorial_short_(mp_ptr dst, mp_size_t rn, ushort n) {
     }
 }
 
-mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
+mp_size_t lmmp_permutation_num_(mp_ptr dst, mp_size_t rn, uint n, uint k) {
+    lmmp_debug_assert(k <= n);
+    lmmp_debug_assert(n > 0);
     if (n <= 20) {
         dst[0] = 1;
-        for (uint i = 1; i <= n; ++i) {
+        for (uint i = n - k + 1; i <= n; ++i) {
             dst[0] *= i;
         }
         return 1;
+    } else if (rn < FACTORIAL_N_BASECASE_THRESHOLD) {
+        dst[0] = 1;
+        rn = 1;
+        for (uint i = n - k + 1; i <= n; ++i) {
+            dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
+            ++rn;
+            rn -= dst[rn - 1] == 0 ? 1 : 0;
+        }
+        return rn;
     } else if (n <= 0xffff) {
-        return lmmp_factorial_short_(dst, rn, n);
+        return lmmp_permutation_num_short_(dst, rn, n, k);
     } else {
         pri_int primes;
         lmmp_prime_int_init_(&primes, n);
         num_heap heap;
         lmmp_num_heap_init_(&heap, primes.prin);
-
+        
+        k = n - k;
+        
         mp_size_t mpn = 1;
         mp_ptr mp = ALLOC_TYPE(FACTORIAL_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
@@ -161,6 +185,11 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
             while (pn > 0) {
                 pn /= primes.pri[i];
                 e += pn;
+            }
+            pn = k;
+            while (pn > 0) {
+                pn /= primes.pri[i];
+                e -= pn;
             }
             if (e >= FACTORIAL_PRIME_POW_THRESHOLD) {
                 mp_size_t pon_max = lmmp_pow_1_size_(primes.pri[i], e);
@@ -188,8 +217,10 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
                 lmmp_num_heap_push_(&heap, po, pon);
                 continue;
             }
-
-            if (e == 1) {
+            
+            if (e == 0) {
+                continue;  
+            } else if (e == 1) {
                 mp[mpn] = lmmp_mul_1_(mp, mp, mpn, primes.pri[i]);
                 ++mpn;
                 mpn -= mp[mpn - 1] == 0 ? 1 : 0;
@@ -205,7 +236,7 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
                 mp[0] = 1;
             }
         }
-        if ( !(mpn == 1 && mp[0] == 1))
+        if (!(mpn == 1 && mp[0] == 1))
             lmmp_num_heap_push_(&heap, mp, mpn);
 
         lmmp_prime_int_free_(&primes);
@@ -231,9 +262,9 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
         }
 
         /* 乘以 2 的幂次方 */
-        /* sum( floor(n / 2^k) ) = n - popcnt(n) */
         rn = n - lmmp_limb_popcnt_(n);
-        
+        rn -= k - lmmp_limb_popcnt_(k);
+
         mp_size_t sh_w = rn / LIMB_BITS;
         rn %= LIMB_BITS;
         lmmp_zero(dst, sh_w);
