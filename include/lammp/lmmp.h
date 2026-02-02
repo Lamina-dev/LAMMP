@@ -38,7 +38,7 @@
 #include <stddef.h> 
 #include <stdint.h>
 
-#define LAMMP_DEBUG 1
+#define LAMMP_DEBUG 0
 #define MEMORY_CHECK 0
 
 #if MEMORY_CHECK == 1
@@ -379,12 +379,11 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
 
 /**
  * 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
- * @warning na>0, numa的最高位不能为0,
- *          eqsep(dst,numa)
+ * @warning na>0, numa[na-1]!=0, eqsep(dst,numa)
  * @param dst 逆元结果输出指针
  * @param numa 源操作数指针
- * @param na 操作数的位数（limb数量）
- * @param nf 精度因子（用于扩展计算精度）
+ * @param na 操作数的 limb 长度
+ * @param nf 精度因子
  */
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
