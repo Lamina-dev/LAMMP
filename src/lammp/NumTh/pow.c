@@ -1,16 +1,5 @@
 #include "../../../include/lammp/numth.h"
 
-static inline mp_size_t lmmp_pow4_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
-    lmmp_debug_assert(exp == 4);
-    mp_limb_t tmp[2] = {0, 0};
-    lmmp_mullh_(base, base, tmp);
-    rn = (tmp[1] == 0) ? 1 : 2;
-    lmmp_sqr_basecase_(dst, tmp, rn);
-    rn <<= 1;
-    rn -= (dst[rn - 1] == 0) ? 1 : 0;
-    return rn;
-}
-
 mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
     lmmp_debug_assert(n > 0);
     lmmp_debug_assert(exp > 0);
@@ -25,9 +14,7 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
         return rn;
     } else {
         if (n == 1) {
-            if (exp == 4) {
-                return lmmp_pow4_(dst, rn, base[0], exp);
-            } else if (exp <= POW_1_EXP_THRESHOLD) {
+            if (exp <= POW_1_EXP_THRESHOLD) {
                 dst[0] = base[0];
                 rn = 1;
                 for (mp_size_t i = 1; i < exp; ++i) {
@@ -38,6 +25,11 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
                 return rn;
             } else {
                 return lmmp_pow_1_(dst, rn, base[0], exp);
+            }
+        }
+        if (exp > POW_WIN2_EXP_THRESHOLD && n > POW_WIN2_N_THRESHOLD) {
+            if ((exp % 4 == 3) || (2 * lmmp_limb_popcnt_(exp) >= (lmmp_limb_bits_(exp)))) {
+                return lmmp_pow_win2_(dst, rn, base, n, exp);
             }
         }
         if (exp & 1) {
