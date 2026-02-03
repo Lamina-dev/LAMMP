@@ -1,16 +1,18 @@
-#include "../include/test_short.hpp"
 #include <chrono>
+#include "../include/test_short.hpp"
 
-void test_factorial() {
-    size_t n = 0xffff;//136000
-    size_t len = lmmp_factorial_size_(n);
+void test_perm() {
+    size_t n = 0xffffffffffffffff, r = 12;
+    size_t len = lmmp_nPr_size_(n, r);
+    std::cout << "len = " << len << std::endl;
+
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);
 
     a[0] = 1;
     mp_size_t an = 1;
     auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = 1; i <= n; i++) {
+    for (size_t i = n - r + 1; i <= n && i != 0; i++) {
         a[an] = lmmp_mul_1_(a, a, an, i);
         ++an;
         an -= a[an - 1] == 0 ? 1 : 0;
@@ -20,15 +22,18 @@ void test_factorial() {
     std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
 
     auto start2 = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_factorial_(b, len, n);
+    mp_size_t bn = lmmp_nPr_(b, len, n, r);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
 
-    std::cout << an << " " << bn << std::endl;
+    if (bn != an)
+        std::cout << "bn != an" << std::endl;
+    else 
+        std::cout << bn << " == " << an << std::endl;
     for (size_t i = 0; i < an; i++) {
         if (a[i] != b[i]) {
-            std::cout << "i = " << i << " a = " << a[i] << " b = " << b[i] << std::endl;
+            std::cout << "i = " << i << " a[i] = " << a[i] << " b[i] = " << b[i] << std::endl;
             break;
         }
     }

@@ -4,10 +4,6 @@
 #include <vector>
 
 int main() {
-    if (test_pow(12, 65)) {
-        printf("test_pow failed\n");
-    } else {
-        printf("test_pow passed\n");
-    }
+    test_bino();
     return 0;
 }

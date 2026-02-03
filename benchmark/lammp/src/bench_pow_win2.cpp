@@ -8,7 +8,7 @@ long long bench_pow_win2(int len1, int len2) {
     mp_ptr b = ALLOC_TYPE(bn, mp_limb_t);
 
     auto start = std::chrono::high_resolution_clock::now();
-    bn = lmmp_pow_win2_(b, a, len1, len2);
+    bn = lmmp_pow_win2_(b, bn, a, len1, len2);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     lmmp_free(a);

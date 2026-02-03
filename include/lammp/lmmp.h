@@ -351,8 +351,8 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
  * @note 如果dstq不为NULL: [dstq,na-nb+1] = [numa,na] / [numb,nb] (商)
  *       如果dstr不为NULL: [dstr,nb] = [numa,na] mod [numb,nb] (余数)
  * @warning 0<nb<=na, numb[nb-1]!=0, sep(dstq,[numa|numb]), eqsep(dstr,[numa|numb]))
- *          特殊情况: nb==1时dstq>=numa-1是允许的
- *                   nb==2时dstq>=numa是允许的
+ *          特殊情况: nb==1时, dstq>=numa-1 是允许的
+ *                   nb==2时, dstq>=numa 是允许的
  * @param dstq 商结果输出指针（NULL表示不计算商）
  * @param dstr 余数结果输出指针（NULL表示不计算余数）
  * @param numa 被除数指针

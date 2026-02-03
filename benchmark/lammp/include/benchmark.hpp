@@ -24,7 +24,7 @@ long long bench_sub(int len1, int len2);
 long long bench_mul(int len1, int len2);
 long long bench_sqr(int len1);
 long long bench_div(int len1, int len2);
-long long bench_pow_basecase(int len1, int len2);
+long long bench_pow(int len1, int len2);
 long long bench_pow_win2(int len1, int len2);
 long long bench_factorial(unsigned len1);
 long long bench_powmod_ulong(int len);
