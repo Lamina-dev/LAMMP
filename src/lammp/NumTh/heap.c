@@ -75,3 +75,27 @@ bool lmmp_num_heap_peek_(num_heap* pq, num_node_ptr outElem) {
     *outElem = pq->head[0];
     return true;
 }
+
+mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn) {
+    num_node numa, numb;
+    numa.num = NULL;
+    numb.num = NULL;
+    numa.n = 0;
+    numb.n = 0;
+
+    while (lmmp_num_heap_pop_(pq, &numa)) {
+        if (!lmmp_num_heap_pop_(pq, &numb)) {
+            break;
+        }
+        mp_ptr prod = ALLOC_TYPE(numa.n + numb.n, mp_limb_t);
+        lmmp_mul_(prod, numb.num, numb.n, numa.num, numa.n);
+        lmmp_free(numa.num);
+        lmmp_free(numb.num);
+        numa.num = prod;
+        numa.n += numb.n;
+        numa.n -= numa.num[numa.n - 1] == 0 ? 1 : 0;
+        lmmp_num_heap_push_(pq, numa.num, numa.n);
+    }
+    *rn = numa.n;
+    return numa.num;
+}
