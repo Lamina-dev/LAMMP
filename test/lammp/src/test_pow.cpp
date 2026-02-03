@@ -12,7 +12,7 @@ int test_pow(uint len, uint exp) {
     mp_ptr c = (mp_ptr)lmmp_alloc(bn * sizeof(mp_limb_t));
     //std::cout << "1" << std::endl;
     mp_size_t n1 = lmmp_pow_(b, bn, a, len, exp);
-    mp_size_t n2 = lmmp_pow_win2_(c, a, len, exp);
+    mp_size_t n2 = lmmp_pow_win2_(c, bn, a, len, exp);
     if (n1 != n2) {
         lmmp_free(b);
         lmmp_free(c);

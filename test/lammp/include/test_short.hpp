@@ -12,3 +12,5 @@ void test_pri_int();
 void test_powmod();
 void test_isprime_ulong();
 void test_factorial();
+void test_perm();
+void test_bino();
