@@ -1,5 +1,4 @@
 #include "../../../include/lammp/numth.h"
-#include <math.h>
 
 #define cal_tab(i)                  \
     tab[i] = tab[i - 1] * base;     \
