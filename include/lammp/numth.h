@@ -31,10 +31,10 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数计算中，大于此阈值的质数幂将使用快速幂算法
-#define PERMUTATION_PRIME_POW_THRESHOLD 20
+// 排列数，二项式、多项式系数计算中，大于此阈值的质数幂将使用快速幂算法
+#define PERMUTATION_PRIME_POW_THRESHOLD 32
 
-// 排列数计算中，朴素连乘的乘法空间长度阈值
+// 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
 #define PERMUTATION_MUL_MAX_THRESHOLD 20
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素连乘
@@ -96,13 +96,6 @@ ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @return base^exp 对 mod 取模的结果
  */
 ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
-
-typedef struct {
-    mp_ptr inv;  // 逆元指针
-    mp_ptr div;  // 商指针
-    mp_size_t n; // 长度
-    mp_size_t shift; // 移位数
-} lmmp_inv_t;
 
 /**
  * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
@@ -487,7 +480,7 @@ INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
  * @param r 组合数的选择数
  * @return nCr 组合数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-INLINE_ mp_size_t lmmp_nCr_size_(ulong n, ulong r) {
+INLINE_ mp_size_t lmmp_nCr_size_(uint n, uint r) {
     double ln_comb = lgamma(n + 1.0) - lgamma(r + 1.0) - lgamma(n - r + 1.0);
     double log2_comb = ln_comb / LOG2_;
     mp_size_t rn = ceil(log2_comb / LIMB_BITS) + 2; /* more two limbs */
@@ -501,9 +494,9 @@ INLINE_ mp_size_t lmmp_nCr_size_(ulong n, ulong r) {
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning n>0, r<=n
+ * @warning r>0, r<=n/2, n<=0xffff
  */
-mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
@@ -512,9 +505,9 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning n>0, r<=n
+ * @warning r>0, r<=n/2
  */
-mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
@@ -523,23 +516,76 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning n>0, r<=n
+ * @warning r>0, r <= floor(n/2)
  */
-mp_size_t lmmp_nCr_ulong_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+INLINE_ mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
+    lmmp_debug_assert(r > 0);
+    lmmp_debug_assert(r <= (n / 2));
+    if (n <= 0xffff) 
+        return lmmp_nCr_short_(dst, rn, n, r);
+    else
+        return lmmp_nCr_int_(dst, rn, n, r);
+}
 
 /**
- * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
+ * @brief 计算多项式系数的 limb 缓冲区长度
+ * @param r 需要计算的系数的数组
+ * @param m 系数的个数
+ * @param n 输出变量，将会被修改为 r[i] 的总和，即r1+r2+...+rm
+ * @return 多项式系数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
+ * @warning 我们使用 ulong* n 来同时计算 r[i] 的总和，因为 n 可能超过 0xffffffff。
+ *          我们预计算 n，这不仅可以作为后续多项式系数函数的参数传入。
+ *          同时也请调用者注意判断 n 是否超过了 0xffffffff
+ *          这是 lmmp_multinomial_ 函数的限制。
+ */
+mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
+
+/**
+ * @brief 计算多项式系数
  * @param dst 结果指针
  * @param rn 结果指针的 limb 长度
- * @param n 组合数的总数
- * @param r 组合数的选择数
+ * @param n r[i] 的总和
+ * @param r 需要计算的系数的数组
+ * @param m 系数的个数
+ * @warning 0<n<=0xffff, 1<m<=0xffff
+ * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
  * @return 返回 dst 的实际 limb 长度
- * @warning n>0, r<=n
  */
-mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
 
+/**
+ * @brief 计算多项式系数
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n r[i] 的总和
+ * @param r 需要计算的系数的数组
+ * @param m 系数的个数
+ * @warning m>1, 0<n<=0xffffffff
+ * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_multinomial_int_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
 
-
+/**
+ * @brief 计算多项式系数
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n r[i] 的总和
+ * @param r 需要计算的系数的数组
+ * @param m 系数的个数
+ * @warning m>1, n>0
+ * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
+ * @return 返回 dst 的实际 limb 长度
+ */
+INLINE_ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m) {
+    lmmp_debug_assert(m > 1);
+    lmmp_debug_assert(n > 0);
+    if (n <= 0xffff) 
+        return lmmp_multinomial_short_(dst, rn, n, r, m);
+    else
+        return lmmp_multinomial_int_(dst, rn, n, r, m);
+}
 
 #undef LOG2_
 
