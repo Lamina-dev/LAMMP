@@ -24,7 +24,7 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 }
 
 void test_bino() {
-    size_t n = 0x9fff, r = n / 2;
+    size_t n = 0xe9fff, r = n / 2;
     size_t len = lmmp_nCr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 
@@ -40,7 +40,7 @@ void test_bino() {
     std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
 
     auto start2 = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_nCr_short_(b, len, n, r);
+    mp_size_t bn = lmmp_nCr_(b, len, n, r);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
