@@ -194,13 +194,24 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
                 pn /= primes.pri[i];
                 e -= pn;
             }
-            if (e >= PERMUTATION_PRIME_POW_THRESHOLD) {
+
+            if (e == 0) {
+                continue;
+            } else if (e == 1) {
+                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, primes.pri[i]);
+                ++mpn;
+                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
+            } else if (e == 2) {
+                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, (mp_limb_t)(primes.pri[i]) * primes.pri[i]);
+                ++mpn;
+                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
+            } else if (e >= PERMUTATION_PRIME_POW_THRESHOLD) {
                 mp_size_t pon = lmmp_pow_1_size_(primes.pri[i], e);
                 mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
                 pon = lmmp_pow_1_(po, pon, primes.pri[i], e);
                 lmmp_num_heap_push_(&heap, po, pon);
                 continue;
-            } else if (e > 2) {
+            } else {
                 mp_size_t pon = lmmp_pow_1_size_(primes.pri[i], e);
                 mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
                 pon = 1;
@@ -220,17 +231,6 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
                 continue;
             }
 
-            if (e == 0) {
-                continue;
-            } else if (e == 1) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, primes.pri[i]);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, (mp_limb_t)(primes.pri[i]) * primes.pri[i]);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            }
             if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
                 lmmp_num_heap_push_(&heap, mp, mpn);
                 mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
