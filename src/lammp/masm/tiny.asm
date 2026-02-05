@@ -50,8 +50,6 @@ lmmp_mullh_ proc
     mov [r8], rax   
     mov [r8+8], rdx 
     ret          
-
-	ALIGN 16
 lmmp_mullh_ endp
 
 	ALIGN 16
