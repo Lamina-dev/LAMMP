@@ -1,6 +1,16 @@
 #include "../include/benchmark.hpp"
 #include <vector>
 
+#include <immintrin.h>
+
+#ifdef _MSC_VER
+static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend_lo64, uint64_t divisor) {
+    uint64_t remainder;
+    uint64_t quotient = _udiv128(dividend_hi64, dividend_lo64, divisor, &remainder);
+    dividend_lo64 = remainder;
+    return quotient;
+}
+#else
 static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend_lo64, uint64_t divisor) {
     uint64_t quotient_low, remainder;
     __asm__("div %[divisor]"                                                  // RDX:RAX ÷ 除数 → RAX=商, RDX=余数
@@ -12,6 +22,7 @@ static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend
     dividend_lo64 = remainder;  // 更新余数到被除数低位引用
     return quotient_low;
 }
+#endif
 
 void bench_div_128() {
     uint64_t mod = 123291;
