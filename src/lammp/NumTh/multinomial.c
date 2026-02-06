@@ -1,4 +1,5 @@
-#include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/prime_table.h"
 
 #define LOG2_ 0.693147180559945
 
@@ -21,6 +22,16 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n) {
 mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m) {
     lmmp_debug_assert(n <= 0xffff);
     lmmp_debug_assert(m > 0 && n > 0);
+
+    if (n <= 20) {
+        lmmp_nPr_short_(dst, rn, n, n);
+        mp_limb_t t = 0;
+        for (uint i = 0; i < m; ++i) {
+            lmmp_nPr_short_(&t, 1, r[i], r[i]);
+            dst[0] /= t;
+        }
+        return 1;
+    }
     pri_short primes;
     lmmp_prime_short_init_(&primes, n);
     num_heap heap;
@@ -101,7 +112,7 @@ mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp 
         lmmp_num_heap_push_(&heap, mp, mpn);
 
     lmmp_prime_short_free_(&primes);
-
+    lmmp_debug_assert(heap.size != 0);
     mp = lmmp_num_heap_mul_(&heap, &mpn);
     lmmp_num_heap_free_(&heap);
     
