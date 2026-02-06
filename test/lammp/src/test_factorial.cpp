@@ -2,7 +2,7 @@
 #include <chrono>
 
 void test_factorial() {
-    size_t n = 0xffff;//136000
+    size_t n = 0;
     size_t len = lmmp_factorial_size_(n);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);

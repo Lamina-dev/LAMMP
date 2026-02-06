@@ -2,7 +2,7 @@
 #include "../include/test_short.hpp"
 
 void test_perm() {
-    size_t n = 0xffffffffffffffff, r = 12;
+    size_t n = 0xfffffffff, r = 0;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 

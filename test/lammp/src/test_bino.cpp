@@ -24,7 +24,7 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 }
 
 void test_bino() {
-    size_t n = 0xe9fff, r = n / 2;
+    size_t n = 0xffffffffffffffff, r = 0;
     size_t len = lmmp_nCr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 

@@ -3,8 +3,8 @@
 
 
 void test_multinomial() {
-    size_t m = 4;
-    uint r[4] = {1231, 31610, 12320, 21022};
+    size_t m = 22;
+    uint r[22] = {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ulong n = 0;
     size_t len = lmmp_multinomial_size_(r, m, &n);
     std::cout << "len = " << len << std::endl;
@@ -18,6 +18,7 @@ void test_multinomial() {
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
 
+    std::cout << "bn = " << bn << std::endl;
     for (size_t i = bn - 1; i != (size_t)-1 ; --i) {
         std::cout << std::hex << a[i];
     }
