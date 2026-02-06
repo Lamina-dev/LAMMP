@@ -1,5 +1,8 @@
 ﻿LIBRARY LammpCore.dll
 EXPORTS
+	lmmp_set_abort_func
+	lmmp_abort
+
 	lmmp_alloc
 	lmmp_realloc
 	lmmp_free
