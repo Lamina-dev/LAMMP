@@ -507,7 +507,7 @@ mp_limb_t lmmp_div_mulinv_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr num
  * @param na 被除数的 limb 长度
  * @param x 除数（单个 limb ）
  * @return 商的最高位（qh）
- * @warning na>1, MSB(x)=1, sqp(dstq,numa)
+ * @warning na>1, MSB(x)=1, sep(dstq,numa)
  * @note qh:[dstq,na-1]=[numa,na] div x, [numa,1]=[numa,na] mod x, return qh
  */
 mp_limb_t lmmp_div_1_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_limb_t x);
@@ -643,21 +643,20 @@ void lmmp_temp_free_(void* marker);
 
 // 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
 // RELEASE 版本也会检查
-#define lmmp_assert(x)          \
-    do {                        \
-        if (!(x)) {             \
-            *(mp_limb_t*)0 = 0; \
-        }                       \
+#define lmmp_assert(x)                                                \
+    do {                                                              \
+        if (!(x)) {                                                   \
+            lmmp_abort(LAMMP_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                             \
     } while (0)
 
 #if LAMMP_DEBUG == 1
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
-#define lmmp_debug_assert(x)                                                          \
-    do {                                                                              \
-        if (!(x)) {                                                                   \
-            fprintf(stderr, "Assertion failed: %s:%d: %s\n", __FILE__, __LINE__, #x); \
-            abort();                                                                  \
-        }                                                                             \
+#define lmmp_debug_assert(x)                                                \
+    do {                                                                    \
+        if (!(x)) {                                                         \
+            lmmp_abort(LAMMP_DEBUG_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                                   \
     } while (0)
 #else
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
