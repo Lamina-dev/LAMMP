@@ -1,4 +1,4 @@
-#include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/prime_table.h"
 
 void lmmp_prime_short_init_(pri_short* p, ushort n) {
     p->N = n;

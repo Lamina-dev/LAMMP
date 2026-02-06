@@ -1,4 +1,5 @@
-#include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/prime_table.h"
 
 mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     lmmp_debug_assert(n <= 0xffff);

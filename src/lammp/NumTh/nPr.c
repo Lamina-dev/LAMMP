@@ -1,4 +1,5 @@
-#include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/prime_table.h"
 
 mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     if (n <= 20) {
@@ -25,11 +26,30 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
                                             2432902008176640000};
         dst[0] = factorial[n] / factorial[n - r];
         return 1;
-    } else if (n <= 0xff) {
+    } else if (r <= 10) {
         dst[0] = 1;
         rn = 1;
         ulong t = 0;
         ulong i = n - r + 1;
+        for (; i <= (ulong)n - 3; i += 3) {
+            t = i * (i + 1) * (i + 2);
+            dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
+            ++rn;
+            rn -= dst[rn - 1] == 0 ? 1 : 0;
+        }
+        t = 1;
+        for (; i <= n; ++i) {
+            t *= i;
+        }
+        dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
+        ++rn;
+        rn -= dst[rn - 1] == 0 ? 1 : 0;
+        return rn;
+    } else if (n <= 0xff) {
+        dst[0] = n - r + 1;
+        rn = 1;
+        ulong t = 0;
+        ulong i = n - r + 2;
         lmmp_debug_assert(n >= 7);
         for (; i <= (ulong)n - 7; i += 7) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4) * (i + 5) * (i + 6);
@@ -46,10 +66,10 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
     } else if (n <= 0xfff && rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        dst[0] = 1;
+        dst[0] = n - r + 1;
         rn = 1;
         ulong t = 0;
-        ulong i = n - r + 1;
+        ulong i = n - r + 2;
         for (; i <= (ulong)n - 4; i += 4) {
             t = i * (i + 1) * (i + 2) * (i + 3);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
@@ -109,9 +129,9 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         if (r <= 10 || n >= 0x10000000) {
-            dst[0] = n - r + 1;
+            dst[0] = 1;
             rn = 1;
-            for (ulong i = n - r + 2; i <= n; ++i) {
+            for (ulong i = n - r + 1; i <= n; ++i) {
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
@@ -264,10 +284,10 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 
 mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        if (n == 0xffffffffffffffff) {
+        if (n == 0xffffffffffffffff || r <= 3) {
             dst[0] = 1;
             rn = 1;
-            for (ulong i = n - r + 1; i != 0; ++i) {
+            for (ulong i = n - r + 1; i != 0 && i <= n; ++i) {
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;

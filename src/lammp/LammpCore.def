@@ -103,17 +103,7 @@ EXPORTS
 	lmmp_pow_win2_
 	lmmp_pow_
 	
-	lmmp_prime_short_init_
-	lmmp_prime_short_free_
-	lmmp_prime_int_init_
-	lmmp_prime_int_free_
-	
 	lmmp_is_prime_ulong_
-
-
-	lmmp_num_heap_push_
-	lmmp_num_heap_pop_
-	lmmp_num_heap_mul_
 
 	lmmp_nPr_short_
 	lmmp_nPr_int_

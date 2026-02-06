@@ -1,4 +1,4 @@
-#include "../../include/lammp/impl/base_table.h"
+#include "../../include/lammp/lmmpn.h"
 
 // assume src[len-1]!=0
 mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {

@@ -1,4 +1,4 @@
-#include "../../include/lammp/impl/base_table.h"
+#include "../../include/lammp/lmmpn.h"
 
 // assume numa[na-1]!=0
 mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {

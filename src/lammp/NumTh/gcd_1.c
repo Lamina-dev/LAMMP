@@ -1,0 +1,34 @@
+#include "../../../include/lammp/numth.h"
+
+mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v) {
+    lmmp_debug_assert(u > 0 && v > 0);
+    uint count, k;
+    k = lmmp_tailing_zeros_(u | v);
+    u >>= lmmp_tailing_zeros_(u);
+    v >>= lmmp_tailing_zeros_(v);
+    while (u != v) {
+        if (u > v) {
+            u -= v;
+            count = lmmp_tailing_zeros_(u); 
+            u >>= count;
+        } else {
+            v -= u;
+            count = lmmp_tailing_zeros_(v);
+            v >>= count;
+        }
+    }
+    return u << k;
+}
+
+mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb) {
+    lmmp_debug_assert(un > 0);
+    lmmp_debug_assert(vlimb > 0);
+    mp_limb_t ulimb;
+    if (un == 1) {
+        ulimb = up[0];
+    }
+    else {
+        ulimb = lmmp_div_1_(NULL, up, un, vlimb);
+    }
+    return lmmp_gcd_11_(ulimb, vlimb);
+}
