@@ -40,9 +40,6 @@ SOFTWARE.
 
 #include "_umul64to128_.h"
 
-#ifdef __cplusplus
-extern "C" {    
-#endif
 
 typedef uint64_t u128[2];
 typedef uint64_t u192[3];
@@ -193,9 +190,5 @@ def montgomery_mul(a_mont, b_mont, p):
         (i192)[1] -= _b_;                                \
         (i192)[2] = (i192)[2] - ((j192)[2] + _b1_);      \
     } while (0)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif  // __LAMMP_U128_U192_H__

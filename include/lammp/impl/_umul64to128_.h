@@ -34,7 +34,6 @@
 extern "C" {
 #endif
 
-
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
     __asm__("mul %[b]" 

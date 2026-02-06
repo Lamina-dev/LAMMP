@@ -53,10 +53,12 @@ typedef void (*lmmp_abort_func_t)(int type, const char* msg, const char* file, i
 
 /**
  * 设置 LAMMP 全局退出函数
- * @param func 退出函数指针，可以为NULL，表示使用默认的退出函数
- * @return 原函数指针为NULL被成功覆盖返回0，原函数指针为非NULL被成功覆盖返回1。
+ * @param func 退出函数指针，可以为NULL
+ * @return 返回之前的退出函数指针，若原指针为NULL，则返回NULL。
+ * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
+ *          本库的开发者不对此函数的调用产生的影响做任何保证。
  */
-int lmmp_set_abort_func(lmmp_abort_func_t func);
+lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
 
 /**
  * LAMMP 全局退出函数
@@ -82,8 +84,8 @@ int lmmp_set_abort_func(lmmp_abort_func_t func);
  *       宏为 1（在RELEASE模式下， 其通常为0）的情况下，不会检查内存有无越界情况，也不会触发全局退出函数，
  *       不会产生 LAMMP_OUT_OF_BOUNDS 宏的退出。而 lmmp_assert 和 LAMMP_MEMORY_ALLOC_FAILURE 在何种情况下
  *       都会触发全局退出函数。
- * @warning 调用此函数之前，应先调用 lmmp_set_abort_func 设置全局退出函数，如果没有设置，
- *          则使用默认的退出函数，会打印出错误信息，并调用 abort 函数。
+ * @warning 调用此函数之前，应先调用 lmmp_set_abort_func 设置全局退出函数，
+ *          如果没有设置，则使用默认的退出函数，会打印出错误信息，并调用 abort 函数。
  */
 void lmmp_abort(int type, const char* msg, const char* file, int line);
 
@@ -93,7 +95,11 @@ void lmmp_abort(int type, const char* msg, const char* file, int line);
 #define LAMMP_OUT_OF_BOUNDS 4
 #define LAMMP_UNEXPECTED_ERROR 5
 
+// 此宏为1时，会增加lmmp_debug_assert的检查，包括入参检查和中间结果检查。
+// 开启此宏可能会带来一定的性能开销
 #define LAMMP_DEBUG 1
+// 此宏为1时，会增加内存越界检查的功能。
+// 开启此宏会带来较多的性能开销
 #define MEMORY_CHECK 1
 
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)

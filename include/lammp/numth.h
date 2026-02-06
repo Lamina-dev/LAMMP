@@ -77,6 +77,25 @@ typedef int64_t* slongp;
 #endif // INLINE_
 
 /**
+ * @brief 计算两个无符号整数的最大公约数
+ * @param u 第一个无符号整数
+ * @param v 第二个无符号整数
+ * @return 最大公约数
+ * @warning u!=0, v!=0
+ */
+mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v);
+
+/**
+ * @brief 计算两个无符号整数的最大公约数
+ * @param up 第一个无符号整数指针
+ * @param un 第一个无符号整数的 limb 长度
+ * @param v 第二个无符号整数
+ * @warning v!=0, up!=NULL, un>0
+ * @return 最大公约数
+ */
+mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
+
+/**
  * @brief 计算两个无符号整数的乘积，对mod取模，商放入 q 中
  * @param a 第一个无符号整数
  * @param b 第二个无符号整数
@@ -194,6 +213,8 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param base 底数
  * @param exp 指数
  * @warning base>1, exp>0
+ * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_pow_1_size_ 函数）
+ *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
@@ -230,84 +251,11 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
  * @param n 底数的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
+ * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_pow_size_ 函数）
+ *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
-
-typedef struct prime_short {
-    ushortp pri;    // prime 数组指针
-    ulongp mmp;     // prime 位图指针（1为合数，0为素数）
-    ushort prin;    // prime 数量
-    ushort mmp_cal; // prime 位图容量
-    ushort N;       // 不超过 N 的素数表
-} pri_short;
-
-typedef struct prime_int {
-    uintp pri;    // prime 数组指针
-    ulongp mmp;   // prime 位图指针（1为合数，0为素数）
-    uint prin;    // prime 数量
-    uint mmp_cal; // prime 位图容量
-    uint N;       // 不超过 N 的素数表
-} pri_int;
-
-#define PRI_MMP_ZERO 3 // 位图的初始化值 11000000...
-
-/**
- * @brief 计算素数表大小
- * @param n 初始化不超过 n 的素数表
- * @return 素数表大小（高估素数数量，不会高估太多）
- */
-INLINE_ size_t lmmp_prime_size_(ulong n) {
-    /*
-     * 这是一个不会低估的素数计数估计函数，使用了一些经验数据，其估计的数据可以参考：
-     * 总样本数: 9800001（500000000-10000000 之间以 50 为步长）
-     * 平均相对误差: 0.0830378%
-     * 最大相对误差: 0.123542%
-     * 最小相对误差: 0.0565845%
-     * 平均绝对误差: 11190.7
-     * 最大绝对误差: 22288
-     * 低估次数: 0 (0%)
-     */
-    if (n < 50) {
-        return (double)n / 3 + 2;
-    } else if (n < 500000) {
-        return ceil(1.002 * (double)n / (log(n) - 1.095));
-    } else if (n < 2500000) {
-        return ceil((double)n / (log(n) - 1.095));
-    } else if (n < 10000000) {
-        return ceil((double)n / (log(n) - 1.087));
-    } else if (n < 100000000) {
-        return ceil((double)n / (log(n) - 1.085));
-    } else {
-        return ceil((double)n / (log(n) - 1.075));
-    }
-}
-
-/**
- * @brief 初始化素数表
- * @param p 素数表指针
- * @param n 素数表大小
- */
-void lmmp_prime_short_init_(pri_short* p, ushort n);
-
-/**
- * @brief 释放素数表
- * @param p 素数表指针
- */
-void lmmp_prime_short_free_(pri_short* p);
-
-/**
- * @brief 初始化素数表
- * @param p 素数表指针
- * @param n 素数表大小
- */
-void lmmp_prime_int_init_(pri_int* p, uint n);
-
-/**
- * @brief 释放素数表
- * @param p 素数表指针
- */
-void lmmp_prime_int_free_(pri_int* p);
 
 /**
  * @brief 判断素数
@@ -315,72 +263,6 @@ void lmmp_prime_int_free_(pri_int* p);
  * @return 若 n 为素数，返回 true，否则返回 false
  */
 bool lmmp_is_prime_ulong_(ulong n);
-
-typedef struct num_node {
-    mp_ptr num;
-    mp_size_t n;
-} num_node;
-
-typedef num_node* num_node_ptr;
-
-typedef struct num_heap {
-    num_node_ptr head;
-    size_t size;
-    size_t cap;
-} num_heap;
-
-/**
- * @brief 初始化优先队列
- * @param pq 优先队列指针
- * @param capa 优先队列容量
- */
-INLINE_ void lmmp_num_heap_init_(num_heap* pq, size_t capa) {
-    pq->head = ALLOC_TYPE(capa, num_node);
-    for (size_t i = 0; i < capa; ++i) {
-        pq->head[i].num = NULL;
-        pq->head[i].n = 0;
-    }
-    pq->cap = capa;
-    pq->size = 0;
-}
-
-/**
- * @brief 释放优先队列
- * @param pq 优先队列指针
- */
-INLINE_ void lmmp_num_heap_free_(num_heap* pq) {
-    lmmp_debug_assert(pq->size == 0);
-    lmmp_free(pq->head);
-    pq->cap = 0;
-    pq->size = 0;
-    pq->head = NULL;
-}
-
-/**
- * @brief 入队
- * @param pq 优先队列指针
- * @param elem 待入队的元素指针
- * @param n 元素的 limb 长度
- */
-void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n);
-
-/**
- * @brief 出队
- * @param pq 优先队列指针
- * @param elem 出队的元素指针
- * @return 若队列为空，返回 false，否则返回 true
- */
-bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr elem);
-
-/**
- * @brief 将队列中所有元素相乘
- * @param pq 优先队列指针
- * @param rn 结果指针的 limb 长度
- * @warning 队列非空，pq!=NULL
- * @note 返回的指针必须手动释放，原队列中的元素指针都将被释放
- * @return 结果指针
- */
-mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn);
 
 /**
  * @brief 计算 nPr 排列数的 limb 缓冲区长度
@@ -401,7 +283,7 @@ INLINE_ mp_size_t lmmp_nPr_size_(ulong n, ulong r) {
  * @param rn 结果指针的 limb 长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
- * @warning 0xffff >= n >= r > 0
+ * @warning 0xffff >= n >= r
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
@@ -412,7 +294,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param rn 结果指针的 limb 长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
- * @warning 0xffffffff >= n >= r > 0
+ * @warning 0xffffffff >= n >= r
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
@@ -423,7 +305,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param rn 结果指针的 limb 长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
- * @warning n >= r > 0,
+ * @warning n >= r
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
@@ -434,12 +316,13 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param rn 结果指针的 limb 长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
- * @warning n >= r > 0
+ * @warning n >= r
+ * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_nPr_size_ 函数）
+ *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_debug_assert(n >= r);
-    lmmp_debug_assert(r > 0);
     if (n <= 0xffff) 
         return lmmp_nPr_short_(dst, rn, n, r);
     else if (n <= 0xffffffff)
@@ -494,7 +377,7 @@ INLINE_ mp_size_t lmmp_nCr_size_(uint n, uint r) {
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r>0, r<=n/2, n<=0xffff
+ * @warning r<=n/2, n<=0xffff
  */
 mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
@@ -505,7 +388,7 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r>0, r<=n/2
+ * @warning r<=n/2
  */
 mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
@@ -516,10 +399,9 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r>0, r <= floor(n/2)
+ * @warning r <= floor(n/2)
  */
 INLINE_ mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
-    lmmp_debug_assert(r > 0);
     lmmp_debug_assert(r <= (n / 2));
     if (n <= 0xffff) 
         return lmmp_nCr_short_(dst, rn, n, r);
@@ -561,7 +443,7 @@ mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp 
  * @param n r[i] 的总和
  * @param r 需要计算的系数的数组
  * @param m 系数的个数
- * @warning m>1, 0<n<=0xffffffff
+ * @warning m>1, 0xffff<n<=0xffffffff
  * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
  * @return 返回 dst 的实际 limb 长度
  */
