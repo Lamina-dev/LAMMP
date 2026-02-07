@@ -1,9 +1,9 @@
 #include "../../../include/lammp/numth.h"
 
 #define mul_b(_i_)                                 \
-    lmmp_mul_(sq, dst, rn, b##_i_, b##_i_##n);     \
+    lmmp_mul_(dst, sq, rn, b##_i_, b##_i_##n);     \
     rn += b##_i_##n;                               \
-    rn -= (sq[rn - 1] == 0) ? 1 : 0
+    rn -= (dst[rn - 1] == 0) ? 1 : 0
 
 mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
     lmmp_debug_assert(exp >= 3);
@@ -14,40 +14,55 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
 #define b1n n
     mp_ptr sq = TALLOC_TYPE(rn, mp_limb_t);
     rn = n;
-    lmmp_copy(sq, base, n);
-    lmmp_sqr_(dst, sq, rn);
+    lmmp_copy(dst, base, n);
+    lmmp_sqr_(sq, dst, rn);
     rn <<= 1;
-    rn -= (dst[rn - 1] == 0) ? 1 : 0;
+    rn -= (sq[rn - 1] == 0) ? 1 : 0;
     mp_size_t lz = lmmp_leading_zeros_(exp);
     mp_size_t i = 62 - lz;
     exp <<= lz + 1;
-    
+/*
+    For the intermediate 0, we will skip it entirely until the next 1, 
+    and then perform a multiplication. This can reduce the extra copying 
+    caused by sparse 1s and improve efficiency.
+ */
     for ( ; i > 0; ) {
         lz = lmmp_leading_zeros_(exp);
         if (lz == 0) {
             mul_b(1);
 
-            lmmp_sqr_(dst, sq, rn);
+            lmmp_sqr_(sq, dst, rn);
             rn <<= 1;
-            rn -= (dst[rn - 1] == 0) ? 1 : 0;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
             --i;
             exp <<= 1;
         } else {
             mp_size_t j = 2;
-            for (; j <= lz; j += 2) {
-                lmmp_sqr_(sq, dst, rn);
-                rn <<= 1;
-                rn -= (sq[rn - 1] == 0);
-                lmmp_sqr_(dst, sq, rn);
-                rn <<= 1;
-                rn -= (dst[rn - 1] == 0);
-            }
             if (lz & 1) {
+                lmmp_copy(dst, sq, rn);
                 lmmp_sqr_(sq, dst, rn);
                 rn <<= 1;
                 rn -= (sq[rn - 1] == 0);
-                lmmp_copy(dst, sq, rn);
+                ++j;
+                for (; j <= lz; j += 2) {
+                    lmmp_sqr_(dst, sq, rn);
+                    rn <<= 1;
+                    rn -= (dst[rn - 1] == 0);
+                    lmmp_sqr_(sq, dst, rn);
+                    rn <<= 1;
+                    rn -= (sq[rn - 1] == 0);
+                }
+            } else {
+                for (; j <= lz; j += 2) {
+                    lmmp_sqr_(dst, sq, rn);
+                    rn <<= 1;
+                    rn -= (dst[rn - 1] == 0);
+                    lmmp_sqr_(sq, dst, rn);
+                    rn <<= 1;
+                    rn -= (sq[rn - 1] == 0);
+                }
             }
+
             i -= lz;
             exp <<= lz;
         }
@@ -55,7 +70,6 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
     lmmp_debug_assert(exp == 0x8000000000000000ull);
 
     mul_b(1);
-    lmmp_copy(dst, sq, rn);
     
     TEMP_FREE;
     return rn;
