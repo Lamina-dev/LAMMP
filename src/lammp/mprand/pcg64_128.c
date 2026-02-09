@@ -2,6 +2,7 @@
 #include "../../../include/lammp/impl/u128_u192.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/mprand.h"
+#include "../../../include/lammp/impl/rand_state.h"
 
 /**
  * algorithm: PCG-XSL-RR-128/64
@@ -40,13 +41,13 @@ void lmmp_pcg64_128_srandom(pcg64_128_state* rng, mp_limb_t seed) {
 
     rng->state[0] = seed;
     rng->state[1] = seed;
-    rng->inc[0] = seed ^ (seed >> 18); /* no use may enhanced obfuscation */
+    rng->inc[0] = seed ^ (seed >> 18); /* no use, may enhanced obfuscation */
     rng->inc[0] |= 1ull;               /* force the lowest bit to 1       */
     rng->inc[1] = seed;
     pcg64_128_action(rng->state, rng->inc);
 
     rng->state[0] += seed; 
-    rng->state[1] ^= (seed >> 11); /* no use may enhanced obfuscation */
+    rng->state[1] ^= (seed >> 11); /* no use, may enhanced obfuscation */
     pcg64_128_action(rng->state, rng->inc);
 }
 
