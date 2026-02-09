@@ -82,12 +82,9 @@ EXPORTS
 	lmmp_temp_alloc_
 	lmmp_temp_free_
 
-
-
-	lmmp_pcg64_128_srandom
-	lmmp_pcg64_128_random
-	lmmp_xorshift_srandom
-	lmmp_xorshift_random
+	lmmp_global_rng_init_
+	lmmp_seed_random_
+	lmmp_random_
 
 	lmmp_mulmod_ulong_
 	lmmp_powmod_ulong_
