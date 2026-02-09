@@ -742,6 +742,7 @@ INLINE_ int lmmp_cmp_(mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
  * @param p 指向大数起始位置的指针
  * @param n 大数的单精度数(limb)长度
  * @return 1(全零) / 0(非零)
+ * @warning n>0
  * @note 从最高位开始检查，只要有非零位则返回0
  */
 INLINE_ int lmmp_zero_q_(mp_srcptr p, mp_size_t n) {
