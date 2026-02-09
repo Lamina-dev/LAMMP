@@ -39,7 +39,7 @@ EXPORTS
 
 	lmmp_from_str_
 	lmmp_to_str_
-
+	lmmp_extract_bits_
 	
 	lmmp_limb_bits_
 	lmmp_limb_popcnt_
