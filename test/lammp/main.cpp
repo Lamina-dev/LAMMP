@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_bino();
+    test_hash();
     return 0;
 }
