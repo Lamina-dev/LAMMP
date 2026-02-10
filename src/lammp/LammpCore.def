@@ -114,3 +114,4 @@ EXPORTS
 	lmmp_multinomial_int_
 
 	lmmp_siphash24_
+	lmmp_xxhash_

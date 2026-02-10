@@ -59,6 +59,15 @@
 #ifndef LAMMP_SECRET_H
 #define LAMMP_SECRET_H
 
+/*
+  LAMMP中实现了两种hash函数：SipHash-2-4 和 xxhash。其中前者通常被认为安全性更好，而后者提供更快的速度，测量发现：xxhash
+  生成的hash值统计性能微优，同时生成速度比 SipHash-2-4 快四倍左右。两者生成的 hash 值均具有非常良好的统计性能。
+
+  需要注意的是，两种hash函数都不是标准处理任意字节流的 hash 函数，因此在 LAMMP 中，它们仅用于对整数数据进行 hash 计算，
+  尽管这可能带来未知的安全风险，但如果仅作为hash表的键值，则影响不大。但对于字节流数据，应使用标准的 hash 函数，我们建议
+  使用其他更强的加密算法或协议来处理。
+ */
+
 #include "lmmpn.h"
 
 #ifndef INLINE_
@@ -69,9 +78,11 @@
 extern "C" {
 #endif
 
+typedef const uint64_t srckey64_t;
 typedef const uint64_t srckey128_t[2];
 typedef const uint64_t srckey256_t[4];
 
+typedef uint64_t key64_t;
 typedef uint64_t key128_t[2];
 typedef uint64_t key256_t[4];
 
@@ -82,7 +93,7 @@ INLINE_ uint64_t rotl64(uint64_t x, int b) {
 }
 
 /**
- * @brief SipHash-2-4 函数（并非标准的 SipHash-2-4）
+ * @brief SipHash-2-4 函数（并非标准处理任意字节流的 SipHash-2-4）
  * @param in 输入数据，可以为 NULL
  * @param inlen 输入数据长度
  * @param key 128-bit 秘钥，可以为 NULL
@@ -91,6 +102,14 @@ INLINE_ uint64_t rotl64(uint64_t x, int b) {
  */
 uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
 
+/**
+ * @brief xxhash 函数（标准处理任意字节流的 xxhash）
+ * @param in 输入数据，可以为 NULL
+ * @param inlen 输入数据长度
+ * @param seed 种子，可以为 NULL
+ * @warning 若 seed 为 NULL，则使用全零种子
+ */
+uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key);
 
 #ifdef INLINE_
 #undef INLINE_  
