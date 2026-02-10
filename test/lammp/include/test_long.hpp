@@ -3,3 +3,4 @@
 #include <chrono>
 #include "../../../include/lammp/lmmpn.h"
 
+void test_hash();
