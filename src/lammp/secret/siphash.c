@@ -1,21 +1,22 @@
 #include "../../../include/lammp/secret.h"
 
 uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key) {
-#define SIPROUND                  \
-    do {                          \
-        v0 += v1;                 \
-        v1 = rotl64(v1, 13);      \
-        v1 ^= v0;                 \
-        v0 = rotl64(v0, 32);      \
-        v2 += v3;                 \
-        v3 = rotl64(v3, 16);      \
-        v3 ^= v2;                 \
-        v2 += v1;                 \
-        v1 = rotl64(v1, 17);      \
-        v1 ^= v2;                 \
-        v0 += v3;                 \
-        v3 = rotl64(v3, 21);      \
-        v3 ^= v0;                 \
+#define SIPROUND             \
+    do {                     \
+        v0 += v1;            \
+        v1 = rotl64(v1, 13); \
+        v1 ^= v0;            \
+        v0 = rotl64(v0, 32); \
+        v2 += v3;            \
+        v3 = rotl64(v3, 16); \
+        v3 ^= v2;            \
+        v0 += v3;            \
+        v3 = rotl64(v3, 21); \
+        v3 ^= v0;            \
+        v2 += v1;            \
+        v1 = rotl64(v1, 17); \
+        v1 ^= v2;            \
+        v2 = rotl64(v2, 32); \
     } while (0)
 
     uint64_t k0;
