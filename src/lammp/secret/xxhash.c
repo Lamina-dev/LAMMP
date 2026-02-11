@@ -6,6 +6,11 @@
 #define PRIME64_4 0x85EBCA77C2B2AE63ULL
 #define PRIME64_5 0x27D4EB2F165667C5ULL
 
+static inline uint64_t rotl64(uint64_t x, int b) {
+    b &= 63;
+    return (x << b) | (x >> (64 - b));
+}
+
 uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key) {
     uint64_t seed = *key;
     if (in == NULL || inlen == 0) {

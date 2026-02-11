@@ -1,5 +1,10 @@
 #include "../../../include/lammp/secret.h"
 
+static inline uint64_t rotl64(uint64_t x, int b) {
+    b &= 63;
+    return (x << b) | (x >> (64 - b));
+}
+
 uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key) {
 #define SIPROUND             \
     do {                     \
