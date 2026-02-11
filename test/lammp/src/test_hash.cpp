@@ -216,7 +216,8 @@ uint64_t customHashFunction1(uint64_t* ptr, size_t len, uint64_t seed) {
 }
 
 uint64_t customHashFunction2(uint64_t* ptr, size_t len, uint64_t seed) {
-    return lmmp_xxhash_(ptr, len, seed);
+    key64_t key = { seed };
+    return lmmp_xxhash_(ptr, len, key);
 }
 
 void test_hash() {
