@@ -39,7 +39,9 @@ SOFTWARE.
 #define __LAMMP_U128_U192_H__
 
 #include "_umul64to128_.h"
-
+/**
+ * 请注意，本文中的蒙哥马利域的R为2^64，p不可超过2^63-1
+ */
 
 typedef uint64_t u128[2];
 typedef uint64_t u192[3];

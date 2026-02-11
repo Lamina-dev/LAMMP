@@ -400,7 +400,7 @@ typedef struct {
  * @param n - 输入的机器字长度
  * @return 最优的k值
  */
-mp_size_t lmmp_fft_best_k_(mp_size_t n) {
+static inline mp_size_t lmmp_fft_best_k_(mp_size_t n) {
     mp_size_t k = 0;
     while (n >= lmmp_fft_table_[k + 1][0]) ++k;
     return lmmp_fft_table_[k][1];
@@ -425,7 +425,7 @@ mp_size_t lmmp_fft_next_size_(mp_size_t n) {
  * @param size - 分配大小（字节），size=0表示释放当前层内存
  * @return 分配成功：返回内存地址；释放：返回0
  */
-void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
+static void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
     if (size) { 
         if (++ms->tempdepth > ms->maxdepth) {
             ms->mem[++ms->maxdepth] = lmmp_alloc(size); 
@@ -451,7 +451,7 @@ void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
  * @param lenw - 输出系数的机器字长度
  * @warning dst与numa的内存地址必须分离（sep(dst,numa)）
  */
-void lmmp_fft_extract_coef_(mp_ptr dst, mp_srcptr numa, mp_size_t bitoffset, mp_size_t bits, mp_size_t lenw) {
+static void lmmp_fft_extract_coef_(mp_ptr dst, mp_srcptr numa, mp_size_t bitoffset, mp_size_t bits, mp_size_t lenw) {
     // shr = 机器字内的比特偏移（0~LIMB_BITS-1）
     // offset = 起始机器字的索引
     mp_size_t shr = bitoffset & (LIMB_BITS - 1), offset = bitoffset / LIMB_BITS;
@@ -481,7 +481,7 @@ void lmmp_fft_extract_coef_(mp_ptr dst, mp_srcptr numa, mp_size_t bitoffset, mp_
  *         *coef 已伪归一化（mod 2^n+1）
  *         ms->temp_coef 至少有 lenw+1 个机器字
  */
-void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
+static void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
     mp_size_t l = ms->lenw;         // 系数的机器字长度
     mp_size_t w = shl / LIMB_BITS;  // 左移的机器字数量
     shl &= LIMB_BITS - 1;           // 剩余的比特偏移（0~LIMB_BITS-1）
@@ -550,7 +550,7 @@ void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
  * @param coef - 输入输出系数数组指针
  * @param shr - 右移的比特数（0 < shr < 2*n）
  */
-void lmmp_fft_shr_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shr) {
+static void lmmp_fft_shr_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shr) {
     lmmp_fft_shl_coef_(ms, coef, 2 * ms->lenw * LIMB_BITS - shr);
 }
 
@@ -566,7 +566,7 @@ void lmmp_fft_shr_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shr) {
  *          a,b 均已伪归一化（mod 2^n+1）
  *          ms->temp_coef 有至少 lenw + 1 个字长
  */
-void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) {
+static void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) {
     mp_ptr numa = coef[0];                // 系数a
     mp_ptr numb = coef[wing];             // 系数b
     mp_ptr numc = ms->temp_coef;          // 临时数组（存储a-b<<w）
@@ -667,7 +667,7 @@ void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) 
  *          a,b 均已伪归一化（mod 2^n+1）
  *          ms->temp_coef 有至少 lenw + 1 个字长
  */
-void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) {
+static void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) {
     mp_ptr numa = coef[0];                // 系数a
     mp_ptr numb = coef[wing];             // 系数b
     mp_ptr numc = ms->temp_coef;          // 临时数组（存储a-(b>>w)）
@@ -769,7 +769,7 @@ void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w)
  * @param w - 每次蝶形运算的移位基数
  * @param w0 - 初始移位偏移
  */
-void lmmp_fft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, mp_size_t w, mp_size_t w0) {
+static void lmmp_fft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, mp_size_t w, mp_size_t w0) {
     if (k == 1)
         lmmp_fft_bfy_(ms, coef, dis, w0);
     else {
@@ -791,7 +791,7 @@ void lmmp_fft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, mp
     }
 }
 
-void lmmp_fft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
+static void lmmp_fft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     if (k == 1)
         // 单次蝶形运算
         lmmp_fft_bfy_(ms, coef, 1, 0);
@@ -813,7 +813,7 @@ void lmmp_fft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     }
 }
 
-void lmmp_fft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
+static void lmmp_fft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     mp_size_t k1 = k >> 1;                // k1 = k/2（右移1位等价于除以2）
     k -= k1;                              // k = k - k1（剩余层数）
     mp_size_t Kp = ((mp_size_t)1) << k;   // Kp = 2^k
@@ -824,7 +824,7 @@ void lmmp_fft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     for (mp_size_t i = 0; i < Kq; ++i) lmmp_fft_4_(ms, coef + Kp * i, k, w * Kq);
 }
 
-void lmmp_ifft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, mp_size_t w, mp_size_t w0) {
+static void lmmp_ifft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, mp_size_t w, mp_size_t w0) {
     if (k == 1)
         lmmp_ifft_bfy_(ms, coef, dis, w0);
     else {
@@ -845,7 +845,7 @@ void lmmp_ifft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_t k, m
     }
 }
 
-void lmmp_ifft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
+static void lmmp_ifft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     if (k == 1)
         lmmp_ifft_bfy_(ms, coef, 1, 0);
     else {
@@ -866,7 +866,7 @@ void lmmp_ifft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     }
 }
 
-void lmmp_ifft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
+static void lmmp_ifft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
     mp_size_t k1 = k >> 1;                // k1 = k/2
     k -= k1;                              // k = k - k1
     mp_size_t Kp = ((mp_size_t)1) << k;   // Kp = 2^k
@@ -888,14 +888,14 @@ void lmmp_ifft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
  * @param M - 每个块的比特数
  * @param rn - 结果长度（机器字）
  */
-void lmmp_mul_fermat_recombine_(fft_memstack* ms,
-                                mp_ptr dst,
-                                mp_ptr* pfca,
-                                mp_size_t K,
-                                mp_size_t k,
-                                mp_size_t n,
-                                mp_size_t M,
-                                mp_size_t rn) {
+static void lmmp_mul_fermat_recombine_(fft_memstack* ms,
+                                       mp_ptr dst,
+                                       mp_ptr* pfca,
+                                       mp_size_t K,
+                                       mp_size_t k,
+                                       mp_size_t n,
+                                       mp_size_t M,
+                                       mp_size_t rn) {
     mp_size_t rhead = 0, nlen = ms->lenw + 1;  // rhead=结果当前长度，nlen=系数长度
     mp_slimb_t borrow = 0, maxc = 0;           // borrow=借位，maxc=总进位
 
@@ -987,7 +987,7 @@ void lmmp_mul_fermat_recombine_(fft_memstack* ms,
  *          所有系数均已伪归一化（mod B^lenw+1）
  *          nsqr=1表示乘法，nsqr=0表示平方
  */
-void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_size_t K0) {
+static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_size_t K0) {
     int nsqr = pc1 != pc2;  // 判断是否为平方运算
     mp_ptr push_temp_coef = ms->temp_coef;
     mp_size_t rn = ms->lenw;  // 当前系数长度

@@ -96,6 +96,30 @@ mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v);
 mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
 
 /**
+ * @brief 计算两个无符号整数的最大公约数
+ * @param dst 结果指针（长度至少为 min(un,vn)+1）
+ * @param up 第一个无符号整数指针
+ * @param un 第一个无符号整数的 limb 长度
+ * @param vp 第二个无符号整数指针
+ * @param vn 第二个无符号整数的 limb 长度
+ * @warning up!=NULL, un>0, vp!=NULL, vn>0, eqsep(dst,[up|vp]), dst!=NULL
+ * @return dst 的实际 limb 长度
+ */
+mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
+
+/**
+ * @brief 计算两个无符号整数的最大公约数
+ * @param dst 结果指针（长度至少为 min(un,vn)+1）
+ * @param up 第一个无符号整数指针
+ * @param un 第一个无符号整数的 limb 长度
+ * @param vp 第二个无符号整数指针
+ * @param vn 第二个无符号整数的 limb 长度
+ * @warning up!=NULL, un>0, vp!=NULL, vn>0, eqsep(dst,[up|vp]), dst!=NULL
+ * @return dst 的实际 limb 长度
+ */
+mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
+
+/**
  * @brief 计算两个无符号整数的乘积，对mod取模，商放入 q 中
  * @param a 第一个无符号整数
  * @param b 第二个无符号整数

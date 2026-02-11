@@ -1,7 +1,7 @@
 #include "../../include/lammp/lmmpn.h"
 
 // assume src[len-1]!=0
-mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
+static mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
     lmmp_debug_assert(src[len - 1] != 0);
     lmmp_debug_assert(base >= 2 && base <= 256);
     mp_size_t digitspl = lmmp_bases_[base].digits_in_limb;
@@ -45,7 +45,7 @@ mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t le
 // limbs=return value
 // 1st level need(nh>=2, [dst,2*N], [tp,limbs])
 // recursive need(N>=2, [dst,limbs+1], [tp,2*N-1])
-mp_size_t lmmp_from_str_divide_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, mp_basepow_t* pow, mp_ptr tp) {
+static mp_size_t lmmp_from_str_divide_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, mp_basepow_t* pow, mp_ptr tp) {
     lmmp_debug_assert(src[len - 1] != 0);
     mp_size_t limbs;
     int base = pow->base;
