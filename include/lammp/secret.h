@@ -1,58 +1,76 @@
 /*
  * ==============================================================================
- *                              免责声明 (DISCLAIMER)
+ *                       SECURITY & LIABILITY DISCLAIMER
+ *                           安全与责任免责声明
  * ==============================================================================
  *
- * 【声明 - Statement】
- * 本密码学库（以下简称"本库"）仅为密码学理论学习、算法原理研究的教学用途而开发，
- * 开发者已尽合理努力保证代码的可读性和学习价值，但未对代码的安全性、正确性、完整性做任何承诺。
- * This cryptography library (hereinafter referred to as "the Library") is developed
- * solely for educational purposes of cryptography theory learning and algorithm principle research.
- * The developer has made reasonable efforts to ensure the readability and learning value of the code,
- * but makes no promises regarding the security, correctness, or completeness of the code.
+ * This library provides implementations of cryptographic and hash functions
+ * as the underlying computation library for an open-source programming language.
+ * 本库实现加密算法与哈希函数，作为一门开源编程语言的底层计算库。
  *
- * 【使用限制 - Usage Restrictions】
- * 1. 严禁将本库用于生产环境、商业场景、数据加密/解密、身份认证等任何需要保障数据安全的场景；
- *    It is strictly prohibited to use the Library in production environments, commercial scenarios,
- *    data encryption/decryption, identity authentication, or any scenarios requiring data security guarantees.
+ * 1. NO SECURITY WARRANTY 无安全担保
+ *    While the developer strives to implement algorithms correctly,
+ *    this library is provided "AS IS" without any explicit or implied
+ *    warranty of correctness, security, robustness, or fitness for any purpose.
+ *    Undiscovered vulnerabilities, implementation flaws, or side-channel risks may exist.
  *
- * 2. 本库可能存在未发现的安全漏洞、算法实现缺陷或逻辑错误，使用本库导致的任何直接/间接损失，
- *    包括但不限于数据泄露、财产损失、业务中断等，开发者不承担任何民事、行政或刑事责任；
- *    The Library may contain undiscovered security vulnerabilities, algorithm implementation flaws,
- *    or logical errors. The developer shall not be liable for any direct/indirect losses caused by 
- *    the use of the Library, including but not limited to data leakage, property loss, business interruption, etc.
+ *    开发者力求算法实现正确，但不对代码的绝对安全性、正确性、完整性
+ *    或适用于特定用途作出任何明示或暗示保证。
+ *    本库可能存在未发现的安全漏洞、实现缺陷或侧信道风险。
  *
- * 3. 使用者在使用本库前，应充分知晓其学习属性和安全风险，所有使用行为均由使用者自行承担责任；
- *    Before using the Library, users shall fully understand its educational nature and security risks,
- *    and all usage behaviors shall be at the user's own risk.
+ * 2. COMMITMENT AGAINST MALICIOUS VULNERABILITIES
+ *    不主动植入恶意漏洞承诺
+ *    The developer solemnly undertakes that the Library will NOT
+ *    intentionally contain, reserve, or add any known or foreseeable
+ *    security vulnerabilities, backdoors, or flaws that could be maliciously exploited.
  *
- * 【商用密码特别声明 - Special Statement on Commercial Cryptography】
- * 本库未经过国家密码管理局的商用密码检测认证，不包含合规的商用密码算法实现，
- * 严禁用于涉及商用密码应用的场景（如金融、政务、关键信息基础设施等）；
- * The Library has not passed the commercial cryptography testing and certification by the State Cryptography
- * Administration, and does not contain compliant commercial cryptography algorithm implementations. It is strictly
- * prohibited to use the Library in scenarios involving commercial cryptography applications (such as finance,
- * government affairs, critical information infrastructure, etc.).
+ *    开发者郑重承诺：不会在本库中故意保留、隐藏或添加
+ *    任何明确存在、可预见、或可被恶意利用的安全漏洞、后门或缺陷。
  *
- * 【免责范围 - Scope of Disclaimer】
- * 开发者对本库的所有使用场景、衍生修改版本、二次分发行为均不承担任何责任；
- * 即使开发者被告知可能发生此类损失，也不承担任何赔偿责任。
- * The developer shall not be liable for any usage scenarios of the Library, modified derivative versions,
- * or secondary distribution behaviors.
- * Even if the developer is notified of the possibility of such losses, no liability for compensation shall be assumed.
+ * 3. PRODUCTION USE AT YOUR OWN RISK
+ *    生产环境使用，风险自担
+ *    Users may integrate this library into production environments at their own risk.
+ *    It is the user's responsibility to conduct security audits, testing, validation,
+ *    and comply with applicable laws and regulations before deployment.
  *
- * 【版本与更新 - Version and Update】
- * 本库可能随时更新或终止维护，开发者无义务通知使用者，也无义务修复已知/未知漏洞。
- * The Library may be updated or discontinued at any time, and the developer has no obligation to notify users
- * or fix known/unknown vulnerabilities.
+ *    使用者可将本库用于生产环境，但一切风险自行承担。
+ *    使用者有义务自行完成安全审计、充分测试与合规验证，并承担相关责任。
  *
- * 使用者一旦下载、编译、运行或修改本库代码，即表示已阅读并同意本免责声明的全部条款。
- * By downloading, compiling, running, or modifying the Library's code, the user indicates that they have read
- * and agreed to all terms of this disclaimer.
+ * 4. NO LIABILITY FOR SECURITY ISSUES
+ *    安全问题责任豁免
+ *    The developer shall NOT be liable for any damages, losses, or incidents
+ *    arising from security vulnerabilities, including but not limited to
+ *    data breaches, system compromise, financial loss, or business interruption.
  *
- * 起草者信息 (Developer Info)：HJimmyK (https://github.com/HJimmyK)
- * 起草日期 (Development Date)：[2026-01-23]
- * 有效期 (Validity)：永久有效
+ *    因本库安全问题所引发的一切损失、数据泄露、系统入侵、财产损害或业务中断，
+ *    开发者均不承担任何法律责任。
+ *
+ * 5. WELCOME SECURITY DISCLOSURES
+ *    欢迎安全漏洞反馈
+ *    The developer welcomes responsible security disclosures, code reviews,
+ *    and reports of potential vulnerabilities.
+ *    Feedback helps improve the library, but does not impose any obligation
+ *    of immediate fix or guaranteed maintenance.
+ *
+ *    开发者欢迎负责任的安全披露、代码审查与漏洞报告。
+ *    社区反馈将用于改进本库，但开发者不承诺立即修复或持续维护。
+ *
+ * 6. GENERAL DISCLAIMER 通用免责
+ *    The developer is not liable for any direct, indirect, incidental,
+ *    or consequential damages resulting from the use of this library,
+ *    including modified versions and redistributions.
+ *
+ *    开发者不对使用本库（含修改版本、二次分发）所产生的任何直接、间接损失承担责任。
+ *
+ * By using, compiling, modifying, or redistributing this library,
+ * you acknowledge that you have read and agreed to this disclaimer.
+ *
+ * 使用、编译、修改或分发本库即表示你已阅读并同意本声明。
+ *
+ * Developer: HJimmyK (https://github.com/HJimmyK)
+ * Date: 2026-02-11
+ * This disclaimer applies permanently to this and future versions.
+ * 本免责声明永久适用于当前版本及未来版本。
  * ==============================================================================
  */
 
@@ -70,10 +88,6 @@
 
 #include "lmmpn.h"
 
-#ifndef INLINE_
-#define INLINE_ static inline
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -86,11 +100,6 @@ typedef uint64_t key64_t[1];
 typedef uint64_t key128_t[2];
 typedef uint64_t key256_t[4];
 
-
-INLINE_ uint64_t rotl64(uint64_t x, int b) { 
-    b &= 63; 
-    return (x << b) | (x >> (64 - b)); 
-}
 
 /**
  * @brief SipHash-2-4 函数（并非标准处理任意字节流的 SipHash-2-4）
@@ -110,10 +119,6 @@ uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
  * @warning 若 seed 为 NULL，则使用全零种子
  */
 uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key);
-
-#ifdef INLINE_
-#undef INLINE_  
-#endif
 
 #ifdef __cplusplus
 }
