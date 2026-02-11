@@ -105,8 +105,8 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_mullh_(tab[3][0], tab[4][0], tab[7]);
     tab[7][1] += tab[3][0] * tab[4][1];
 
-    rn = 1;
     mp_ptr sq = TALLOC_TYPE(rn, mp_limb_t);
+    rn = 1;
     dst[0] = 1;
     int i = 21;
     while ((exp & (0x7ull << ((i--) * 3))) == 0);

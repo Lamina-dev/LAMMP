@@ -2,7 +2,7 @@
 
 #define MODLIMB_INVERSE_3 ((mp_limb_t)0xAAAAAAAAAAAAAAAB)
 
-void lmmp_divexact_by3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+static inline void lmmp_divexact_by3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     mp_limb_t c = 0;
     mp_limb_t l, q, s;
     mp_size_t i = 0;

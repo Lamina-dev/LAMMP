@@ -20,12 +20,21 @@
 #define __UMUL64TO128_H__
 
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
-#pragma message("Using __asm__ to compute 64bit x 64bit to 128bit")
+    #ifndef UMUL128_MESSAGE
+    #define UMUL128_MESSAGE "Using __asm__ to compute 64bit x 64bit to 128bit"
+    #pragma message(UMUL128_MESSAGE)
+    #endif
 #elif defined(_WIN64)
-#include <intrin.h>
-#pragma message("Using _umul128 to compute 64bit x 64bit to 128bit")
+    #include <intrin.h>
+    #ifndef UMUL128_MESSAGE
+    #define UMUL128_MESSAGE "Using _umul128 to compute 64bit x 64bit to 128bit"
+    #pragma message(UMUL128_MESSAGE)
+    #endif
 #else
-#pragma message("Using 32bit to compute 64bit x 64bit to 128bit")
+    #ifndef UMUL128_MESSAGE
+    #define UMUL128_MESSAGE "Using 32bit to compute 64bit x 64bit to 128bit"
+    #pragma message(UMUL128_MESSAGE)
+    #endif
 #endif
 
 #include <stdint.h>

@@ -1,7 +1,7 @@
 #include "../../include/lammp/lmmpn.h"
 
 // assume numa[na-1]!=0
-mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
+static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
     int i;
     int digitspl = lmmp_bases_[base].digits_in_limb;
     mp_limb_t lbase = lmmp_bases_[base].large_base;
@@ -42,7 +42,7 @@ mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, in
 }
 
 // assume numa[na-1]!=0, need an extra limb at numa[na]
-mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, mp_basepow_t* pow, mp_ptr tpq) {
+static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, mp_basepow_t* pow, mp_ptr tpq) {
     mp_size_t digits;
     if (na < TO_STR_DIVIDE_THRESHOLD) {
         digits = lmmp_to_str_basecase_(dst, numa, na, pow->base);

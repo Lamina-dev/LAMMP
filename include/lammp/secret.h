@@ -78,11 +78,11 @@
 extern "C" {
 #endif
 
-typedef const uint64_t srckey64_t;
+typedef const uint64_t srckey64_t[1];
 typedef const uint64_t srckey128_t[2];
 typedef const uint64_t srckey256_t[4];
 
-typedef uint64_t key64_t;
+typedef uint64_t key64_t[1];
 typedef uint64_t key128_t[2];
 typedef uint64_t key256_t[4];
 
