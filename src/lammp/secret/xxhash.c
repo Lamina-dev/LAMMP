@@ -35,7 +35,6 @@ uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key) {
         uint64_t v3 = seed + 0;
         uint64_t v4 = seed - PRIME64_1;
 
-        // 步骤2：分块处理4个uint64_t元素（32字节）
         do {
             v1 += *p * PRIME64_2;
             v1 = rotl64(v1, 31);

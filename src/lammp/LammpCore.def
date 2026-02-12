@@ -86,6 +86,13 @@ EXPORTS
 	lmmp_seed_random_
 	lmmp_random_
 
+	lmmp_gcd_11_
+	lmmp_gcd_1_
+	lmmp_gcd_22_
+	lmmp_gcd_2_
+	lmmp_gcd_basecase_
+	lmmp_gcd_lehmer_
+
 	lmmp_mulmod_ulong_
 	lmmp_powmod_ulong_
 
