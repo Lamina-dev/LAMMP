@@ -97,19 +97,42 @@ mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
 
 /**
  * @brief 计算两个无符号整数的最大公约数
- * @param dst 结果指针（长度至少为 min(un,vn)+1）
+ * @param up 第一个无符号整数指针，长度为 2
+ * @param vp 第二个无符号整数指针，长度为 2
+ * @param dst 结果指针（长度为 2，两个 limb 都会进行写入，即使最高位可能为0）
+ * @warning up!=NULL, vp!=NULL, [up,2]!=0, [vp,2]!=0, dst!=NULL, eqsep(dst,[up|vp])
+ * @note 我们不要求 up 和 vp 的高位不为 0，但要求两个数均不可以高低位全为 0
+ * @return dst 的实际 limb 长度
+ */
+mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp);
+
+/**
+ * @brief 计算两个无符号整数的最大公约数
+ * @param up 第一个无符号整数指针
+ * @param un 第一个无符号整数的 limb 长度
+ * @param vp 第二个无符号整数指针，长度为 2
+ * @param dst 结果指针（长度至少为 2，两个 limb 都会进行写入，即使最高位可能为0）
+ * @warning up!=NULL, un>2, vp!=NULL, vp[1]!=0, dst!=NULL, eqsep(dst,[up|vp])
+ * @return dst 的实际 limb 长度
+ */
+mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp);
+
+/**
+ * @brief 计算两个无符号整数的最大公约数（不建议使用此算法，更高版本可能被彻底弃用）
+ * @param dst 结果指针（长度至少为 min(un,vn)）
  * @param up 第一个无符号整数指针
  * @param un 第一个无符号整数的 limb 长度
  * @param vp 第二个无符号整数指针
  * @param vn 第二个无符号整数的 limb 长度
  * @warning up!=NULL, un>0, vp!=NULL, vn>0, eqsep(dst,[up|vp]), dst!=NULL
+ * @note 朴素的辗转相除法，与Lehmer算法具有相似的渐进时间复杂度，但Lehmer算法绝大多数场合更加优秀
  * @return dst 的实际 limb 长度
  */
 mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
 
 /**
- * @brief 计算两个无符号整数的最大公约数
- * @param dst 结果指针（长度至少为 min(un,vn)+1）
+ * @brief 计算两个无符号整数的最大公约数（Lehmer算法）
+ * @param dst 结果指针（长度至少为 min(un,vn)）
  * @param up 第一个无符号整数指针
  * @param un 第一个无符号整数的 limb 长度
  * @param vp 第二个无符号整数指针

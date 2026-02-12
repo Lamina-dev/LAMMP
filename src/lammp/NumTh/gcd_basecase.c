@@ -21,7 +21,7 @@ mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr v
     mp_ptr b = TALLOC_TYPE(bn, mp_limb_t);
     lmmp_copy(a, up, an);
     lmmp_copy(b, vp, bn);
-    while (b[0] != 0 && bn > 0) {
+    while (bn > 0 || (bn == 1 && b[0] == 0)) {
         // dst = a % b;
         lmmp_div_(NULL, dst, a, an, b, bn);
         lmmp_copy(a, b, bn);

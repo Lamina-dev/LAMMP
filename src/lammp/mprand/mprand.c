@@ -1,4 +1,5 @@
 #include "../../../include/lammp/mprand.h"
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/rand_state.h"
 
 typedef struct {
@@ -52,12 +53,15 @@ mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_ty
 }
 
 mp_size_t lmmp_random_(mp_ptr dst, mp_size_t n) {
+    if (n == 0 || dst == NULL) {
+        return 0;
+    }
     if (lmmp_global_rng.is_init == INIT) {
-        mp_limb_t seed = lmmp_xorshift_random(&lmmp_global_rng.state);
+        mp_limb_t seed = lmmp_xorshift_random(&lmmp_global_rng.state) + n;
         return lmmp_seed_random_(dst, n, seed, lmmp_global_rng.seed_type);
     } else {
         lmmp_global_rng_init_(0, 1);
-        mp_limb_t seed = lmmp_xorshift_random(&lmmp_global_rng.state);
+        mp_limb_t seed = lmmp_xorshift_random(&lmmp_global_rng.state) + n;
         return lmmp_seed_random_(dst, n, seed, lmmp_global_rng.seed_type);
     }
 }

@@ -74,6 +74,23 @@ typedef uint64_t u192[3];
         (*((r) + 1)) = (*((x) + 1)) + (((*(r)) < (_i64)) ? 1 : 0); \
     } while (0)
 
+#define _u128sub64(r, x, _i64)          \
+    do {                                \
+        uint64_t _c_ = (x)[0] < (_i64); \
+        (r)[0] = (x)[0] - (_i64);       \
+        (r)[1] = (x)[1] - _c_;          \
+    } while (0)
+
+// x < y ?
+#define _u128cmp(x, y) ((x)[1] < (y)[1] || ((x)[1] == (y)[1] && (x)[0] < (y)[0]))
+
+#define _u128sub(r, x, y)               \
+    do {                                \
+        uint64_t _c_ = (x)[0] < (y)[0]; \
+        (r)[0] = (x)[0] - (y)[0];       \
+        (r)[1] = (x)[1] - (y)[1] - _c_; \
+    } while (0)
+
 #define _u128mul(r, x, y) _umul64to128_((x), (y), (r), (((r) + 1)))
 
 #define _mont64_add(r, x, y, mod2)                   \

@@ -102,7 +102,7 @@ typedef uint64_t key256_t[4];
 
 
 /**
- * @brief SipHash-2-4 函数（并非标准处理任意字节流的 SipHash-2-4）
+ * @brief SipHash-2-4 函数（非标准处理任意字节流的 SipHash-2-4）
  * @param in 输入数据，可以为 NULL
  * @param inlen 输入数据长度
  * @param key 128-bit 秘钥，可以为 NULL
@@ -112,11 +112,12 @@ typedef uint64_t key256_t[4];
 uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
 
 /**
- * @brief xxhash 函数（标准处理任意字节流的 xxhash）
+ * @brief xxhash 函数（非标准处理任意字节流的 xxhash）
  * @param in 输入数据，可以为 NULL
  * @param inlen 输入数据长度
- * @param seed 种子，可以为 NULL
- * @warning 若 seed 为 NULL，则使用全零种子
+ * @param key 64-bit 秘钥，可以为 NULL
+ * @warning 若 key 为 NULL，则使用全零秘钥
+ * @return 64-bit hash 值
  */
 uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key);
 

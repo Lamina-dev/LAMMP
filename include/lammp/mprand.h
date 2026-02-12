@@ -64,9 +64,10 @@ mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_ty
  * @brief 生成随机大整数（0 - B^n-1 均匀分布）
  * @param dst 随机数存储位置
  * @param n dst的 limb 长度
- * @warning 种子由 lmmp_global_rng_init() 设置，发生器类型由 lmmp_global_rng_init() 设置
- *          如果没有进行全局初始化，则使用默认种子（默认等价设置全局种子为0，并不代表全局种子为0）
- *          和默认发生器类型（默认为xorshift256++），即未设置全局种子，行为等价于 lmmp_global_rng_init_(0, 1)
+ * @warning 如果dst==NULL或n==0，则返回0，无其他操作。种子由 lmmp_global_rng_init() 设置，发生器类型由 
+ *          lmmp_global_rng_init() 设置，如果没有进行全局初始化，则使用默认种子（默认等价设置全局种子为0，
+ *          并不代表全局种子为0）和默认发生器类型（默认为xorshift256++），即未设置全局种子，行为等价于 
+ *          执行了 lmmp_global_rng_init_(0, 1)
  * @note 每调用一次此函数，种子将会进行一次更新，以确保多次调用时的种子不同，但是只要每次调用的方式
  *       和顺序相同，在同一个进程中，每次生成的随机数序列相同。
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）

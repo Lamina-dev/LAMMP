@@ -2,7 +2,7 @@
 
 mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v) {
     lmmp_debug_assert(u > 0 && v > 0);
-    uint count, k;
+    int count, k;
     k = lmmp_tailing_zeros_(u | v);
     u >>= lmmp_tailing_zeros_(u);
     v >>= lmmp_tailing_zeros_(v);
@@ -30,5 +30,8 @@ mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb) {
     else {
         ulimb = lmmp_div_1_(NULL, up, un, vlimb);
     }
-    return lmmp_gcd_11_(ulimb, vlimb);
+    if (ulimb == 0)
+        return vlimb;
+    else
+        return lmmp_gcd_11_(ulimb, vlimb);
 }
