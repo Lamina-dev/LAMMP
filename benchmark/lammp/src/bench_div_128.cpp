@@ -1,7 +1,7 @@
 #include "../include/benchmark.hpp"
 #include <vector>
 
-#include <immintrin.h>
+#include <intrin.h>
 
 #ifdef _MSC_VER
 static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend_lo64, uint64_t divisor) {
@@ -15,8 +15,7 @@ static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend
     uint64_t quotient_low, remainder;
     __asm__("div %[divisor]"                                                  // RDX:RAX ÷ 除数 → RAX=商, RDX=余数
             : "=a"(quotient_low), "=d"(remainder)                             // 输出：商=RAX，余数=RDX
-            : "a"(dividend_lo64), "d"(dividend_hi64), [divisor] "r"(divisor)  // 输入：RAX=低64位,
-                                                                              // RDX=高64位
+            : "a"(dividend_lo64), "d"(dividend_hi64), [divisor] "r"(divisor)  
             :                                                                 // 无寄存器污染
     );
     dividend_lo64 = remainder;  // 更新余数到被除数低位引用
@@ -25,7 +24,7 @@ static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend
 #endif
 
 void bench_div_128() {
-    uint64_t mod = 123291;
+    uint64_t mod = 1293291;
     int n = 1000000;
     mp_ptr a = (mp_ptr)lmmp_alloc(n * sizeof(mp_limb_t));
     mp_ptr b = (mp_ptr)lmmp_alloc(n * sizeof(mp_limb_t));

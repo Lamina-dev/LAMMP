@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_hash();
+    test_gcd2();
     return 0;
 }
