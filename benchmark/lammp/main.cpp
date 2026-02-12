@@ -2,7 +2,6 @@
 #include "include/benchmark.hpp"
 
 int main() {
-    std::cout << bench_hash(1000000, 1) << std::endl;
-    std::cout << bench_hash(1000000, 0) << std::endl;
+    bench_gcd2();
     return 0;
 }

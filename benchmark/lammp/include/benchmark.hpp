@@ -30,6 +30,6 @@ long long bench_factorial(unsigned len1);
 long long bench_powmod_ulong(int len);
 void bench_div_128();
 long long bench_hash(int len, int type);
-
+void bench_gcd2();
 
 #endif  // __BENCHMARK_HPP__

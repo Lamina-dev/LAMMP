@@ -16,5 +16,6 @@ void test_multinomial();
 void test_perm();
 void test_bino();
 void test_gcd();
+void test_gcd2();
 void test_rand();
 void test_hash();
