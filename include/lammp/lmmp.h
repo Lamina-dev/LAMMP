@@ -42,6 +42,14 @@
 extern "C" {
 #endif
 
+typedef enum {
+        LAMMP_ASSERT_FAILURE = 1,
+        LAMMP_DEBUG_ASSERT_FAILURE = 2,
+        LAMMP_MEMORY_ALLOC_FAILURE = 3,
+        LAMMP_OUT_OF_BOUNDS = 4,
+        LAMMP_UNEXPECTED_ERROR = 5
+} lmmp_error_t;
+
 /**
  * LAMMP 全局退出函数指针类型
  * @param type 退出类型（可以查看lmmp_abort函数对此参数的说明，这里不再重复）
@@ -49,7 +57,7 @@ extern "C" {
  * @param file 退出处的文件名
  * @param line 退出处的行号
  */
-typedef void (*lmmp_abort_func_t)(int type, const char* msg, const char* file, int line);
+typedef void (*lmmp_abort_func_t)(lmmp_error_t type, const char* msg, const char* file, int line);
 
 /**
  * 设置 LAMMP 全局退出函数
@@ -68,22 +76,22 @@ lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
  * @param line 退出处的行号
  * @param type 退出类型。有以下几个类型：
  * 
- *        1. LAMMP_ASSERT_FAILURE 宏（默认值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
+ *        1. LAMMP_ASSERT_FAILURE （枚举值为1），为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
  *             其通常代表不可能发生的计算错误，可能表明程序其他部分的计算错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
- *        2. LAMMP_DEBUG_ASSERT_FAILURE 宏（默认值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
+ *        2. LAMMP_DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
  *             大部分情况下，可能是调用者未按照规定使用函数，导致函数入参检查失败，在函数开头通常有lmmp_debug_assert宏
  *             来检查部分参数的输入，不排除其他地方出现的错误。此类型只会在定义了 LAMMP_DEBUG 宏为 1 的情况下才会触发，
  *             Release 模式下通常为 0 。
  *
- *        3. LAMMP_MEMORY_ALLOC_FAILURE 宏（默认值为3）为内存分配失败退出，这通常源于隐蔽的内存越界导致堆损坏，
+ *        3. LAMMP_MEMORY_ALLOC_FAILURE （枚举值为3）为内存分配失败退出，这通常源于隐蔽的内存越界导致堆损坏，
  *             或者分配过大的系统内存。
  *
- *        4. LAMMP_OUT_OF_BOUNDS 宏（默认值为4）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
+ *        4. LAMMP_OUT_OF_BOUNDS （枚举值为4）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
  *             出范围。此类型只会在定义了 MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
- *        5. LAMMP_UNEXPECTED_ERROR 宏（默认值为5）为其他未知错误导致的退出。目前暂未使用，为预留作用。
+ *        5. LAMMP_UNEXPECTED_ERROR （枚举值为5）为其他未知错误导致的退出。目前暂未使用，为预留作用。
  *
  * @note + 调用此函数会导致本程序退出。需要注意的是，出于对性能的考量，在未定义LAMMP_DEBUG宏为 1（RELEASE模式下，
  *       其通常为0）的情况下，lmmp_debug_assert不会产生任何作用，也就是不会触发全局退出函数。在未定义 MEMORY_CHECK
@@ -91,20 +99,14 @@ lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
  *       不会产生 LAMMP_OUT_OF_BOUNDS 宏的退出。而 lmmp_assert 和 LAMMP_MEMORY_ALLOC_FAILURE 在何种情况下
  *       都会触发全局退出函数。
  *
- *       + 如果调用者希望在Release模式下开启 LAMMP_DEBUG_ASSERT_FAILURE 和 LAMMP_OUT_OF_BOUNDS 宏，需要在编译时
+ *       + 如果调用者希望在Release模式下开启 LAMMP_DEBUG_ASSERT_FAILURE 和 LAMMP_OUT_OF_BOUNDS ，需要在编译时
  *       定义相应的宏，无法在运行时动态设置。
  *
  * @warning LAMMP内部中断都将会调用此函数，如果全局退出函数为NULL，则使用默认的退出函数，会打印出全部错误信息，并调用 
  *          abort 函数中断程序。设置全局退出函数请通过 lmmp_set_abort_func 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
-void lmmp_abort(int type, const char* msg, const char* file, int line);
-
-#define LAMMP_ASSERT_FAILURE 1
-#define LAMMP_DEBUG_ASSERT_FAILURE 2
-#define LAMMP_MEMORY_ALLOC_FAILURE 3
-#define LAMMP_OUT_OF_BOUNDS 4
-#define LAMMP_UNEXPECTED_ERROR 5
+void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
 
 // 此宏为1时，会增加lmmp_debug_assert的检查，包括入参检查和中间结果检查。
 // 开启此宏可能会带来一定的性能开销
