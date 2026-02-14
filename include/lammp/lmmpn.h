@@ -92,6 +92,8 @@
 // 8192 字节通常远远小于现代CPU的L1缓存大小，但仍然可以满足分块需要了
 #define L1_CACHE_SIZE 8192
 
+#define L2_CACHE_BYTES (1ull << 20)
+
 #define LIMB_BITS 64
 #define LIMB_BYTES 8
 #define LOG2_LIMB_BITS 6
@@ -301,8 +303,14 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
  */
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
+void lmmp_mul_fft_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+void lmmp_mul_fft_history_free_(void);
+
+void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_size_t M);
+
 /**
- * 大数平方操作 [dst,2*na] = [numa,na]^2
+ * @brief 大数平方操作 [dst,2*na] = [numa,na]^2
  * @warning na>0, sep(dst,numa)
  * @param dst 平方结果输出指针（需要2*na的limb长度）
  * @param numa 源操作数指针
@@ -320,7 +328,7 @@ INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 /**
- * 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
+ * @brief 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
  * @warning n>0, sep(dst,[numa|numb])
  *       特殊情况: n==1时dst<=numa+1是允许的
  *                 n==2时dst<=numa是允许的
