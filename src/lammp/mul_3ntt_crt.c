@@ -41,9 +41,9 @@ static inline double find_unbalanced_root(double m, double n) {
 #define func_f(x) (n * log(m) - m / x - n * log(x) - n)
 #define func_f_deriv(x) (m / (x * x) - n / x)
     /*
-    事实上，这个初始值的估计几乎已经足够准确了。一步牛顿迭代意义并不大，
-    但此函数也仅仅调用一次，省去一次牛顿迭代法也仅带来十几ns的开销，因
-    此不值得过多纠结。
+    we use the bisection method to find the root of the function f(x) = 0
+    f(x) = n * log(m) - m / x - n * log(x) - n
+    f'(x) = m / (x * x) - n / x
      */
     double x_prev = m / (n * log(n)) * 0.8728;
     double x_curr;
@@ -73,9 +73,9 @@ void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr num
     
     if (M == 0) M = find_unbalanced_root(na, nb);
 
-    mp_limb_t min_sum = nb + na / LMMP_MAX(3, M);
+    mp_size_t min_sum = nb + na / LMMP_MAX(3, M);
 
-    min_sum -= ((min_sum & (min_sum - 1)) == 0) ? na : 0;
+    min_sum -= LMMP_POW2_Q(min_sum) ? nb : 0;
 
     int highest_bit = 63 - lmmp_leading_zeros_(min_sum);
     mp_limb_t next_power = 1ULL << (highest_bit + 1);
@@ -87,7 +87,7 @@ void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr num
     mp_size_t rem = na % single_len;
 
     /* 预处理表 */
-    _3ntt_short table0;
+    _3ntt_memstack table0;
     table0.ntt_len = LMMP_MIN(ntt_len, long_threshold);
     table0.log_len = log2_64(table0.ntt_len);
     table0.omega1 = BALLOC_TYPE(table0.ntt_len, mont64);
@@ -97,7 +97,7 @@ void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr num
     table0.omega3 = BALLOC_TYPE(table0.ntt_len, mont64);
     table0.iomega3 = BALLOC_TYPE(table0.ntt_len, mont64);
 
-    cover_nttshort(table0.log_len, &table0);
+    _3ntt_memstack_init_(table0.log_len, &table0);
 
     mont64 *buf1_mont, *buf2_mont, *buf3_mont, *buf4_mont, *buf5_mont, *buf6_mont;
     buf1_mont = BALLOC_TYPE(ntt_len, mont64);
