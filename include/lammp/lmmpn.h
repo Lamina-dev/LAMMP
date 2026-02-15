@@ -303,10 +303,40 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
  */
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
+/**
+ * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning ???<=nb<=na, sep(dst,[numa|numb])
+ * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算FFT乘积
+ *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果，同时需要注意的是，在释放历史记录结果前，
+ *       不能对记录的numb进行释放，否则可能发生悬空指针错误。
+ * @return 无返回值，结果存储在dst中
+ */
 void lmmp_mul_fft_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
+/**
+ * @brief 释放历史FFT乘法运算的结果
+ * @note 请在调用lmmp_mul_fft_history_()后调用此函数释放历史记录结果，否则可能发生悬空指针错误。
+ */
 void lmmp_mul_fft_history_free_(void);
 
+/**
+ * @brief NTT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @param M 分块大小参数，若为0，则使用默认的最优分块策略
+ * @note 请注意，使用此函数务必保证numa长度是numb长度的数倍以上，无需整数倍关系，若长度相差不大
+ *       可能导致lmmp_assert断言触发。
+ * @warning na/nb > ???, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
 void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_size_t M);
 
 /**
