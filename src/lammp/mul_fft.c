@@ -409,7 +409,7 @@ static inline mp_size_t lmmp_fft_best_k_(mp_size_t n) {
 /**
  * @brief 计算FFT运算所需的最小规整化长度（向上取整到2^k的倍数）
  * @param n - 原始长度
- * @return 规整后的长度（满足2^k的倍数，保证FFT并行性）
+ * @return 规整后的长度（为2^k的倍数）
  */
 mp_size_t lmmp_fft_next_size_(mp_size_t n) {
     mp_size_t k = lmmp_fft_best_k_(n);
@@ -1204,7 +1204,7 @@ void lmmp_mul_fft_history_free_(void) {
     GH.rn = 0;
 }
 
-void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
     lmmp_assert(nsqr);
     mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
@@ -1300,7 +1300,7 @@ void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t
     lmmp_fft_memstack_(&amsr, 0);
 }
 
-void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
     lmmp_assert(nsqr);
     mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
