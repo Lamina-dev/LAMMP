@@ -326,21 +326,6 @@ void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t n
 void lmmp_mul_fft_history_free_(void);
 
 /**
- * @brief NTT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]（此算法或被弃用）
- * @param dst 输出结果缓冲区，长度至少为 na+nb
- * @param numa 第一个输入操作数，长度为 na
- * @param na 第一个操作数的 limb 长度
- * @param numb 第二个输入操作数，长度为 nb
- * @param nb 第二个操作数的 limb 长度
- * @param M 分块大小参数，若为0，则使用默认的最优分块策略
- * @note 请注意，使用此函数务必保证numa长度是numb长度的数倍以上，无需整数倍关系，若长度相差不大
- *       可能导致lmmp_assert断言触发。
- * @warning na/nb > ???, sep(dst,[numa|numb])
- * @return 无返回值，结果存储在dst中
- */
-void lmmp_mul_ntt_unbal_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_size_t M);
-
-/**
  * @brief 大数平方操作 [dst,2*na] = [numa,na]^2
  * @warning na>0, sep(dst,numa)
  * @param dst 平方结果输出指针（需要2*na的limb长度）
