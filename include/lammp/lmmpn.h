@@ -306,6 +306,7 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
 /**
  * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param hn FFT模域参数
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
@@ -316,7 +317,7 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
  *       不能对记录的numb进行释放，否则可能发生悬空指针错误。
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_fft_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief 释放历史FFT乘法运算的结果
@@ -325,7 +326,7 @@ void lmmp_mul_fft_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr n
 void lmmp_mul_fft_history_free_(void);
 
 /**
- * @brief NTT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief NTT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]（此算法或被弃用）
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度

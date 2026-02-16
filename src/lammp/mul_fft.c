@@ -344,7 +344,7 @@ A python code for the FFT-SSA algorithm：
 
 // best_k_(next_size_(n)) = best_k_(n)
 // table[i+1][0]-1 必须是 2^(table[i][1]-LOG2_LIMB_BITS) 的整数倍
-// LOG2_LIMB_BITS：每个 limb 的比特数的2对数
+// LOG2_LIMB_BITS：每个 limb 的比特数的2对数，为 log2(64) = 6
 static const mp_size_t lmmp_fft_table_[][2] = {
     {0, 6},      
     {1597, 7},  
@@ -443,13 +443,13 @@ static void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
 }
 
 /**
- * @brief dst,lenw+1] = [(bit*)numa+bitoffset, bits]
+ * @brief [dst,lenw+1] = [(bit*)numa+bitoffset, bits]
  * @param dst - 输出系数数组（长度lenw+1）
  * @param numa - 输入大数指针
  * @param bitoffset - 起始比特偏移量（>=0）
  * @param bits - 提取的比特数（0 < bits <= LIMB_BITS*lenw）
  * @param lenw - 输出系数的机器字长度
- * @warning dst与numa的内存地址必须分离（sep(dst,numa)）
+ * @warning bitoffset>=0, 0<bits<=LIMB_BITS*lenw, sep(dst,numa)
  */
 static void lmmp_fft_extract_coef_(mp_ptr dst, mp_srcptr numa, mp_size_t bitoffset, mp_size_t bits, mp_size_t lenw) {
     // shr = 机器字内的比特偏移（0~LIMB_BITS-1）
@@ -1476,10 +1476,9 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
     lmmp_free(tp);
 }
 
-void lmmp_mul_fft_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     lmmp_debug_assert(na > 0 && nb > 0);
     lmmp_debug_assert(na >= nb);
-    mp_size_t hn = lmmp_fft_next_size_((na + nb + 1) >> 1);
     lmmp_assert(na + nb > hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
 

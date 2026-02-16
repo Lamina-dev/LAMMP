@@ -1,4 +1,6 @@
 #include "../../include/lammp/lmmpn.h"
+#include <math.h>
+
 // This is a simplified version of mul.c
 /*
         Areas where the different toom algorithms can be called
@@ -93,26 +95,32 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
             lmmp_mul_fft_(dst, numa, na, numb, nb);
         else {
             mp_ptr ws = ALLOC_TYPE(nb, mp_limb_t);
-            lmmp_mul_fft_history_(dst, numa, 3 * nb, numb, nb);
-            dst += 3 * nb;
-            numa += 3 * nb;
-            na -= 3 * nb;
+            mp_size_t sna = 3 * nb;
+            mp_size_t hn = lmmp_fft_next_size_((sna + nb + 1) >> 1);
+            sna = (hn << 1) - 1 - nb;
+        
+            lmmp_mul_fft_history_(dst, hn, numa, sna, numb, nb);
+            dst += sna;
+            numa += sna;
+            na -= sna;
             lmmp_copy(ws, dst, nb);
-            while (2 * na >= 7 * nb) {
-                lmmp_mul_fft_history_(dst, numa, 3 * nb, numb, nb);
+            while (na >= sna) {
+                lmmp_mul_fft_history_(dst, hn, numa, sna, numb, nb);
                 if (lmmp_add_n_(dst, dst, ws, nb))
                     lmmp_inc(dst + nb);
-                dst += 3 * nb;
-                numa += 3 * nb;
-                na -= 3 * nb;
+                dst += sna;
+                numa += sna;
+                na -= sna;
                 lmmp_copy(ws, dst, nb);
             }
             lmmp_mul_fft_history_free_();
-            // 0.5 nb <= na < 3.5 nb
+            // remaining na < sna
             if (na >= nb)
                 lmmp_mul_(dst, numa, na, numb, nb);
-            else
+            else if (na > 0)
                 lmmp_mul_(dst, numb, nb, numa, na);
+            else // na == 0 
+                lmmp_zero(dst, nb);
             if (lmmp_add_n_(dst, dst, ws, nb))
                 lmmp_inc(dst + nb);
             lmmp_free(ws);
