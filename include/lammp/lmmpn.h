@@ -92,6 +92,8 @@
 // 8192 字节通常远远小于现代CPU的L1缓存大小，但仍然可以满足分块需要了
 #define L1_CACHE_SIZE 8192
 
+#define L2_CACHE_BYTES (1ull << 20)
+
 #define LIMB_BITS 64
 #define LIMB_BYTES 8
 #define LOG2_LIMB_BITS 6
@@ -302,7 +304,29 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * 大数平方操作 [dst,2*na] = [numa,na]^2
+ * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param hn FFT模域参数
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning ???<=nb<=na, sep(dst,[numa|numb])
+ * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算FFT乘积
+ *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果，同时需要注意的是，在释放历史记录结果前，
+ *       不能对记录的numb进行释放，否则可能发生悬空指针错误。
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief 释放历史FFT乘法运算的结果
+ * @note 请在调用lmmp_mul_fft_history_()后调用此函数释放历史记录结果，否则可能发生悬空指针错误。
+ */
+void lmmp_mul_fft_history_free_(void);
+
+/**
+ * @brief 大数平方操作 [dst,2*na] = [numa,na]^2
  * @warning na>0, sep(dst,numa)
  * @param dst 平方结果输出指针（需要2*na的limb长度）
  * @param numa 源操作数指针
@@ -320,7 +344,7 @@ INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 /**
- * 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
+ * @brief 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
  * @warning n>0, sep(dst,[numa|numb])
  *       特殊情况: n==1时dst<=numa+1是允许的
  *                 n==2时dst<=numa是允许的

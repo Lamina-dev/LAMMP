@@ -22,7 +22,6 @@ void ger_random_numbers(int len, mp_ptr dst, mp_size_t min = 0, mp_size_t max = 
 long long bench_add(int len1, int len2);
 long long bench_sub(int len1, int len2);
 long long bench_mul(int len1, int len2);
-long long bench_sqr(int len1);
 long long bench_div(int len1, int len2);
 long long bench_pow(int len1, int len2);
 long long bench_pow_win2(int len1, int len2);

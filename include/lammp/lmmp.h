@@ -19,21 +19,33 @@
 #ifndef LAMMP_LMMP_H
 #define LAMMP_LMMP_H
 
-/*************************************
+/*************************************************************
         符号说明:
 
-        B           基数，固定为 2^64 
+        B           基数，固定为 2^64
 
         [p,n,b]     表示指针p指向的、以b为基数的n位数
                     p[i-1] 代表其第i位最低有效位 (0<i<=n)
-                    如果省略b，则默认基数为B
+                    如果省略b，则默认基数为B。通常情况下，
+                    用此符号表示函数参数时，一般暗指高位不存在0，
+                    而用此符号表示函数返回值时，表示写入的位数，
+                    即使可能写入为0。
 
         sep         指针指向的内存区域完全分离
 
         eqsep       完全相同的内存区域或者完全分离
 
+                    备注：我们都假定内存是向上增长的，dst <= num+1
+                    的内存布局可以这样表示
+                            dst ──┐
+                   num ──┐        |00000000|00000000|
+                         |********|********|
+
+        MSB(x)      x的最高有效位，比如最高有效位为1，大部分语境下
+                    代表 x >= B / 2
+
         [x|y]       x或y，用于表示参数或返回值的取值范围
-**************************************/
+****************************************************************/
 
 #include <stddef.h> 
 #include <stdint.h>
@@ -76,7 +88,7 @@ lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
  * @param line 退出处的行号
  * @param type 退出类型。有以下几个类型：
  * 
- *        1. LAMMP_ASSERT_FAILURE （枚举值为1），为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
+ *        1. LAMMP_ASSERT_FAILURE （枚举值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
  *             其通常代表不可能发生的计算错误，可能表明程序其他部分的计算错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
@@ -178,7 +190,7 @@ void lmmp_free(void*);
 
 // ===================== lmmp_ 底层不安全运算函数 =====================
 /**
- * 带进位的n位加法 [dst,n] = [numa,n] + [numb,n] + c
+ * @brief 带进位的n位加法 [dst,n] = [numa,n] + [numb,n] + c
  * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
@@ -190,7 +202,7 @@ void lmmp_free(void*);
 mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * 无进位的n位加法 [dst,n] = [numa,n] + [numb,n]
+ * @brief 无进位的n位加法 [dst,n] = [numa,n] + [numb,n]
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
@@ -201,7 +213,7 @@ mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, 
 mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 带借位的n位减法 [dst,n] = [numa,n] - [numb,n] - c
+ * @brief 带借位的n位减法 [dst,n] = [numa,n] - [numb,n] - c
  * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
@@ -213,7 +225,7 @@ mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * 无借位的n位减法 [dst,n] = [numa,n] - [numb,n]
+ * @brief 无借位的n位减法 [dst,n] = [numa,n] - [numb,n]
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
@@ -224,7 +236,7 @@ mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, 
 mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 同时执行n位加法和减法 ([dsta,n],[dstb,n]) = ([numa,n]+[numb,n],[numa,n]-[numb,n])
+ * @brief 同时执行n位加法和减法 ([dsta,n],[dstb,n]) = ([numa,n]+[numb,n],[numa,n]-[numb,n])
  * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb])
  * @param dsta 加法结果输出指针
  * @param dstb 减法结果输出指针
@@ -237,7 +249,7 @@ mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 加法后右移1位 [dst,n] = ([numa,n] + [numb,n]) >> 1
+ * @brief 加法后右移1位 [dst,n] = ([numa,n] + [numb,n]) >> 1
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
@@ -248,7 +260,7 @@ mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr 
 mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 带进位加法后右移1位 [dst,n] = ([numa,n] + [numb,n] + c) >> 1
+ * @brief 带进位加法后右移1位 [dst,n] = ([numa,n] + [numb,n] + c) >> 1
  * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
@@ -260,7 +272,7 @@ mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t 
 mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * 减法后右移1位 [dst,n] = ([numa,n] - [numb,n]) >> 1
+ * @brief 减法后右移1位 [dst,n] = ([numa,n] - [numb,n]) >> 1
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
@@ -271,7 +283,7 @@ mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t
 mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 带借位减法后右移1位 [dst,n] = ([numa,n] - [numb,n] - c) >> 1
+ * @brief 带借位减法后右移1位 [dst,n] = ([numa,n] - [numb,n] - c) >> 1
  * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
@@ -283,7 +295,7 @@ mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t 
 mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * 大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充0
+ * @brief 大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充0
  * @warning na>0, 0<=shr<64, eqsep(dst,numa)
  *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
@@ -295,7 +307,7 @@ mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t
 mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
 
 /**
- * 带进位的大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充c的高shr位
+ * @brief 带进位的大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充c的高shr位
  * @warning na>0, 0<=shr<64, eqsep(dst,numa)
  *          c的低(64-shr)位必须为0
  *          允许dst指针地址小于numa（即支持原地长移位操作）
@@ -309,9 +321,9 @@ mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
 mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, mp_limb_t c);
 
 /**
- * 大数左移操作 [dst,na] = [numa,na] << shl，dst的低shl位填充0
- * 要求: na>0, 0<=shl<64, eqsep(dst,numa)
- *       允许dst指针地址大于numa（即支持原地长移位操作）
+ * @brief 大数左移操作 [dst,na] = [numa,na] << shl，dst的低shl位填充0
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ *         允许dst指针地址大于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
@@ -321,9 +333,7 @@ mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, m
 mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 
 /**
- * 带进位的大数左移操作
- * 功能: [dst,na] = [numa,na] << shl (整体左移shl位)
- *       dst的低shl位填充c的低shl位
+ * @brief 带进位的大数左移操作 [dst,na] = [numa,na] << shl，dst的低shl位填充c的低shl位
  * @warning na>0, 0<=shl<64, eqsep(dst,numa)
  *          c的高(64-shl)位必须为0
  *          允许dst指针地址大于numa（即支持原地长移位操作）
@@ -337,7 +347,7 @@ mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, mp_limb_t c);
 
 /**
- * 大数按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
+ * @brief 大数按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
  * @warning na>0, eqsep(dst,numa)
  * @param dst 结果输出指针
  * @param numa 源操作数指针
@@ -346,7 +356,7 @@ mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, m
 void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * 左移后按位取反操作 [dst,na] = ~([numa,na] << shl)，dst的低shl位填充1
+ * @brief 左移后按位取反操作 [dst,na] = ~([numa,na] << shl)，dst的低shl位填充1
  * @warning na>0, 0<=shl<64, eqsep(dst,numa)
  * @param dst 结果输出指针
  * @param numa 源操作数指针
@@ -357,7 +367,7 @@ void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 
 /**
- * 加法结合左移1位操作 [dst,n] = [numa,n] + ([numb,n] << 1)
+ * @brief 加法结合左移1位操作 [dst,n] = [numa,n] + ([numb,n] << 1)
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被加数指针
@@ -368,7 +378,7 @@ mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 减法结合左移1位操作 [dst,n] = [numa,n] - ([numb,n] << 1)
+ * @brief 减法结合左移1位操作 [dst,n] = [numa,n] - ([numb,n] << 1)
  * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
@@ -379,7 +389,7 @@ mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t 
 mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * 大数乘以单limb并累加操作 [numa,n] += [numb,n] * B 
+ * @brief 大数乘以单limb并累加操作 [numa,n] += [numb,n] * b
  * @warning n>0, eqsep(numa,numb))
  * @param numa 被加数指针（结果也存储在此）
  * @param numb 乘数指针
@@ -390,7 +400,7 @@ mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t 
 mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
- * 大数乘以单limb并累减操作 [numa,n] -= [numb,n] * b
+ * @brief 大数乘以单limb并累减操作 [numa,n] -= [numb,n] * b
  * @warning n>0, eqsep(numa,numb))
  * @param numa 被减数指针（结果也存储在此）
  * @param numb 乘数指针
@@ -401,7 +411,7 @@ mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
- * 大数乘以单limb操作 [dst,na] = [numa,na] * x
+ * @brief 大数乘以单limb操作 [dst,na] = [numa,na] * x
  * @warning na>0, eqsep(dst,numa)
  *       支持 dst<=numa+1 的内存布局
  * @param dst 结果输出指针
@@ -413,7 +423,7 @@ mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
 
 /**
- * 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
  * @warning 0<nb<=na, sep(dst,[numa|numb])
  *      特殊情况:  nb==1时dst<=numa+1是允许的
  *                nb==2时dst<=numa是允许的
@@ -426,7 +436,7 @@ mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
 void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * 大数除法和取模操作
+ * @brief 大数除法和取模操作
  * @note 如果dstq不为NULL: [dstq,na-nb+1] = [numa,na] / [numb,nb] (商)
  *       如果dstr不为NULL: [dstr,nb] = [numa,na] mod [numb,nb] (余数)
  * @warning 0<nb<=na, numb[nb-1]!=0, sep(dstq,[numa|numb]), eqsep(dstr,[numa|numb]))
@@ -442,7 +452,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
 void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * 大数平方根和取余操作
+ * @brief 大数平方根和取余操作
  * @note 如果dstr不为NULL: [dsts,nf+na/2+1], [dstr,nf+na/2+1] = sqrtrem([numa,na]*B^(2*nf))
  *                         也即 [numa,na] × B^(2×nf) = [dsts,nf+na/2+1]^2 + [dstr,nf+na/2+1]
  *                         且 0 <= [dstr,nf+na/2+1] < 2 * [dsts,nf+na/2+1] + 1
@@ -457,7 +467,7 @@ void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr
 void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
- * 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
+ * @brief 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
  * @warning na>0, numa[na-1]!=0, eqsep(dst,numa)
  * @param dst 逆元结果输出指针
  * @param numa 源操作数指针
@@ -467,8 +477,8 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
- * 字符串转大数操作 [src,len,base] to [dst,return value,B]
- * @warning len>=0, 2<=base<=256 
+ * @brief 字符串转大数操作 [src,len,base] to [dst,return value,B]
+ * @warning len>=0, 2<=base<=256
  * @param dst 大数结果输出指针
  * @param src 字符串源指针
  * @param len 字符串长度
@@ -478,7 +488,7 @@ void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base);
 
 /**
- * 大数转字符串操作 [numa,na,B] to [dst,return value,base]
+ * @brief 大数转字符串操作 [numa,na,B] to [dst,return value,base]
  * @warning na>=0, 2<=base<=256
  * @param dst 字符串结果输出指针
  * @param numa 大数源指针
@@ -489,7 +499,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
 mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base);
 
 /**
- * 提取高位指定位数，并返回低位bits位数
+ * @brief 提取高位指定位数，并返回低位bits位数
  * @param num 待提取的大数指针
  * @param n num的 limb 长度
  * @param bits 待提取的位数(1-64)

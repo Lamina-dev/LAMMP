@@ -1,4 +1,4 @@
-#include "../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/lmmpn.h"
 
 const mp_base_t lmmp_bases_[257]={
 	{0x0000000000000000,0x0000000000000000,0x0000000000000000,0,0},
