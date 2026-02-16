@@ -62,6 +62,8 @@ EXPORTS
 	lmmp_mul_fermat_
 	lmmp_mul_mersenne_
 	lmmp_mul_fft_
+	lmmp_mul_fft_history_
+	lmmp_mul_fft_history_free_
 	
 	lmmp_inv_1_
 	lmmp_inv_2_1_
