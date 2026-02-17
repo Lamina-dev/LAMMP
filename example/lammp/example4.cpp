@@ -9,18 +9,34 @@
 #include "../../include/lammp/mprand.h"
 int main() {
     TEMP_DECL;
-    mp_size_t nb = 10000;
+    mp_size_t nb = 850;
     mp_size_t na = nb * 10000;
     mp_ptr numa = BALLOC_TYPE(na, mp_limb_t);
     mp_ptr numb = BALLOC_TYPE(nb, mp_limb_t);
+    
     na = lmmp_random_(numa, na);
     nb = lmmp_random_(numb, nb);
+    
     mp_ptr dst = BALLOC_TYPE(na + nb, mp_limb_t);
     auto start = std::chrono::high_resolution_clock::now();
     lmmp_mul_(dst, numa, na, numb, nb);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Time: " << duration.count() << " microseconds" << std::endl;
+
+    mp_ptr dst2 = BALLOC_TYPE(na + nb, mp_limb_t);
+    start = std::chrono::high_resolution_clock::now();
+    lmmp_mul_fft_(dst2, numa, na, numb, nb);
+    end = std::chrono::high_resolution_clock::now();
+    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+    std::cout << "Time: " << duration.count() << " microseconds" << std::endl;
+
+    for (size_t i = 0; i < na + nb; i++) {
+        if (dst[i] != dst2[i]) {
+            std::cout << "Error: " << i << std::endl;
+            break;
+        }
+    }
 
     TEMP_FREE;
     return 0;
