@@ -75,14 +75,14 @@ function(set_common_compiler_options target)
             $<$<COMPILE_LANGUAGE:C>:
                 -Wall -Wextra -Wpedantic -fPIC -m64
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -ffast-math -DNDEBUG>
+                $<$<CONFIG:Release>:-O3 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
                 -Wall -Wextra -Wpedantic -fPIC -m64
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -ffast-math -DNDEBUG>
+                $<$<CONFIG:Release>:-O3 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
@@ -94,14 +94,14 @@ function(set_common_compiler_options target)
     elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
-                /MP /W3 /fp:fast /DWIN64 /D_CRT_SECURE_NO_WARNINGS
+                /MP /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
                 $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
                 $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
-                /MP /W3 /fp:fast /DWIN64
+                /MP /W4 /DWIN64
                 $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
                 $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
