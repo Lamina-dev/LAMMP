@@ -2,12 +2,12 @@
 #define __LAMMP_PRIME_TABLE_H__
 #include "../numth.h"
 
-#define CHAR_PRIME_size 54
+#define PRIME_CHAR_TABLE_SIZE 54
 
-static const uint8_t pri_char_table[54] = {2,   3,   5,   7,   11,  13,  17,  19,  23,  29,  31,  37,  41,  43,
-                                           47,  53,  59,  61,  67,  71,  73,  79,  83,  89,  97,  101, 103, 107,
-                                           109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181,
-                                           191, 193, 197, 199, 211, 223, 227, 229, 233, 239, 241, 251};
+extern const uint8_t prime_char_table[54];
+
+// uint16_t prime_short_table[PRIME_SHORT_TABLE_SIZE];
+#define PRIME_SHORT_TABLE_SIZE 6542
 
 typedef struct prime_short {
     ushortp pri;     // prime 数组指针
@@ -66,12 +66,14 @@ INLINE_ size_t lmmp_prime_size_(ulong n) {
  * @brief 初始化素数表
  * @param p 素数表指针
  * @param n 素数表大小
+ * @warning n>=2, p!=NULL
  */
 void lmmp_prime_short_init_(pri_short* p, ushort n);
 
 /**
  * @brief 释放素数表
  * @param p 素数表指针
+ * @warning p!=NULL
  */
 void lmmp_prime_short_free_(pri_short* p);
 
@@ -79,12 +81,14 @@ void lmmp_prime_short_free_(pri_short* p);
  * @brief 初始化素数表
  * @param p 素数表指针
  * @param n 素数表大小
+ * @warning n>=2, p!=NULL
  */
 void lmmp_prime_int_init_(pri_int* p, uint n);
 
 /**
  * @brief 释放素数表
  * @param p 素数表指针
+ * @warning p!=NULL
  */
 void lmmp_prime_int_free_(pri_int* p);
 

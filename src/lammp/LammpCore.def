@@ -57,6 +57,8 @@ EXPORTS
 	lmmp_mul_toom32_
 	lmmp_mul_toom33_
 	lmmp_mul_toom42_
+	lmmp_mul_toom42_history_
+	lmmp_mul_toom42_history_free_
 
 	lmmp_fft_next_size_
 	lmmp_mul_fermat_

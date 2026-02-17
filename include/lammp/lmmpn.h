@@ -259,6 +259,26 @@ void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
+ * @brief Toom-42乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
+ * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算并记录
+ *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果。
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief 释放历史Toom-42乘法运算的结果
+ * @note 请在调用lmmp_mul_toom42_history_()后调用此函数释放历史记录。
+ */
+void lmmp_mul_toom42_history_free_(void);
+
+/**
  * @brief 计算满足 >=n 的最小费马/梅森乘法可行尺寸
  * @param n 输入的目标尺寸
  * @return 满足条件的SSA乘法最小尺寸
@@ -313,15 +333,14 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
  * @param nb 第二个操作数的 limb 长度
  * @warning ???<=nb<=na, sep(dst,[numa|numb])
  * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算FFT乘积
- *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果，同时需要注意的是，在释放历史记录结果前，
- *       不能对记录的numb进行释放，否则可能发生悬空指针错误。
+ *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果。
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief 释放历史FFT乘法运算的结果
- * @note 请在调用lmmp_mul_fft_history_()后调用此函数释放历史记录结果，否则可能发生悬空指针错误。
+ * @note 请在调用lmmp_mul_fft_history_()后调用此函数释放历史记录。
  */
 void lmmp_mul_fft_history_free_(void);
 

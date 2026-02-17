@@ -8,10 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef LAMMP_OUT_OF_BOUNDS
-#define LAMMP_OUT_OF_BOUNDS 4
-#endif
-
 // === 内存块头部结构 ===
 typedef struct {
     size_t user_size;   // 用户请求的大小
