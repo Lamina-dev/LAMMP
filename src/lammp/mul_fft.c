@@ -1183,8 +1183,8 @@ typedef struct {
     fft_memstack msr_mersenne;
     mp_ptr temp_coef_fermat;
     mp_ptr temp_coef_mersenne;
-    int fermat_flag;
-    int mersenne_flag;
+    int fermat_flag;   // 是否分配了费马内存
+    int mersenne_flag; // 是否分配了梅森内存
 } fft_history;
 
 static fft_history numb_history;
@@ -1231,7 +1231,7 @@ static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp
     mp_ptr *pfca = (mp_ptr*)(amsr.temp_coef + nlen);
     mp_ptr *pfcb = NULL;
 
-    if (GH.rn == rn && GH.fermat_flag) {
+    if (GH.rn == rn && GH.fermat_flag && GH.nb == nb && GH.numb == numb) {
         bmsr = &GH.msr_fermat;
         bmsr->lenw = n / LIMB_BITS;
         pfcb = (mp_ptr*)(GH.temp_coef_fermat + nlen);
@@ -1249,7 +1249,7 @@ static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp
         GH.rn = rn;
         pfcb = (mp_ptr*)(bmsr->temp_coef + nlen);
     }
-    
+
     mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;
     for (mp_size_t i = 0; i < K; ++i) {
         mp_size_t coeflen;
@@ -1329,7 +1329,7 @@ static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, 
     mp_ptr* pfca = (mp_ptr*)(amsr.temp_coef + nlen);
     mp_ptr* pfcb = NULL;
 
-    if (GH.rn == rn && GH.mersenne_flag) {
+    if (GH.rn == rn && GH.mersenne_flag && GH.nb == nb && GH.numb == numb) {
         bmsr = &GH.msr_mersenne;
         bmsr->lenw = n / LIMB_BITS;
         pfcb = (mp_ptr*)(GH.temp_coef_mersenne + nlen);

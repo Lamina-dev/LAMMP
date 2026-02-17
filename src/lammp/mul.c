@@ -68,13 +68,13 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
                 lmmp_mul_toom42_(dst, numa, na, numb, nb);
         } else {
             mp_limb_t* ws = SALLOC_TYPE(nb, mp_limb_t);
-            lmmp_mul_toom42_(dst, numa, 2 * nb, numb, nb);
+            lmmp_mul_toom42_history_(dst, numa, 2 * nb, numb, nb);
             dst += 2 * nb;
             numa += 2 * nb;
             na -= 2 * nb;
             lmmp_copy(ws, dst, nb);
             while (2 * na >= 5 * nb) {
-                lmmp_mul_toom42_(dst, numa, 2 * nb, numb, nb);
+                lmmp_mul_toom42_history_(dst, numa, 2 * nb, numb, nb);
                 if (lmmp_add_n_(dst, dst, ws, nb))
                     lmmp_inc(dst + nb);
                 dst += 2 * nb;
@@ -82,6 +82,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
                 na -= 2 * nb;
                 lmmp_copy(ws, dst, nb);
             }
+            lmmp_mul_toom42_history_free_();
             // 0.5 nb <= na < 2.5 nb
             if (na >= nb)
                 lmmp_mul_(dst, numa, na, numb, nb);

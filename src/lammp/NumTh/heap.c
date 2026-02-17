@@ -67,15 +67,6 @@ bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr outElem) {
     return true;
 }
 
-// 查看队首元素，不取出
-bool lmmp_num_heap_peek_(num_heap* pq, num_node_ptr outElem) {
-    if (pq->size == 0) {
-        return false;
-    }
-    *outElem = pq->head[0];
-    return true;
-}
-
 mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn) {
     num_node numa, numb;
     numa.num = NULL;
