@@ -72,7 +72,7 @@ typedef enum {
 typedef void (*lmmp_abort_func_t)(lmmp_error_t type, const char* msg, const char* file, int line);
 
 /**
- * 设置 LAMMP 全局退出函数
+ * @brief 设置 LAMMP 全局退出函数
  * @param func 退出函数指针，可以为NULL
  * @return 返回之前的退出函数指针，若原指针为NULL，则返回NULL。
  * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
@@ -81,7 +81,7 @@ typedef void (*lmmp_abort_func_t)(lmmp_error_t type, const char* msg, const char
 lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
 
 /**
- * LAMMP 全局退出函数，内部错误或断言失败时调用，若设置了全局退出函数，则会调用该函数，否则会调用默认的退出函数。
+ * @brief LAMMP 全局退出函数，内部错误或断言失败时调用，若设置了全局退出函数，则会调用该函数，否则会调用默认的退出函数。
  * @param msg 退出信息，大部分情况下，为断言错误直接转换为字符串。若type为LAMMP_OUT_OF_BOUNDS，则会包含较多的信息，
  *         详细说明越界的指针、何处分配、何处销毁。详细信息可以查看 impl/safe_memory.h 中的相关函数实现。
  * @param file 退出处的文件名
@@ -123,7 +123,7 @@ void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
 // 此宏为1时，会增加lmmp_debug_assert的检查，包括入参检查和中间结果检查。
 // 开启此宏可能会带来一定的性能开销
 #define LAMMP_DEBUG 0
-// 此宏为1时，会增加内存越界检查的功能。
+// 此宏为1时，会增加内存越界检查的功能（非常有限的检查）
 // 开启此宏会带来较多的性能开销
 #define MEMORY_CHECK 0
 
@@ -153,7 +153,7 @@ void* lmmp_alloc(size_t size, const char* file, int line);
 #define lmmp_alloc(size) lmmp_alloc(size, __FILE__, __LINE__)
 #else
 /**
- * 内存分配函数
+ * @brief 内存分配函数
  * @param size 要分配的内存字节数
  * @return 成功返回指向分配内存的指针，失败返回NULL
  * @note 是标准malloc的安全封装版本
@@ -166,7 +166,7 @@ void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
 #define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __FILE__, __LINE__)
 #else
 /**
- * 内存重分配函数
+ * @brief 内存重分配函数
  * @param ptr 已分配的内存指针
  * @param size 新的内存大小（字节）
  * @return 成功返回指向新内存区域的指针，失败返回NULL
@@ -181,7 +181,7 @@ void lmmp_free(void* ptr, const char* file, int line);
 #define lmmp_free(ptr) lmmp_free(ptr, __FILE__, __LINE__)
 #else
 /**
- * 内存释放函数
+ * @brief 内存释放函数
  * @param ptr 要释放的内存指针
  * @note 是标准free的安全封装版本，确保空指针释放安全
  */
