@@ -7,7 +7,7 @@ static inline void swap_num_node(num_node_ptr a, num_node_ptr b) {
 }
 
 // 向上调整最小堆（插入元素后维护堆性质：len小的在上）
-void heapifyUp(num_heap* pq, size_t index) {
+static void heapifyUp(num_heap* pq, size_t index) {
     size_t parent = (index - 1) / 2; 
 
     // 最小堆：当前节点len < 父节点len 时交换
@@ -19,7 +19,7 @@ void heapifyUp(num_heap* pq, size_t index) {
 }
 
 // 向下调整最小堆
-void heapifyDown(num_heap* pq, size_t index) {
+static void heapifyDown(num_heap* pq, size_t index) {
     if (pq->size == 0) {
         return;
     }
