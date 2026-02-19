@@ -122,6 +122,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         dst[mpn] = lmmp_mul_1_(dst, mp, mpn, t);
         rn = dst[mpn] == 0 ? mpn : mpn + 1;
         lmmp_free(mp);
+        lmmp_num_heap_free_(&heap);
         return rn;
     }
 }
@@ -331,6 +332,7 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 
         lmmp_copy(dst, mp, mpn);
         lmmp_free(mp);
+        lmmp_num_heap_free_(&heap);
         return mpn;
     }
 }

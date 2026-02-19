@@ -1,7 +1,5 @@
 #include "../../include/lammp/lmmpn.h"
 
-// 1:[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]
-// need(na>0, MSB(numa)=1, sep(dst, numa))
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_debug_assert(na > 0);
     lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
@@ -11,10 +9,11 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         TEMP_DECL;
         mp_ptr xp = TALLOC_TYPE(2 * na, mp_limb_t);
         mp_size_t i = na;
-        do xp[--i] = LIMB_MAX;
-        while (i);
+        do {
+            xp[--i] = LIMB_MAX;
+        } while (i);
         lmmp_not_(xp + na, numa, na);
-        //[xp,2*na]=2^(64*2*na)-1-[numa,na]*2^(64*na)
+        //[xp,2*na] = B^(2*na)-1 - [numa,na]*B^na
 
         if (na == 2) {
             lmmp_div_2_s_(dst, xp, 4, numa);
@@ -30,8 +29,6 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     }
 }
 
-// 1:[dst,na]=(2^(2*na*LMMP_BITS)-1)/[numa,na]+[0|-1]
-// need(na>4, MSB(numa)=1, sep(dst, numa))
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_debug_assert(na > 4);
     lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
