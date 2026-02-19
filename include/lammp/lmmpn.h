@@ -159,10 +159,11 @@ void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr dst);
 /**
  * @brief Toom插值计算（5点插值），用于Toom-33和Toom-42乘法算法
  * @param dst 输出结果缓冲区，存储插值计算结果
- * @param v2 输入参数：v(2)插值点值
- * @param vm1 输入参数：v(-1)插值点值
- * @param n 操作数的单精度数(limb)长度
- * @param spt 分段大小参数，用于内存分段处理
+ *        v(0)储存在[dst,2n]，v(1)储存在[dst+2n,2n]
+ * @param v2 v(2)插值点值，长度为 2n+1
+ * @param vm1 v(-1)插值点值，长度为 2n+1
+ * @param n 操作数的 limb 长度
+ * @param spt 系数r4的长度
  * @param vm1_neg 符号标记：v(-1)是否为负数（1表示负，0表示正）
  * @param vinf0 无穷远点插值的低64位值
  */
@@ -401,11 +402,11 @@ mp_limb_t lmmp_inv_1_(mp_limb_t x);
 mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
 
 /**
- * @brief 近似逆元计算（牛顿迭代法）
+ * @brief 近似逆元计算
  * @param dst 输出结果缓冲区，长度为na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
- * @warning na>4, MSB(numa)=1, sep(dst,numa)
+ * @warning na>0, MSB(numa)=1, sep(dst,numa)
  * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]
  */
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
