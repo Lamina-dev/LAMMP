@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_gcd2();
+    test_matrix();
     return 0;
 }

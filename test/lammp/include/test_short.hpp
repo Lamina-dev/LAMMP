@@ -3,6 +3,7 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/mprand.h"
+#include "../../../include/lammp/matrix.h"
 
 
 void test_add_nc();
@@ -19,3 +20,4 @@ void test_gcd();
 void test_gcd2();
 void test_rand();
 void test_hash();
+void test_matrix();

@@ -37,14 +37,24 @@
         同时limb长度为0，因为这可能导致未定义行为。
 
         矩阵或向量的各个元素的地址我们并不要求完全分离或相同，当sep或eqsep用于矩阵或向量时，
-        语义和意义与sep或eqsep的一般用法相同。sep表示各个元素分离，eqsep表示各个元素相同。
+        语义和意义与sep或eqsep的一般用法相同。sep表示mat和vec指针分离，eqsep表示mat和vec
+        指针分离或相同，elemsep表示mat或vec各元素指针分离，eqelemsep表示mat或vec各元素指针
+        分离或相同。
+
+        nonull()表示矩阵或向量中的各元素全部非空
 
 */
 
 #include "lmmp.h"
-
+#include <stdio.h>
 // 元素连乘朴素连乘空间长度
-#define ELEMMUL_MP_THRESHOLD 20
+#define LIMB_ELEMMUL_MP_THRESHOLD 20
+
+// 向量连乘朴素连乘空间长度
+#define VEC_ELEMMUL_MP_THRESHOLD 40
+
+// 2x2矩阵乘法选择STRASSEN算法的阈值
+#define MAT22_MUL_STRASSEN_THRESHOLD 60
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,11 +92,9 @@ typedef struct {
 typedef lmmp_svecn_t lmmp_matn1_t;
 typedef lmmp_svecn_t lmmp_vecn_t;
 
-void lmmp_vec_scalar_mul_(lmmp_vecn_t* dst, const lmmp_vecn_t* vec, mp_srcptr scalar, mp_size_t sralar_n);
-
 /**
  * @brief 计算向量的累乘
- * @param dst 结果向量，将会被覆盖为累乘结果指针
+ * @param dst 结果向量，将会被覆盖为累乘结果指针，将会自动分配内存
  * @param vec 被累乘向量
  * @warning dst!=NULL, vec!=NULL, vec->num!=NULL, vec->len!=NULL, vec->n>0
  * @note 当vec存在语义0时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
@@ -96,7 +104,7 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, lmmp_vecn_t* vec);
 
 /**
  * @brief 计算limb向量的累乘
- * @param dst 结果向量，将会被覆盖为累乘结果指针
+ * @param dst 结果向量，将会被覆盖为累乘结果指针，将会自动分配内存
  * @param vec 被累乘向量
  * @warning dst!=NULL, vec!=NULL
  * @note 当limb数组存在0值时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
@@ -106,15 +114,35 @@ mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, mp_limb_t* limb, mp_size_t n);
 
 /**
  * @brief 计算slimb向量的累乘
- * @param dst 结果向量，将会被覆盖为累乘结果指针
+ * @param dst 结果向量，将会被覆盖为累乘结果指针，将会自动分配内存
  * @param vec 被累乘向量
  * @warning dst!=NULL, vec!=NULL
  * @note 当limb数组存在0值时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
- * @return 结果dst的实际长度
+ * @return 结果dst的实际长度（为负数表示此数为负数，绝对值表示实际长度）
  */
 mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, mp_slimb_t* slimb, mp_size_t n);
 
+/**
+ * @brief 计算2x2矩阵和向量的乘积
+ * @param dst 结果向量，dst内的内存请调用者自行分配，自行保证拥有足够的空间
+ * @param mat 2x2矩阵
+ * @param vec 2x1向量
+ * @return 无，结果保存在dst中
+ * @warning dst!=NULL, mat!=NULL, vec!=NULL, nonull(mat), nonull(vec), nonull(dst), eqsep(dst, vec)
+ */
 void lmmp_mat22_mul_vec2_(lmmp_vec2_t* dst, const lmmp_mat22_t* mat, const lmmp_vec2_t* vec);
+
+int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_size_t* tn, mp_size_t* maxa);
+
+void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_ptr tp,
+                              mp_size_t tn);
+
+void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_size_t tn,
+                              mp_size_t maxa);
+
+void lmmp_mat22_mul_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, int choose, mp_size_t tn);
+
+void lmmp_mat22_sqr_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat);
 
 
 #ifdef __cplusplus
