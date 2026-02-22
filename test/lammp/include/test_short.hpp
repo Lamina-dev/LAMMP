@@ -21,3 +21,4 @@ void test_gcd2();
 void test_rand();
 void test_hash();
 void test_matrix();
+void test_vec_ele_mul();
