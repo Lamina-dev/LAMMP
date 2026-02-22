@@ -42,8 +42,7 @@ INLINE_ mp_ssize_t lmmp_add_signed_(mp_ptr dst, mp_srcptr numa, mp_ssize_t na, m
             dst[na] = lmmp_add_(dst, numa, na, numb, nb);
             return dst[na] == 0 ? na : na + 1;
         } else {
-            mp_limb_t c = lmmp_add_(dst, numb, nb, numa, na);
-            dst[nb] = c;
+            dst[nb] = lmmp_add_(dst, numb, nb, numa, na);
             return dst[nb] == 0 ? nb : nb + 1;
         }
     } else if (na < 0 && nb > 0) {
@@ -141,6 +140,27 @@ INLINE_ mp_ssize_t lmmp_mul_signed_(mp_ptr dst, mp_srcptr numa, mp_ssize_t na, m
     na += nb;
     na -= (dst[na - 1] == 0);
     return sign * na;
+}
+
+/**
+ * @brief 计算带符号数的平方
+ * @param dst 结果指针，自行保证有足够的空间，需要空间为abs(na)*2
+ * @param numa 第一个数的指针
+ * @param na 第一个数的长度，为负数表示此数为负数，绝对值表示实际长度
+ * @return 结果的长度，平方一定为非负数
+ * @warning dst!=NULL, sep(dst,numa)
+ */
+INLINE_ mp_ssize_t lmmp_sqr_signed_(mp_ptr dst, mp_srcptr numa, mp_ssize_t na) {
+    if (na < 0) {
+        na = -na;
+    } else if (na == 0) {
+        dst[0] = 0;
+        return 0;
+    }
+    lmmp_sqr_(dst, numa, na);
+    na <<= 1;
+    na -= (dst[na - 1] == 0) ? 1 : 0;
+    return na;
 }
 
 #ifdef INLINE_

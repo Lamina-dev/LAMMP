@@ -10,8 +10,8 @@ static inline void lmmp_print_hex(mp_srcptr num, mp_ssize_t n) {
         n = -n;
     }
     printf("0x");
-    for (mp_ssize_t i = n - 1; i >= 0; i--) {
-        printf("%llx", num[i]);
+    for (mp_ssize_t i = n - 1; i >= 0; --i) {
+        printf("%016llX", num[i]);
     }
     printf("\n");
 }

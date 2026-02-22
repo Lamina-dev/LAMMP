@@ -707,6 +707,12 @@ void lmmp_temp_free_(void* marker);
 #define lmmp_debug_assert(x) ((void)0)
 #endif
 
+#if ALLOC_FREE_COUNT == 1
+#define ALLOC_FREE_COUNT_CHECK lmmp_assert(lmmp_alloc_count(-1) == 0 && "Memory leak detected")
+#else
+#define ALLOC_FREE_COUNT_CHECK ((void)0)
+#endif
+
 /**
  * @brief 大数加1宏（预期无进位）
  * @param p 指向大数起始位置的指针
