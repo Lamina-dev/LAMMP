@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_matrix();
+    test_vec_ele_mul();
     return 0;
 }

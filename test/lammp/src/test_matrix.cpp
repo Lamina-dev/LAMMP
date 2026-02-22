@@ -5,7 +5,7 @@ void test_matrix() {
     lmmp_mat22_t A1, A2, B, C;
     TEMP_DECL;
     lmmp_global_rng_init_(123823, 0);
-    const mp_size_t Bn = 60, Cn = 60;
+    const mp_size_t Bn = 55, Cn = 60;
     B.n00 = Bn;
     B.n01 = Bn;
     B.n10 = Bn;
@@ -34,7 +34,7 @@ void test_matrix() {
     C.n00 = -C.n00;
     C.n11 = -C.n11;
 
-    const mp_size_t an = Bn + Cn + 2;
+    const mp_size_t an = Bn + Bn + 2;
     A1.a00 = BALLOC_TYPE(an, mp_limb_t);
     A1.a01 = BALLOC_TYPE(an, mp_limb_t);
     A1.a10 = BALLOC_TYPE(an, mp_limb_t);
@@ -48,14 +48,14 @@ void test_matrix() {
     const mp_size_t tn = an;
     mp_ptr tp = BALLOC_TYPE(tn * 2, mp_limb_t);
     auto start = std::chrono::high_resolution_clock::now();
-    lmmp_mat22_mul_basecase_(&A1, &B, &C, tp, tn);
+    lmmp_mat22_mul_basecase_(&A1, &B, &B, tp, tn);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     printf("basecase time: %lld us\n", duration);
 
 
     start = std::chrono::high_resolution_clock::now();
-    lmmp_mat22_mul_strassen_(&A2, &B, &C, tn, Bn + 1);
+    lmmp_mat22_mul_strassen_(&A2, &B, &B, NULL, tn, Bn + 1);
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     printf("strassen time: %lld us\n", duration);
