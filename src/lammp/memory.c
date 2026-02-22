@@ -89,12 +89,25 @@ static inline void lmmp_chech_memory(size_t size, const char* file, int line) {
     lmmp_abort(LAMMP_MEMORY_ALLOC_FAILURE, msg, file, line);
 }
 
+#if ALLOC_FREE_COUNT == 1
+static int alloc_count = 0;
+int lmmp_alloc_count(int cnt) {
+    int new_cnt = cnt >= 0 ? cnt : alloc_count;
+    cnt = alloc_count;
+    alloc_count = new_cnt;
+    return cnt;
+}
+#endif
+
 #if MEMORY_CHECK == 1
 void* lmmp_alloc(size_t size, const char* file, int line) { 
     if (size) {
         void* ret = lmmp_malloc_debug(size, file, line);
         if (ret == NULL)
             lmmp_chech_memory(size, file, line);
+        #if ALLOC_FREE_COUNT == 1
+        alloc_count++;
+        #endif
         return ret;
     }
     return NULL;
@@ -105,6 +118,9 @@ void* lmmp_alloc(size_t size) {
         void* ret = malloc(size);
         if (ret == NULL) 
             lmmp_chech_memory(size, __FILE__, __LINE__);
+        #if ALLOC_FREE_COUNT == 1
+        alloc_count++;
+        #endif
         return ret;
     }
     return NULL;
@@ -116,6 +132,9 @@ void* lmmp_realloc(void* oldptr, size_t new_size, const char* file, int line) {
     void* ret = lmmp_realloc_debug(oldptr, new_size, file, line);
     if (ret == NULL)
         lmmp_chech_memory(new_size, file, line);
+    #if ALLOC_FREE_COUNT == 1
+    alloc_count++;
+    #endif
     return ret;
 }
 #else
@@ -123,6 +142,9 @@ void* lmmp_realloc(void* oldptr, size_t new_size) {
     void* ret = realloc(oldptr, new_size);
     if (ret == NULL) 
         lmmp_chech_memory(new_size, __FILE__, __LINE__);
+    #if ALLOC_FREE_COUNT == 1
+    alloc_count++;
+    #endif
     return ret;
 }
 #endif
@@ -131,11 +153,18 @@ void* lmmp_realloc(void* oldptr, size_t new_size) {
 void lmmp_free(void* ptr, const char* file, int line) {
     if (ptr) {
         lmmp_free_debug(ptr, file, line);
+        #if ALLOC_FREE_COUNT == 1
+        alloc_count--;
+        #endif
     }
 }
 #else
 void lmmp_free(void* ptr) { 
-    if (ptr) 
-        free(ptr); 
+    if (ptr) {
+        free(ptr);
+        #if ALLOC_FREE_COUNT == 1
+        alloc_count--;
+        #endif
+    } 
 }
 #endif

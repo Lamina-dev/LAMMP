@@ -8,7 +8,7 @@
 
 #define POP_THRESHOLD 5
 
-mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, lmmp_vecn_t* vec) {
+mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec) {
     lmmp_debug_assert(dst != NULL && vec != NULL);
     lmmp_debug_assert(vec->n > 0);
 
@@ -50,6 +50,7 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, lmmp_vecn_t* vec) {
                     lmmp_mul_basecase_(mp1, vec->num[i], len, mp2, mpn);
                 mpn += len;
                 mpn -= mp1[mpn - 1] == 0 ? 1 : 0;
+                imp = true;
             }
         }
         if (mpn + POP_THRESHOLD > VEC_ELEMMUL_MP_THRESHOLD) {
@@ -67,12 +68,16 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, lmmp_vecn_t* vec) {
         }
     }
     if (imp) {
-        if (!(mpn == 1 && mp1[0] == 1)) 
+        if (!(mpn == 1 && mp1[0] == 1))
             lmmp_num_heap_push_(&heap, mp1, mpn);
+        else
+            lmmp_free(mp1);
         lmmp_free(mp2);
     } else {
         if (!(mpn == 1 && mp2[0] == 1))
             lmmp_num_heap_push_(&heap, mp2, mpn);
+        else
+            lmmp_free(mp2);
         lmmp_free(mp1);
     }
 
@@ -82,7 +87,7 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, lmmp_vecn_t* vec) {
     return sign ? mpn : -mpn;
 }
 
-mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, mp_limb_t* limb, mp_size_t n) {
+mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n) {
     lmmp_debug_assert(dst != NULL && limb != NULL);
     lmmp_debug_assert(n > 0);
 
@@ -112,6 +117,8 @@ mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, mp_limb_t* limb, mp_size_t n) {
 
     if (!(mpn == 1 && mp[0] == 1))
         lmmp_num_heap_push_(&heap, mp, mpn);
+    else
+        lmmp_free(mp);
 
     mp = lmmp_num_heap_mul_(&heap, &mpn);
     lmmp_num_heap_free_(&heap);
@@ -119,7 +126,7 @@ mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, mp_limb_t* limb, mp_size_t n) {
     return mpn;
 }
 
-mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, mp_slimb_t* slimb, mp_size_t n) {
+mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t n) {
     lmmp_debug_assert(dst != NULL && slimb != NULL);
     lmmp_debug_assert(n > 0);
 
@@ -154,6 +161,8 @@ mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, mp_slimb_t* slimb, mp_size_t n) {
 
     if (!(mpn == 1 && mp[0] == 1))
         lmmp_num_heap_push_(&heap, mp, mpn);
+    else
+        lmmp_free(mp);
 
     mp = lmmp_num_heap_mul_(&heap, &mpn);
     lmmp_num_heap_free_(&heap);
