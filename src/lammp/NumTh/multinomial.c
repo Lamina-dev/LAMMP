@@ -110,6 +110,8 @@ mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp 
     }
     if (!(mpn == 1 && mp[0] == 1))
         lmmp_num_heap_push_(&heap, mp, mpn);
+    else
+        lmmp_free(mp);
 
     lmmp_prime_short_free_(&primes);
     lmmp_debug_assert(heap.size != 0);

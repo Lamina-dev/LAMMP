@@ -2,21 +2,20 @@
 #include "../include/test_short.hpp"
 
 void test_perm() {
-    size_t n = 0xfffffffff, r = 0;
+    size_t n = 0xfffff, r = n;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 
-    mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
+    mp_ptr a;
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);
 
-    a[0] = 1;
-    mp_size_t an = 1;
-    auto start = std::chrono::high_resolution_clock::now();
-    for (size_t i = n - r + 1; i <= n && i != 0; i++) {
-        a[an] = lmmp_mul_1_(a, a, an, i);
-        ++an;
-        an -= a[an - 1] == 0 ? 1 : 0;
+    mp_ptr limb_vec = ALLOC_TYPE(n, mp_limb_t);
+    for (size_t i = 0; i < n; i++) {
+        limb_vec[i] = i + 1;
     }
+
+    auto start = std::chrono::high_resolution_clock::now();
+    mp_size_t an = lmmp_limb_elem_mul_(&a, limb_vec, n);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
@@ -40,4 +39,6 @@ void test_perm() {
     std::cout << "passed\n";
     lmmp_free(a);
     lmmp_free(b);
+    lmmp_free(limb_vec);
+    ALLOC_FREE_COUNT_CHECK;
 }

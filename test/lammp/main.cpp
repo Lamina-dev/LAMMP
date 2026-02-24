@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_gcd2();
+    test_vec_ele_mul();
     return 0;
 }
