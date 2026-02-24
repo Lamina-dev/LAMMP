@@ -130,6 +130,8 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         }
         if (!(mpn == 1 && mp[0] == 1))
             lmmp_num_heap_push_(&heap, mp, mpn);
+        else
+            lmmp_free(mp);
 
         lmmp_prime_short_free_(&primes);
 
@@ -264,6 +266,8 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         }
         if (!(mpn == 1 && mp[0] == 1))
             lmmp_num_heap_push_(&heap, mp, mpn);
+        else
+            lmmp_free(mp);
 
         lmmp_prime_int_free_(&primes);
 

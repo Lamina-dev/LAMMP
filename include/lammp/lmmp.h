@@ -126,6 +126,10 @@ void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
 // 此宏为1时，会增加内存越界检查的功能（非常有限的检查）
 // 开启此宏会带来较多的性能开销
 #define MEMORY_CHECK 0
+// 此宏为1时，会增加内存分配和释放次数的统计功能
+// 定义此宏时，需要手动
+// 开启此宏会带来一定的性能开销
+#define ALLOC_FREE_COUNT 1
 
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
@@ -186,6 +190,16 @@ void lmmp_free(void* ptr, const char* file, int line);
  * @note 是标准free的安全封装版本，确保空指针释放安全
  */
 void lmmp_free(void*);
+#endif
+
+#if ALLOC_FREE_COUNT == 1
+/**
+ * @brief 获取当前分配的内存数量
+ * @param cnt 如果cnt不为负数，则返回当前分配的内存数量（旧值），并将当前计数器值设置为cnt。
+ *            若为负数，则仅返回当前分配的内存数量（新值）。
+ * @return 当前分配的内存数量（旧值）
+ */
+int lmmp_alloc_count(int cnt);
 #endif
 
 // ===================== lmmp_ 底层不安全运算函数 =====================
