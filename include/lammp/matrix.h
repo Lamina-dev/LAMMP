@@ -130,16 +130,6 @@ mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n);
 mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t n);
 
 /**
- * @brief 计算2x2矩阵和向量的乘积
- * @param dst 结果向量，dst内的内存请调用者自行分配，自行保证拥有足够的空间
- * @param mat 2x2矩阵
- * @param vec 2x1向量
- * @return 无，结果保存在dst中
- * @warning dst!=NULL, mat!=NULL, vec!=NULL, nonull(mat), nonull(vec), nonull(dst), eqsep(dst, vec)
- */
-void lmmp_mat22_mul_vec2_(lmmp_vec2_t* dst, const lmmp_mat22_t* mat, const lmmp_vec2_t* vec);
-
-/**
  * @brief 计算2x2矩阵和2x2矩阵的乘积需要分配的内存
  * @param dst 结果矩阵，dst中的n将会被覆盖为对应位置需要的limb长度，此函数不分配内存。
  * @param matA 矩阵A
