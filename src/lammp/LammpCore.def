@@ -126,3 +126,12 @@ EXPORTS
 
 	lmmp_siphash24_
 	lmmp_xxhash_
+
+	lmmp_vec_elem_mul_
+	lmmp_limb_elem_mul_
+	lmmp_slimb_elem_mul_
+	lmmp_mat22_mul_size_
+	lmmp_mat22_mul_basecase_
+	lmmp_mat22_sqr_basecase_
+	lmmp_mat22_mul_strassen_
+	lmmp_mat22_sqr_strassen_
