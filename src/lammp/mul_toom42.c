@@ -18,6 +18,7 @@ vinf=              a3 *     b1  # A(inf)*B(inf)
 */
 
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    TEMP_DECL;
     mp_size_t n = na >= 2 * nb ? (na + 3) >> 2 : (nb + 1) >> 1, s = na - 3 * n, t = nb - n;
     int vm1_neg;
     mp_limb_t cy, vinf0, am1h;
@@ -111,6 +112,7 @@ void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
     lmmp_mul_n_(v0, a0, b0, n);
 
     lmmp_toom_interp5_(dst, v2, vm1, n, s + t, vm1_neg, vinf0);
+    TEMP_FREE;
 #undef a0
 #undef a1
 #undef a2
@@ -159,6 +161,7 @@ void lmmp_mul_toom42_history_free_() {
 }
 
 void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    TEMP_DECL;
     mp_size_t n = na >= 2 * nb ? (na + 3) >> 2 : (nb + 1) >> 1, s = na - 3 * n, t = nb - n;
     int vm1_neg;
     mp_limb_t cy, vinf0, am1h;
@@ -285,4 +288,5 @@ void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcpt
     lmmp_mul_n_(v0, a0, b0, n);
 
     lmmp_toom_interp5_(dst, v2, vm1, n, s + t, vm1_neg, vinf0);
+    TEMP_FREE;
 }

@@ -67,6 +67,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
             else
                 lmmp_mul_toom42_(dst, numa, na, numb, nb);
         } else {
+            TEMP_DECL;
             mp_limb_t* ws = SALLOC_TYPE(nb, mp_limb_t);
             lmmp_mul_toom42_history_(dst, numa, 2 * nb, numb, nb);
             dst += 2 * nb;
@@ -90,6 +91,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
                 lmmp_mul_(dst, numb, nb, numa, na);
             if (lmmp_add_n_(dst, dst, ws, nb))
                 lmmp_inc(dst + nb);
+            TEMP_FREE;
         }
     } else {
         if (na < 8 * nb)

@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn) {

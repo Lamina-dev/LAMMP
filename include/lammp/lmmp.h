@@ -19,57 +19,93 @@
 #ifndef LAMMP_LMMP_H
 #define LAMMP_LMMP_H
 
-/*************************************************************
-        符号说明:
-
-        B           基数，固定为 2^64
-
-        [p,n,b]     表示指针p指向的、以b为基数的n位数
-                    p[i-1] 代表其第i位最低有效位 (0<i<=n)
-                    如果省略b，则默认基数为B。通常情况下，
-                    用此符号表示函数参数时，一般暗指高位不存在0，
-                    而用此符号表示函数返回值时，表示写入的位数，
-                    即使可能写入为0。
-
-        sep         指针指向的内存区域完全分离
-
-        eqsep       完全相同的内存区域或者完全分离
-
-                    备注：我们都假定内存是向上增长的，dst <= num+1
-                    的内存布局可以这样表示
-                            dst ──┐
-                   num ──┐        |00000000|00000000|
-                         |********|********|
-
-        MSB(x)      x的最高有效位，比如最高有效位为1，大部分语境下
-                    代表 x >= B / 2
-
-        [x|y]       x或y，用于表示参数或返回值的取值范围
-****************************************************************/
-
 #include <stddef.h> 
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#define LAMMP_DEFAULT_STACK_SIZE 128*1024 // 默认全局栈大小，单位为字节
+
+/* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有三个开销等级：低、中、高。 */
+
+// 开启时，将会检查栈溢出；开销：低
+#define LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 1
+
+// 开启时，将会进行debug_assert的检查；开销：中
+#define LAMMP_DEBUG_ASSERT_CHECK 0
+
+// 开启时，将会进行参数检查；开销：中
+#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 0
+
+// 开启时，将会进行堆内存的检查；开销：高
+#define LAMMP_DEBUG_MEMORY_CHECK 0
+
+// 开启时，会增加内存分配和释放次数的统计功能
+// 需要手动调用检查宏
+#define LAMMP_DEBUG_ALLOC_FREE_COUNT 0
+
+/*
+ LAMMP 内存分配函数指针类型：
+ 1. heap_alloc : 堆内存分配器
+ 2. heap_free : 堆内存释放器
+ 3. realloc : 堆内存重新分配器
+ 4. stack_get_top : 获取当前栈顶指针
+ 5. stack_set_top : 设置当前栈顶指针
+
+ 前三个函数默认使用 malloc、free、realloc 实现，
+ 而 stack_get_top 和 stack_set_top 函数默认实现为：
+  首次调用时分配一块大小为LAMMP_DEFAULT_STACK_SIZE的堆内存
+  （通过调用 heap_alloc 函数），通过维护此堆内存来模拟栈。
+  请注意，我们默认栈是向上增长的，即从低地址到高地址。
+ 
+ 如果使用自定义栈，请进行手动内存管理和处理溢出。默认栈是全局的，
+ 同时默认栈的大小是可调的，可以通过函数 lmmp_default_stack_reset 来调整
+ */
+
+typedef void* (*lmmp_heap_alloc_fn)(size_t size);
+typedef void (*lmmp_heap_free_fn)(void* ptr);
+typedef void* (*lmmp_realloc_fn)(void* ptr, size_t size);
+typedef void* (*lmmp_stack_get_top_fn)(void);
+typedef void (*lmmp_stack_set_top_fn)(void* top);
+
+lmmp_heap_alloc_fn lmmp_set_heap_alloc_fn(lmmp_heap_alloc_fn func);
+lmmp_heap_free_fn lmmp_set_heap_free_fn(lmmp_heap_free_fn func);
+lmmp_realloc_fn lmmp_set_realloc_fn(lmmp_realloc_fn func);
+lmmp_stack_get_top_fn lmmp_set_stack_get_top_fn(lmmp_stack_get_top_fn func);
+lmmp_stack_set_top_fn lmmp_set_stack_set_top_fn(lmmp_stack_set_top_fn func);
+
+/**
+ * @brief LAMMP 全局默认栈重置函数
+ * @param size 新的默认栈大小，单位为字节
+ * @warning 请注意，此函数会释放掉当前的默认栈，并重新分配一块新的堆内存作为默认栈。
+ *          因此，调用此函数后，访问之前的分配的栈空间将会导致未定义行为。
+ * @note 当 size 为 0 时，将会释放调用默认栈，如果此后再使用栈内存，将会重新申请一块大小为
+ *        LAMMP_DEFAULT_STACK_SIZE 的堆内存作为默认栈。
+ */
+void lmmp_default_stack_reset(size_t size);
+
 typedef enum {
-        LAMMP_ASSERT_FAILURE = 1,
-        LAMMP_DEBUG_ASSERT_FAILURE = 2,
-        LAMMP_MEMORY_ALLOC_FAILURE = 3,
-        LAMMP_OUT_OF_BOUNDS = 4,
-        LAMMP_UNEXPECTED_ERROR = 5
+    LAMMP_ERROR_ASSERT_FAILURE = 1,
+    LAMMP_ERROR_DEBUG_ASSERT_FAILURE = 2,
+    LAMMP_ERROR_PARAM_ASSERT_FAILURE = 3,
+    LAMMP_ERROR_MEMORY_ALLOC_FAILURE = 4,
+    LAMMP_ERROR_MEMORY_FREE_FAILURE = 5,
+    LAMMP_ERROR_OUT_OF_BOUNDS = 6,
+    LAMMP_ERROR_UNEXPECTED_ERROR = 7
 } lmmp_error_t;
 
 /**
- * LAMMP 全局退出函数指针类型
+ * @brief LAMMP 全局退出函数指针类型
  * @param type 退出类型（可以查看lmmp_abort函数对此参数的说明，这里不再重复）
- * @param msg 退出信息，取决于type，并不一定很详细，大部分情况下为断言错误直接转换为字符串
+ * @param msg 退出信息，取决于type
  * @param file 退出处的文件名
  * @param line 退出处的行号
  */
-typedef void (*lmmp_abort_func_t)(lmmp_error_t type, const char* msg, const char* file, int line);
+typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* file, int line);
 
 /**
  * @brief 设置 LAMMP 全局退出函数
@@ -78,41 +114,41 @@ typedef void (*lmmp_abort_func_t)(lmmp_error_t type, const char* msg, const char
  * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
  *          本库的开发者不对 func 函数的调用产生的影响做任何保证。
  */
-lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
+lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
 
 /**
  * @brief LAMMP 全局退出函数，内部错误或断言失败时调用，若设置了全局退出函数，则会调用该函数，否则会调用默认的退出函数。
- * @param msg 退出信息，大部分情况下，为断言错误直接转换为字符串。若type为LAMMP_OUT_OF_BOUNDS，则会包含较多的信息，
- *         详细说明越界的指针、何处分配、何处销毁。详细信息可以查看 impl/safe_memory.h 中的相关函数实现。
+ * @param msg 退出信息，assert类型的错误信息通常仅包含断言内容，其他类型的错误则因类型不同而不同。
  * @param file 退出处的文件名
  * @param line 退出处的行号
  * @param type 退出类型。有以下几个类型：
  * 
- *        1. LAMMP_ASSERT_FAILURE （枚举值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
+ *        1. ASSERT_FAILURE （枚举值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
  *             其通常代表不可能发生的计算错误，可能表明程序其他部分的计算错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
- *        2. LAMMP_DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
+ *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
  *             大部分情况下，可能是调用者未按照规定使用函数，导致函数入参检查失败，在函数开头通常有lmmp_debug_assert宏
- *             来检查部分参数的输入，不排除其他地方出现的错误。此类型只会在定义了 LAMMP_DEBUG 宏为 1 的情况下才会触发，
- *             Release 模式下通常为 0 。
+ *             来检查部分参数的输入，不排除其他地方出现的错误。此类型只会在定义了 LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的
+ *             情况下才会触发，
+ *         
+ *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出，其通常表明调用者传入了无效的参数，
+ *             导致函数的行为不符合预期。此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。此类型的错误只有在
+ *             定义了 LAMMP_DEBUG_PARAM_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *
- *        3. LAMMP_MEMORY_ALLOC_FAILURE （枚举值为3）为内存分配失败退出，这通常源于隐蔽的内存越界导致堆损坏，
- *             或者分配过大的系统内存。
+ *        4. MEMORY_ALLOC_FAILURE （枚举值为4）为内存分配失败退出，这可能有两种情况：一种情况为分配了堆内存不足，
+ *             导致程序崩溃；另一种情况为默认栈溢出（若是自定义栈，也不会有此情况），其中，情况一是会永远进行的，而情况二
+ *             只有在定义了 LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
  *
- *        4. LAMMP_OUT_OF_BOUNDS （枚举值为4）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
+ *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有一种触发可能，那就是使用默认栈时，调整的栈帧小于
+ *             栈底指针，导致栈下溢，只有在定义了 LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
+ * 
+ *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
  *             出范围。此类型只会在定义了 MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
- *        5. LAMMP_UNEXPECTED_ERROR （枚举值为5）为其他未知错误导致的退出。目前暂未使用，为预留作用。
+ *        7. UNEXPECTED_ERROR （枚举值为7）为其他未知错误导致的退出。目前暂未使用，为预留作用。
  *
- * @note + 调用此函数会导致本程序退出。需要注意的是，出于对性能的考量，在未定义LAMMP_DEBUG宏为 1（RELEASE模式下，
- *       其通常为0）的情况下，lmmp_debug_assert不会产生任何作用，也就是不会触发全局退出函数。在未定义 MEMORY_CHECK
- *       宏为 1（在RELEASE模式下， 其通常为0）的情况下，不会检查内存有无越界情况，也不会触发全局退出函数，
- *       不会产生 LAMMP_OUT_OF_BOUNDS 宏的退出。而 lmmp_assert 和 LAMMP_MEMORY_ALLOC_FAILURE 在何种情况下
- *       都会触发全局退出函数。
- *
- *       + 如果调用者希望在Release模式下开启 LAMMP_DEBUG_ASSERT_FAILURE 和 LAMMP_OUT_OF_BOUNDS ，需要在编译时
- *       定义相应的宏，无法在运行时动态设置。
+ * @note 相应的错误检查开关宏可以自行查阅上面的说明。
  *
  * @warning LAMMP内部中断都将会调用此函数，如果全局退出函数为NULL，则使用默认的退出函数，会打印出全部错误信息，并调用 
  *          abort 函数中断程序。设置全局退出函数请通过 lmmp_set_abort_func 函数进行设置。请不要在全局退出函数里做任
@@ -120,16 +156,6 @@ lmmp_abort_func_t lmmp_set_abort_func(lmmp_abort_func_t func);
  */
 void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
 
-// 此宏为1时，会增加lmmp_debug_assert的检查，包括入参检查和中间结果检查。
-// 开启此宏可能会带来一定的性能开销
-#define LAMMP_DEBUG 0
-// 此宏为1时，会增加内存越界检查的功能（非常有限的检查）
-// 开启此宏会带来较多的性能开销
-#define MEMORY_CHECK 0
-// 此宏为1时，会增加内存分配和释放次数的统计功能
-// 定义此宏时，需要手动
-// 开启此宏会带来一定的性能开销
-#define ALLOC_FREE_COUNT 1
 
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
@@ -138,6 +164,11 @@ typedef int64_t mp_slimb_t;          // 有符号limb类型 (64位有符号整�
 typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
 typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
 typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
+
+#define LIMB_BITS 64
+#define LIMB_BYTES 8
+#define LOG2_LIMB_BITS 6
+#define LIMB_MAX (~(mp_limb_t)0)
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #define STATIC_ASSERT _Static_assert
@@ -157,7 +188,7 @@ void* lmmp_alloc(size_t size, const char* file, int line);
 #define lmmp_alloc(size) lmmp_alloc(size, __FILE__, __LINE__)
 #else
 /**
- * @brief 内存分配函数
+ * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
  * @param size 要分配的内存字节数
  * @return 成功返回指向分配内存的指针，失败返回NULL
  * @note 是标准malloc的安全封装版本
@@ -170,7 +201,7 @@ void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
 #define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __FILE__, __LINE__)
 #else
 /**
- * @brief 内存重分配函数
+ * @brief 内存重分配函数（调用lmmp_realloc_fn）
  * @param ptr 已分配的内存指针
  * @param size 新的内存大小（字节）
  * @return 成功返回指向新内存区域的指针，失败返回NULL
@@ -185,7 +216,7 @@ void lmmp_free(void* ptr, const char* file, int line);
 #define lmmp_free(ptr) lmmp_free(ptr, __FILE__, __LINE__)
 #else
 /**
- * @brief 内存释放函数
+ * @brief 内存释放函数（调用lmmp_heap_free_fn）
  * @param ptr 要释放的内存指针
  * @note 是标准free的安全封装版本，确保空指针释放安全
  */
@@ -202,328 +233,113 @@ void lmmp_free(void*);
 int lmmp_alloc_count(int cnt);
 #endif
 
-// ===================== lmmp_ 底层不安全运算函数 =====================
-/**
- * @brief 带进位的n位加法 [dst,n] = [numa,n] + [numb,n] + c
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 第一个加数指针
- * @param numb 第二个加数指针
- * @param n limb长度
- * @param c 初始进位值 [0|1]
- * @return 运算后的最终进位值 [0|1]
- */
-mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
+// 计算整数的绝对值
+#define LMMP_ABS(x) ((x) >= 0 ? (x) : -(x))
+// 返回两个数中的较小值
+#define LMMP_MIN(l, o) ((l) < (o) ? (l) : (o))
+// 返回两个数中的较大值
+#define LMMP_MAX(h, i) ((h) > (i) ? (h) : (i))
+// 交换两个同类型变量的值
+#define LMMP_SWAP(x, y, type) \
+    do {                      \
+        type _swap_ = (x);    \
+        (x) = (y);            \
+        (y) = _swap_;         \
+    } while (0)
+// 检查n是否为2的整数次幂
+#define LMMP_POW2_Q(n) (((n) & ((n) - 1)) == 0)
+// 将a向上取整为m的整数倍
+#define LMMP_ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
 
 /**
- * @brief 无进位的n位加法 [dst,n] = [numa,n] + [numb,n]
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 第一个加数指针
- * @param numb 第二个加数指针
- * @param n limb长度
- * @return 运算后的最终进位值 [0|1]
+ * @brief 临时堆内存分配函数
+ * @param pmarker 标记
+ * @param size 要分配的内存字节数
  */
-mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+void* lmmp_temp_heap_alloc_(void** pmarker, size_t size);
 
 /**
- * @brief 带借位的n位减法 [dst,n] = [numa,n] - [numb,n] - c
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param numb 减数指针
- * @param n limb长度
- * @param c 初始借位值 [0|1]
- * @return 运算后的最终借位值 [0|1]
+ * @brief 临时栈内存分配函数
+ * @param pmarker 标记
+ * @param size 要分配的内存字节数
  */
-mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
+void* lmmp_temp_stack_alloc_(void** pmarker, size_t size);
 
 /**
- * @brief 无借位的n位减法 [dst,n] = [numa,n] - [numb,n]
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param numb 减数指针
- * @param n limb长度
- * @return 运算后的最终借位值 [0|1]
+ * @brief 临时堆内存释放函数
+ * @param marker 要释放的临时内存标记
  */
-mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+void lmmp_temp_heap_free_(void* marker);
 
 /**
- * @brief 同时执行n位加法和减法 ([dsta,n],[dstb,n]) = ([numa,n]+[numb,n],[numa,n]-[numb,n])
- * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb])
- * @param dsta 加法结果输出指针
- * @param dstb 减法结果输出指针
- * @param numa 第一个操作数指针（被加数/被减数）
- * @param numb 第二个操作数指针（加数/减数）
- * @param n limb长度
- * @return 组合返回值 cb = 2*c + b (c为加法进位, b为减法借位)
- *         返回值范围: 0(无进位无借位),1(无进位有借位),2(有进位无借位),3(有进位有借位)
+ * @brief 临时栈内存释放函数
+ * @param marker 要释放的临时内存标记
  */
-mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+void lmmp_temp_stack_free_(void* marker);
 
-/**
- * @brief 加法后右移1位 [dst,n] = ([numa,n] + [numb,n]) >> 1
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 第一个加数指针
- * @param numb 第二个加数指针
- * @param n limb长度
- * @return 右移操作产生的进位值 [0|1]
- */
-mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+// 临时内存标记声明：用于跟踪临时内存分配
+#define TEMP_DECL void *lmmp_temp_alloc_marker_ = NULL, *lmmp_temp_stack_marker_ = NULL
 
-/**
- * @brief 带进位加法后右移1位 [dst,n] = ([numa,n] + [numb,n] + c) >> 1
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 第一个加数指针
- * @param numb 第二个加数指针
- * @param n limb长度
- * @param c 初始进位值 [0|1]
- * @return 右移操作产生的进位值 [0|1]
- */
-mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
+// 栈内存分配：使用alloca在栈上分配n字节内存（小内存）
+#define TEMP_SALLOC(n) lmmp_temp_stack_alloc_(&lmmp_temp_stack_marker_, (n))
+// 堆内存分配：使用lmmp_temp_alloc_在堆上分配n字节内存（大内存）
+#define TEMP_BALLOC(n) lmmp_temp_heap_alloc_(&lmmp_temp_alloc_marker_, (n))
+// 临时内存分配：小内存用栈，大内存用堆
+#define TEMP_TALLOC(n) ((n) <= 0x7f00 ? TEMP_SALLOC(n) : TEMP_BALLOC(n))
+// 类型化栈内存分配：分配n个type类型的栈内存
+#define SALLOC_TYPE(n, type) ((type*)TEMP_SALLOC((n) * sizeof(type)))
+// 类型化堆内存分配：分配n个type类型的堆内存
+#define BALLOC_TYPE(n, type) ((type*)TEMP_BALLOC((n) * sizeof(type)))
+// 类型化临时内存分配：智能选择栈/堆分配n个type类型内存
+#define TALLOC_TYPE(n, type) ((type*)TEMP_TALLOC((n) * sizeof(type)))
+// 临时内存释放：释放所有通过TEMP_XALLOC系列函数分配的临时内存
+#define TEMP_FREE                                           \
+    do {                                                    \
+        if (lmmp_temp_alloc_marker_)                        \
+            lmmp_temp_heap_free_(lmmp_temp_alloc_marker_);  \
+        if (lmmp_temp_stack_marker_)                        \
+            lmmp_temp_stack_free_(lmmp_temp_stack_marker_); \
+    } while (0)
 
-/**
- * @brief 减法后右移1位 [dst,n] = ([numa,n] - [numb,n]) >> 1
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param numb 减数指针
- * @param n 操作数的位数（limb数量）
- * @return 右移操作产生的进位值 (0或1)
- */
-mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+// 类型化内存分配：分配n个type类型的内存（堆）
+#define ALLOC_TYPE(n, type) ((type*)lmmp_alloc((size_t)(n) * sizeof(type)))
+// 类型化内存重分配：将p指向的内存重分配为new_size个type类型
+#define REALLOC_TYPE(p, new_size, type) ((type*)lmmp_realloc((p), (new_size) * sizeof(type)))
 
-/**
- * @brief 带借位减法后右移1位 [dst,n] = ([numa,n] - [numb,n] - c) >> 1
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param numb 减数指针
- * @param n limb长度
- * @param c 初始借位值 [0|1]
- * @return 右移操作产生的进位值 [0|1]
- */
-mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
+// 内存拷贝宏：拷贝n个limb（每个8字节），使用memmove保证重叠安全
+#define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)
+// 内存置零宏：将n个limb置零（每个8字节）
+#define lmmp_zero(dst, n) memset(dst, 0, (n) << 3)
+// 内存设置宏：将n个limb的值设置为val（每个8字节）
+#define lmmp_set(dst, val, n) memset(dst, val, (n) << 3)
 
-/**
- * @brief 大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充0
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
- *          允许dst指针地址小于numa（即支持原地长移位操作）
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- * @param shr 右移的位数 (0~63)
- * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
- */
-mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
+// 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
+// RELEASE 版本也会检查
+#define lmmp_assert(x)                                                      \
+    do {                                                                    \
+        if (!(x)) {                                                         \
+            lmmp_abort(LAMMP_ERROR_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                                   \
+    } while (0)
 
-/**
- * @brief 带进位的大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充c的高shr位
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
- *          c的低(64-shr)位必须为0
- *          允许dst指针地址小于numa（即支持原地长移位操作）
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- * @param shr 右移的位数 (0~63)
- * @param c 进位值（其低(64-shr)位必须为0）
- * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
- */
-mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, mp_limb_t c);
+#if LAMMP_DEBUG == 1
+// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
+#define lmmp_debug_assert(x)                                                \
+    do {                                                                    \
+        if (!(x)) {                                                         \
+            lmmp_abort(LAMMP_DEBUG_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                                   \
+    } while (0)
+#else
+// 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
+#define lmmp_debug_assert(x) ((void)0)
+#endif
 
-/**
- * @brief 大数左移操作 [dst,na] = [numa,na] << shl，dst的低shl位填充0
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
- *         允许dst指针地址大于numa（即支持原地长移位操作）
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- * @param shl 左移的位数 (0~63)
- * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
- */
-mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
-
-/**
- * @brief 带进位的大数左移操作 [dst,na] = [numa,na] << shl，dst的低shl位填充c的低shl位
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
- *          c的高(64-shl)位必须为0
- *          允许dst指针地址大于numa（即支持原地长移位操作）
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- * @param shl 左移的位数 (0~63)
- * @param c 进位值（其高(64-shl)位必须为0）
- * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
- */
-mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, mp_limb_t c);
-
-/**
- * @brief 大数按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
- * @warning na>0, eqsep(dst,numa)
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- */
-void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
-
-/**
- * @brief 左移后按位取反操作 [dst,na] = ~([numa,na] << shl)，dst的低shl位填充1
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
- * @param dst 结果输出指针
- * @param numa 源操作数指针
- * @param na limb长度
- * @param shl 左移的位数 (0~63)
- * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
- */
-mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
-
-/**
- * @brief 加法结合左移1位操作 [dst,n] = [numa,n] + ([numb,n] << 1)
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被加数指针
- * @param numb 加数指针（先左移1位）
- * @param n limb长度
- * @return 运算后的进位值 [0|1|2]
- */
-mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
-
-/**
- * @brief 减法结合左移1位操作 [dst,n] = [numa,n] - ([numb,n] << 1)
- * @warning n>0, eqsep(dst,[numa|numb])
- * @param dst 结果输出指针
- * @param numa 被减数指针
- * @param numb 减数指针（先左移1位）
- * @param n limb长度
- * @return 运算后的借位值 [0|1|2]
- */
-mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
-
-/**
- * @brief 大数乘以单limb并累加操作 [numa,n] += [numb,n] * b
- * @warning n>0, eqsep(numa,numb))
- * @param numa 被加数指针（结果也存储在此）
- * @param numb 乘数指针
- * @param n limb长度
- * @param b 乘数
- * @return 运算后的进位limb值
- */
-mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
-
-/**
- * @brief 大数乘以单limb并累减操作 [numa,n] -= [numb,n] * b
- * @warning n>0, eqsep(numa,numb))
- * @param numa 被减数指针（结果也存储在此）
- * @param numb 乘数指针
- * @param n limb长度
- * @param b 乘数
- * @return 运算后的借位limb值
- */
-mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
-
-/**
- * @brief 大数乘以单limb操作 [dst,na] = [numa,na] * x
- * @warning na>0, eqsep(dst,numa)
- *       支持 dst<=numa+1 的内存布局
- * @param dst 结果输出指针
- * @param numa 被乘数指针
- * @param na 操作数的位数（limb数量）
- * @param x 单个limb乘数
- * @return 运算后的进位limb值
- */
-mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
-
-/**
- * @brief 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
- * @warning 0<nb<=na, sep(dst,[numa|numb])
- *      特殊情况:  nb==1时dst<=numa+1是允许的
- *                nb==2时dst<=numa是允许的
- * @param dst 乘积结果输出指针（需要 na+nb 的 limb 长度）
- * @param numa 第一个乘数指针（较长的操作数）
- * @param na 第一个操作数的 limb 长度
- * @param numb 第二个乘数指针（较短的操作数）
- * @param nb 第二个操作数的 limb 长度
- */
-void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * @brief 大数除法和取模操作
- * @note 如果dstq不为NULL: [dstq,na-nb+1] = [numa,na] / [numb,nb] (商)
- *       如果dstr不为NULL: [dstr,nb] = [numa,na] mod [numb,nb] (余数)
- * @warning 0<nb<=na, numb[nb-1]!=0, sep(dstq,[numa|numb]), eqsep(dstr,[numa|numb]))
- *          特殊情况: nb==1时, dstq>=numa-1 是允许的
- *                   nb==2时, dstq>=numa 是允许的
- * @param dstq 商结果输出指针（NULL表示不计算商）
- * @param dstr 余数结果输出指针（NULL表示不计算余数）
- * @param numa 被除数指针
- * @param na 被除数的 limb 长度
- * @param numb 除数指针
- * @param nb 除数的 limb 长度
- */
-void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * @brief 大数平方根和取余操作
- * @note 如果dstr不为NULL: [dsts,nf+na/2+1], [dstr,nf+na/2+1] = sqrtrem([numa,na]*B^(2*nf))
- *                         也即 [numa,na] × B^(2×nf) = [dsts,nf+na/2+1]^2 + [dstr,nf+na/2+1]
- *                         且 0 <= [dstr,nf+na/2+1] < 2 * [dsts,nf+na/2+1] + 1
- *        如果dstr为NULL:   [dsts,nf+na/2+1] = [round|floor](sqrt([numa,na]*B^(2*nf)))
- * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa)
- * @param dsts 平方根结果输出指针
- * @param dstr 余数结果输出指针（NULL表示不计算余数）
- * @param numa 源操作数指针
- * @param na 操作数的 limb 长度
- * @param nf 精度因子
- */
-void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf);
-
-/**
- * @brief 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
- * @warning na>0, numa[na-1]!=0, eqsep(dst,numa)
- * @param dst 逆元结果输出指针
- * @param numa 源操作数指针
- * @param na 操作数的 limb 长度
- * @param nf 精度因子
- */
-void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
-
-/**
- * @brief 字符串转大数操作 [src,len,base] to [dst,return value,B]
- * @warning len>=0, 2<=base<=256
- * @param dst 大数结果输出指针
- * @param src 字符串源指针
- * @param len 字符串长度
- * @param base 字符串的进制基数
- * @return 转换后的大数 limb 长度
- */
-mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base);
-
-/**
- * @brief 大数转字符串操作 [numa,na,B] to [dst,return value,base]
- * @warning na>=0, 2<=base<=256
- * @param dst 字符串结果输出指针
- * @param numa 大数源指针
- * @param na 大数的 limb 长度
- * @param base 目标字符串的进制基数
- * @return 转换后的字符串长度
- */
-mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base);
-
-/**
- * @brief 提取高位指定位数，并返回低位bits位数
- * @param num 待提取的大数指针
- * @param n num的 limb 长度
- * @param bits 待提取的位数(1-64)
- * @param ext 提取结果输出指针
- * @warning n>0, 1<=bits<=64, ext!=NULL
- * @note 如果bits大于num的实际位数，则不会保证ext有效位数为bits位；
- *       如果bits小于等于num的实际位数，则ext将会有bits位有效位数。
- * @return 剩余的低位bits数量
- */
-mp_size_t lmmp_extract_bits_(mp_srcptr num, mp_size_t n, mp_limb_t* ext, int bits);
+#if ALLOC_FREE_COUNT == 1
+#define ALLOC_FREE_COUNT_CHECK lmmp_assert(lmmp_alloc_count(-1) == 0 && "Memory leak detected")
+#else
+#define ALLOC_FREE_COUNT_CHECK ((void)0)
+#endif
 
 #ifdef __cplusplus
 }  // extern "C"
