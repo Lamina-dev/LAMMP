@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
 #define cal_tab(i)                  \

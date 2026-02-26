@@ -1,4 +1,5 @@
 #include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/lmmpn.h"
 
 mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v) {
     lmmp_debug_assert(u > 0 && v > 0);

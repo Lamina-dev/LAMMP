@@ -20,7 +20,10 @@
 #define LAMMP_NUMTH_H
 
 #include <math.h>
-#include "lmmpn.h"
+#include <stdbool.h>
+
+#include "lmmp.h"
+
 
 // 幂运算中，底数长度为 1 的幂运算指数阈值，低于此阈值使用连乘法
 #define POW_1_EXP_THRESHOLD 10

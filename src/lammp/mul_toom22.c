@@ -16,6 +16,7 @@ vinf=     a1 *    b1   # A(inf)*B(inf)
 */
 
 void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    TEMP_DECL;
     mp_size_t s = na >> 1, n = na - s, t = nb - n;
     mp_limb_t* vm1 = SALLOC_TYPE(2 * n, mp_limb_t);
     int vm1_neg = 0;
@@ -85,4 +86,5 @@ void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
         lmmp_dec(dst + 3 * n);
     else
         lmmp_inc_1(dst + 3 * n, cy);
+    TEMP_FREE;
 }

@@ -1,5 +1,6 @@
-#include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
     lmmp_debug_assert(dst != NULL);

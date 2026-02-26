@@ -80,7 +80,7 @@ static inline int check_front_guard_underflow(MemHeader* hdr, void* user_ptr, co
         SAFE_APPEND("%s%s", "Likely cause: Writing before start of buffer (e.g., ptr[-1] = x).", "\n");
         error_buf[buf_size - 1] = '\0';
 
-        lmmp_abort(LAMMP_OUT_OF_BOUNDS, error_buf, check_file, check_line);
+        lmmp_abort(LAMMP_ERROR_OUT_OF_BOUNDS, error_buf, check_file, check_line);
         return 1;
     }
     return 0;
@@ -147,7 +147,7 @@ static inline int check_rear_guard_overflow(MemHeader* hdr, void* user_ptr, cons
         }
 
         error_buf[buf_size - 1] = '\0';
-        lmmp_abort(LAMMP_OUT_OF_BOUNDS, error_buf, check_file, check_line);
+        lmmp_abort(LAMMP_ERROR_OUT_OF_BOUNDS, error_buf, check_file, check_line);
         return 1;
     }
     return 0;
@@ -179,7 +179,7 @@ static inline void* lmmp_malloc_debug(size_t size, const char* file, int line) {
     if (!base) {
         char msg[256];
         snprintf(msg, sizeof(msg), "Memory allocation failed (size: %zu bytes)", size);
-        lmmp_abort(LAMMP_MEMORY_ALLOC_FAILURE, msg, file, line);
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, file, line);
         return NULL;
     }
 
