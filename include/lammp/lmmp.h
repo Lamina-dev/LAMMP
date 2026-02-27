@@ -30,37 +30,34 @@ extern "C" {
 
 #define LAMMP_DEFAULT_STACK_SIZE 128*1024 // 默认全局栈大小，单位为字节
 
-/* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有三个开销等级：低、中、高。 */
+/* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
 // 开启时，将会检查栈溢出；开销：低
-#define LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 1
-
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
 // 开启时，将会进行debug_assert的检查；开销：中
 #define LAMMP_DEBUG_ASSERT_CHECK 0
-
 // 开启时，将会进行参数检查；开销：中
 #define LAMMP_DEBUG_PARAM_ASSERT_CHECK 0
-
-// 开启时，将会进行堆内存的检查；开销：高
-#define LAMMP_DEBUG_MEMORY_CHECK 0
-
-// 开启时，会增加内存分配和释放次数的统计功能
+// 开启时，将会同时开启堆栈溢出检查；开销：很高
+#define LAMMP_DEBUG_MEMORY_CHECK 1
+// 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
+#define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
+// 开启时，会增加内存分配和释放次数的统计功能；开销：中
 // 需要手动调用检查宏
-#define LAMMP_DEBUG_ALLOC_FREE_COUNT 0
+#define LAMMP_DEBUG_ALLOC_FREE_COUNT 1
 
 /*
  LAMMP 内存分配函数指针类型：
  1. heap_alloc : 堆内存分配器
  2. heap_free : 堆内存释放器
  3. realloc : 堆内存重新分配器
- 4. stack_get_top : 获取当前栈顶指针
- 5. stack_set_top : 设置当前栈顶指针
+ 4. set_stack_alloctor : 设置自定义栈分配器
 
  前三个函数默认使用 malloc、free、realloc 实现，
- 而 stack_get_top 和 stack_set_top 函数默认实现为：
+ 而默认栈实现为：
   首次调用时分配一块大小为LAMMP_DEFAULT_STACK_SIZE的堆内存
   （通过调用 heap_alloc 函数），通过维护此堆内存来模拟栈。
-  请注意，我们默认栈是向上增长的，即从低地址到高地址。
+  同时请注意，我们默认栈是向上增长的，即从低地址到高地址。
  
  如果使用自定义栈，请进行手动内存管理和处理溢出。默认栈是全局的，
  同时默认栈的大小是可调的，可以通过函数 lmmp_default_stack_reset 来调整
@@ -72,18 +69,25 @@ typedef void* (*lmmp_realloc_fn)(void* ptr, size_t size);
 typedef void* (*lmmp_stack_get_top_fn)(void);
 typedef void (*lmmp_stack_set_top_fn)(void* top);
 
+typedef struct {
+    void* begin;
+    void* end;
+    lmmp_stack_get_top_fn get;
+    lmmp_stack_set_top_fn set;
+} lmmp_stack_alloctor_t;
+
 lmmp_heap_alloc_fn lmmp_set_heap_alloc_fn(lmmp_heap_alloc_fn func);
 lmmp_heap_free_fn lmmp_set_heap_free_fn(lmmp_heap_free_fn func);
 lmmp_realloc_fn lmmp_set_realloc_fn(lmmp_realloc_fn func);
-lmmp_stack_get_top_fn lmmp_set_stack_get_top_fn(lmmp_stack_get_top_fn func);
-lmmp_stack_set_top_fn lmmp_set_stack_set_top_fn(lmmp_stack_set_top_fn func);
+void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* alloctor);
 
 /**
  * @brief LAMMP 全局默认栈重置函数
  * @param size 新的默认栈大小，单位为字节
  * @warning 请注意，此函数会释放掉当前的默认栈，并重新分配一块新的堆内存作为默认栈。
  *          因此，调用此函数后，访问之前的分配的栈空间将会导致未定义行为。
- * @note 当 size 为 0 时，将会释放调用默认栈，如果此后再使用栈内存，将会重新申请一块大小为
+ *          需要特别注意，使用重置默认栈后，将会改为使用新的默认栈，如此前分配了自定义的栈分配器，将被覆盖。
+ * @note 当 size 为 0 时，将会释放调用默认栈，如果此后再使用默认栈内存，将会重新申请一块大小为
  *        LAMMP_DEFAULT_STACK_SIZE 的堆内存作为默认栈。
  */
 void lmmp_default_stack_reset(size_t size);
@@ -95,7 +99,8 @@ typedef enum {
     LAMMP_ERROR_MEMORY_ALLOC_FAILURE = 4,
     LAMMP_ERROR_MEMORY_FREE_FAILURE = 5,
     LAMMP_ERROR_OUT_OF_BOUNDS = 6,
-    LAMMP_ERROR_UNEXPECTED_ERROR = 7
+    LAMMP_ERROR_MEMORY_LEAK = 7,
+    LAMMP_ERROR_UNEXPECTED_ERROR = 8
 } lmmp_error_t;
 
 /**
@@ -146,7 +151,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
  *             出范围。此类型只会在定义了 MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
- *        7. UNEXPECTED_ERROR （枚举值为7）为其他未知错误导致的退出。目前暂未使用，为预留作用。
+ *        7. UNEXPECTED_ERROR （枚举值为7）为其他未知错误导致的退出。
  *
  * @note 相应的错误检查开关宏可以自行查阅上面的说明。
  *
@@ -183,7 +188,9 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
 
 #undef STATIC_ASSERT
 
-#if MEMORY_CHECK == 1
+// ============================内存管理相关函数=============================
+
+#if LAMMP_DEBUG_MEMORY_CHECK == 1
 void* lmmp_alloc(size_t size, const char* file, int line);
 #define lmmp_alloc(size) lmmp_alloc(size, __FILE__, __LINE__)
 #else
@@ -196,7 +203,7 @@ void* lmmp_alloc(size_t size, const char* file, int line);
 void* lmmp_alloc(size_t size);
 #endif 
 
-#if MEMORY_CHECK == 1
+#if LAMMP_DEBUG_MEMORY_CHECK == 1
 void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
 #define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __FILE__, __LINE__)
 #else
@@ -210,8 +217,7 @@ void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
 void* lmmp_realloc(void* ptr, size_t size);
 #endif 
 
-
-#if MEMORY_CHECK == 1
+#if LAMMP_DEBUG_MEMORY_CHECK == 1
 void lmmp_free(void* ptr, const char* file, int line);
 #define lmmp_free(ptr) lmmp_free(ptr, __FILE__, __LINE__)
 #else
@@ -223,14 +229,53 @@ void lmmp_free(void* ptr, const char* file, int line);
 void lmmp_free(void*);
 #endif
 
-#if ALLOC_FREE_COUNT == 1
 /**
- * @brief 获取当前分配的内存数量
- * @param cnt 如果cnt不为负数，则返回当前分配的内存数量（旧值），并将当前计数器值设置为cnt。
- *            若为负数，则仅返回当前分配的内存数量（新值）。
- * @return 当前分配的内存数量（旧值）
+ * @brief 内存分配计数器
+ * @param cnt 若不为0，则将堆内存计数器置为cnt
+ * @return 返回当前的heap分配计数（如果被设置，即返回旧的计数值），即目前未被释放的堆内存数量
  */
 int lmmp_alloc_count(int cnt);
+
+/**
+ * @brief 内存泄漏检测器
+ * @param file 泄漏发生的文件名
+ * @param line 泄漏发生的行号
+ * @note 将会同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
+ *       两者同时发生则将输出两者的信息。
+ */
+void lmmp_leak_tracker(const char* file, int line);
+
+#if LAMMP_DEBUG_ALLOC_FREE_COUNT == 1
+// 同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
+// 两者同时发生则将输出两者的信息。
+#define lmmp_leak_tracker lmmp_leak_tracker(__FILE__, __LINE__)
+#else
+#define lmmp_leak_tracker ((void)0)
+#endif
+
+#if LAMMP_DEBUG_MEMORY_CHECK == 1
+    void* lmmp_stack_alloc(size_t size, const char* file, int line);
+#define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __FILE__, __LINE__)
+#else
+/**
+ * @brief 栈内存分配函数（使用stack_get_top和stack_set_top）
+ * @param size 要分配的内存字节数
+ * @warning 请严格按照分配顺序的逆序释放内存，否则会导致未定义行为或导致栈溢出触发lmmp_abort
+ * @return 成功返回指向分配内存的指针，栈溢出时，会触发lmmp_abort
+ */
+void* lmmp_stack_alloc(size_t size);
+#endif
+
+#if LAMMP_DEBUG_MEMORY_CHECK == 1
+void lmmp_stack_free(void* ptr, const char* file, int line);
+#define lmmp_stack_free(ptr) lmmp_stack_free(ptr, __FILE__, __LINE__)
+#else
+/**
+ * @brief 栈内存释放函数（使用stack_get_top和stack_set_top）
+ * @param ptr 要释放的内存指针
+ * @warning 请严格按照分配顺序的逆序释放内存，若释放的指针不在当前栈帧上或传入意外的指针，则会触发lmmp_abort
+ */
+void lmmp_stack_free(void* ptr);
 #endif
 
 // 计算整数的绝对值
@@ -280,12 +325,14 @@ void lmmp_temp_stack_free_(void* marker);
 // 临时内存标记声明：用于跟踪临时内存分配
 #define TEMP_DECL void *lmmp_temp_alloc_marker_ = NULL, *lmmp_temp_stack_marker_ = NULL
 
-// 栈内存分配：使用alloca在栈上分配n字节内存（小内存）
+#define TEMP_SALLOC_THRESHOLD 0x7f00  // 小内存分配阈值（小于等于该值的内存分配在栈上）
+
+// 栈内存分配：使用lmmp_temp_stack_alloc_在栈上分配n字节内存（小内存）
 #define TEMP_SALLOC(n) lmmp_temp_stack_alloc_(&lmmp_temp_stack_marker_, (n))
-// 堆内存分配：使用lmmp_temp_alloc_在堆上分配n字节内存（大内存）
+// 堆内存分配：使用lmmp_temp_heap_alloc_在堆上分配n字节内存（大内存）
 #define TEMP_BALLOC(n) lmmp_temp_heap_alloc_(&lmmp_temp_alloc_marker_, (n))
 // 临时内存分配：小内存用栈，大内存用堆
-#define TEMP_TALLOC(n) ((n) <= 0x7f00 ? TEMP_SALLOC(n) : TEMP_BALLOC(n))
+#define TEMP_TALLOC(n) ((n) <= TEMP_SALLOC_THRESHOLD ? TEMP_SALLOC(n) : TEMP_BALLOC(n))
 // 类型化栈内存分配：分配n个type类型的栈内存
 #define SALLOC_TYPE(n, type) ((type*)TEMP_SALLOC((n) * sizeof(type)))
 // 类型化堆内存分配：分配n个type类型的堆内存
