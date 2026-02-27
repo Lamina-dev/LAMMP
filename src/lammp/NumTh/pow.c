@@ -21,9 +21,9 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
      *     3. https://github.com/Lamina-dev/LAMMP/issues/49
      */
 
-    lmmp_debug_assert(n > 0);
-    lmmp_debug_assert(exp > 0);
-    lmmp_debug_assert(base[n - 1] != 0);
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(exp > 0);
+    lmmp_param_assert(base[n - 1] != 0);
     if (exp == 1) {
         lmmp_copy(dst, base, n);
         return n;

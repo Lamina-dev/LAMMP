@@ -16,6 +16,9 @@ vinf=          a2 *^2 # A(inf)^2
 */
 
 void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa != NULL);
+    lmmp_param_assert(dst != NULL);
     TEMP_DECL;
     mp_size_t n = (na + 2) / 3, s = na - 2 * n;
     mp_limb_t cy, cy2, vinf0, am1h;

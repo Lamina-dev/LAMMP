@@ -2,7 +2,7 @@
 #include "../../../include/lammp/impl/prime_table.h"
 
 mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
-    lmmp_debug_assert(n <= 0xffff);
+    lmmp_param_assert(n <= 0xffff);
     if (n <= 67) {
         rn = lmmp_nPr_short_(dst, rn, n, r);
         mp_limb_t t = 0;
@@ -156,6 +156,7 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
 }
 
 mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
+    lmmp_param_assert(r <= (n / 2));
     if (r <= 3 || n > 0xfffffff) {
         dst[0] = 1;
         rn = 1;

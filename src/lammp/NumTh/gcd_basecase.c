@@ -2,7 +2,7 @@
 #include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn) {
-    lmmp_debug_assert(un > 0 && vn > 0);
+    lmmp_param_assert(un > 0 && vn > 0);
     if (un < vn) {
         LMMP_SWAP(up, vp, mp_srcptr);
         LMMP_SWAP(un, vn, mp_size_t);

@@ -2,6 +2,9 @@
 
 // assume numa[na-1]!=0
 static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa[na - 1]!= 0);
     int i;
     int digitspl = lmmp_bases_[base].digits_in_limb;
     mp_limb_t lbase = lmmp_bases_[base].large_base;
@@ -43,6 +46,9 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
 
 // assume numa[na-1]!=0, need an extra limb at numa[na]
 static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, mp_basepow_t* pow, mp_ptr tpq) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa[na - 1] != 0);
+    lmmp_param_assert(pow != NULL);
     mp_size_t digits;
     if (na < TO_STR_DIVIDE_THRESHOLD) {
         digits = lmmp_to_str_basecase_(dst, numa, na, pow->base);
@@ -112,6 +118,7 @@ static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, 
 }
 
 mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
     do {
         if (na == 0)
             return 0;

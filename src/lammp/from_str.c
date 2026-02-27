@@ -2,8 +2,8 @@
 
 // assume src[len-1]!=0
 static mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
-    lmmp_debug_assert(src[len - 1] != 0);
-    lmmp_debug_assert(base >= 2 && base <= 256);
+    lmmp_param_assert(src[len - 1] != 0);
+    lmmp_param_assert(base >= 2 && base <= 256);
     mp_size_t digitspl = lmmp_bases_[base].digits_in_limb;
     mp_limb_t lbase = lmmp_bases_[base].large_base;
     mp_size_t limbs = 0, i = len;
@@ -46,7 +46,7 @@ static mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_si
 // 1st level need(nh>=2, [dst,2*N], [tp,limbs])
 // recursive need(N>=2, [dst,limbs+1], [tp,2*N-1])
 static mp_size_t lmmp_from_str_divide_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, mp_basepow_t* pow, mp_ptr tp) {
-    lmmp_debug_assert(src[len - 1] != 0);
+    lmmp_param_assert(src[len - 1] != 0);
     mp_size_t limbs;
     int base = pow->base;
 
@@ -100,7 +100,7 @@ static mp_size_t lmmp_from_str_divide_(mp_ptr dst, const mp_byte_t* src, mp_size
 }
 
 mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
-    lmmp_debug_assert(base >= 2 && base <= 256);
+    lmmp_param_assert(base >= 2 && base <= 256);
     do {
         if (len == 0)
             return 0;

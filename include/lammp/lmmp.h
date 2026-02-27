@@ -32,19 +32,19 @@ extern "C" {
 
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
-// 开启时，将会检查栈溢出；开销：低
-#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
-// 开启时，将会进行debug_assert的检查；开销：中
-#define LAMMP_DEBUG_ASSERT_CHECK 0
+// 开启时，将会检查栈溢出；开销：中
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 0
+// 开启时，将会进行debug_assert的检查；开销：低
+#define LAMMP_DEBUG_ASSERT_CHECK 1
 // 开启时，将会进行参数检查；开销：中
-#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 0
-// 开启时，将会同时开启堆栈溢出检查；开销：很高
-#define LAMMP_DEBUG_MEMORY_CHECK 1
+#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
+// 开启时，将会同时开启堆栈越界检查；开销：很高
+#define LAMMP_DEBUG_MEMORY_CHECK 0
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
 // 开启时，会增加内存分配和释放次数的统计功能；开销：中
 // 需要手动调用检查宏
-#define LAMMP_DEBUG_ALLOC_FREE_COUNT 1
+#define LAMMP_DEBUG_ALLOC_FREE_COUNT 0
 
 /*
  LAMMP 内存分配函数指针类型：
@@ -76,9 +76,36 @@ typedef struct {
     lmmp_stack_set_top_fn set;
 } lmmp_stack_alloctor_t;
 
+/**
+ * @brief 设置 LAMMP 全局堆内存分配函数
+ * @param func 新的堆内存分配函数，可以为NULL，表示使用默认的 malloc
+ * @warning 自行保证分配器和释放器相匹配 
+ * @return 之前的堆内存分配函数
+ */
 lmmp_heap_alloc_fn lmmp_set_heap_alloc_fn(lmmp_heap_alloc_fn func);
+
+/**
+ * @brief 设置 LAMMP 全局堆内存释放函数
+ * @param func 新的堆内存释放函数，可以为NULL，表示使用默认的 free
+ * @return 之前的堆内存释放函数
+ * @warning 请注意，自行保证分配器和释放器相匹配，若使用malloc，却不使用free，将会导致内存泄漏。
+ */
 lmmp_heap_free_fn lmmp_set_heap_free_fn(lmmp_heap_free_fn func);
+/**
+ * @brief 设置 LAMMP 全局堆内存重新分配函数
+ * @param func 新的堆内存重新分配函数，可以为NULL，表示使用默认的 realloc
+ * @return 之前的堆内存重新分配函数
+ * @warning 请注意，自行保证分配器和释放器相匹配，否则将会导致内存泄漏。
+ */
 lmmp_realloc_fn lmmp_set_realloc_fn(lmmp_realloc_fn func);
+
+/**
+ * @brief 设置 LAMMP 全局栈分配器
+ * @param alloctor 新的栈分配器，可以为NULL，表示使用默认的堆栈分配器
+ * @note 默认栈分配器的内存地址是从低地址到高地址，因此，如果需要使用自定义栈，请自行保证，
+ *       若传入的分配器的内存地址是从高地址到低地址，则行为等价于传入 NULL。
+ * @warning 请注意，出于对性能的考虑，此函数不会释放掉当前的默认栈。
+ */
 void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* alloctor);
 
 /**
@@ -133,30 +160,33 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
  *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
- *             大部分情况下，可能是调用者未按照规定使用函数，导致函数入参检查失败，在函数开头通常有lmmp_debug_assert宏
- *             来检查部分参数的输入，不排除其他地方出现的错误。此类型只会在定义了 LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的
- *             情况下才会触发，
+ *             这通常是调用者的UB，如无UB的情况下触发此错误，可能是LAMMP内部的逻辑错误，可以报告给开发者。
+ *             此类型只会在定义了 LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *         
  *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出，其通常表明调用者传入了无效的参数，
  *             导致函数的行为不符合预期。此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。此类型的错误只有在
  *             定义了 LAMMP_DEBUG_PARAM_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *
  *        4. MEMORY_ALLOC_FAILURE （枚举值为4）为内存分配失败退出，这可能有两种情况：一种情况为分配了堆内存不足，
- *             导致程序崩溃；另一种情况为默认栈溢出（若是自定义栈，也不会有此情况），其中，情况一是会永远进行的，而情况二
- *             只有在定义了 LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
+ *             导致程序崩溃；另一种情况为栈分配器的栈溢出（栈空间不足或其他UB），其中，情况一是会永远进行的，而情况二
+ *             只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
  *
- *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有一种触发可能，那就是使用默认栈时，调整的栈帧小于
- *             栈底指针，导致栈下溢，只有在定义了 LAMMP_DEBUG_DEFAULT_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
+ *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有一种触发可能，那就是使用栈分配器时，释放的内存
+ *             不是分配器分配的，导致释放错误。或由栈分配的前一次内存缓冲区意外写入，导致后续内存释放时，头部信息损坏
+ *             导致释放无法进行。此类错误只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
  * 
- *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间，或者计算内部变量超
- *             出范围。此类型只会在定义了 MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
+ *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间。此类型的错误在堆栈分配器中，
+ *             均可能触发，但由于栈分配器的特殊性，可能部分越界访问被判定为栈溢出，或内存释放错误。具体可尝试查看错误信息。
+ *             此类型只会在定义了 LAMMP_DEBUG_MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
- *        7. UNEXPECTED_ERROR （枚举值为7）为其他未知错误导致的退出。
- *
- * @note 相应的错误检查开关宏可以自行查阅上面的说明。
+ *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出，有两种情况，一种情况为堆内存计数器不为0，另一种情况为当前栈帧
+ *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_ALLOC_FREE_COUNT 宏为 1，且仅在手动调用lmmp_leak_tracker
+ *             宏来触发，
+ * 
+ *        8. UNEXPECTED_ERROR （枚举值为8）为其他未知错误导致的退出。
  *
  * @warning LAMMP内部中断都将会调用此函数，如果全局退出函数为NULL，则使用默认的退出函数，会打印出全部错误信息，并调用 
- *          abort 函数中断程序。设置全局退出函数请通过 lmmp_set_abort_func 函数进行设置。请不要在全局退出函数里做任
+ *          abort 函数中断程序。自定义全局退出函数请通过 lmmp_set_abort_fn 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
 void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
@@ -369,23 +399,28 @@ void lmmp_temp_stack_free_(void* marker);
         }                                                                   \
     } while (0)
 
-#if LAMMP_DEBUG == 1
+#if LAMMP_DEBUG_ASSERT_CHECK == 1
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
-#define lmmp_debug_assert(x)                                                \
-    do {                                                                    \
-        if (!(x)) {                                                         \
-            lmmp_abort(LAMMP_DEBUG_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
-        }                                                                   \
+#define lmmp_debug_assert(x)                                                      \
+    do {                                                                          \
+        if (!(x)) {                                                               \
+            lmmp_abort(LAMMP_ERROR_DEBUG_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                                         \
     } while (0)
 #else
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
 #define lmmp_debug_assert(x) ((void)0)
 #endif
 
-#if ALLOC_FREE_COUNT == 1
-#define ALLOC_FREE_COUNT_CHECK lmmp_assert(lmmp_alloc_count(-1) == 0 && "Memory leak detected")
+#if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
+#define lmmp_param_assert(x)                                                      \
+    do {                                                                          \
+        if (!(x)) {                                                               \
+            lmmp_abort(LAMMP_ERROR_PARAM_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+        }                                                                         \
+    } while (0)
 #else
-#define ALLOC_FREE_COUNT_CHECK ((void)0)
+#define lmmp_param_assert(x) ((void)0)
 #endif
 
 #ifdef __cplusplus

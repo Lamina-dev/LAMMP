@@ -175,6 +175,8 @@ ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
  * @return 返回值为 [base,n]^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(base[n - 1] != 0);
     mp_size_t rn = exp * (n - 1) * LIMB_BITS + ceil((double)exp * log2(base[n - 1]));
     return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
 }
@@ -183,10 +185,12 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @brief 计算幂次方需要的limb缓冲区长度 base ^ exp
  * @param base 底数
  * @param exp 指数
- * @warning n>0, base>1
+ * @warning exp>0, base>1
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
+    lmmp_param_assert(base > 1);
+    lmmp_param_assert(exp > 0);
     return (ceil((double)(exp)*log2((double)base)) + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
 }
 
@@ -268,6 +272,8 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
+    lmmp_param_assert(base > 1);
+    lmmp_param_assert(exp > 0);
     if (base <= (mp_limb_t)0xf) {
         return lmmp_1_pow_1_(dst, rn, base, exp);
     } else if (base <= (mp_limb_t)0xff) {
@@ -511,8 +517,8 @@ mp_size_t lmmp_multinomial_int_(mp_ptr dst, mp_size_t rn, uint n, const uintp r,
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m) {
-    lmmp_debug_assert(m > 1);
-    lmmp_debug_assert(n > 0);
+    lmmp_param_assert(m > 1);
+    lmmp_param_assert(n > 0);
     if (n <= 0xffff) 
         return lmmp_multinomial_short_(dst, rn, n, r, m);
     else

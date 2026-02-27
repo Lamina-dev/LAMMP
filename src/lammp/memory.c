@@ -69,27 +69,36 @@ void lmmp_default_stack_set_top(void* top) {
 
 void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* stack) {
     if (stack == NULL) return;
-    if (stack->begin > stack->end)
-        lmmp_abort(LAMMP_ERROR_UNEXPECTED_ERROR, 
-                   "Invalid stack alloctor, please make sure begin is smaller than end",
-                   __FILE__, __LINE__);
+    if (stack->begin > stack->end) return;
     global_stack = *stack;
     is_default_stack = 0;
 }
 
 lmmp_heap_alloc_fn lmmp_set_heap_alloc_fn(lmmp_heap_alloc_fn func) {
+    if (func == NULL) {
+        heap_alloc_func = malloc;
+        return malloc;
+    }
     lmmp_heap_alloc_fn old_func = heap_alloc_func;
     heap_alloc_func = func;
     return old_func;
 }
 
 lmmp_heap_free_fn lmmp_set_heap_free_fn(lmmp_heap_free_fn func) {
+    if (func == NULL) {
+        heap_free_func = free;
+        return free;
+    }
     lmmp_heap_free_fn old_func = heap_free_func;
     heap_free_func = func;
     return old_func;
 }
 
 lmmp_realloc_fn lmmp_set_realloc_fn(lmmp_realloc_fn func) {
+    if (func == NULL) {
+        realloc_func = realloc;
+        return realloc;
+    }
     lmmp_realloc_fn old_func = realloc_func;
     realloc_func = func;
     return old_func;
@@ -268,8 +277,8 @@ void lmmp_stack_free(void* ptr) {
 #endif // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     void* old_top = stack_get_top_func();
     size_t total_size = *(size_t*)((mp_byte_t*)ptr - SIZE_SIZE);
-#if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     void* new_top = (mp_byte_t*)old_top - total_size;
+#if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     if (new_top < global_stack.begin || new_top > global_stack.end) {
         char msg[256];
         snprintf(msg, sizeof(msg),
@@ -396,7 +405,7 @@ void lmmp_stack_free(void* ptr, const char* file, int line) {
         SAFE_APPEND("  extra_size: %zu\n", header->extra_size);
         SAFE_APPEND("  magic_addr_offset: %zu\n", header->magic_addr_offset);
         SAFE_APPEND("  last_ptr: %p\n", header->last_ptr);
-        lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, error_buf, file, line);
+        lmmp_abort(LAMMP_ERROR_OUT_OF_BOUNDS, error_buf, file, line);
     }
 
     void* old_top = stack_get_top_func();

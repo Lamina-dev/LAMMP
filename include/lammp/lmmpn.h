@@ -999,9 +999,13 @@ typedef struct lmmp_mp_basepow_t_ {
  * @param numb 第二个大数，长度为n
  * @param n 大数的单精度数(limb)长度
  * @return 1(numa>numb) / 0(numa==numb) / -1(numa<numb)
+ * @warning n>0, numa!=NULL, numb!=NULL
  * @note 从最高位开始逐位比较，直到找到不同位
  */
 INLINE_ int lmmp_cmp_(mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(numa != NULL);
+    lmmp_param_assert(numb != NULL);
     mp_ssize_t i = n;
     mp_limb_t x, y;
     while (--i >= 0) {
@@ -1130,6 +1134,7 @@ INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_
  *       2. if (numa==NULL) 返回na个limb长度的数的最大可能字符长度（最坏情况）
  */
 INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
     int mslbits = 0;
     if (numa) {
         do {
@@ -1153,6 +1158,7 @@ INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
  *       2. if (src==NULL) 返回len位base进制数的最大可能 limb 长度（最坏情况）
  */
 INLINE_ mp_size_t lmmp_form_str_len_(const mp_byte_t* src, mp_size_t len, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
     if (src) {
         do {
             if (len == 0)

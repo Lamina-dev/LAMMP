@@ -1,6 +1,8 @@
 #include "../../../include/lammp/impl/prime_table.h"
 
 void lmmp_prime_int_init_(pri_int* p, uint n) {
+    lmmp_param_assert(n >= 2);
+    lmmp_param_assert(p != NULL);
     p->N = n;
     size_t pri_est = lmmp_prime_size_(n);
     p->pri = ALLOC_TYPE(pri_est, uint);
@@ -38,6 +40,7 @@ void lmmp_prime_int_init_(pri_int* p, uint n) {
 }
 
 void lmmp_prime_int_free_(pri_int* p) {
+    lmmp_param_assert(p != NULL);
     lmmp_free(p->pri);
     lmmp_free(p->mmp);
     p->mmp_cal = 0;
