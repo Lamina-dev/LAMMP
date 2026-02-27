@@ -1,6 +1,5 @@
 #include "../../../include/lammp/impl/_umul64to128_.h"
 #include "../../../include/lammp/impl/u128_u192.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/mprand.h"
 #include "../../../include/lammp/impl/rand_state.h"
 
