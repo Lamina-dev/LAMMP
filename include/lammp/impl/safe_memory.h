@@ -80,14 +80,15 @@ static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, co
     } while (0)
 
         SAFE_APPEND("Memory overflow (extra memory corruption) detected!%s", "\n");
-        SAFE_APPEND("Allocated at: %s:%d\n", hdr->file, hdr->line);
-        SAFE_APPEND("Checked at:   %s:%d\n", check_file, check_line);
-        SAFE_APPEND("User size:    %zu bytes\n", hdr->user_size);
-        SAFE_APPEND("Extra size:   %zu bytes (%.0f%% of user size)\n", hdr->extra_size,
+        SAFE_APPEND("Memory header: %s", "\n");
+        SAFE_APPEND("  allocated at: %s:%d\n", hdr->file, hdr->line);
+        SAFE_APPEND("  checked at:   %s:%d\n", check_file, check_line);
+        SAFE_APPEND("  user size:    %zu bytes\n", hdr->user_size);
+        SAFE_APPEND("  extra size:   %zu bytes (%.0f%% of user size)\n", hdr->extra_size,
                     (hdr->user_size > 0) ? (hdr->extra_size * 100.0 / hdr->user_size) : 0);
-        SAFE_APPEND("User ptr:     %p\n", user_ptr);
-        SAFE_APPEND("Extra memory: %p to %p\n", (void*)extra_start, (void*)(extra_start + hdr->extra_size - 1));
-        SAFE_APPEND("Corrupted range: offset %d to %d (total %d bytes)\n", first, last, count);
+        SAFE_APPEND("  user ptr:     %p\n", user_ptr);
+        SAFE_APPEND("  extra memory: %p to %p\n", (void*)extra_start, (void*)(extra_start + hdr->extra_size - 1));
+        SAFE_APPEND("  corrupted range: offset %d to %d (total %d bytes)\n", first, last, count);
         SAFE_APPEND("Likely cause: Buffer overflow beyond the end of allocated memory.%s", "\n");
 
         error_buf[buf_size - 1] = '\0';

@@ -18,6 +18,9 @@ vinf=              a3 *     b1  # A(inf)*B(inf)
 */
 
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    lmmp_param_assert(nb >= 20);
+    lmmp_param_assert(na <= 3 * nb);
+    lmmp_param_assert(5 * na >= 9 * nb);
     TEMP_DECL;
     mp_size_t n = na >= 2 * nb ? (na + 3) >> 2 : (nb + 1) >> 1, s = na - 3 * n, t = nb - n;
     int vm1_neg;
@@ -161,6 +164,9 @@ void lmmp_mul_toom42_history_free_() {
 }
 
 void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    lmmp_param_assert(nb >= 20);
+    lmmp_param_assert(na <= 3 * nb);
+    lmmp_param_assert(5 * na >= 9 * nb);
     TEMP_DECL;
     mp_size_t n = na >= 2 * nb ? (na + 3) >> 2 : (nb + 1) >> 1, s = na - 3 * n, t = nb - n;
     int vm1_neg;

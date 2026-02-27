@@ -3,8 +3,8 @@
 // qh:[dstq,n]=[numa,2*n] div [numb,n], [numa,n]=[numa,2*n] mod [numb,n], return qh
 // need(n>=6, MSB(numb)=1, [tp,n], inv21=(2^192-1)/[numb+nb-2,2]-2^64, sep(dstq,numa,numb,tp))
 static mp_limb_t lmmp_div_divide_n_(mp_ptr dstq, mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t inv21, mp_ptr tp) {
-    lmmp_assert(n >= 6);
-    lmmp_assert(numb[n - 1] >= 0x8000000000000000);
+    lmmp_param_assert(n >= 6);
+    lmmp_param_assert(numb[n - 1] >= 0x8000000000000000);
     mp_size_t lo = n >> 1, hi = n - lo;
     mp_limb_t cy, qh, ql;
 
@@ -43,9 +43,9 @@ static mp_limb_t lmmp_div_divide_n_(mp_ptr dstq, mp_ptr numa, mp_srcptr numb, mp
 }
 
 mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
-    lmmp_debug_assert(na >= 2 * nb);
-    lmmp_debug_assert(nb >= 6);
-    lmmp_debug_assert(numb[nb - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(na >= 2 * nb);
+    lmmp_param_assert(nb >= 6);
+    lmmp_param_assert(numb[nb - 1] >= 0x8000000000000000ull);
     mp_size_t nq = na - nb;
 
     dstq += nq;

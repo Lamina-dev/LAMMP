@@ -9,8 +9,8 @@
 #define POP_THRESHOLD 5
 
 mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec) {
-    lmmp_debug_assert(dst != NULL && vec != NULL);
-    lmmp_debug_assert(vec->n > 0);
+    lmmp_param_assert(dst != NULL && vec != NULL);
+    lmmp_param_assert(vec->n > 0);
 
     num_heap heap;
     lmmp_num_heap_init_(&heap, vec->n);
@@ -88,8 +88,8 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec) {
 }
 
 mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n) {
-    lmmp_debug_assert(dst != NULL && limb != NULL);
-    lmmp_debug_assert(n > 0);
+    lmmp_param_assert(dst != NULL && limb != NULL);
+    lmmp_param_assert(n > 0);
 
     num_heap heap;
 #define heap_size (n / LIMB_ELEMMUL_MP_THRESHOLD)

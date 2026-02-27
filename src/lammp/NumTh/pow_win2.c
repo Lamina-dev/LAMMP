@@ -21,6 +21,9 @@
     }
 
 mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
+    lmmp_param_assert(exp > 0);
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(dst != NULL);
     TEMP_DECL;
 
 #define b1 base
