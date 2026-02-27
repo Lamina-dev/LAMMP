@@ -17,6 +17,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
     : (type == LAMMP_ERROR_MEMORY_ALLOC_FAILURE) ? "MEMORY_ALLOC_FAILURE" \
     : (type == LAMMP_ERROR_MEMORY_FREE_FAILURE)  ? "MEMORY_FREE_FAILURE"  \
     : (type == LAMMP_ERROR_OUT_OF_BOUNDS)        ? "OUT_OF_BOUNDS"        \
+    : (type == LAMMP_ERROR_MEMORY_LEAK)          ? "MEMORY_LEAK"          \
     : (type == LAMMP_ERROR_UNEXPECTED_ERROR)     ? "UNEXPECTED_ERROR"     \
                                                  : "UNKNOWN_TYPE"
 
