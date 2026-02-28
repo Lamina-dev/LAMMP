@@ -33,18 +33,17 @@ extern "C" {
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
 // 开启时，将会检查栈溢出；开销：中
-#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 0
-// 开启时，将会进行debug_assert的检查；开销：低
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
+// 开启时，将会开启debug_assert的检查；开销：低
 #define LAMMP_DEBUG_ASSERT_CHECK 1
 // 开启时，将会进行参数检查；开销：中
 #define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
-// 开启时，将会同时开启堆栈越界检查；开销：很高
+// 开启时，将会进行全面的堆栈内存检查，包括堆栈溢出、指针释放检查、缓冲区溢出检查；开销：很高
 #define LAMMP_DEBUG_MEMORY_CHECK 0
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
 // 开启时，会增加内存分配和释放次数的统计功能；开销：中
-// 需要手动调用检查宏
-#define LAMMP_DEBUG_ALLOC_FREE_COUNT 0
+#define LAMMP_DEBUG_MEMORY_LEAK 1
 
 /*
  LAMMP 内存分配函数指针类型：
@@ -70,6 +69,12 @@ typedef void* (*lmmp_stack_get_top_fn)(void);
 typedef void (*lmmp_stack_set_top_fn)(void* top);
 
 typedef struct {
+    lmmp_heap_alloc_fn alloc;
+    lmmp_heap_free_fn free;
+    lmmp_realloc_fn realloc;
+} lmmp_heap_alloctor_t;
+
+typedef struct {
     void* begin;
     void* end;
     lmmp_stack_get_top_fn get;
@@ -78,42 +83,32 @@ typedef struct {
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
- * @param func 新的堆内存分配函数，可以为NULL，表示使用默认的 malloc
- * @warning 自行保证分配器和释放器相匹配 
+ * @param heap 新的堆内存分配器，可以为NULL，表示使用默认的 malloc
+ * @warning 由于默认栈采用堆内存的模拟，因此，传入新的堆分配器将导致默认栈被清空，
+ *          同时，为保证内存不泄露，在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对堆栈分配器进行检查。
+ *          若此时堆栈分配计数器不为 0，则会触发lmmp_abort函数，并输出相应的错误信息。
+ * @note 自行保证分配器和释放器相匹配，
  * @return 之前的堆内存分配函数
  */
-lmmp_heap_alloc_fn lmmp_set_heap_alloc_fn(lmmp_heap_alloc_fn func);
-
-/**
- * @brief 设置 LAMMP 全局堆内存释放函数
- * @param func 新的堆内存释放函数，可以为NULL，表示使用默认的 free
- * @return 之前的堆内存释放函数
- * @warning 请注意，自行保证分配器和释放器相匹配，若使用malloc，却不使用free，将会导致内存泄漏。
- */
-lmmp_heap_free_fn lmmp_set_heap_free_fn(lmmp_heap_free_fn func);
-/**
- * @brief 设置 LAMMP 全局堆内存重新分配函数
- * @param func 新的堆内存重新分配函数，可以为NULL，表示使用默认的 realloc
- * @return 之前的堆内存重新分配函数
- * @warning 请注意，自行保证分配器和释放器相匹配，否则将会导致内存泄漏。
- */
-lmmp_realloc_fn lmmp_set_realloc_fn(lmmp_realloc_fn func);
+void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
 
 /**
  * @brief 设置 LAMMP 全局栈分配器
- * @param alloctor 新的栈分配器，可以为NULL，表示使用默认的堆栈分配器
+ * @param stack 新的栈分配器，可以为NULL，表示使用默认的堆栈分配器
  * @note 默认栈分配器的内存地址是从低地址到高地址，因此，如果需要使用自定义栈，请自行保证，
  *       若传入的分配器的内存地址是从高地址到低地址，则行为等价于传入 NULL。
  * @warning 请注意，出于对性能的考虑，此函数不会释放掉当前的默认栈。
  */
-void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* alloctor);
+void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* stack);
 
 /**
  * @brief LAMMP 全局默认栈重置函数
  * @param size 新的默认栈大小，单位为字节
- * @warning 请注意，此函数会释放掉当前的默认栈，并重新分配一块新的堆内存作为默认栈。
- *          因此，调用此函数后，访问之前的分配的栈空间将会导致未定义行为。
- *          需要特别注意，使用重置默认栈后，将会改为使用新的默认栈，如此前分配了自定义的栈分配器，将被覆盖。
+ * @warning 请注意，此函数会释放掉当前的默认栈，如果使用的是自定义栈，则将被弃用，
+ *          并重新分配一块新的堆内存作为默认栈。且后续的栈将会改为使用新的默认栈。
+ *          调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
+ *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
+ *          若默认栈不为空，则会触发lmmp_abort函数。
  * @note 当 size 为 0 时，将会释放调用默认栈，如果此后再使用默认栈内存，将会重新申请一块大小为
  *        LAMMP_DEFAULT_STACK_SIZE 的堆内存作为默认栈。
  */
@@ -154,7 +149,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  * @param file 退出处的文件名
  * @param line 退出处的行号
  * @param type 退出类型。有以下几个类型：
- * 
+ *
  *        1. ASSERT_FAILURE （枚举值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
  *             其通常代表不可能发生的计算错误，可能表明程序其他部分的计算错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
@@ -162,7 +157,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
  *             这通常是调用者的UB，如无UB的情况下触发此错误，可能是LAMMP内部的逻辑错误，可以报告给开发者。
  *             此类型只会在定义了 LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的情况下才会触发。
- *         
+ *
  *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出，其通常表明调用者传入了无效的参数，
  *             导致函数的行为不符合预期。此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。此类型的错误只有在
  *             定义了 LAMMP_DEBUG_PARAM_ASSERT_CHECK 宏为 1 的情况下才会触发。
@@ -171,21 +166,24 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *             导致程序崩溃；另一种情况为栈分配器的栈溢出（栈空间不足或其他UB），其中，情况一是会永远进行的，而情况二
  *             只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
  *
- *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有一种触发可能，那就是使用栈分配器时，释放的内存
- *             不是分配器分配的，导致释放错误。或由栈分配的前一次内存缓冲区意外写入，导致后续内存释放时，头部信息损坏
- *             导致释放无法进行。此类错误只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
- * 
+ *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有两种触发可能，一种为堆内存分配释放时，头部信息被损坏
+ *             可能源于传入错误的指针，或缓冲区溢出导致此头部损坏。另一种情况为类似的，由栈分配器分配的内存释放时，头部信息损坏
+ *             或指针不在栈的范围内，导致释放错误，如不是传入错误指针，则可能为栈分配的前一次内存缓冲区溢出，导致此内存释放时，
+ *             头部信息损坏，导致释放无法进行。此类错误错误触发情况较为复杂，LAMMP_DEBUG_MEMORY_CHECK 宏为 1 时，两种情况都
+ *             有可能发生，仅定义 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 时，此错误仅可能由栈分配器触发。
+ *
  *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间。此类型的错误在堆栈分配器中，
  *             均可能触发，但由于栈分配器的特殊性，可能部分越界访问被判定为栈溢出，或内存释放错误。具体可尝试查看错误信息。
  *             此类型只会在定义了 LAMMP_DEBUG_MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
  *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出，有两种情况，一种情况为堆内存计数器不为0，另一种情况为当前栈帧
- *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_ALLOC_FREE_COUNT 宏为 1，且仅在手动调用lmmp_leak_tracker
- *             宏来触发，
- * 
+ *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_MEMORY_LEAK 宏为 1，才会触发。通常情况下，此错误需要手动调用
+ *             lmmp_leak_tracker宏进行检查，但在调用堆栈分配器重置时，也将会检查此时的堆计数器是否为0，栈是否为空，若不满足，
+ *             触发此错误。
+ *
  *        8. UNEXPECTED_ERROR （枚举值为8）为其他未知错误导致的退出。
  *
- * @warning LAMMP内部中断都将会调用此函数，如果全局退出函数为NULL，则使用默认的退出函数，会打印出全部错误信息，并调用 
+ * @warning LAMMP内部中断都将会调用此函数，如果全局退出函数为NULL，则使用默认的退出函数，会打印出全部错误信息，并调用
  *          abort 函数中断程序。自定义全局退出函数请通过 lmmp_set_abort_fn 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
@@ -260,7 +258,7 @@ void lmmp_free(void*);
 #endif
 
 /**
- * @brief 内存分配计数器
+ * @brief 堆内存分配计数器
  * @param cnt 若不为0，则将堆内存计数器置为cnt
  * @return 返回当前的heap分配计数（如果被设置，即返回旧的计数值），即目前未被释放的堆内存数量
  */
@@ -275,7 +273,7 @@ int lmmp_alloc_count(int cnt);
  */
 void lmmp_leak_tracker(const char* file, int line);
 
-#if LAMMP_DEBUG_ALLOC_FREE_COUNT == 1
+#if LAMMP_DEBUG_MEMORY_LEAK == 1
 // 同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
 // 两者同时发生则将输出两者的信息。
 #define lmmp_leak_tracker lmmp_leak_tracker(__FILE__, __LINE__)
@@ -284,7 +282,7 @@ void lmmp_leak_tracker(const char* file, int line);
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-    void* lmmp_stack_alloc(size_t size, const char* file, int line);
+void* lmmp_stack_alloc(size_t size, const char* file, int line);
 #define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __FILE__, __LINE__)
 #else
 /**
@@ -303,7 +301,7 @@ void lmmp_stack_free(void* ptr, const char* file, int line);
 /**
  * @brief 栈内存释放函数（使用stack_get_top和stack_set_top）
  * @param ptr 要释放的内存指针
- * @warning 请严格按照分配顺序的逆序释放内存，若释放的指针不在当前栈帧上或传入意外的指针，则会触发lmmp_abort
+ * @warning 请严格按照分配顺序的逆序释放内存（后分配者先释放）
  */
 void lmmp_stack_free(void* ptr);
 #endif
@@ -422,6 +420,14 @@ void lmmp_temp_stack_free_(void* marker);
 #else
 #define lmmp_param_assert(x) ((void)0)
 #endif
+
+/**
+ * @brief 全局共享的动态分配的堆内存资源释放函数
+ * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
+ *       释放后，这些全局资源将处于未初始化状态，将会变成程序刚启动时的状态，
+ *       如果这些资源还将使用，则将会在后续调用中重新分配堆内存并初始化。
+ */
+void lmmp_global_deinit(void);
 
 #ifdef __cplusplus
 }  // extern "C"
