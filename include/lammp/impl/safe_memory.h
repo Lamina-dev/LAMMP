@@ -8,14 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-// === 配置宏 ===
-// 额外分配的内存比例控制，默认额外分配10% (MORE_ALLOC_TIMES/10)
-#ifndef LAMMP_MEMORY_MORE_ALLOC_TIMES
-#define MORE_ALLOC_TIMES 1
-#else
-#define MORE_ALLOC_TIMES LAMMP_MEMORY_MORE_ALLOC_TIMES
-#endif
-
 // === 内存块头部结构 ===
 typedef struct {
     size_t user_size;   // 用户请求的大小
@@ -80,16 +72,16 @@ static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, co
     } while (0)
 
         SAFE_APPEND("Memory overflow (extra memory corruption) detected!%s", "\n");
-        SAFE_APPEND("Memory header: %s", "\n");
+        SAFE_APPEND("Memory header:%s", "\n");
         SAFE_APPEND("  allocated at: %s:%d\n", hdr->file, hdr->line);
         SAFE_APPEND("  checked at:   %s:%d\n", check_file, check_line);
         SAFE_APPEND("  user size:    %zu bytes\n", hdr->user_size);
         SAFE_APPEND("  extra size:   %zu bytes (%.0f%% of user size)\n", hdr->extra_size,
-                    (hdr->user_size > 0) ? (hdr->extra_size * 100.0 / hdr->user_size) : 0);
+                    LAMMP_MEMORY_MORE_ALLOC_TIMES * 10.0);
         SAFE_APPEND("  user ptr:     %p\n", user_ptr);
         SAFE_APPEND("  extra memory: %p to %p\n", (void*)extra_start, (void*)(extra_start + hdr->extra_size - 1));
         SAFE_APPEND("  corrupted range: offset %d to %d (total %d bytes)\n", first, last, count);
-        SAFE_APPEND("Likely cause: Buffer overflow beyond the end of allocated memory.%s", "\n");
+        SAFE_APPEND("Likely cause: Buffer overflow beyond the end of the memory.%s", "\n");
 
         error_buf[buf_size - 1] = '\0';
         lmmp_abort(LAMMP_ERROR_OUT_OF_BOUNDS, error_buf, check_file, check_line);
@@ -105,12 +97,12 @@ static inline int check_memory_block_integrity(MemHeader* hdr, void* user_ptr, c
 
     // 检查头部魔数是否被破坏（可能由下溢或野指针导致）
     if (hdr->magic != MEM_MAGIC) {
-        char error_buf[256];
+        char error_buf[128];
         snprintf(error_buf, sizeof(error_buf),
                  "Memory header corruption detected! Magic: 0x%08x (expected 0x%08x)\n"
                  "Possible underflow or invalid pointer.",
                  hdr->magic, MEM_MAGIC);
-        lmmp_abort(LAMMP_ERROR_OUT_OF_BOUNDS, error_buf, check_file, check_line);
+        lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, error_buf, check_file, check_line);
         return 1;
     }
 
@@ -124,7 +116,7 @@ static inline void* lmmp_alloc_debug(size_t size, const char* file, int line) {
         return NULL;
 
     // 计算额外分配的内存大小
-    size_t extra_size = (size * MORE_ALLOC_TIMES) / 10;
+    size_t extra_size = (size * LAMMP_MEMORY_MORE_ALLOC_TIMES) / 10;
     extra_size = align_up(extra_size);
 
     size_t header_size = align_up(sizeof(MemHeader));
@@ -214,7 +206,6 @@ static inline int check_memory_overflow(void* ptr, const char* file, int line) {
 
 #define CHECK_OVERFLOW(ptr) check_memory_overflow(ptr, __FILE__, __LINE__)
 
-#undef MORE_ALLOC_TIMES
 #undef SAFE_APPEND
 #undef MEM_MAGIC
 #undef ALIGNMENT
