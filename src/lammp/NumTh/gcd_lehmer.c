@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
 typedef struct {
@@ -44,10 +45,10 @@ static void lmmp_gcd_lehmer_step_(slong u, slong v, mp_gcd_lehmer_t* gcd) {
 }
 
 static void lmmp_lehmer_extract_(mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn, slong* a, slong* b) {
-    lmmp_debug_assert(un > 1 && vn > 1);
-    lmmp_debug_assert(un >= vn);
-    lmmp_debug_assert(up != NULL && vp != NULL);
-    lmmp_debug_assert(a != NULL && b != NULL);
+    lmmp_param_assert(un > 1 && vn > 1);
+    lmmp_param_assert(un >= vn);
+    lmmp_param_assert(up != NULL && vp != NULL);
+    lmmp_param_assert(a != NULL && b != NULL);
 
     int kz = lmmp_limb_bits_(up[un - 1]);
     if (kz >= LEHMER_EXACT_BITS) {
@@ -223,9 +224,9 @@ static bool lmmp_lehmer_mul_(mp_ptr a, mp_size_t* an, mp_ptr b, mp_size_t* bn, m
 }
 
 mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn) {
-    lmmp_debug_assert(un > 0 && vn > 0);
-    lmmp_debug_assert(up != NULL && vp != NULL);
-    lmmp_debug_assert(dst != NULL);
+    lmmp_param_assert(un > 0 && vn > 0);
+    lmmp_param_assert(up != NULL && vp != NULL);
+    lmmp_param_assert(dst != NULL);
 
     if (un < vn) {
         LMMP_SWAP(up, vp, mp_srcptr);

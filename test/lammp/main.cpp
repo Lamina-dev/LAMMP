@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_vec_ele_mul();
+    test_perm();
     return 0;
 }

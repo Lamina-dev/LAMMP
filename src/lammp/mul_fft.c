@@ -1421,8 +1421,8 @@ static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, 
 }
 
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
-    lmmp_debug_assert(na > 0 && nb > 0);
-    lmmp_debug_assert(na >= nb);
+    lmmp_param_assert(na > 0 && nb > 0);
+    lmmp_param_assert(na >= nb);
     mp_size_t hn = lmmp_fft_next_size_((na + nb + 1) >> 1);
     lmmp_assert(na + nb > hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
@@ -1477,8 +1477,8 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
 }
 
 void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
-    lmmp_debug_assert(na > 0 && nb > 0);
-    lmmp_debug_assert(na >= nb);
+    lmmp_param_assert(na > 0 && nb > 0);
+    lmmp_param_assert(na >= nb);
     lmmp_assert(na + nb > hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
 

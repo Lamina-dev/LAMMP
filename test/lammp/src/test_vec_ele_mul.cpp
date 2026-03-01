@@ -73,5 +73,4 @@ void test_vec_ele_mul() {
     for (mp_ssize_t i = 0; i < n; i++) {
         lmmp_free(p[i]);
     }
-    ALLOC_FREE_COUNT_CHECK;
 }

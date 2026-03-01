@@ -1,5 +1,4 @@
 #include "../../../include/lammp/impl/rand_state.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/mprand.h"
 
 /**
@@ -26,7 +25,7 @@ static inline mp_limb_t rotl(const mp_limb_t x, int k) {
 }
 
 mp_limb_t lmmp_xorshift_random(xorshift256pp_state* rng) {
-    lmmp_debug_assert(rng != NULL);
+    lmmp_param_assert(rng != NULL);
     const mp_limb_t r = rotl(rng->s[0] + rng->s[3], 23) + rng->s[0];
     const mp_limb_t t = rng->s[1] << 17;
 
@@ -41,7 +40,7 @@ mp_limb_t lmmp_xorshift_random(xorshift256pp_state* rng) {
 }
 
 void lmmp_xorshift_srandom(xorshift256pp_state* rng, mp_limb_t seed) {
-    lmmp_debug_assert(rng != NULL);
+    lmmp_param_assert(rng != NULL);
 
     // assert that the seed is non-zero
     mp_limb_t seed0 = (seed == 0) ? 0x123456789abcdefULL : seed;

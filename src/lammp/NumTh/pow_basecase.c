@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
 #define mul_b(_i_)                                 \
@@ -6,8 +7,8 @@
     rn -= (dst[rn - 1] == 0) ? 1 : 0
 
 mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
-    lmmp_debug_assert(exp >= 3);
-    lmmp_debug_assert(exp % 2 == 1);
+    lmmp_param_assert(exp >= 3);
+    lmmp_param_assert(exp % 2 == 1);
     TEMP_DECL;
 
 #define b1 base

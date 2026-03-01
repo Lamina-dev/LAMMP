@@ -1,11 +1,30 @@
 ﻿LIBRARY LammpCore.dll
 EXPORTS
-	lmmp_set_abort_func
+
+	lmmp_set_heap_alloctor
+	lmmp_set_stack_alloctor
+	lmmp_default_stack_reset
+	
+	lmmp_set_abort_fn
 	lmmp_abort
 
 	lmmp_alloc
 	lmmp_realloc
 	lmmp_free
+
+	lmmp_alloc_count
+	lmmp_leak_tracker
+
+	lmmp_stack_alloc
+	lmmp_stack_free
+
+	lmmp_temp_heap_alloc_
+	lmmp_temp_heap_free_
+	lmmp_temp_stack_alloc_
+	lmmp_temp_stack_free_
+
+	lmmp_global_deinit
+	
 
 	lmmp_add_nc_
 	lmmp_add_n_
@@ -34,7 +53,11 @@ EXPORTS
 	lmmp_mul_1_
 	lmmp_mul_
 	lmmp_div_
+	
 	lmmp_sqrt_
+
+	lmmp_bases_
+	
 	lmmp_inv_
 
 	lmmp_from_str_
@@ -83,12 +106,11 @@ EXPORTS
 	lmmp_div_2_s_
 	lmmp_div_s_
 
-	lmmp_temp_alloc_
-	lmmp_temp_free_
 
 	lmmp_global_rng_init_
 	lmmp_seed_random_
 	lmmp_random_
+
 
 	lmmp_gcd_11_
 	lmmp_gcd_1_
@@ -124,12 +146,15 @@ EXPORTS
 	lmmp_multinomial_short_
 	lmmp_multinomial_int_
 
+
 	lmmp_siphash24_
 	lmmp_xxhash_
+
 
 	lmmp_vec_elem_mul_
 	lmmp_limb_elem_mul_
 	lmmp_slimb_elem_mul_
+
 	lmmp_mat22_mul_size_
 	lmmp_mat22_mul_basecase_
 	lmmp_mat22_sqr_basecase_

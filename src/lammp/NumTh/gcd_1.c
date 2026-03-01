@@ -1,7 +1,8 @@
 #include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/lmmpn.h"
 
 mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v) {
-    lmmp_debug_assert(u > 0 && v > 0);
+    lmmp_param_assert(u > 0 && v > 0);
     int count, k;
     k = lmmp_tailing_zeros_(u | v);
     u >>= lmmp_tailing_zeros_(u);
@@ -21,8 +22,8 @@ mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v) {
 }
 
 mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb) {
-    lmmp_debug_assert(un > 0);
-    lmmp_debug_assert(vlimb > 0);
+    lmmp_param_assert(un > 0);
+    lmmp_param_assert(vlimb > 0);
     mp_limb_t ulimb;
     if (un == 1) {
         ulimb = up[0];
