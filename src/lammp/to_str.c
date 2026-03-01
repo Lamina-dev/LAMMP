@@ -6,8 +6,8 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1]!= 0);
     int i;
-    int digitspl = lmmp_bases_[base].digits_in_limb;
-    mp_limb_t lbase = lmmp_bases_[base].large_base;
+    int digitspl = lmmp_bases_(base).digits_in_limb;
+    mp_limb_t lbase = lmmp_bases_(base).large_base;
     mp_size_t n = 0;
     mp_limb_t frac;
     mp_limb_t tp[1 + TO_STR_BASEPOW_THRESHOLD];
@@ -129,7 +129,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
 
     if (LMMP_POW2_Q(base)) {
         mp_limb_t curlimb = numa[na - 1];
-        int cnt = lmmp_bases_[base].large_base;
+        int cnt = lmmp_bases_(base).large_base;
         int bitsh = lmmp_limb_bits_(curlimb);
         int mask = (1 << cnt) - 1;
         mp_size_t bits = bitsh + LIMB_BITS * (na - 1);
@@ -154,8 +154,8 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
         TEMP_DECL;
         mp_basepow_t powers[LIMB_BITS];
         mp_size_t exps[LIMB_BITS];
-        mp_limb_t lbase = lmmp_bases_[base].large_base;
-        mp_size_t digitspl = lmmp_bases_[base].digits_in_limb;
+        mp_limb_t lbase = lmmp_bases_(base).large_base;
+        mp_size_t digitspl = lmmp_bases_(base).digits_in_limb;
         mp_size_t bexp = (lmmp_to_str_len_(numa, na, base) - 1) / digitspl + 1;
         mp_size_t tzbit = lmmp_tailing_zeros_(lbase);
         // numa 的拷贝空间，多一个 limb 预留规整化移位所需

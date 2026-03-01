@@ -53,7 +53,11 @@ EXPORTS
 	lmmp_mul_1_
 	lmmp_mul_
 	lmmp_div_
+	
 	lmmp_sqrt_
+
+	lmmp_bases_
+	
 	lmmp_inv_
 
 	lmmp_from_str_

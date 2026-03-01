@@ -58,7 +58,7 @@ static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, co
     find_corruption_range(extra_start, EXTRA_MEM_PATTERN, hdr->extra_size, &first, &last, &count);
 
     if (count > 0) {
-        char error_buf[1024];
+        char error_buf[1088];
         int offset = 0;
         const int buf_size = sizeof(error_buf);
 
