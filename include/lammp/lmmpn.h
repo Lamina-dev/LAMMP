@@ -383,8 +383,7 @@ mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t 
  * @param n limb长度
  * @return 运算后的借位值 [0|1|2]
  */
-mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb,
-                          mp_size_t n);
+mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 大数乘以单limb并累加操作 [numa,n] += [numb,n] * b
@@ -917,7 +916,10 @@ typedef struct lmmp_mp_base_t_ {
     int base;
 } mp_base_t;
 
-extern const mp_base_t lmmp_bases_[257];
+// base 2 - 256
+extern const mp_base_t lmmp_bases_[255];
+
+#define lmmp_bases_(base) lmmp_bases_[base - 2]
 
 typedef struct lmmp_mp_basepow_t_ {
     // 基数幂值(base^digits)
@@ -1143,7 +1145,7 @@ INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
         } while (numa[--na] == 0);
         mslbits = lmmp_limb_bits_(numa[na]);
     }
-    return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_[base].inv_lg_base) + 1;
+    return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_(base).inv_lg_base) + 1;
 }
 
 /**
@@ -1166,7 +1168,7 @@ INLINE_ mp_size_t lmmp_form_str_len_(const mp_byte_t* src, mp_size_t len, int ba
         } while (src[--len] == 0);
         ++len;
     }
-    return lmmp_mulh_(len, lmmp_bases_[base].lg_base) + 1;
+    return lmmp_mulh_(len, lmmp_bases_(base).lg_base) + 1;
 }
 
 /**

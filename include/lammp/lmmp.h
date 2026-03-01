@@ -33,9 +33,9 @@ extern "C" {
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
 // 开启时，将会检查栈溢出；开销：中
-#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 0
 // 开启时，将会开启debug_assert的检查；开销：低
-#define LAMMP_DEBUG_ASSERT_CHECK 1
+#define LAMMP_DEBUG_ASSERT_CHECK 0
 // 开启时，将会进行参数检查；开销：中
 #define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
 // 开启时，将会进行全面的堆栈内存检查，包括堆栈溢出、指针释放检查、缓冲区溢出检查；开销：很高
@@ -43,7 +43,7 @@ extern "C" {
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
 // 开启时，会增加内存分配和释放次数的统计功能；开销：中
-#define LAMMP_DEBUG_MEMORY_LEAK 1
+#define LAMMP_DEBUG_MEMORY_LEAK 0
 
 /*
  LAMMP 内存分配函数指针类型：
