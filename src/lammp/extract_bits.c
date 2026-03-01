@@ -1,9 +1,8 @@
-#include "../../include/lammp/lmmp.h"
 #include "../../include/lammp/lmmpn.h"
 
 mp_size_t lmmp_extract_bits_(mp_srcptr num, mp_size_t n, mp_limb_t* ext, int bits) {
-    lmmp_debug_assert(bits <= LIMB_BITS && bits > 0);
-    lmmp_debug_assert(n > 0);
+    lmmp_param_assert(bits <= LIMB_BITS && bits > 0);
+    lmmp_param_assert(n > 0);
     if (n == 1) {
         int lb = lmmp_limb_bits_(num[0]);
         if (lb <= bits) {

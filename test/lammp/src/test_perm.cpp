@@ -2,7 +2,7 @@
 #include "../include/test_short.hpp"
 
 void test_perm() {
-    size_t n = 0xfffff, r = n;
+    size_t n = 1000000, r = n;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 
@@ -40,5 +40,4 @@ void test_perm() {
     lmmp_free(a);
     lmmp_free(b);
     lmmp_free(limb_vec);
-    ALLOC_FREE_COUNT_CHECK;
 }

@@ -201,6 +201,10 @@ void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_pt
 INLINE_ void 
 lmmp_mat22_mul_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, int choose, mp_size_t tn,
                 mp_size_t maxa) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(matA != NULL);
+    lmmp_param_assert(matB != NULL);
+    lmmp_param_assert(choose == 0 || choose == 1);
     if (choose == 0) {
         lmmp_mat22_mul_basecase_(dst, matA, matB, NULL, tn);
     } else {
@@ -218,6 +222,9 @@ lmmp_mat22_mul_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t*
  */
 INLINE_ void 
 lmmp_mat22_sqr_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat, int choose, mp_size_t tn) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(mat != NULL);
+    lmmp_param_assert(choose == 0 || choose == 1);
     if (choose == 0) {
         lmmp_mat22_sqr_basecase_(dst, mat, NULL, tn);
     } else {

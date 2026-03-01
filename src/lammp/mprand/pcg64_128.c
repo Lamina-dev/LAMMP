@@ -1,6 +1,5 @@
 #include "../../../include/lammp/impl/_umul64to128_.h"
 #include "../../../include/lammp/impl/u128_u192.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/mprand.h"
 #include "../../../include/lammp/impl/rand_state.h"
 
@@ -35,7 +34,7 @@ static inline void pcg64_128_action(mp_limb_t state[2], const mp_limb_t inc[2]) 
 }
 
 void lmmp_pcg64_128_srandom(pcg64_128_state* rng, mp_limb_t seed) {
-    lmmp_debug_assert(rng != NULL);
+    lmmp_param_assert(rng != NULL);
 
     if (seed == 0) seed = 0x1234567890abcdefULL;
 
@@ -53,7 +52,7 @@ void lmmp_pcg64_128_srandom(pcg64_128_state* rng, mp_limb_t seed) {
 
 // （PCG-XSL-RR-128/64）
 mp_limb_t lmmp_pcg64_128_random(pcg64_128_state* rng) {
-    lmmp_debug_assert(rng != NULL);
+    lmmp_param_assert(rng != NULL);
     mp_limb_t oldstate[2] = {rng->state[0], rng->state[1]};
     pcg64_128_action(rng->state, rng->inc);
 

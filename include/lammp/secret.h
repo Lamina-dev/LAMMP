@@ -86,7 +86,7 @@
   使用其他更强的加密算法或协议来处理。
  */
 
-#include "lmmpn.h"
+#include "lmmp.h"
 
 #ifdef __cplusplus
 extern "C" {

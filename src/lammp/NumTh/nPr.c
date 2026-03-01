@@ -2,6 +2,8 @@
 #include "../../../include/lammp/impl/prime_table.h"
 
 mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+    lmmp_param_assert(n >= r);
+    lmmp_param_assert(n <= 0xffff);
     if (n <= 20) {
         static const ulong factorial[21] = {1,
                                             1,
@@ -130,6 +132,8 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 }
 
 mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+    lmmp_param_assert(n >= r);
+    lmmp_param_assert(n <= 0xffffffff);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         if (r <= 10 || n >= 0x10000000) {
             dst[0] = 1;
@@ -290,6 +294,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 }
 
 mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+    lmmp_param_assert(n >= r);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         if (n == 0xffffffffffffffff || r <= 3) {
             dst[0] = 1;

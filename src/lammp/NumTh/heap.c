@@ -47,7 +47,7 @@ static void heapifyDown(num_heap* pq, size_t index) {
 }
 
 void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n) {
-    lmmp_debug_assert(pq->size < pq->cap);
+    lmmp_param_assert(pq->size < pq->cap);
     pq->head[pq->size].num = elem;
     pq->head[pq->size].n = n;
     pq->size++;

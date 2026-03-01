@@ -1,5 +1,4 @@
 #include "../../../include/lammp/mprand.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/rand_state.h"
 
 typedef struct {

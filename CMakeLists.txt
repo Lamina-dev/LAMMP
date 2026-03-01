@@ -5,7 +5,7 @@ if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         enable_language(ASM_MASM)
     elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        # 对于MinGW，我们仍然使用ASM_MASM语言，但手动配置ml64编译器
+        # 对于MinGW，我们仍然使用ASM_MASM，但手动配置ml64编译器
         enable_language(ASM_MASM)
     endif()
 endif()
@@ -24,12 +24,12 @@ endif()
 # ===================== MASM 汇编器配置 =====================
 if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-        # MSVC原生MASM配置
+        # MSVC的MASM配置
         set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
         set(CMAKE_ASM_MASM_FLAGS_INIT "${CMAKE_ASM_MASM_FLAGS}")
         set(CMAKE_ASM_MASM_COMPILE_OBJECT "<CMAKE_ASM_MASM_COMPILER> <FLAGS> /Fo<OBJECT> <SOURCE>")
     elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        # MinGW下使用MASM (ml64.exe) 配置
+        # MinGW下使用MASM (ml64.exe) 
         # 查找ml64.exe（MASM64位编译器）
         find_program(ML64_EXECUTABLE
             NAMES ml64.exe
@@ -44,17 +44,15 @@ if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
             REQUIRED
         )
         
-        # 设置MASM编译器
+        # 设置MASM汇编器
         set(CMAKE_ASM_MASM_COMPILER ${ML64_EXECUTABLE})
         # MASM编译参数
-        set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64 /Zi")
+        set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
         set(CMAKE_ASM_MASM_FLAGS_INIT "${CMAKE_ASM_MASM_FLAGS}")
-        # 自定义编译规则：调用ml64.exe编译汇编文件
         set(CMAKE_ASM_MASM_COMPILE_OBJECT 
             "<CMAKE_ASM_MASM_COMPILER> <FLAGS> /Fo<OBJECT> <SOURCE>"
         )
         
-        # 确保汇编文件被正确识别
         file(GLOB MASM_FILES ${CMAKE_SOURCE_DIR}/src/lammp/masm/*.asm)
     endif()
 endif()
@@ -75,14 +73,14 @@ function(set_common_compiler_options target)
             $<$<COMPILE_LANGUAGE:C>:
                 -Wall -Wextra -Wpedantic -fPIC -m64
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -fno-math-errno -DNDEBUG>
+                $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
                 -Wall -Wextra -Wpedantic -fPIC -m64
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -fno-math-errno -DNDEBUG>
+                $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
@@ -90,6 +88,10 @@ function(set_common_compiler_options target)
         )
         target_link_options(${target} PRIVATE
             -m64 -Wl,--enable-auto-import -Wl,--no-undefined
+            $<$<CONFIG:Release>:-s -Wl,--strip-all> 
+            $<$<CONFIG:MinSizeRel>:-s -Wl,--strip-all>
+            $<$<CONFIG:Debug>:> 
+            $<$<CONFIG:RelWithDebInfo>:>
         )
     elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         target_compile_options(${target} PRIVATE
@@ -118,7 +120,6 @@ endfunction()
 # ===================== 输出目录配置 =====================
 set(OUTPUT_ROOT ${CMAKE_SOURCE_DIR}/dist/lammp)
 
-# 对MSVC多配置构建
 foreach(CONFIG_TYPE Debug Release RelWithDebInfo MinSizeRel)
     string(TOUPPER ${CONFIG_TYPE} CONFIG_TYPE_UPPER)
     # DLL/可执行文件输出目录

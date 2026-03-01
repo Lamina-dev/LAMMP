@@ -16,6 +16,10 @@ vinf=          a2 *^2 # A(inf)^2
 */
 
 void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa != NULL);
+    lmmp_param_assert(dst != NULL);
+    TEMP_DECL;
     mp_size_t n = (na + 2) / 3, s = na - 2 * n;
     mp_limb_t cy, cy2, vinf0, am1h;
     mp_limb_t* tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
@@ -75,4 +79,5 @@ void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_sqr_(v0, a0, n);
 
     lmmp_toom_interp5_(dst, v2, vm1, n, s + s, 0, vinf0);
+    TEMP_FREE;
 }

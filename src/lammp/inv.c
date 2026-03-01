@@ -1,8 +1,8 @@
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    lmmp_debug_assert(na > 0);
-    lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa[na - 1] >= 0x8000000000000000ull);
     if (na == 1)
         *dst = lmmp_inv_1_(*numa);
     else {
@@ -30,8 +30,8 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    lmmp_debug_assert(na > 4);
-    lmmp_debug_assert(numa[na - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(na > 4);
+    lmmp_param_assert(numa[na - 1] >= 0x8000000000000000ull);
     
     mp_limb_t cy;
     mp_size_t nr = na, mn;
@@ -142,6 +142,8 @@ void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa[na - 1] != 0);
     mp_limb_t high = numa[na - 1];
     int nsh = lmmp_leading_zeros_(high);
     TEMP_DECL;

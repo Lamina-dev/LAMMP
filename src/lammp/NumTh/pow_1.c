@@ -1,3 +1,4 @@
+#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
 #define cal_tab(i)                  \
@@ -10,7 +11,7 @@
     tab[i + 6] = tab[i + 5] * base
 
 mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_debug_assert(base <= 0xf && base >= 2);
+    lmmp_param_assert(base <= 0xf && base >= 2);
     
     TEMP_DECL;
     mp_limb_t tab[16];
@@ -53,8 +54,8 @@ mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
 }
 
 mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_debug_assert(base >= 2);
-    lmmp_debug_assert(base <= 0xff);
+    lmmp_param_assert(base >= 2);
+    lmmp_param_assert(base <= 0xff);
     TEMP_DECL;
     mp_limb_t tab[8];
     tab[0] = 1;
@@ -87,8 +88,8 @@ mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
 }
 
 mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_debug_assert(base >= 2);
-    lmmp_debug_assert(base <= 0xffff);
+    lmmp_param_assert(base >= 2);
+    lmmp_param_assert(base <= 0xffff);
     TEMP_DECL;
     mp_limb_t tab[8][2];
     tab[0][0] = 1;
@@ -139,8 +140,8 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
 }
 
 mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_debug_assert(base >= 2);
-    lmmp_debug_assert(base <= 0xffffffff);
+    lmmp_param_assert(base >= 2);
+    lmmp_param_assert(base <= 0xffffffff);
     TEMP_DECL;
     mp_limb_t tab[4][2];
     tab[0][0] = 1;
@@ -202,7 +203,7 @@ mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
 }
 
 mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_debug_assert(base > 0xffffffff);
+    lmmp_param_assert(base > 0xffffffff);
     TEMP_DECL;
 
     mp_limb_t b2[2];

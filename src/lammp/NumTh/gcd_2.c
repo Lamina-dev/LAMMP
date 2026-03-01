@@ -1,12 +1,13 @@
-#include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
-    lmmp_debug_assert(dst != NULL);
-    lmmp_debug_assert(up != NULL);
-    lmmp_debug_assert(vp != NULL);
-    lmmp_debug_assert(!(up[1] == 0 && up[0] == 0));
-    lmmp_debug_assert(!(vp[1] == 0 && vp[0] == 0));
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(up != NULL);
+    lmmp_param_assert(vp != NULL);
+    lmmp_param_assert(!(up[1] == 0 && up[0] == 0));
+    lmmp_param_assert(!(vp[1] == 0 && vp[0] == 0));
     mp_limb_t u[2] = { up[0], up[1] };
     mp_limb_t v[2] = { vp[0], vp[1] };
     int k, cnt;
@@ -40,6 +41,9 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
     }
     cnt = lmmp_tailing_zeros_(u[0] | v[0]);
     k = lmmp_tailing_zeros_(u[0]);
+/*
+ FIXME: 这里疑似有部分移位分支中，k一定大于0，可以省去判断条件
+ */
     if (k > 0)
         _u128lshr(u, u, k);
     k = lmmp_tailing_zeros_(v[0]);
@@ -136,11 +140,11 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
 }
 
 mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp) {
-    lmmp_debug_assert(dst != NULL);
-    lmmp_debug_assert(up != NULL);
-    lmmp_debug_assert(vp != NULL);
-    lmmp_debug_assert(un > 2);
-    lmmp_debug_assert(vp[1] != 0);
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(up != NULL);
+    lmmp_param_assert(vp != NULL);
+    lmmp_param_assert(un > 2);
+    lmmp_param_assert(vp[1] != 0);
     mp_limb_t u[2] = {vp[0], vp[1]};
     lmmp_div_2_(NULL, up, un, u);
     if (u[1] == 0 && u[0] == 0) {

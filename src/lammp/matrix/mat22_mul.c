@@ -3,8 +3,8 @@
 #include "../../../include/lammp/matrix.h"
 
 int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_size_t* tn, mp_size_t* maxa) {
-    lmmp_debug_assert(matA!= NULL && matB!= NULL && dst!= NULL);
-    lmmp_debug_assert(tn != NULL);
+    lmmp_param_assert(matA!= NULL && matB!= NULL && dst!= NULL);
+    lmmp_param_assert(tn != NULL);
     if (matA == matB) {
         mp_ssize_t A00 = LMMP_ABS(matA->n00);
         mp_ssize_t A01 = LMMP_ABS(matA->n01);
@@ -71,8 +71,8 @@ void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst,
                               const lmmp_mat22_t* matB,
                               mp_ptr tp,
                               mp_size_t tn) {
-    lmmp_debug_assert(matA != NULL && matB != NULL && dst != NULL);
-    lmmp_debug_assert(tn > 0);
+    lmmp_param_assert(matA != NULL && matB != NULL && dst != NULL);
+    lmmp_param_assert(tn > 0);
     if (matA == matB) {
         lmmp_mat22_sqr_basecase_(dst, matA, tp, tn);
         return;
@@ -129,8 +129,8 @@ void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst,
 
 void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, 
                               mp_ptr tp, mp_size_t tn, mp_size_t maxa) {
-    lmmp_debug_assert(matA != NULL && matB != NULL && dst != NULL);
-    lmmp_debug_assert(tn > 0 && maxa > 0);
+    lmmp_param_assert(matA != NULL && matB != NULL && dst != NULL);
+    lmmp_param_assert(tn > 0 && maxa > 0);
     if (matA == matB) {
         lmmp_mat22_sqr_strassen_(dst, matA, tp, tn);
         return;
@@ -273,20 +273,21 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
 #undef p7    
 }
 
-void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn) {
+void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat, mp_ptr tp, mp_size_t tn) {
+    lmmp_param_assert(mat != NULL && dst != NULL);
     TEMP_DECL;
     ++tn;
     if (tp == NULL)
         tp = BALLOC_TYPE(tn * 7, mp_limb_t);
 
-#define A11 (matA->a00)
-#define A12 (matA->a01)
-#define A21 (matA->a10)
-#define A22 (matA->a11)
-#define A11n (matA->n00)
-#define A12n (matA->n01)
-#define A21n (matA->n10)
-#define A22n (matA->n11)
+#define A11 (mat->a00)
+#define A12 (mat->a01)
+#define A21 (mat->a10)
+#define A22 (mat->a11)
+#define A11n (mat->n00)
+#define A12n (mat->n01)
+#define A21n (mat->n10)
+#define A22n (mat->n11)
 
 #define s1 (dst->a00)
 #define s2 (dst->a01)
