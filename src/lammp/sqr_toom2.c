@@ -17,7 +17,7 @@ void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(numa!= NULL);
-    TEMP_DECL;
+    TEMP_S_DECL;
     mp_size_t s = na >> 1, n = na - s;
     mp_limb_t* vm1 = SALLOC_TYPE(2 * n, mp_limb_t);
     mp_slimb_t cy, cy2;
@@ -62,5 +62,5 @@ void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         lmmp_dec(dst + 3 * n);
     else
         lmmp_inc_1(dst + 3 * n, cy);
-    TEMP_FREE;
+    TEMP_S_FREE;
 }

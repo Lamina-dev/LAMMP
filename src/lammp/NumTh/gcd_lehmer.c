@@ -247,15 +247,16 @@ mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp,
 
 #define an un
 #define bn vn
-    TEMP_DECL;
+    TEMP_B_DECL;
     // [a,an+1] [b,bn+1]
     // A * a_old may overlow
-    mp_ptr a = TALLOC_TYPE(an + 1, mp_limb_t);
-    mp_ptr b = TALLOC_TYPE(bn + 1, mp_limb_t);
+    mp_ptr a = BALLOC_TYPE(an + 1, mp_limb_t);
+    mp_ptr b = BALLOC_TYPE(bn + 1, mp_limb_t);
     lehmer_stack_t ms;
-    ms.tp = TALLOC_TYPE(an + 1, mp_limb_t);
-    ms.mp = TALLOC_TYPE(an + 1, mp_limb_t);
-    ms.np = TALLOC_TYPE(an + 1, mp_limb_t);
+    mp_ptr temp = BALLOC_TYPE((an + 1) * 3, mp_limb_t);
+    ms.tp = temp;
+    ms.mp = temp + (an + 1);
+    ms.np = temp + (an + 1) * 2;
 
     lmmp_copy(a, up, an);
     lmmp_copy(b, vp, bn);
@@ -293,7 +294,7 @@ mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp,
         }
     }
     lmmp_copy(dst, a, an);
-    TEMP_FREE;
+    TEMP_B_FREE;
     return an;
 #undef an
 #undef bn

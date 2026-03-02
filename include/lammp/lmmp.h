@@ -352,6 +352,8 @@ void lmmp_temp_stack_free_(void* marker);
 
 // 临时内存标记声明：用于跟踪临时内存分配
 #define TEMP_DECL void *lmmp_temp_alloc_marker_ = NULL, *lmmp_temp_stack_marker_ = NULL
+#define TEMP_B_DECL void *lmmp_temp_alloc_marker_ = NULL
+#define TEMP_S_DECL void *lmmp_temp_stack_marker_ = NULL
 
 #define TEMP_SALLOC_THRESHOLD 0x7f00  // 小内存分配阈值（小于等于该值的内存分配在栈上）
 
@@ -372,6 +374,16 @@ void lmmp_temp_stack_free_(void* marker);
     do {                                                    \
         if (lmmp_temp_alloc_marker_)                        \
             lmmp_temp_heap_free_(lmmp_temp_alloc_marker_);  \
+        if (lmmp_temp_stack_marker_)                        \
+            lmmp_temp_stack_free_(lmmp_temp_stack_marker_); \
+    } while (0)
+#define TEMP_B_FREE                                        \
+    do {                                                   \
+        if (lmmp_temp_alloc_marker_)                       \
+            lmmp_temp_heap_free_(lmmp_temp_alloc_marker_); \
+    } while (0)
+#define TEMP_S_FREE                                         \
+    do {                                                    \
         if (lmmp_temp_stack_marker_)                        \
             lmmp_temp_stack_free_(lmmp_temp_stack_marker_); \
     } while (0)
