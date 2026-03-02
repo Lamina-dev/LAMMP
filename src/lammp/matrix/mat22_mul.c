@@ -135,7 +135,7 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
         lmmp_mat22_sqr_strassen_(dst, matA, tp, tn);
         return;
     }
-    TEMP_DECL;
+    TEMP_B_DECL;
     ++tn;
     if (tp == NULL)
         tp = BALLOC_TYPE(tn * 7, mp_limb_t);
@@ -247,7 +247,7 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
     C12n = lmmp_add_signed_(C12, U3, U3n, p6, -p6n);
     C21n = lmmp_add_signed_(C21, U2, U2n, p7, -p7n);
     C22n = lmmp_add_signed_(C22, p2, p2n, U2, U2n);
-    TEMP_FREE;
+    TEMP_B_FREE;
 
 #undef C11
 #undef C12
@@ -275,7 +275,7 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
 
 void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat, mp_ptr tp, mp_size_t tn) {
     lmmp_param_assert(mat != NULL && dst != NULL);
-    TEMP_DECL;
+    TEMP_B_DECL;
     ++tn;
     if (tp == NULL)
         tp = BALLOC_TYPE(tn * 7, mp_limb_t);
@@ -359,7 +359,7 @@ void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat, mp_ptr
     C12n = lmmp_add_signed_(C12, U3, U3n, p6, -p6n);
     C21n = lmmp_add_signed_(C21, U2, U2n, p7, -p7n);
     C22n = lmmp_add_signed_(C22, p2, p2n, U2, U2n);
-    TEMP_FREE;
+    TEMP_B_FREE;
 
 #undef C11
 #undef C12
