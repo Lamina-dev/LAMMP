@@ -1,13 +1,26 @@
+#include "../../include/lammp/impl/base_table.h"
 #include "../../include/lammp/lmmpn.h"
+
+mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
+    int mslbits = 0;
+    if (numa) {
+        do {
+            if (na == 0)
+                return 1;
+        } while (numa[--na] == 0);
+        mslbits = lmmp_limb_bits_(numa[na]);
+    }
+    return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_table[base - 2].inv_lg_base) + 1;
+}
 
 // assume numa[na-1]!=0
 static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
-    lmmp_param_assert(base >= 2 && base <= 256);
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1]!= 0);
     int i;
-    int digitspl = lmmp_bases_(base).digits_in_limb;
-    mp_limb_t lbase = lmmp_bases_(base).large_base;
+    int digitspl = lmmp_bases_table[base - 2].digits_in_limb;
+    mp_limb_t lbase = lmmp_bases_table[base - 2].large_base;
     mp_size_t n = 0;
     mp_limb_t frac;
     mp_limb_t tp[1 + TO_STR_BASEPOW_THRESHOLD];
@@ -45,13 +58,20 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
 }
 
 // assume numa[na-1]!=0, need an extra limb at numa[na]
-static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, mp_basepow_t* pow, mp_ptr tpq) {
+static mp_size_t lmmp_to_str_divide_(
+          mp_byte_t*    dst, 
+          mp_ptr        numa, 
+          mp_size_t     na, 
+          mp_basepow_t* pow, 
+          int           base,
+          mp_ptr        tpq
+) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1] != 0);
     lmmp_param_assert(pow != NULL);
     mp_size_t digits;
     if (na < TO_STR_DIVIDE_THRESHOLD) {
-        digits = lmmp_to_str_basecase_(dst, numa, na, pow->base);
+        digits = lmmp_to_str_basecase_(dst, numa, na, base);
     } else {
         mp_ptr p = pow->p, invp = pow->invp;
         mp_size_t np = pow->np, ni = pow->ni;
@@ -74,7 +94,7 @@ static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, 
         // if numa<p
         if (na + adjust <= np + zeros) {
             // skip this power
-            digits = lmmp_to_str_divide_(dst, numa, na, pow - 1, tpq);
+            digits = lmmp_to_str_divide_(dst, numa, na, pow - 1, base, tpq);
         } else {
             numa[na] = 0;
             na += adjust;
@@ -98,11 +118,11 @@ static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, 
 
             while (nq && q[nq - 1] == 0) --nq;
             if (nq)
-                digitsh = lmmp_to_str_divide_(dst + pdigits, q, nq, pow - 1, tpq + nq + 1);
+                digitsh = lmmp_to_str_divide_(dst + pdigits, q, nq, pow - 1, base, tpq + nq + 1);
 
             while (nr && r[nr - 1] == 0) --nr;
             if (nr)
-                digitsl = lmmp_to_str_divide_(dst, r, nr, pow - 1, tpq);
+                digitsl = lmmp_to_str_divide_(dst, r, nr, pow - 1, base, tpq);
 
             if (digitsh) {
                 while (digitsl != pdigits) {
@@ -118,7 +138,6 @@ static mp_size_t lmmp_to_str_divide_(mp_byte_t* dst, mp_ptr numa, mp_size_t na, 
 }
 
 mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
-    lmmp_param_assert(base >= 2 && base <= 256);
     do {
         if (na == 0)
             return 0;
@@ -126,10 +145,9 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
     ++na;
 
     mp_size_t digits;
-
     if (LMMP_POW2_Q(base)) {
         mp_limb_t curlimb = numa[na - 1];
-        int cnt = lmmp_bases_(base).large_base;
+        int cnt = lmmp_bases_table[base - 2].large_base;
         int bitsh = lmmp_limb_bits_(curlimb);
         int mask = (1 << cnt) - 1;
         mp_size_t bits = bitsh + LIMB_BITS * (na - 1);
@@ -154,8 +172,8 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
         TEMP_DECL;
         mp_basepow_t powers[LIMB_BITS];
         mp_size_t exps[LIMB_BITS];
-        mp_limb_t lbase = lmmp_bases_(base).large_base;
-        mp_size_t digitspl = lmmp_bases_(base).digits_in_limb;
+        mp_limb_t lbase = lmmp_bases_table[base - 2].large_base;
+        mp_size_t digitspl = lmmp_bases_table[base - 2].digits_in_limb;
         mp_size_t bexp = (lmmp_to_str_len_(numa, na, base) - 1) / digitspl + 1;
         mp_size_t tzbit = lmmp_tailing_zeros_(lbase);
         // numa 的拷贝空间，多一个 limb 预留规整化移位所需
@@ -173,7 +191,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
             // we will calculate lbase^(bexp-1) first, and trim it s. t.
             // it contains at most 2 tailing 0 limb, then multiply it by lbase,
             // so we need npow limbs to store lbase^bexp
-            mp_size_t npow = lmmp_form_str_len_(0, (bexp - 1) * digitspl + 1, base) + 1;
+            mp_size_t npow = lmmp_from_str_len_(0, (bexp - 1) * digitspl + 1, base) + 1;
 
             // space needed for quotients in recursive calls,
             // quotients are smaller than lbase^bexp
@@ -268,7 +286,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
         }
 
         lmmp_copy(tp, numa, na);
-        digits = lmmp_to_str_divide_(dst, tp, na, powers + cpow - 1, tp + na + 1);
+        digits = lmmp_to_str_divide_(dst, tp, na, powers + cpow - 1, base, tp + na + 1);
 
         TEMP_FREE;
     }

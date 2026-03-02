@@ -55,13 +55,14 @@ EXPORTS
 	lmmp_div_
 	
 	lmmp_sqrt_
-
-	lmmp_bases_
 	
 	lmmp_inv_
 
 	lmmp_from_str_
+	lmmp_from_str_len_
 	lmmp_to_str_
+	lmmp_to_str_len_
+
 	lmmp_extract_bits_
 	
 	lmmp_limb_bits_

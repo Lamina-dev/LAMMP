@@ -1,6 +1,6 @@
-#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/impl/base_table.h"
 
-const mp_base_t lmmp_bases_[255]={
+const mp_base_t lmmp_bases_table[255] = {
 	{0x0000000000000001,0x0400000000000000,0xffffffffffffffff,64,2},
 	{0xa8b8b452291fe821,0x06570068e7ef5a1f,0xa1849cc1a9a9e94f,40,3},
 	{0x0000000000000002,0x0800000000000000,0x8000000000000000,32,4},
