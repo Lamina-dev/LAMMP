@@ -25,11 +25,8 @@
         UCASE_: 危险宏，仅在当前头文件中使用，使用后会立即取消定义
         UCASE: 安全宏
         _lcase_: 宏内部使用的临时变量名
-                （部分内部多层嵌套宏可能不严格这样，为了避免命名冲突，部分
-                  宏混用了 _lcase 命名，也有无下划线的，但外部接口头文件均
-                  严格遵守此约定）
-        lmmp_lcase_: 危险的函数名/宏函数名（可能存在命名冲突或内存安全风险）
-        lmmp_lcase: 安全的函数名/宏函数名（经过命名规范校验）
+        lmmp_lcase_: 危险的函数名/宏函数名
+        lmmp_lcase: 安全的函数名/宏函数名
 
     符号说明:
 
@@ -898,49 +895,6 @@ void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr
  */
 void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
-typedef struct lmmp_mp_base_t_ {
-    // 单个limb能容纳的基数的最大幂次
-    // 二的幂次存储 log2(base)
-    // large_base = base ^ digits_in_limb
-    mp_limb_t large_base;
-    // ceiling(2^64*log2(base)/log2(2^64))
-    // N 位 base 数最多需要 N * lg_base / 2^64 + 1 个 limb
-    mp_limb_t lg_base;
-    // N 位二进制数最多需要 N * inv_lg_base / 2^64 + 1 个 base 进制位
-    // ceiling(2^64/log2(base))
-    mp_limb_t inv_lg_base;
-    // 单个limb可容纳的最大基数位数
-    // floor(64/log2(base))
-    int digits_in_limb;
-    // 基数（2~256）
-    int base;
-} mp_base_t;
-
-// base 2 - 256
-extern const mp_base_t lmmp_bases_[255];
-
-#define lmmp_bases_(base) lmmp_bases_[base - 2]
-
-typedef struct lmmp_mp_basepow_t_ {
-    // 基数幂值(base^digits)
-    mp_ptr p;
-    // p的 limb 长度
-    mp_size_t np;
-    // 归一化p的逆元
-    mp_ptr invp;
-    // invp的有效长度
-    mp_size_t ni;
-    // 去除的末尾零 limb 长度
-    mp_size_t zeros;
-    // 基数幂的指数（log_base(p)）
-    mp_size_t digits;
-    // p归一化时的移位位数
-    int norm_cnt;
-    // 基数
-    int base;
-} mp_basepow_t;
-
-
 /**
  * @brief 大数加1宏（预期无进位）
  * @param p 指向大数起始位置的指针
@@ -1135,18 +1089,7 @@ INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_
  *       1. if (numa!=NULL) 返回的长度可能会多分配一个字符空间
  *       2. if (numa==NULL) 返回na个limb长度的数的最大可能字符长度（最坏情况）
  */
-INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
-    lmmp_param_assert(base >= 2 && base <= 256);
-    int mslbits = 0;
-    if (numa) {
-        do {
-            if (na == 0)
-                return 1;
-        } while (numa[--na] == 0);
-        mslbits = lmmp_limb_bits_(numa[na]);
-    }
-    return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_(base).inv_lg_base) + 1;
-}
+mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base);
 
 /**
  * @brief 计算字符串转大数所需的 limb 缓冲区长度
@@ -1159,17 +1102,7 @@ INLINE_ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
  *       1. if (src!=NULL) 返回的长度可能会多分配一个 limb 空间
  *       2. if (src==NULL) 返回len位base进制数的最大可能 limb 长度（最坏情况）
  */
-INLINE_ mp_size_t lmmp_form_str_len_(const mp_byte_t* src, mp_size_t len, int base) {
-    lmmp_param_assert(base >= 2 && base <= 256);
-    if (src) {
-        do {
-            if (len == 0)
-                return 1;
-        } while (src[--len] == 0);
-        ++len;
-    }
-    return lmmp_mulh_(len, lmmp_bases_(base).lg_base) + 1;
-}
+mp_size_t lmmp_from_str_len_(const mp_byte_t* src, mp_size_t len, int base);
 
 /**
  * @brief 字符串转大数操作 [src,len,base] to [dst,return value,B]

@@ -254,7 +254,7 @@ void lmmp_free(void* ptr, const char* file, int line);
  * @param ptr 要释放的内存指针
  * @note 是标准free的安全封装版本，确保空指针释放安全
  */
-void lmmp_free(void*);
+void lmmp_free(void* ptr);
 #endif
 
 /**
