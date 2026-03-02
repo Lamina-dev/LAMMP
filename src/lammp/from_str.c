@@ -62,18 +62,17 @@ static mp_size_t lmmp_from_str_divide_(
     const mp_byte_t*    src, 
           mp_size_t     len, 
           mp_basepow_t* pow, 
-          int           base, 
           mp_ptr        tp
 ) {
     lmmp_param_assert(src[len - 1] != 0);
     mp_size_t limbs;
 
-    if (lmmp_from_str_len_(0, len, base) < FROM_STR_DIVIDE_THRESHOLD) {
-        limbs = lmmp_from_str_basecase_(dst, src, len, base);
+    if (lmmp_from_str_len_(0, len, pow->base) < FROM_STR_DIVIDE_THRESHOLD) {
+        limbs = lmmp_from_str_basecase_(dst, src, len, pow->base);
     } else {
         mp_size_t pdigits = pow->digits;
         if (len <= pdigits) {
-            limbs = lmmp_from_str_divide_(dst, src, len, pow - 1, base, tp);
+            limbs = lmmp_from_str_divide_(dst, src, len, pow - 1, tp);
         } else {
             mp_ptr p = pow->p;
             mp_size_t np = pow->np;
@@ -84,10 +83,10 @@ static mp_size_t lmmp_from_str_divide_(
             mp_size_t llen = pdigits;
             while (llen && src[llen - 1] == 0) --llen;
             if (llen)
-                nl = lmmp_from_str_divide_(lp, src, llen, pow - 1, base, dst);
+                nl = lmmp_from_str_divide_(lp, src, llen, pow - 1, dst);
 
             mp_limb_t save0 = hp[0], save1 = hp[1];  // save 2 limbs
-            nh = lmmp_from_str_divide_(hp, src + pdigits, len - pdigits, pow - 1, base, dst);
+            nh = lmmp_from_str_divide_(hp, src + pdigits, len - pdigits, pow - 1, dst);
             if (nh >= np)
                 lmmp_mul_(dst + zeros, hp, nh, p, np);
             else
@@ -237,7 +236,7 @@ mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int ba
             powers[i].np = np;
         }
 
-        limbs = lmmp_from_str_divide_(tp, src, len, powers + cpow - 1, base, dst);
+        limbs = lmmp_from_str_divide_(tp, src, len, powers + cpow - 1, dst);
         lmmp_copy(dst, tp, limbs);
 
         TEMP_FREE;
