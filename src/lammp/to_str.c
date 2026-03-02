@@ -63,7 +63,6 @@ static mp_size_t lmmp_to_str_divide_(
           mp_ptr        numa, 
           mp_size_t     na, 
           mp_basepow_t* pow, 
-          int           base,
           mp_ptr        tpq
 ) {
     lmmp_param_assert(na > 0);
@@ -71,7 +70,7 @@ static mp_size_t lmmp_to_str_divide_(
     lmmp_param_assert(pow != NULL);
     mp_size_t digits;
     if (na < TO_STR_DIVIDE_THRESHOLD) {
-        digits = lmmp_to_str_basecase_(dst, numa, na, base);
+        digits = lmmp_to_str_basecase_(dst, numa, na, pow->base);
     } else {
         mp_ptr p = pow->p, invp = pow->invp;
         mp_size_t np = pow->np, ni = pow->ni;
@@ -94,7 +93,7 @@ static mp_size_t lmmp_to_str_divide_(
         // if numa<p
         if (na + adjust <= np + zeros) {
             // skip this power
-            digits = lmmp_to_str_divide_(dst, numa, na, pow - 1, base, tpq);
+            digits = lmmp_to_str_divide_(dst, numa, na, pow - 1, tpq);
         } else {
             numa[na] = 0;
             na += adjust;
@@ -118,11 +117,11 @@ static mp_size_t lmmp_to_str_divide_(
 
             while (nq && q[nq - 1] == 0) --nq;
             if (nq)
-                digitsh = lmmp_to_str_divide_(dst + pdigits, q, nq, pow - 1, base, tpq + nq + 1);
+                digitsh = lmmp_to_str_divide_(dst + pdigits, q, nq, pow - 1, tpq + nq + 1);
 
             while (nr && r[nr - 1] == 0) --nr;
             if (nr)
-                digitsl = lmmp_to_str_divide_(dst, r, nr, pow - 1, base, tpq);
+                digitsl = lmmp_to_str_divide_(dst, r, nr, pow - 1, tpq);
 
             if (digitsh) {
                 while (digitsl != pdigits) {
@@ -286,7 +285,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
         }
 
         lmmp_copy(tp, numa, na);
-        digits = lmmp_to_str_divide_(dst, tp, na, powers + cpow - 1, base, tp + na + 1);
+        digits = lmmp_to_str_divide_(dst, tp, na, powers + cpow - 1, tp + na + 1);
 
         TEMP_FREE;
     }
