@@ -138,9 +138,9 @@ static mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int n
 //[dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
 // need(ns>=3, na>0, numa[na-1]>=B/4)
 static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
-    lmmp_debug_assert(ns >= 3);
-    lmmp_debug_assert(na > 0);
-    lmmp_debug_assert(numa[na - 1] >= B_4);
+    lmmp_param_assert(ns >= 3);
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa[na - 1] >= B_4);
     mp_size_t nr = ns, namax = na, mn;
     mp_size_t sizes[LIMB_BITS], *sizp = sizes;
 
@@ -266,6 +266,8 @@ static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_
 // note: here [floor|ceiling](x) is internally this: round(x-epsilon), where 0<=epsilon<2^-31
 //      so if round is equivalent to floor, ceiling will not be used
 static void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(nf >= 2);
     mp_limb_t high = numa[na - 1];
     int nsh = lmmp_leading_zeros_(high) / 2;
     mp_size_t ns = na / 2 + 1 + nf;

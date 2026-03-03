@@ -113,6 +113,9 @@ EXPORTS
 	lmmp_random_
 
 
+	lmmp_binvert_uint_
+	lmmp_binvert_ulong_
+
 	lmmp_gcd_11_
 	lmmp_gcd_1_
 	lmmp_gcd_22_
