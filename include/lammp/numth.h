@@ -80,6 +80,20 @@ typedef int64_t* slongp;
 #endif // INLINE_
 
 /**
+ * @brief 计算 a 在2^32下的逆元
+ * @param a 待求逆元
+ * @return 逆元
+ */
+uint lmmp_binvert_uint_(uint a);
+
+/**
+ * @brief 计算 a 在2^64下的逆元
+ * @param a 待求逆元
+ * @return 逆元
+ */
+ulong lmmp_binvert_ulong_(ulong a);
+
+/**
  * @brief 计算两个无符号整数的最大公约数
  * @param u 第一个无符号整数
  * @param v 第二个无符号整数
