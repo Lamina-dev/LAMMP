@@ -4,6 +4,6 @@
 #include <vector>
 
 int main() {
-    test_perm();
+    test_mullo();
     return 0;
 }

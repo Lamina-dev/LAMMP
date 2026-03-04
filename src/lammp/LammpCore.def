@@ -90,6 +90,11 @@ EXPORTS
 	lmmp_mul_fft_
 	lmmp_mul_fft_history_
 	lmmp_mul_fft_history_free_
+
+	lmmp_mullo_dc_
+	lmmp_sqrlo_dc_
+	lmmp_mullo_
+	lmmp_mullo_fft_
 	
 	lmmp_inv_1_
 	lmmp_inv_2_1_
