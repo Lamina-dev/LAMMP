@@ -4,8 +4,8 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
     lmmp_param_assert(n > 0);
     mp_size_t hn = lmmp_fft_next_size_((n + n + 1) >> 1);
     lmmp_assert(n + n >= hn);
-    mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
-    mp_ptr mp = ALLOC_TYPE(hn, mp_limb_t);
+    mp_ptr tp = ALLOC_TYPE((hn << 1) + 1, mp_limb_t);
+    mp_ptr mp = tp + hn + 1;
 
     mp_srcptr amodm = numa;
     mp_size_t nam = n;
@@ -41,7 +41,6 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
     if (c)
         dst[n - 1] |= (mp_limb_t)1 << (LIMB_BITS - 1);
     lmmp_free(tp);
-    lmmp_free(mp);
 }
 
 /*
@@ -108,6 +107,56 @@ void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_si
         lmmp_mullo_dc_(lo2, a0, b1, tp2, t);
         lmmp_add_n_(c1, c1, lo1, t);
         lmmp_add_n_(c1, c1, lo2, t);
+        return;
+    }
+}
+
+void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n) {
+    if (n < MULLO_BASECASE_THRESHOLD) {
+        lmmp_mul_1_(dst, numa, n, numa[0]);
+        for (mp_size_t i = 1; i < n; ++i) {
+            lmmp_mul_1_(tp, numa, n - i, numa[i]);
+            lmmp_add_n_(dst + i, dst + i, tp, n - i);
+        }
+        return;
+    } else {
+        mp_size_t m, t;
+        if (n < MUL_TOOM33_THRESHOLD) {
+            m = 25 * n / 36;
+        } else {
+            m = 31 * n / 40;
+        }
+        t = n - m;
+#define a0 (numa)
+#define a1 (numa + m)
+#define c0 (dst)
+#define c1 (dst + m)
+#define lo1 (tp)              // [tp, 2*t]
+#define tp1 (tp + 2 * t)      // [tp+2*t, 2*t]
+        lmmp_sqr_(tp, a0, m);
+        lmmp_copy(c0, tp, n);
+        lmmp_mullo_dc_(lo1, a0, a1, tp1, t);
+        lmmp_addshl1_n_(c1, c1, lo1, t);
+    }
+}
+
+void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    lmmp_param_assert(n > 0);
+    if (n < MULLO_DC_THRESHOLD) {
+        if (numa == numb) {
+            TEMP_DECL;
+            mp_ptr tp = TALLOC_TYPE(2 * n, mp_limb_t);
+            lmmp_sqrlo_dc_(dst, numa, tp, n);
+            TEMP_FREE;
+            return;
+        }
+        TEMP_DECL;
+        mp_ptr tp = TALLOC_TYPE(2 * n, mp_limb_t);
+        lmmp_mullo_dc_(dst, numa, numb, tp, n);
+        TEMP_FREE;
+        return;
+    } else {
+        lmmp_mullo_fft_(dst, numa, numb, n);
         return;
     }
 }
