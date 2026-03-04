@@ -95,7 +95,7 @@
 // 低位乘法阈值：低位乘法的阈值，低于此规模使用朴素乘法
 #define MULLO_BASECASE_THRESHOLD 20
 
-#define MULLO_TOOM
+#define MULLO_DC_THRESHOLD 2238
 
 // 模F FFT乘法阈值：用于模F场景下的FFT乘法策略选择
 #define MUL_FFT_MODF_THRESHOLD 477
@@ -669,6 +669,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
  * @param numb 第二个输入操作数，长度为 n
  * @param n limb长度
  * @warning n>0, sep(dst,[numa|numb])
+ *          特殊情况：当 n >= MULLO_DC_THRESHOLD 时，eqsep(dst,[numa|numb])是允许的
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
 void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -686,6 +687,17 @@ void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_size_t n);
 
 /**
+ * @brief 低位平方 [dst,n] = [numa,n]^2 mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param numa 第一个输入操作数，长度为 n
+ * @param tp 临时缓冲区，长度至少为 2*n
+ * @param n limb长度
+ * @warning n>0, sep(dst,[numa|tp])
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n]^2 mod B^n
+ */
+void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n);
+
+/**
  * @brief 低位FFT乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
  * @param dst 输出结果缓冲区，长度至少为 n
  * @param rn 模运算的阶数参数
@@ -697,16 +709,6 @@ void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_si
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
 void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
-
-/**
- * @brief 低位平方 [dst,n] = [numa,n]^2 mod B^n
- * @param dst 输出结果缓冲区，长度至少为 n
- * @param numa 第一个输入操作数，长度为 n
- * @param n limb长度
- * @warning n>0, sep(dst,numa)
- * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n]^2 mod B^n
- */
-void lmmp_sqrlo_(mp_ptr dst, mp_srcptr numa, mp_size_t n);
 
 /**
  * @brief 1阶逆元计算 (inv1)
