@@ -41,9 +41,7 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
     }
     cnt = lmmp_tailing_zeros_(u[0] | v[0]);
     k = lmmp_tailing_zeros_(u[0]);
-/*
- FIXME: 这里疑似有部分移位分支中，k一定大于0，可以省去判断条件
- */
+
     if (k > 0)
         _u128lshr(u, u, k);
     k = lmmp_tailing_zeros_(v[0]);
@@ -64,8 +62,8 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
                 goto gcd_2_1;
             }
             k = lmmp_tailing_zeros_(v[0]);
-            if (k > 0)
-                _u128lshr(v, v, k);
+            // k > 0
+            _u128lshr(v, v, k);
         } else {
             _u128sub(u, u, v);
             if (u[0] == 0) {
@@ -76,8 +74,8 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
                 goto gcd_1_2;
             }
             k = lmmp_tailing_zeros_(u[0]);
-            if (k > 0)
-                _u128lshr(u, u, k);
+            // k > 0
+            _u128lshr(u, u, k);
         }
     }
     dst[0] = u[0];
@@ -99,8 +97,8 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
                 goto gcd_1_1;
             }
             k = lmmp_tailing_zeros_(v[0]);
-            if (k > 0)
-                _u128lshr(v, v, k);
+            // k > 0
+            _u128lshr(v, v, k);
         }
         goto gcd_1_1;
 
@@ -117,8 +115,8 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
                 goto gcd_1_1;
             }
             k = lmmp_tailing_zeros_(u[0]);
-            if (k > 0)
-                _u128lshr(u, u, k);
+            // k > 0
+            _u128lshr(u, u, k);
         }
         goto gcd_1_1;
 
