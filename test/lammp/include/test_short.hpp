@@ -22,3 +22,5 @@ void test_rand();
 void test_hash();
 void test_matrix();
 void test_vec_ele_mul();
+void test_mod();
+void test_mullo();
