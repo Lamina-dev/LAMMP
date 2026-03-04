@@ -65,9 +65,9 @@
 
 // 除法阈值：当操作数规模超过此值时，使用分治除法算法
 #define DIV_DIVIDE_THRESHOLD 50
-// 乘法逆元L阈值：用于选择乘法逆元计算策略的临界值（L维度）
+// 乘法逆元L阈值：用于选择乘法逆元计算策略的临界值
 #define DIV_MULINV_L_THRESHOLD 477
-// 乘法逆元N阈值：用于选择乘法逆元计算策略的临界值（N维度）
+// 乘法逆元N阈值：用于选择乘法逆元计算策略的临界值
 #define DIV_MULINV_N_THRESHOLD 1736
 
 // 牛顿迭代求逆阈值：超过此规模使用牛顿迭代法求逆
@@ -91,6 +91,11 @@
 #define MUL_TOOM33_THRESHOLD 65
 // FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法
 #define MUL_FFT_THRESHOLD 1736
+
+// 低位乘法阈值：低位乘法的阈值，低于此规模使用朴素乘法
+#define MULLO_BASECASE_THRESHOLD 20
+
+#define MULLO_TOOM
 
 // 模F FFT乘法阈值：用于模F场景下的FFT乘法策略选择
 #define MUL_FFT_MODF_THRESHOLD 477
@@ -656,6 +661,52 @@ INLINE_ void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n
  * @param nb 第二个操作数的 limb 长度
  */
 void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief 低位乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param numa 第一个输入操作数，长度为 n
+ * @param numb 第二个输入操作数，长度为 n
+ * @param n limb长度
+ * @warning n>0, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
+ */
+void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+
+/**
+ * @brief 低位乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param numa 第一个输入操作数，长度为 n
+ * @param numb 第二个输入操作数，长度为 n
+ * @param tp 临时缓冲区，长度至少为 2*n
+ * @param n limb长度
+ * @warning n>0, sep(dst,[numa|numb|tp])
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
+ */
+void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_size_t n);
+
+/**
+ * @brief 低位FFT乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param rn 模运算的阶数参数
+ * @param numa 第一个输入操作数，长度为 n
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 n
+ * @param nb 第二个操作数的 limb 长度
+ * @warning ???<n, eqsep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
+ */
+void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+
+/**
+ * @brief 低位平方 [dst,n] = [numa,n]^2 mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param numa 第一个输入操作数，长度为 n
+ * @param n limb长度
+ * @warning n>0, sep(dst,numa)
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n]^2 mod B^n
+ */
+void lmmp_sqrlo_(mp_ptr dst, mp_srcptr numa, mp_size_t n);
 
 /**
  * @brief 1阶逆元计算 (inv1)
