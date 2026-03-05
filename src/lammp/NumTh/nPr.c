@@ -200,10 +200,10 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     } else {
         lmmp_debug_assert(n <= 0xffffffff);
 
-        pri_int primes;
-        lmmp_prime_int_init_(&primes, n);
+        lmmp_prime_int_table_init_(n, true);
         num_heap heap;
-        lmmp_num_heap_init_(&heap, primes.prin);
+        ulong prime_n = lmmp_get_prime_count_table(n);
+        lmmp_num_heap_init_(&heap, prime_n);
 
         r = n - r;
 
@@ -211,40 +211,41 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
         /* 跳过质数 2 */
-        for (ulong i = 1; i < primes.prin; ++i) {
+        for (ulong i = 1; i < prime_n; ++i) {
             ulong pn = n;
             ulong e = 0;
+            ulong prime = lmmp_get_nth_prime_table(i);
             while (pn > 0) {
-                pn /= primes.pri[i];
+                pn /= prime;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= primes.pri[i];
+                pn /= prime;
                 e -= pn;
             }
 
             if (e == 0) {
                 continue;
             } else if (e == 1) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, primes.pri[i]);
+                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime);
                 ++mpn;
                 mpn -= mp[mpn - 1] == 0 ? 1 : 0;
             } else if (e == 2) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, (mp_limb_t)(primes.pri[i]) * primes.pri[i]);
+                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime * prime);
                 ++mpn;
                 mpn -= mp[mpn - 1] == 0 ? 1 : 0;
             } else if (e >= PERMUTATION_PRIME_POW_THRESHOLD) {
-                mp_size_t pon = lmmp_pow_1_size_(primes.pri[i], e);
+                mp_size_t pon = lmmp_pow_1_size_(prime, e);
                 mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
-                pon = lmmp_pow_1_(po, pon, primes.pri[i], e);
+                pon = lmmp_pow_1_(po, pon, prime, e);
                 lmmp_num_heap_push_(&heap, po, pon);
                 continue;
             } else {
-                mp_size_t pon = lmmp_pow_1_size_(primes.pri[i], e);
+                mp_size_t pon = lmmp_pow_1_size_(prime, e);
                 mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
                 pon = 1;
-                mp_limb_t pri2 = (mp_limb_t)primes.pri[i] * primes.pri[i];
+                mp_limb_t pri2 = prime * prime;
                 po[0] = pri2;
                 for (uint j = 2; j < e - 1; j += 2) {
                     po[pon] = lmmp_mul_1_(po, po, pon, pri2);
@@ -252,7 +253,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
                     pon -= po[pon - 1] == 0 ? 1 : 0;
                 }
                 if (e % 2 == 1) {
-                    po[pon] = lmmp_mul_1_(po, po, pon, primes.pri[i]);
+                    po[pon] = lmmp_mul_1_(po, po, pon, prime);
                     ++pon;
                     pon -= po[pon - 1] == 0 ? 1 : 0;
                 }
@@ -272,7 +273,6 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         else
             lmmp_free(mp);
 
-        lmmp_prime_int_free_(&primes);
 
         mp = lmmp_num_heap_mul_(&heap, &mpn);
         lmmp_num_heap_free_(&heap);
