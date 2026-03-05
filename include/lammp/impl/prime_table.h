@@ -2,98 +2,87 @@
 #define __LAMMP_PRIME_TABLE_H__
 #include "../numth.h"
 
-#define PRIME_CHAR_TABLE_SIZE 54
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-extern const uint8_t prime_char_table[54];
-
-// uint16_t prime_short_table[PRIME_SHORT_TABLE_SIZE];
 #define PRIME_SHORT_TABLE_SIZE 6542
 
-typedef struct prime_short {
-    ushortp pri;     // prime 数组指针
-    ulongp mmp;      // prime 位图指针（1为合数，0为素数）
-    ushort prin;     // prime 数量
-    ushort mmp_cal;  // prime 位图容量
-    ushort N;        // 不超过 N 的素数表
-} pri_short;
+#define PRIME_SHORT_TABLE_N 0x10000
 
-typedef struct prime_int {
-    uintp pri;     // prime 数组指针
-    ulongp mmp;    // prime 位图指针（1为合数，0为素数）
-    uint prin;     // prime 数量
-    uint mmp_cal;  // prime 位图容量
-    uint N;        // 不超过 N 的素数表
-} pri_int;
+extern const ushort prime_short_table[PRIME_SHORT_TABLE_SIZE];
 
-#define PRI_MMP_ZERO 3  // 位图的初始化值 11000000...
+bool lmmp_is_prime_table(uint p);
 
-#ifndef INLINE_
-#define INLINE_ static inline
-#endif // INLINE_
+uint lmmp_get_nth_prime_table(uint n);
+
 
 /**
- * @brief 计算素数表大小
- * @param n 初始化不超过 n 的素数表
- * @return 素数表大小（高估素数数量，不会高估太多）
+ * @brief 计算 n 范围内的short素数数量
+ * @param n 范围
+ * @return 素数数量
  */
-INLINE_ size_t lmmp_prime_size_(ulong n) {
-    /*
-     * 这是一个不会低估的素数计数估计函数，使用了一些经验数据，其估计的数据可以参考：
-     * 总样本数: 9800001（500000000-10000000 之间以 50 为步长）
-     * 平均相对误差: 0.0830378%
-     * 最大相对误差: 0.123542%
-     * 最小相对误差: 0.0565845%
-     * 平均绝对误差: 11190.7
-     * 最大绝对误差: 22288
-     * 低估次数: 0 (0%)
-     */
-    if (n < 50) {
-        return (double)n / 3 + 2;
-    } else if (n < 500000) {
-        return ceil(1.002 * (double)n / (log(n) - 1.095));
-    } else if (n < 2500000) {
-        return ceil((double)n / (log(n) - 1.095));
-    } else if (n < 10000000) {
-        return ceil((double)n / (log(n) - 1.087));
-    } else if (n < 100000000) {
-        return ceil((double)n / (log(n) - 1.085));
+ushort short_prime_count(ushort n);
+
+/**
+ * @brief 计算 n 范围内的素数数量
+ * @param n 范围
+ * @note 不会低估素数数量，可能恰好超过 pi(n)
+ * @return 素数数量
+ */
+ulong lmmp_prime_size_(ulong n);
+
+typedef struct prime_int {
+    uintp p;       // prime 数组指针（仅存储大于65536的素数）
+    ulongp m;      // prime 位图指针（1为质数，0为合数）
+    uint n;        // prime 数量（当前p数组中素数数量）
+    uint m_size;   // prime 位图容量
+    uint N;        // 位图记录的最大值 N
+    uint pN;       // prime 数组当前记录的是不超过 pN 的素数
+} prime_int;
+
+extern prime_int global_prime_int_table;
+
+static inline uint lmmp_get_prime_count_table(uint n) {
+    if (n <= PRIME_SHORT_TABLE_N) {
+        return short_prime_count(n);
     } else {
-        return ceil((double)n / (log(n) - 1.075));
+        lmmp_debug_assert(n <= global_prime_int_table.N);
+        return global_prime_int_table.n + PRIME_SHORT_TABLE_SIZE;
     }
 }
 
 /**
- * @brief 初始化素数表
- * @param p 素数表指针
+ * @brief 初始化全局素数表
  * @param n 素数表大小
- * @warning n>=2, p!=NULL
+ * @param init_primes 是否初始化素数数组
  */
-void lmmp_prime_short_init_(pri_short* p, ushort n);
+void lmmp_prime_int_table_init_(uint n, bool init_primes);
 
 /**
- * @brief 释放素数表
- * @param p 素数表指针
- * @warning p!=NULL
+ * @brief 更新全局素数表（利用已经生成的位图）
+ * @param n 将素数数组扩展到不超过 n 的素数（如果没有更新过的话）
+ * @warning 该函数不会更新位图，如果 n 超过了位图记录的最大值 N，则会直接返回该函数，无任何操作
  */
-void lmmp_prime_short_free_(pri_short* p);
+void lmmp_prime_int_table_update_(uint n);
 
 /**
- * @brief 初始化素数表
- * @param p 素数表指针
- * @param n 素数表大小
- * @warning n>=2, p!=NULL
+ * @brief 释放全局素数表
  */
-void lmmp_prime_int_init_(pri_int* p, uint n);
+static inline void lmmp_prime_int_table_free_(void) {
+    if (global_prime_int_table.p != NULL)
+        lmmp_free(global_prime_int_table.p);
+    if (global_prime_int_table.m != NULL)
+        lmmp_free(global_prime_int_table.m);
+    global_prime_int_table.m = NULL;
+    global_prime_int_table.p = NULL;
+    global_prime_int_table.N = 0;
+    global_prime_int_table.m = 0;
+    global_prime_int_table.m_size = 0;
+}
 
-/**
- * @brief 释放素数表
- * @param p 素数表指针
- * @warning p!=NULL
- */
-void lmmp_prime_int_free_(pri_int* p);
-
-#ifdef INLINE_
-#undef INLINE_
-#endif // INLINE_
+#ifdef __cplusplus
+}
+#endif
 
 #endif  // __LAMMP_PRIME_TABLE_H__
