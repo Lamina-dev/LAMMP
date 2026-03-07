@@ -47,33 +47,52 @@ prime_int global_prime_int_table = { NULL, NULL, 0, 0, 0, 0 };
 
 #define G global_prime_int_table
 
+// 计算从5到n的可能素数个数
+static inline uint count_possible_primes(uint n) {
+    if (n < 5)
+        return 0;
+    return ((n - 1) / 6) + ((n - 5) / 6) + 1;
+}
+
 void lmmp_prime_int_table_init_(uint n, bool init_primes) {
     if (n <= PRIME_SHORT_TABLE_N || G.N >= n)
         return;
+
+#define IS_POSSIBLE(x) ((x) >= 5 && (((x) % 6 == 1) || ((x) % 6 == 5)))
+#define IDX(x) (2 * ((x) / 6) + (((x) % 6 == 5) ? 1 : 0) - 1)
+#define is_prime(_i_) \
+    ((_i_) == 2 || (_i_) == 3 || (IS_POSSIBLE(_i_) && (G.m[IDX(_i_) / ULONG_BITS] >> (IDX(_i_) % ULONG_BITS) & 1)))
+#define set_not_prime(_i_)                                      \
+    do {                                                        \
+        uint idx = IDX(_i_);                                    \
+        G.m[idx / ULONG_BITS] &= ~(1ULL << (idx % ULONG_BITS)); \
+    } while (0)
+
     if (G.m == NULL) {
         G.N = n;
-        G.m_size = LMMP_ROUND_UP_MULTIPLE(n, ULONG_BITS) + 1;
+        uint count = count_possible_primes(n);
+        G.m_size = LMMP_ROUND_UP_MULTIPLE(count, ULONG_BITS) + 1;
         G.m = ALLOC_TYPE(G.m_size, ulong);
         for (ulong i = 0; i < G.m_size; ++i) {
-            G.m[i] = UINT64_MAX;
+            G.m[i] = (ulong)0xffffffffffffffffULL; 
         }
-// 1 is prime 0 is not prime
-#define is_prime(_i_) (G.m[(_i_) / ULONG_BITS] >> ((_i_) % ULONG_BITS) & 1)
-#define set_not_prime(_i_) G.m[(_i_) / ULONG_BITS] &= ~(1ULL << ((_i_) % ULONG_BITS))
 
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
             uint prime = prime_short_table[i];
             if (prime > n)
                 break;
-
+            if (prime <= 3)
+                continue; 
             uint start = prime * prime;
             if (start > n)
                 break;
-
             for (ulong j = start; j <= (ulong)n; j += prime) {
-                set_not_prime(j);
+                if (IS_POSSIBLE(j)) {
+                    set_not_prime(j);
+                }
             }
         }
+
         if (init_primes) {
             uint pn = lmmp_prime_size_(n) - PRIME_SHORT_TABLE_SIZE;
             G.p = ALLOC_TYPE(pn, uint);
@@ -85,34 +104,39 @@ void lmmp_prime_int_table_init_(uint n, bool init_primes) {
             G.pN = n;
         }
     } else {
-        mp_size_t new_size = LMMP_ROUND_UP_MULTIPLE(n, ULONG_BITS) + 1;
+        uint new_count = count_possible_primes(n);
+        uint new_size = LMMP_ROUND_UP_MULTIPLE(new_count, ULONG_BITS);
+        if (new_size == 0)
+            new_size = 1;
         G.m = lmmp_realloc(G.m, new_size * sizeof(ulong));
         for (ulong i = G.m_size; i < new_size; ++i) {
-            G.m[i] = UINT64_MAX;
+            G.m[i] = (ulong)0xffffffffffffffffULL; 
         }
         G.m_size = new_size;
 
+        // 继续筛法
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
             uint prime = prime_short_table[i];
             if (prime > n)
                 break;
-
+            if (prime <= 3)
+                continue;
             uint start = prime * prime;
             if (start > n)
                 break;
-
             if (start <= G.N) {
                 ulong k = (G.N - start) / prime + 1;
                 start = start + k * prime;
             }
             for (ulong j = start; j <= (ulong)n; j += prime) {
-                set_not_prime(j);
+                if (IS_POSSIBLE(j)) {
+                    set_not_prime(j);
+                }
             }
         }
 
         if (init_primes) {
             uint pn = lmmp_prime_size_(n) - PRIME_SHORT_TABLE_SIZE;
-
             G.p = lmmp_realloc(G.p, pn * sizeof(uint));
             for (ulong j = G.N + 1; j <= (ulong)n; ++j) {
                 if (is_prime(j)) {

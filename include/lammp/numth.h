@@ -427,6 +427,8 @@ INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
         return lmmp_nPr_int_(dst, rn, n, n);
 }
 
+mp_size_t lmmp_fac_(mp_ptr dst, mp_size_t rn, uint n);
+
 /**
  * @brief 计算 nCr 组合数的 limb 缓冲区长度
  * @param n 组合数的总数
