@@ -12,9 +12,9 @@ extern "C" {
 
 extern const ushort prime_short_table[PRIME_SHORT_TABLE_SIZE];
 
-bool lmmp_is_prime_table(uint p);
+bool lmmp_is_prime_table_(uint p);
 
-uint lmmp_get_nth_prime_table(uint n);
+uint lmmp_nth_prime_table_(uint n);
 
 
 /**
@@ -22,7 +22,7 @@ uint lmmp_get_nth_prime_table(uint n);
  * @param n 范围
  * @return 素数数量
  */
-ushort short_prime_count(ushort n);
+ushort lmmp_prime_cnt16_(ushort n);
 
 /**
  * @brief 计算 n 范围内的素数数量
@@ -43,9 +43,9 @@ typedef struct prime_int {
 
 extern prime_int global_prime_int_table;
 
-static inline uint lmmp_get_prime_count_table(uint n) {
+static inline uint lmmp_prime_cnt_table_(uint n) {
     if (n <= PRIME_SHORT_TABLE_N) {
-        return short_prime_count(n);
+        return lmmp_prime_cnt16_(n);
     } else {
         lmmp_debug_assert(n <= global_prime_int_table.N);
         return global_prime_int_table.n + PRIME_SHORT_TABLE_SIZE;

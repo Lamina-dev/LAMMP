@@ -2,7 +2,7 @@
 
 ulong lmmp_prime_size_(ulong n) {
     if (n <= PRIME_SHORT_TABLE_N) {
-        return short_prime_count(n);
+        return lmmp_prime_cnt16_(n);
     } else if (n < 95000) {
         return (ulong)ceil((double)n / (log(n) - 1.095)) + 1;
     } else if (n < 355991) {
@@ -40,7 +40,7 @@ ulong lmmp_prime_size_(ulong n) {
     double denom =
         lnx - 1.0 - 1.0 / lnx - 3.35 / lnx2 - 12.65 / lnx3 - 71.7 / lnx4 - 466.1275 / lnx5 - 3489.8225 / lnx6;
 
-    return (ulong)(n / denom);
+    return (ulong)ceil(n / denom);
 }
 
 prime_int global_prime_int_table = { NULL, NULL, 0, 0, 0, 0 };
@@ -162,9 +162,9 @@ void lmmp_prime_int_table_update_(uint n) {
     G.pN = n;
 }
 
-bool lmmp_is_prime_table(uint p) {
+bool lmmp_is_prime_table_(uint p) {
     if (p < PRIME_SHORT_TABLE_N) {
-        ushort i = short_prime_count(p);
+        ushort i = lmmp_prime_cnt16_(p);
         if (prime_short_table[i - 1] == p) return true;
         return false;
     } else {
@@ -176,7 +176,7 @@ bool lmmp_is_prime_table(uint p) {
 #undef is_prime
 #undef set_not_prime
 
-ushort short_prime_count(ushort n) {
+ushort lmmp_prime_cnt16_(ushort n) {
     if (n < 2)
         return 0;
     if (n >= prime_short_table[PRIME_SHORT_TABLE_SIZE - 1]) 
@@ -197,7 +197,7 @@ ushort short_prime_count(ushort n) {
 }
 
 
-uint lmmp_get_nth_prime_table(uint n) {
+uint lmmp_nth_prime_table_(uint n) {
     if (n < PRIME_SHORT_TABLE_SIZE) {
         return prime_short_table[n];
     } else {

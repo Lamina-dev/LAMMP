@@ -48,7 +48,7 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         }
     } else {
         num_heap heap;
-        ulong prin = short_prime_count(n);
+        ulong prin = lmmp_prime_cnt16_(n);
         lmmp_num_heap_init_(&heap, prin);
 
         ulong nr = n - r;
@@ -194,7 +194,7 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     } else {
         lmmp_prime_int_table_init_(n, true);
         num_heap heap;
-        ulong prime_n = lmmp_get_prime_count_table(n);
+        ulong prime_n = lmmp_prime_cnt_table_(n);
         lmmp_num_heap_init_(&heap, prime_n);
 
         ulong nr = n - r;
@@ -206,7 +206,7 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         for (ulong i = 1; i < prime_n; ++i) {
             ulong pn = n;
             ulong e = 0;
-            ulong prime = lmmp_get_nth_prime_table(i);
+            ulong prime = lmmp_nth_prime_table_(i);
             while (pn > 0) {
                 pn /= prime;
                 e += pn;
