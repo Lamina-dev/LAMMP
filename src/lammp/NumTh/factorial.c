@@ -1,5 +1,6 @@
 #include "../../../include/lammp/impl/heap.h"
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
@@ -9,15 +10,19 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
-typedef struct factor {
-    uint f;
-    uint j;
-} factor;
-
-typedef struct factor* factors;
-
-mp_size_t lmmp_fac_j_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N) {
-    if (nfactors <= 20) {
+/**
+ * @brief 计算因子的累乘，并将结果放入dst中
+ * @param dst 结果数组
+ * @param rn 结果数组的长度
+ * @param fac 因子数组
+ * @param nfactors 因子数组的长度
+ * @param N 因子的最大值（或最大范围）
+ * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
+ * @return 结果数组的长度
+ */
+mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N) {
+    if (N <= 0xff) {
+        lmmp_debug_assert(nfactors > 0);
         dst[0] = 1;
         rn = 1;
         for (uint i = 0; i < nfactors; i++) {
@@ -31,18 +36,15 @@ mp_size_t lmmp_fac_j_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors
                 ++rn;
                 rn -= dst[rn - 1] == 0;
             } else if (fac[i].j == 3) {
-                lmmp_debug_assert(f <= 0xffff);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, f * f * f);
                 ++rn;
                 rn -= dst[rn - 1] == 0;
             } else if (fac[i].j == 4) {
-                lmmp_debug_assert(f <= 0xffff);
                 f = f * f;
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, f * f);
                 ++rn;
                 rn -= dst[rn - 1] == 0;
             } else {
-                lmmp_debug_assert(f <= 0xffff);
                 ulong p2 = f * f;
                 ulong p4 = p2 * p2;
                 for (uint j = 0; j < fac[i].j - 3; j += 4) {
@@ -74,20 +76,20 @@ mp_size_t lmmp_fac_j_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors
         return rn;
     } else {
         TEMP_B_DECL;
-        mp_size_t new_fac_cap = lmmp_get_prime_count_table(N / 2) + 1;
+        mp_size_t new_fac_cap = lmmp_prime_cnt_table_(N / 2) + 1;
         factors new_fac = BALLOC_TYPE(new_fac_cap, factor);
         mp_size_t new_nfactors = 0;
 
         num_heap heap;
-        // heap size 除以2是因为不超过N/2到N的整数个数最多为N/2，而又必须要是质数，偶数和3的倍数分别占据
-        // 1/2 和 1/3 的个数，即质数只占据 (1-1/2)(1-1/3)=1/3 的个数，所以除以3 
-        // 又除以2是因为因子都小于2^32，64位可以存放两个因子的乘积。
-#define heap_size ((N / 4 / 3) / PERMUTATION_MUL_MAX_THRESHOLD)
+/*
+ 这是一个比较保守的估计，在阶乘形式下的因子乘积中，可能不需要这么多空间。但这也是为了最坏情况的考虑。
+ */
+#define heap_size ((nfactors) / FACTORS_MUL_MAX_THRESHOLD)
         lmmp_num_heap_init_(&heap, heap_size + 4);
 #undef heap_size
 
         mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
+        mp_ptr mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
         ulong ulongt = 1;
         for (mp_size_t i = 0; i < nfactors; i++) {
@@ -104,9 +106,9 @@ mp_size_t lmmp_fac_j_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors
                     ulongt = 1;
                     ++mpn;
                     mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-                    if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
+                    if (mpn == FACTORS_MUL_MAX_THRESHOLD) {
                         lmmp_num_heap_push_(&heap, mp, mpn);
-                        mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
+                        mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
                         mpn = 1;
                         mp[0] = 1;
                     }
@@ -126,35 +128,42 @@ mp_size_t lmmp_fac_j_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors
         mp = lmmp_num_heap_mul_(&heap, &mpn);
         lmmp_num_heap_free_(&heap);
 
-        lmmp_assert(rn >= mpn);
-        mp_size_t tn = ((rn - mpn) >> 1) + 1;
-        
-        mp_ptr tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
+        if (new_nfactors > 0) {
+            lmmp_debug_assert(rn >= mpn);
+            mp_size_t tn = ((rn - mpn) >> 1) + 1;
 
-        tn = lmmp_fac_j_(tp, tn, new_fac, new_nfactors, N / 2);
+            mp_ptr tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
 
-        mp_ptr tp2 = tp + tn + 1;
-        lmmp_sqr_(tp2, tp, tn);
-        tn <<= 1;
-        tn -= tp2[tn - 1] == 0;
-        
-        MUL(dst, mp, mpn, tp2, tn);
-        rn = tn + mpn;
-        rn -= dst[rn - 1] == 0;
-        
+            tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
+
+            mp_ptr tp2 = tp + tn + 1;
+            lmmp_sqr_(tp2, tp, tn);
+            tn <<= 1;
+            tn -= tp2[tn - 1] == 0;
+
+            MUL(dst, mp, mpn, tp2, tn);
+            rn = tn + mpn;
+            rn -= dst[rn - 1] == 0;
+        } else {
+            lmmp_copy(dst, mp, mpn);
+            rn = mpn;
+        }
         lmmp_free(mp);
         TEMP_B_FREE;
         return rn;
     }
 }
 
-mp_size_t lmmp_fac_(mp_ptr dst, mp_size_t rn, uint n) {
+mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n) {
     lmmp_prime_int_table_init_(n, true);
     TEMP_B_DECL;
-    uint nfactors = lmmp_get_prime_count_table(n) - 1;
+    uint nfactors = lmmp_prime_cnt_table_(n) - 1;
     factors fac = BALLOC_TYPE(nfactors, factor);
-    for (uint i = 0; i < nfactors; i++) {
-        fac[i].f = lmmp_get_nth_prime_table(i + 1);
+/*
+    对于2这个因子，我们单独处理，因为可以通过移位来计算。
+ */
+    for (uint i = 0; i < nfactors; ++i) {
+        fac[i].f = lmmp_nth_prime_table_(i + 1);
         fac[i].j = 0;
         uint pn = n;
         uint e = 0;
@@ -170,7 +179,7 @@ mp_size_t lmmp_fac_(mp_ptr dst, mp_size_t rn, uint n) {
     shl %= LIMB_BITS;
 
     lmmp_zero(dst, shw);
-    rn = lmmp_fac_j_(dst + shw, rn - shw, fac, nfactors, n);
+    rn = lmmp_factors_mul_(dst + shw, rn - shw, fac, nfactors, n);
 
     dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
     rn += shw + 1;

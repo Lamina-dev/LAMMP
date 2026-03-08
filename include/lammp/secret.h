@@ -105,7 +105,7 @@
 #include "lmmp.h"
 
 #ifdef __cplusplus
-    extern "C" {
+extern "C" {
 #endif
 
 typedef const uint64_t srckey64_t[1];
