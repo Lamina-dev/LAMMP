@@ -3,7 +3,9 @@
 #include "include/test_short.hpp"
 #include <vector>
 
+#include "../../include/lammp/impl/prime_table.h"
+
 int main() {
-    test_mullo();
+    test_bino();
     return 0;
 }

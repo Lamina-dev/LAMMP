@@ -8,7 +8,7 @@ typedef struct {
     int is_init; /* 1 if initialized, 0 otherwise */
 } lmmp_global_rng_t;
 
-static lmmp_global_rng_t lmmp_global_rng;
+THREAD_LOCAL static lmmp_global_rng_t lmmp_global_rng;
 
 void lmmp_global_rng_init_(int seed, int seed_type) {
     lmmp_xorshift_srandom(&lmmp_global_rng.state, seed);

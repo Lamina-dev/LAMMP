@@ -5,8 +5,8 @@
  * ==============================================================================
  *
  * This library provides implementations of cryptographic and hash functions
- * as the underlying computation library for an open-source programming language.
- * 本库实现加密算法与哈希函数，作为一门开源编程语言的底层计算库。
+ * as the underlying computation library for Lamina.
+ * 本库实现加密算法与哈希函数，作为Lamina的底层计算库。
  *
  * 1. NO SECURITY WARRANTY 无安全担保
  *    While the developer strives to implement algorithms correctly,
@@ -72,6 +72,22 @@
  * This disclaimer applies permanently to this and future versions.
  * 本免责声明永久适用于当前版本及未来版本。
  * ==============================================================================
+ *
+ * [LAMMP]
+ * Copyright (C) [2025] [HJimmyK/LAMINA]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef LAMMP_SECRET_H

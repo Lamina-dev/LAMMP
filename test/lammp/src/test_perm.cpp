@@ -2,7 +2,7 @@
 #include "../include/test_short.hpp"
 
 void test_perm() {
-    size_t n = 1000000, r = n;
+    const size_t n = 0x2ffffff, r = n / 13.5;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;
 
@@ -10,7 +10,10 @@ void test_perm() {
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);
 
     mp_ptr limb_vec = ALLOC_TYPE(n, mp_limb_t);
-    for (size_t i = 0; i < n; i++) {
+    for (size_t i = 0; i < n - r; i++) {
+        limb_vec[i] = 1;
+    }
+    for (size_t i = n - r; i < n; i++) {
         limb_vec[i] = i + 1;
     }
 
@@ -27,7 +30,7 @@ void test_perm() {
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
 
     if (bn != an)
-        std::cout << "bn != an" << std::endl;
+        std::cout << "bn != an\n" << bn << " != " << an << std::endl;
     else 
         std::cout << bn << " == " << an << std::endl;
     for (size_t i = 0; i < an; i++) {
