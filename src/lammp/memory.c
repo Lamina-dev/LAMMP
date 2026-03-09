@@ -1,5 +1,6 @@
 ﻿#include "../../include/lammp/lmmpn.h"
 #include "../../include/lammp/impl/default_stack.h"
+#include "../../include/lammp/impl/prime_table.h"
 
 #undef lmmp_alloc
 #undef lmmp_realloc
@@ -9,27 +10,30 @@
 #undef lmmp_leak_tracker
 #define HSIZE sizeof(void*)
 
-static lmmp_heap_alloctor_t global_heap = {
+THREAD_LOCAL static lmmp_heap_alloctor_t global_heap = {
     malloc,
     free,
     realloc,
 };
 
-static int heap_alloc_count = 0;
+THREAD_LOCAL static int heap_alloc_count = 0;
 
 #define heap_alloc_func global_heap.alloc
 #define heap_free_func global_heap.free
 #define realloc_func global_heap.realloc
 
-static void* default_stack_begin = NULL;
-static void* default_stack_end = NULL;
-static void* default_stack_top = NULL;
+THREAD_LOCAL static void* default_stack_begin = NULL;
+THREAD_LOCAL static void* default_stack_end = NULL;
+THREAD_LOCAL static void* default_stack_top = NULL;
 
-static int is_default_stack = 1; // 0: not using default stack, 1: using default stack
+THREAD_LOCAL static int is_default_stack = 1;  // 0: not using default stack, 1: using default stack
 
 /* global stack only uses memory space without managing it */
-static lmmp_stack_alloctor_t global_stack = {
-    NULL, NULL, lmmp_default_stack_get_top, lmmp_default_stack_set_top,
+THREAD_LOCAL static lmmp_stack_alloctor_t global_stack = {
+    NULL,
+    NULL,
+    lmmp_default_stack_get_top,
+    lmmp_default_stack_set_top,
 };
 
 #define stack_get_top_func() (global_stack.get())
@@ -129,12 +133,13 @@ void* lmmp_temp_heap_alloc_(void** pmarker, size_t size) {
 /*
  * pmarker is a head pointer to a linked list of allocated memory blocks.
  * Each allocated block has a header of size HSIZE, which is used to store the
- * next pointer of the block. The actual data starts at (mp_byte_t*)p + HSIZE.
+ * next pointer of the block. The actual data starts at (mp_byte_t*)p + offset.
  */
-    void* p = heap_alloc_func(size + HSIZE);
+    const size_t offset = LMMP_ROUND_UP_MULTIPLE(HSIZE, LAMMP_MAX_ALIGN);
+    void* p = heap_alloc_func(size + offset);
     *(void**)p = *pmarker;
     *pmarker = p;
-    return (mp_byte_t*)p + HSIZE;
+    return (mp_byte_t*)p + offset;
 }
 
 void* lmmp_temp_stack_alloc_(void** pmarker, size_t size) {
@@ -146,7 +151,8 @@ void* lmmp_temp_stack_alloc_(void** pmarker, size_t size) {
  * which is the position recorded by *pmarker.
  */
     void* p = stack_get_top_func();
-    stack_set_top_func((mp_byte_t*)p + size);
+    size_t offset = LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
+    stack_set_top_func((mp_byte_t*)p + offset);
     if (*pmarker == NULL)
         *pmarker = p;
     return p;
@@ -265,13 +271,14 @@ void lmmp_free(void* ptr) {
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK != 1
-#define SIZE_SIZE sizeof(size_t)
+
+#define SIZE_SIZE LMMP_ROUND_UP_MULTIPLE(sizeof(size_t), LAMMP_MAX_ALIGN)
 
 void* lmmp_stack_alloc(size_t size) {
     if (size == 0) {
         return NULL;
     }
-    size_t total_size = SIZE_SIZE + size;
+    size_t total_size = SIZE_SIZE + LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
     void* old_top = stack_get_top_func();
     void* new_top = (mp_byte_t*)old_top + total_size;
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
@@ -281,7 +288,7 @@ void* lmmp_stack_alloc(size_t size) {
                  total_size, (size_t)((mp_byte_t*)global_stack.end - (mp_byte_t*)old_top));
         lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, __FILE__, __LINE__);
     }
-#endif // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
+#endif  // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     stack_set_top_func(new_top);
     *(size_t*)old_top = total_size;
     return (mp_byte_t*)old_top + SIZE_SIZE;
@@ -294,12 +301,11 @@ void lmmp_stack_free(void* ptr) {
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     if (ptr < global_stack.begin || ptr >= global_stack.end) {
         char msg[128];
-        snprintf(msg, sizeof(msg),
-                 "Invalid stack pointer (trying to free: %p ; stack start: %p , stack end: %p )",
-                 ptr, global_stack.begin, global_stack.end);
+        snprintf(msg, sizeof(msg), "Invalid stack pointer (trying to free: %p ; stack start: %p , stack end: %p )", ptr,
+                 global_stack.begin, global_stack.end);
         lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, msg, __FILE__, __LINE__);
     }
-#endif // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
+#endif  // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     void* old_top = stack_get_top_func();
     size_t total_size = *(size_t*)((mp_byte_t*)ptr - SIZE_SIZE);
     void* new_top = (mp_byte_t*)old_top - total_size;
@@ -307,12 +313,12 @@ void lmmp_stack_free(void* ptr) {
     if (new_top < global_stack.begin || new_top > global_stack.end) {
         char msg[256];
         snprintf(msg, sizeof(msg),
-                 "Stack underflow (trying to free: %p , size: %zu bytes ; stack start: %p , stack end: %p ) \n%s",
-                 ptr, total_size - SIZE_SIZE, global_stack.begin, global_stack.end,
+                 "Stack underflow (trying to free: %p , size: %zu bytes ; stack start: %p , stack end: %p ) \n%s", ptr,
+                 total_size - SIZE_SIZE, global_stack.begin, global_stack.end,
                  "Likely cause: Previous stack buffer overflow corrupted the memory header.");
         lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, msg, __FILE__, __LINE__);
     }
-#endif // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
+#endif  // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
     stack_set_top_func(new_top);
 }
 
@@ -330,16 +336,16 @@ typedef struct {
 #define HEADER_SIZE sizeof(StackHeader) 
 
 #define MAGIC_NUMBER 0xDEADBEEF
-#define MAGIC_SIZE sizeof(unsigned int) 
+#define MAGIC_SIZE sizeof(unsigned int)
 
-static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
+THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
 
 void* lmmp_stack_alloc(size_t size, const char* file, int line) {
     if (size == 0) {
         return NULL;
     }
 
-    size_t base_data_size = size;
+    size_t base_data_size = LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
     size_t base_total_size = HEADER_SIZE + base_data_size;
 
     size_t extra_size = (base_total_size * LAMMP_MEMORY_MORE_ALLOC_TIMES) / 10;
@@ -454,4 +460,5 @@ void lmmp_stack_free(void* ptr, const char* file, int line) {
 
 void lmmp_global_deinit(void) {
     lmmp_default_stack_reset(0);
+    lmmp_prime_int_table_free_();
 }

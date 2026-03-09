@@ -1,5 +1,7 @@
+#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/heap.h"
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= 0xffff);
@@ -29,7 +31,9 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
             ulong t = 1, d = 1;
             for (; i <= (ulong)r - 4; i += 4) {
                 d = i * (i + 1) * (i + 2) * (i + 3);
+                d /= 12;
                 t = (n - i + 1) * (n - i) * (n - i - 1) * (n - i - 2);
+                t /= 12;
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
@@ -47,110 +51,50 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
             return rn;
         }
     } else {
-        num_heap heap;
-        ulong prin = lmmp_prime_cnt16_(n);
-        lmmp_num_heap_init_(&heap, prin);
-
-        ulong nr = n - r;
-
-        mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-        mp[0] = 1;
-        /* 跳过质数 2 */
-        for (ulong i = 1; i < prin; ++i) {
-            ulong pn = n;
-            ulong e = 0;
-            ulong prime = prime_short_table[i];
+        TEMP_DECL;
+        uint nfactors = lmmp_prime_cnt_table_(n) - 1;
+        factors fac = TALLOC_TYPE(nfactors, factor);
+        uint nr = n - r;
+        /*
+            对于2这个因子，我们单独处理，因为可以通过移位来计算。
+         */
+        for (uint i = 0; i < nfactors; ++i) {
+            fac[i].f = lmmp_nth_prime_table_(i + 1);
+            fac[i].j = 0;
+            uint pn = n;
+            uint e = 0;
             while (pn > 0) {
-                pn /= prime;
+                pn /= fac[i].f;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= prime;
+                pn /= fac[i].f;
                 e -= pn;
             }
             pn = nr;
             while (pn > 0) {
-                pn /= prime;
+                pn /= fac[i].f;
                 e -= pn;
             }
-
-            if (e == 0) {
-                continue;
-            } else if (e == 1) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e == 2) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime * prime);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e == 3) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime * prime * prime);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e == 4) {
-                mp_limb_t pri2 = prime * prime;
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, pri2 * pri2);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e >= PERMUTATION_PRIME_POW_THRESHOLD) {
-                mp_size_t pon = lmmp_pow_1_size_(prime, e);
-                mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
-                pon = lmmp_pow_1_(po, pon, prime, e);
-                lmmp_num_heap_push_(&heap, po, pon);
-                continue;
-            } else {
-                mp_size_t pon = lmmp_pow_1_size_(prime, e);
-                mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
-                pon = 1;
-                mp_limb_t p3 = prime * prime * prime;
-                po[0] = p3;
-                uint j = 3;
-                for (; j < e - 2; j += 3) {
-                    po[pon] = lmmp_mul_1_(po, po, pon, p3);
-                    ++pon;
-                    pon -= po[pon - 1] == 0 ? 1 : 0;
-                }
-                for (; j < e; ++j) {
-                    po[pon] = lmmp_mul_1_(po, po, pon, prime);
-                    ++pon;
-                    pon -= po[pon - 1] == 0 ? 1 : 0;
-                }
-                lmmp_num_heap_push_(&heap, po, pon);
-                continue;
-            }
-            if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
-                lmmp_num_heap_push_(&heap, mp, mpn);
-                mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-                mpn = 1;
-                mp[0] = 1;
-            }
+            fac[i].j = e;
         }
-        if (!(mpn == 1 && mp[0] == 1))
-            lmmp_num_heap_push_(&heap, mp, mpn);
-        else
-            lmmp_free(mp);
 
+        mp_size_t shl = n - lmmp_limb_popcnt_(n);
+        shl -= r - lmmp_limb_popcnt_(r);
+        shl -= nr - lmmp_limb_popcnt_(nr);
+        mp_size_t shw = shl / LIMB_BITS;
+        shl %= LIMB_BITS;
 
-        mp = lmmp_num_heap_mul_(&heap, &mpn);
-        lmmp_num_heap_free_(&heap);
+        lmmp_zero(dst, shw);
+        rn = lmmp_factors_mul_(dst + shw, rn - shw, fac, nfactors, n);
 
-        /* 乘以 2 的幂次方 */
-        rn = n - lmmp_limb_popcnt_(n);
-        rn -= r - lmmp_limb_popcnt_(r);
-        rn -= nr - lmmp_limb_popcnt_(nr);
+        dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
+        rn += shw + 1;
+        rn -= dst[rn - 1] == 0 ? 1 : 0;
 
-        mp_size_t sh_w = rn / LIMB_BITS;
-        rn %= LIMB_BITS;
-        lmmp_zero(dst, sh_w);
-        dst[sh_w + mpn] = lmmp_shl_(dst + sh_w, mp, mpn, rn);
-        sh_w += mpn + 1;
-        sh_w -= dst[sh_w - 1] == 0 ? 1 : 0;
-
-        lmmp_free(mp);
-        return sh_w;
+        TEMP_FREE;
+        return rn;
     }
 }
 
@@ -175,7 +119,9 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         ulong t = 1, d = 1;
         for (; i <= (ulong)r - 2; i += 2) {
             d = i * (i + 1);
+            d >>= 1;
             t = (n - i + 1) * (n - i);
+            t >>= 1;
             dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
@@ -193,20 +139,18 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         return rn;
     } else {
         lmmp_prime_int_table_init_(n, true);
-        num_heap heap;
-        ulong prime_n = lmmp_prime_cnt_table_(n);
-        lmmp_num_heap_init_(&heap, prime_n);
-
-        ulong nr = n - r;
-
-        mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-        mp[0] = 1;
-        /* 跳过质数 2 */
-        for (ulong i = 1; i < prime_n; ++i) {
-            ulong pn = n;
-            ulong e = 0;
-            ulong prime = lmmp_nth_prime_table_(i);
+        TEMP_B_DECL;
+        uint nfactors_max = lmmp_prime_cnt_table_(n) - 1;
+        uint nfactors = 0;
+        factors fac = BALLOC_TYPE(nfactors_max, factor);
+        uint nr = n - r;
+        /*
+            对于2这个因子，我们单独处理，因为可以通过移位来计算。
+         */
+        for (uint i = 0; i < nfactors_max; ++i) {
+            uint prime = lmmp_nth_prime_table_(i + 1);
+            uint pn = n;
+            uint e = 0;
             while (pn > 0) {
                 pn /= prime;
                 e += pn;
@@ -221,72 +165,26 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
                 pn /= prime;
                 e -= pn;
             }
-
-            if (e == 0) {
-                continue;
-            } else if (e == 1) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e == 2) {
-                mp[mpn] = lmmp_mul_1_(mp, mp, mpn, prime * prime);
-                ++mpn;
-                mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            } else if (e >= PERMUTATION_PRIME_POW_THRESHOLD) {
-                mp_size_t pon = lmmp_pow_1_size_(prime, e);
-                mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
-                pon = lmmp_pow_1_(po, pon, prime, e);
-                lmmp_num_heap_push_(&heap, po, pon);
-                continue;
-            } else {
-                mp_size_t pon = lmmp_pow_1_size_(prime, e);
-                mp_ptr po = ALLOC_TYPE(pon, mp_limb_t);
-                pon = 1;
-                mp_limb_t pri2 = prime * prime;
-                po[0] = pri2;
-                for (uint j = 2; j < e - 1; j += 2) {
-                    po[pon] = lmmp_mul_1_(po, po, pon, pri2);
-                    ++pon;
-                    pon -= po[pon - 1] == 0 ? 1 : 0;
-                }
-                if (e % 2 == 1) {
-                    po[pon] = lmmp_mul_1_(po, po, pon, prime);
-                    ++pon;
-                    pon -= po[pon - 1] == 0 ? 1 : 0;
-                }
-                lmmp_num_heap_push_(&heap, po, pon);
-                continue;
-            }
-
-            if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
-                lmmp_num_heap_push_(&heap, mp, mpn);
-                mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-                mpn = 1;
-                mp[0] = 1;
+            if (e > 0) {
+                fac[nfactors].j = e;
+                fac[nfactors++].f = prime;
             }
         }
-        if (!(mpn == 1 && mp[0] == 1))
-            lmmp_num_heap_push_(&heap, mp, mpn);
-        else
-            lmmp_free(mp);
 
+        mp_size_t shl = n - lmmp_limb_popcnt_(n);
+        shl -= r - lmmp_limb_popcnt_(r);
+        shl -= nr - lmmp_limb_popcnt_(nr);
+        mp_size_t shw = shl / LIMB_BITS;
+        shl %= LIMB_BITS;
 
-        mp = lmmp_num_heap_mul_(&heap, &mpn);
-        lmmp_num_heap_free_(&heap);
+        lmmp_zero(dst, shw);
+        rn = lmmp_factors_mul_(dst + shw, rn - shw, fac, nfactors, n);
 
-        /* 乘以 2 的幂次方 */
-        rn = n - lmmp_limb_popcnt_(n);
-        rn -= r - lmmp_limb_popcnt_(r);
-        rn -= nr - lmmp_limb_popcnt_(nr);
+        dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
+        rn += shw + 1;
+        rn -= dst[rn - 1] == 0 ? 1 : 0;
 
-        mp_size_t sh_w = rn / LIMB_BITS;
-        rn %= LIMB_BITS;
-        lmmp_zero(dst, sh_w);
-        dst[sh_w + mpn] = lmmp_shl_(dst + sh_w, mp, mpn, rn);
-        sh_w += mpn + 1;
-        sh_w -= dst[sh_w - 1] == 0 ? 1 : 0;
-
-        lmmp_free(mp);
-        return sh_w;
+        TEMP_B_FREE;
+        return rn;
     }
 }

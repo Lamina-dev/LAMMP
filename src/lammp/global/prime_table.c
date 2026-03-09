@@ -43,9 +43,27 @@ ulong lmmp_prime_size_(ulong n) {
     return (ulong)ceil(n / denom);
 }
 
-prime_int global_prime_int_table = { NULL, NULL, 0, 0, 0, 0 };
+typedef struct prime_int {
+    uintp p;      // prime 数组指针（仅存储大于65536的素数）
+    ulongp m;     // prime 位图指针（1为质数，0为合数）
+    uint n;       // prime 数量（当前p数组中素数数量）
+    uint m_size;  // prime 位图容量
+    uint N;       // 位图记录的最大值 N
+    uint pN;      // prime 数组当前记录的是不超过 pN 的素数
+} prime_int;
+
+THREAD_LOCAL static prime_int global_prime_int_table = { NULL, NULL, 0, 0, 0, 0 };
 
 #define G global_prime_int_table
+
+uint lmmp_prime_cnt_table_(uint n) {
+    if (n <= PRIME_SHORT_TABLE_N) {
+        return lmmp_prime_cnt16_(n);
+    } else {
+        lmmp_debug_assert(n <= G.N);
+        return G.n + PRIME_SHORT_TABLE_SIZE;
+    }
+}
 
 // 计算从5到n的可能素数个数
 static inline uint count_possible_primes(uint n) {
@@ -196,7 +214,6 @@ ushort lmmp_prime_cnt16_(ushort n) {
     return lo; 
 }
 
-
 uint lmmp_nth_prime_table_(uint n) {
     if (n < PRIME_SHORT_TABLE_SIZE) {
         return prime_short_table[n];
@@ -204,6 +221,18 @@ uint lmmp_nth_prime_table_(uint n) {
         lmmp_debug_assert(G.pN >= n);
         return G.p[n - PRIME_SHORT_TABLE_SIZE];
     }
+}
+
+void lmmp_prime_int_table_free_(void) {
+    if (G.p != NULL)
+        lmmp_free(G.p);
+    if (G.m != NULL)
+        lmmp_free(G.m);
+    G.m = NULL;
+    G.p = NULL;
+    G.N = 0;
+    G.m = 0;
+    G.m_size = 0;
 }
 
 /*

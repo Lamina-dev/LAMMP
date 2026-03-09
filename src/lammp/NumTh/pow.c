@@ -56,7 +56,7 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
             return lmmp_pow_basecase_(dst, rn, base, n, exp);
         }
 
-        mp_size_t tz = lmmp_tailing_zeros_(exp);
+        int tz = lmmp_tailing_zeros_(exp);
         TEMP_DECL;
         mp_ptr sq = TALLOC_TYPE((rn + 2) >> 1, mp_limb_t);
         exp >>= tz;
@@ -69,7 +69,7 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
                 mp_size_t rn1 = lmmp_pow_size_(base, n, exp);
                 rn = lmmp_pow_basecase_(sq, rn1, base, n, exp);
             }
-            mp_size_t i = 2;
+            int i = 2;
             for (; i <= tz; i += 2) {
                 lmmp_sqr_(dst, sq, rn);
                 rn <<= 1;
@@ -89,7 +89,7 @@ mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong
                 mp_size_t rn1 = lmmp_pow_size_(base, n, exp);
                 rn = lmmp_pow_basecase_(dst, rn1, base, n, exp);
             }
-            mp_size_t i = 2;
+            int i = 2;
             for (; i <= tz; i += 2) {
                 lmmp_sqr_(sq, dst, rn);
                 rn <<= 1;

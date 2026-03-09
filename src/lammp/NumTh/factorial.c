@@ -10,23 +10,15 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
-/**
- * @brief 计算因子的累乘，并将结果放入dst中
- * @param dst 结果数组
- * @param rn 结果数组的长度
- * @param fac 因子数组
- * @param nfactors 因子数组的长度
- * @param N 因子的最大值（或最大范围）
- * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
- * @return 结果数组的长度
- */
 mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N) {
-    if (N <= 0xff) {
+    if (N <= 0xff || nfactors <= 20) {
+    // 对于某些比较大的N，而因子又不多，递归深度可能不足，所以需要用nfactors来进行额外判断。    
         lmmp_debug_assert(nfactors > 0);
         dst[0] = 1;
         rn = 1;
         for (uint i = 0; i < nfactors; i++) {
             ulong f = fac[i].f;
+            lmmp_debug_assert(f < 0xffff);
             if (fac[i].j == 1) {
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, f);
                 ++rn;
@@ -125,6 +117,8 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
             lmmp_num_heap_push_(&heap, mp, mpn);
         else
             lmmp_free(mp);
+
+        lmmp_debug_assert(heap.size != 0);
         mp = lmmp_num_heap_mul_(&heap, &mpn);
         lmmp_num_heap_free_(&heap);
 

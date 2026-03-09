@@ -45,10 +45,10 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
     mp_ptr sq = BALLOC_TYPE(rn, mp_limb_t);
     rn = 1;
     sq[0] = 1;
-    mp_size_t i = 31;
+    int i = 31;
     while ((exp & (0x3ull << ((i--) * 2))) == 0);
-    for (++i; i != (mp_size_t)-1; --i) {
-        mp_size_t p = (exp & (0x3ull << (i * 2))) >> (i * 2);
+    for (++i; i != -1; --i) {
+        int p = (exp & (0x3ull << (i * 2))) >> (i * 2);
         if (p == 0) {
             ;
         } else if (p == 1) {

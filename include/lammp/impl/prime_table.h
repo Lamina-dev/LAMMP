@@ -2,20 +2,28 @@
 #define __LAMMP_PRIME_TABLE_H__
 #include "../numth.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #define PRIME_SHORT_TABLE_SIZE 6542
 
 #define PRIME_SHORT_TABLE_N 0x10000
 
 extern const ushort prime_short_table[PRIME_SHORT_TABLE_SIZE];
 
+/**
+ * @brief 根据全局素数表判断一个数是否为素数
+ * @param p 待判断的数
+ * @warning 若 p 超过了当前全局素数表的范围，则会触发 debug_assert
+ * @return true 素数，false 合数
+ */
 bool lmmp_is_prime_table_(uint p);
 
+/**
+ * @brief 根据全局素数表获取第 n 个素数
+ * @param n 第 n 个素数
+ * @warning 若 n 超过了当前全局素数表的范围，则会触发 debug_assert
+ * @note 第 n 个素数的索引从 0 开始，即第 0 个素数为 2
+ * @return 第 n 个素数
+ */
 uint lmmp_nth_prime_table_(uint n);
-
 
 /**
  * @brief 计算 n 范围内的short素数数量
@@ -25,32 +33,17 @@ uint lmmp_nth_prime_table_(uint n);
 ushort lmmp_prime_cnt16_(ushort n);
 
 /**
- * @brief 计算 n 范围内的素数数量
+ * @brief 估计 n 范围内的素数数量
  * @param n 范围
- * @note 不会低估素数数量，可能恰好超过 pi(n)
+ * @note 不会低估素数数量，可能恰好超过 pi(n)，用以估计素数数组需要的空间
  * @return 素数数量
  */
 ulong lmmp_prime_size_(ulong n);
 
-typedef struct prime_int {
-    uintp p;       // prime 数组指针（仅存储大于65536的素数）
-    ulongp m;      // prime 位图指针（1为质数，0为合数）
-    uint n;        // prime 数量（当前p数组中素数数量）
-    uint m_size;   // prime 位图容量
-    uint N;        // 位图记录的最大值 N
-    uint pN;       // prime 数组当前记录的是不超过 pN 的素数
-} prime_int;
-
-extern prime_int global_prime_int_table;
-
-static inline uint lmmp_prime_cnt_table_(uint n) {
-    if (n <= PRIME_SHORT_TABLE_N) {
-        return lmmp_prime_cnt16_(n);
-    } else {
-        lmmp_debug_assert(n <= global_prime_int_table.N);
-        return global_prime_int_table.n + PRIME_SHORT_TABLE_SIZE;
-    }
-}
+/**
+ * @brief 返回当前全局质数表的质数数组记录的最大的n
+ */
+uint lmmp_prime_cnt_table_(uint n);
 
 /**
  * @brief 初始化全局素数表
@@ -69,20 +62,6 @@ void lmmp_prime_int_table_update_(uint n);
 /**
  * @brief 释放全局素数表
  */
-static inline void lmmp_prime_int_table_free_(void) {
-    if (global_prime_int_table.p != NULL)
-        lmmp_free(global_prime_int_table.p);
-    if (global_prime_int_table.m != NULL)
-        lmmp_free(global_prime_int_table.m);
-    global_prime_int_table.m = NULL;
-    global_prime_int_table.p = NULL;
-    global_prime_int_table.N = 0;
-    global_prime_int_table.m = 0;
-    global_prime_int_table.m_size = 0;
-}
-
-#ifdef __cplusplus
-}
-#endif
+void lmmp_prime_int_table_free_(void);
 
 #endif  // __LAMMP_PRIME_TABLE_H__
