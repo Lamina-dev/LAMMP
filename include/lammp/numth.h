@@ -40,6 +40,7 @@
 // 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
 #define PERMUTATION_MUL_MAX_THRESHOLD 20
 
+// 因子乘法中，朴素连乘的乘法空间长度
 #define FACTORS_MUL_MAX_THRESHOLD 20
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素连乘
@@ -51,8 +52,10 @@
 // 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用哈夫曼队列连乘
 #define PERMUTATION_NR_TIMES_THRESHOLD 14
 
-// 排列数计算中，结果长度大于此阈值的将使用质因数分解算法
+// 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
+
+#define BINOMIAL_RN_FACMUL_THRESHOLD 10000
 
 #define LOG2_ 0.693147180559945
 

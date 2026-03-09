@@ -19,8 +19,8 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
     lmmp_sqr_(sq, dst, rn);
     rn <<= 1;
     rn -= (sq[rn - 1] == 0) ? 1 : 0;
-    mp_size_t lz = lmmp_leading_zeros_(exp);
-    mp_size_t i = 62 - lz;
+    int lz = lmmp_leading_zeros_(exp);
+    int i = 62 - lz;
     exp <<= lz + 1;
 /*
     For the intermediate 0, we will skip it entirely until the next 1, 
@@ -38,7 +38,7 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
             --i;
             exp <<= 1;
         } else {
-            mp_size_t j = 2;
+            int j = 2;
             if (lz & 1) {
                 lmmp_copy(dst, sq, rn);
                 lmmp_sqr_(sq, dst, rn);

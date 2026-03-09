@@ -213,10 +213,14 @@ typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
 typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
 typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
 
+#define LAMMP_MAX_ALIGN 16  // 最大对齐单位
+
 #define LIMB_BITS 64
 #define LIMB_BYTES 8
 #define LOG2_LIMB_BITS 6
 #define LIMB_MAX (~(mp_limb_t)0)
+
+#define THREAD_LOCAL _Thread_local
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #define STATIC_ASSERT _Static_assert
@@ -449,10 +453,12 @@ void lmmp_temp_stack_free_(void* marker);
 #endif
 
 /**
- * @brief 全局共享的动态分配的堆内存资源释放函数
+ * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
  * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
  *       释放后，这些全局资源将处于未初始化状态，将会变成程序刚启动时的状态，
  *       如果这些资源还将使用，则将会在后续调用中重新分配堆内存并初始化。
+ * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
+ *          未调用此函数结束线程可能导致内存泄漏。
  */
 void lmmp_global_deinit(void);
 

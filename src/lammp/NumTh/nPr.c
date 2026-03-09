@@ -92,9 +92,9 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     } else {
         lmmp_debug_assert(n <= 0xffff);
 
-        TEMP_B_DECL;
+        TEMP_DECL;
         uint nfactors = lmmp_prime_cnt_table_(n) - 1;
-        factors fac = BALLOC_TYPE(nfactors, factor);
+        factors fac = TALLOC_TYPE(nfactors, factor);
         r = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
@@ -128,7 +128,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         rn += shw + 1;
         rn -= dst[rn - 1] == 0 ? 1 : 0;
 
-        TEMP_B_FREE;
+        TEMP_FREE;
         return rn;
     }
 }
