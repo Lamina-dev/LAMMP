@@ -5,6 +5,7 @@
 
 mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= 0xffff);
+    lmmp_param_assert(r <= n / 2);
     if (n <= 67) {
         rn = lmmp_nPr_short_(dst, rn, n, r);
         mp_limb_t t = 0;
