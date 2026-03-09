@@ -1187,7 +1187,7 @@ typedef struct {
     int mersenne_flag; // 是否分配了梅森内存
 } fft_history;
 
-static fft_history numb_history;
+THREAD_LOCAL static fft_history numb_history;
 #define GH numb_history
 
 void lmmp_mul_fft_history_free_(void) {
