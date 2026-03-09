@@ -4,7 +4,7 @@
 
 void test_multinomial() {
     size_t m = 22;
-    uint r[22] = {0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    uint r[22] = {0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ulong n = 0;
     size_t len = lmmp_multinomial_size_(r, m, &n);
     std::cout << "len = " << len << std::endl;
@@ -19,9 +19,6 @@ void test_multinomial() {
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
 
     std::cout << "bn = " << bn << std::endl;
-    for (size_t i = bn - 1; i != (size_t)-1 ; --i) {
-        std::cout << std::hex << a[i];
-    }
-    std::cout << std::endl;
+
     lmmp_free(a);
 }
