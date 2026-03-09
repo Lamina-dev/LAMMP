@@ -21,16 +21,18 @@ typedef struct {
 #define MEM_MAGIC 0xDEADBEEF
 #define EXTRA_MEM_PATTERN 0xAA  // 额外内存填充模式（-86的补码即0xAA）
 
-#define ALIGNMENT 8
+#define ALIGNMENT LAMMP_MAX_ALIGN
 static inline size_t align_up(size_t size) { return (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1); }
 
 // === 辅助函数：查找连续修改的范围 ===
-static inline void find_corruption_range(const char* data,
-                                         unsigned char pattern,
-                                         size_t len,
-                                         int* first,
-                                         int* last,
-                                         int* count) {
+static inline void find_corruption_range(
+    const char*   data,
+    unsigned char pattern,
+    size_t        len,
+    int*          first,
+    int*          last,
+    int*          count
+) {
     *first = -1;
     *last = -1;
     *count = 0;

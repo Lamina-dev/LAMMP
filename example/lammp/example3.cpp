@@ -16,11 +16,11 @@ lmmp_stack_alloctor_t stack_allocator;
 
 int main() {
     mp_size_t size = 100;
-    mp_ptr a = (mp_ptr)lmmp_stack_alloc(size * sizeof(mp_limb_t));
-    mp_ptr b = (mp_ptr)lmmp_stack_alloc(1001 * sizeof(mp_limb_t));
-    memset(a, 0, 10 * sizeof(mp_limb_t));
-    lmmp_stack_free(b);
+    mp_ptr a = (mp_ptr)lmmp_alloc(1);
+    mp_ptr b = (mp_ptr)lmmp_alloc(2);
+    printf("%p %p\n", (void*)a, (void*)b);
+    lmmp_free(b);
+    lmmp_free(a);
     lmmp_global_deinit();
-    lmmp_stack_free(a);
     return 0;
 }

@@ -1,0 +1,25 @@
+#ifndef __LAMMP_FACTORS_MUL_H__
+#define __LAMMP_FACTORS_MUL_H__
+
+#include "../numth.h"
+
+typedef struct factor {
+    uint f;
+    uint j;
+} factor;
+
+typedef struct factor* factors;
+
+/**
+ * @brief 计算因子的累乘，并将结果放入dst中
+ * @param dst 结果数组
+ * @param rn 结果数组的长度
+ * @param fac 因子数组
+ * @param nfactors 因子数组的长度
+ * @param N 因子的最大值（或最大范围）
+ * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
+ * @return 结果数组的长度
+ */
+mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N);
+
+#endif // __LAMMP_FACTORS_MUL_H__

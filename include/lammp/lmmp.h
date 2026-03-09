@@ -28,22 +28,33 @@
 extern "C" {
 #endif
 
-#define LAMMP_DEFAULT_STACK_SIZE 128*1024 // 默认全局栈大小，单位为字节
+#if defined(DEBUG)
 
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
 // 开启时，将会检查栈溢出；开销：中
-#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 0
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
 // 开启时，将会开启debug_assert的检查；开销：低
 #define LAMMP_DEBUG_ASSERT_CHECK 1
 // 开启时，将会进行参数检查；开销：中
-#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 0
+#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
 // 开启时，将会进行全面的堆栈内存检查，包括堆栈溢出、指针释放检查、缓冲区溢出检查；开销：很高
-#define LAMMP_DEBUG_MEMORY_CHECK 0
+#define LAMMP_DEBUG_MEMORY_CHECK 1
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
 // 开启时，会增加内存分配和释放次数的统计功能；开销：中
 #define LAMMP_DEBUG_MEMORY_LEAK 1
+
+#else
+
+#define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 0
+#define LAMMP_DEBUG_ASSERT_CHECK 0
+#define LAMMP_DEBUG_PARAM_ASSERT_CHECK 0
+#define LAMMP_DEBUG_MEMORY_CHECK 0
+#define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
+#define LAMMP_DEBUG_MEMORY_LEAK 0
+
+#endif
 
 /*
  LAMMP 内存分配函数指针类型：
@@ -80,6 +91,8 @@ typedef struct {
     lmmp_stack_get_top_fn get;
     lmmp_stack_set_top_fn set;
 } lmmp_stack_alloctor_t;
+
+#define LAMMP_DEFAULT_STACK_SIZE 128 * 1024  // 默认全局栈大小，单位为字节
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
@@ -151,12 +164,13 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  * @param type 退出类型。有以下几个类型：
  *
  *        1. ASSERT_FAILURE （枚举值为1）为lmmp_assert触发的退出，lmmp_assert触发的普通退出几乎不可能发生，
- *             其通常代表不可能发生的计算错误，可能表明程序其他部分的计算错误。比如预期无进位的加法产生了进位。
+ *             其通常代表不可能发生的计算错误，可能表明程序执行此处时必须正确的输入错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
  *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
- *             这通常是调用者的UB，如无UB的情况下触发此错误，可能是LAMMP内部的逻辑错误，可以报告给开发者。
- *             此类型只会在定义了 LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的情况下才会触发。
+ *             这通常是调用者的UB，如无UB的情况下触发此错误；也可能是LAMMP内部的逻辑错误，开发者期待的输入错误，
+ *             在该逻辑处仅简单考虑了某些情况。如有此类错误，可以报告给开发者。此类型只会在定义了 
+ *             LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *
  *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出，其通常表明调用者传入了无效的参数，
  *             导致函数的行为不符合预期。此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。此类型的错误只有在
@@ -166,20 +180,21 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *             导致程序崩溃；另一种情况为栈分配器的栈溢出（栈空间不足或其他UB），其中，情况一是会永远进行的，而情况二
  *             只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
  *
- *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误只有两种触发可能，一种为堆内存分配释放时，头部信息被损坏
+ *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误有两种触发可能，一种为堆内存分配释放时，头部信息被损坏
  *             可能源于传入错误的指针，或缓冲区溢出导致此头部损坏。另一种情况为类似的，由栈分配器分配的内存释放时，头部信息损坏
  *             或指针不在栈的范围内，导致释放错误，如不是传入错误指针，则可能为栈分配的前一次内存缓冲区溢出，导致此内存释放时，
  *             头部信息损坏，导致释放无法进行。此类错误错误触发情况较为复杂，LAMMP_DEBUG_MEMORY_CHECK 宏为 1 时，两种情况都
  *             有可能发生，仅定义 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 时，此错误仅可能由栈分配器触发。
  *
- *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定分配空间。此类型的错误在堆栈分配器中，
- *             均可能触发，但由于栈分配器的特殊性，可能部分越界访问被判定为栈溢出，或内存释放错误。具体可尝试查看错误信息。
+ *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定使用空间。此类型的错误在堆栈分配器中，
+ *             均可能触发，但由于栈分配器的特殊性，可能部分越界访问可能被判定为栈溢出，或内存释放错误。具体可尝试查看错误信息。
  *             此类型只会在定义了 LAMMP_DEBUG_MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
  *
  *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出，有两种情况，一种情况为堆内存计数器不为0，另一种情况为当前栈帧
  *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_MEMORY_LEAK 宏为 1，才会触发。通常情况下，此错误需要手动调用
  *             lmmp_leak_tracker宏进行检查，但在调用堆栈分配器重置时，也将会检查此时的堆计数器是否为0，栈是否为空，若不满足，
- *             触发此错误。
+ *             触发此错误。特别注意，当手动调用检查宏时，在某些情况下，可能会进行一些全局堆资源的初始化，但未释放，如想正确计数，
+ *             请先调用 lmmp_global_deinit 进行全局共享的堆资源的安全释放。
  *
  *        8. UNEXPECTED_ERROR （枚举值为8）为其他未知错误导致的退出。
  *
@@ -198,10 +213,14 @@ typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
 typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
 typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
 
+#define LAMMP_MAX_ALIGN 16  // 最大对齐单位
+
 #define LIMB_BITS 64
 #define LIMB_BYTES 8
 #define LOG2_LIMB_BITS 6
 #define LIMB_MAX (~(mp_limb_t)0)
+
+#define THREAD_LOCAL _Thread_local
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #define STATIC_ASSERT _Static_assert
@@ -434,10 +453,12 @@ void lmmp_temp_stack_free_(void* marker);
 #endif
 
 /**
- * @brief 全局共享的动态分配的堆内存资源释放函数
+ * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
  * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
  *       释放后，这些全局资源将处于未初始化状态，将会变成程序刚启动时的状态，
  *       如果这些资源还将使用，则将会在后续调用中重新分配堆内存并初始化。
+ * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
+ *          未调用此函数结束线程可能导致内存泄漏。
  */
 void lmmp_global_deinit(void);
 

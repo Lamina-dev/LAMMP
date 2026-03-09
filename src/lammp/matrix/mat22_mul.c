@@ -140,7 +140,7 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
     if (tp == NULL)
         tp = BALLOC_TYPE(tn * 7, mp_limb_t);
 
-#define A11 (matA->a00)
+#define A11 (matA->a00) 
 #define A12 (matA->a01)
 #define A21 (matA->a10)
 #define A22 (matA->a11)

@@ -147,7 +147,7 @@ typedef struct {
     int flag; // 是否已经分配内存
 } toom_history_t;
 
-static toom_history_t numb_history;
+THREAD_LOCAL static toom_history_t numb_history;
 #define TH numb_history
 
 void lmmp_mul_toom42_history_free_() {

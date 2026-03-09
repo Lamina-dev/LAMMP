@@ -40,14 +40,22 @@
 // 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
 #define PERMUTATION_MUL_MAX_THRESHOLD 20
 
+// 因子乘法中，朴素连乘的乘法空间长度
+#define FACTORS_MUL_MAX_THRESHOLD 20
+
 // 排列数计算中，结果长度小于此阈值的将使用朴素连乘
-#define PERMUTATION_RN_BASECASE_THRESHOLD 200
+#define PERMUTATION_RN_BASECASE_THRESHOLD 330
 
 // 排列数计算中，结果长度小于此阈值的将使用哈夫曼队列连乘
-#define PERMUTATION_RN_MUL_THRESHOLD 20000
+#define PERMUTATION_RN_MUL_THRESHOLD 9000
 
-// 排列数计算中，结果长度大于此阈值的将使用质因数分解算法
+// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用哈夫曼队列连乘
+#define PERMUTATION_NR_TIMES_THRESHOLD 14
+
+// 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
+
+#define BINOMIAL_RN_FACMUL_THRESHOLD 10000
 
 #define LOG2_ 0.693147180559945
 
@@ -388,7 +396,6 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @param r 排列数的选择数
  * @warning n >= r
  * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_nPr_size_ 函数）
- *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
@@ -418,13 +425,25 @@ INLINE_ mp_size_t lmmp_factorial_size_(uint n) {
  * @param dst 结果指针
  * @param rn 结果指针的 limb 长度
  * @param n 阶乘的阶数
+ * @warning n>1, dst!=NULL, rn>0
+ * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_factorial_size_ 函数）
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
+
+/**
+ * @brief 计算 n! 阶乘
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param n 阶乘的阶数
+ * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_factorial_size_ 函数）
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
     if (n <= 0xffff) 
         return lmmp_nPr_short_(dst, rn, n, n);
     else
-        return lmmp_nPr_int_(dst, rn, n, n);
+        return lmmp_factorial_int_(dst, rn, n);
 }
 
 /**
@@ -500,44 +519,11 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
  * @param n r[i] 的总和
  * @param r 需要计算的系数的数组
  * @param m 系数的个数
- * @warning 0<n<=0xffff, 1<m<=0xffff
- * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
- * @return 返回 dst 的实际 limb 长度
- */
-mp_size_t lmmp_multinomial_short_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
-
-/**
- * @brief 计算多项式系数
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n r[i] 的总和
- * @param r 需要计算的系数的数组
- * @param m 系数的个数
- * @warning m>1, 0xffff<n<=0xffffffff
- * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
- * @return 返回 dst 的实际 limb 长度
- */
-mp_size_t lmmp_multinomial_int_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
-
-/**
- * @brief 计算多项式系数
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n r[i] 的总和
- * @param r 需要计算的系数的数组
- * @param m 系数的个数
  * @warning m>1, n>0
  * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
  * @return 返回 dst 的实际 limb 长度
  */
-INLINE_ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m) {
-    lmmp_param_assert(m > 1);
-    lmmp_param_assert(n > 0);
-    if (n <= 0xffff) 
-        return lmmp_multinomial_short_(dst, rn, n, r, m);
-    else
-        return lmmp_multinomial_int_(dst, rn, n, r, m);
-}
+mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
 
 #undef LOG2_
 

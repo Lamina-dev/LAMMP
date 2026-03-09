@@ -9,34 +9,26 @@
 #include "../../include/lammp/mprand.h"
 int main() {
     TEMP_DECL;
-    mp_size_t nb = 850;
-    mp_size_t na = nb * 10000;
-    mp_ptr numa = BALLOC_TYPE(na, mp_limb_t);
-    mp_ptr numb = BALLOC_TYPE(nb, mp_limb_t);
-    
-    na = lmmp_random_(numa, na);
-    nb = lmmp_random_(numb, nb);
-    
-    mp_ptr dst = BALLOC_TYPE(na + nb, mp_limb_t);
-    auto start = std::chrono::high_resolution_clock::now();
-    lmmp_mul_(dst, numa, na, numb, nb);
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Time: " << duration.count() << " microseconds" << std::endl;
+    mp_size_t n = 1000;
+    mp_ptr a = BALLOC_TYPE(n, mp_limb_t);
+    lmmp_zero(a, n);
+    a[n - 1] = 1;
+    a[3] = 2;
+    a[4] = 123;
+    mp_size_t str_len = lmmp_to_str_len_(a, n, 101);
+    mp_byte_t* str = BALLOC_TYPE(str_len, mp_byte_t);
 
-    mp_ptr dst2 = BALLOC_TYPE(na + nb, mp_limb_t);
-    start = std::chrono::high_resolution_clock::now();
-    lmmp_mul_fft_(dst2, numa, na, numb, nb);
-    end = std::chrono::high_resolution_clock::now();
-    duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Time: " << duration.count() << " microseconds" << std::endl;
+    str_len = lmmp_to_str_(str, a, n, 101);
 
-    for (size_t i = 0; i < na + nb; i++) {
-        if (dst[i] != dst2[i]) {
-            std::cout << "Error: " << i << std::endl;
-            break;
-        }
+    mp_size_t limb_len = lmmp_from_str_len_(str, str_len, 101);
+
+    mp_ptr b = BALLOC_TYPE(limb_len, mp_limb_t);
+    limb_len = lmmp_from_str_(b, str, str_len, 101);
+
+    for (mp_size_t i = 0; i < limb_len; ++i) {
+        std::cout << b[i] << " ";
     }
+    std::cout << std::endl;
 
     TEMP_FREE;
     return 0;
