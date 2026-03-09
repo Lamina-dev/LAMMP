@@ -1,6 +1,7 @@
 ﻿LIBRARY LammpCore.dll
 EXPORTS
 
+; from lmmp.h
 	lmmp_set_heap_alloctor
 	lmmp_set_stack_alloctor
 	lmmp_default_stack_reset
@@ -26,6 +27,7 @@ EXPORTS
 	lmmp_global_deinit
 	
 
+; from lmmpn.h
 	lmmp_add_nc_
 	lmmp_add_n_
 	lmmp_sub_nc_
@@ -113,11 +115,13 @@ EXPORTS
 	lmmp_div_s_
 
 
+; from mprand.h
 	lmmp_global_rng_init_
 	lmmp_seed_random_
 	lmmp_random_
 
 
+; from numth.h
 	lmmp_binvert_uint_
 	lmmp_binvert_ulong_
 
@@ -148,18 +152,21 @@ EXPORTS
 	lmmp_nPr_int_
 	lmmp_nPr_long_
 
+	lmmp_factorial_int_
+
 	lmmp_nCr_short_
 	lmmp_nCr_int_
 
 	lmmp_multinomial_size_
-	lmmp_multinomial_short_
-	lmmp_multinomial_int_
+	lmmp_multinomial_
 
 
+; from secret.h
 	lmmp_siphash24_
 	lmmp_xxhash_
 
 
+; from matrix.h
 	lmmp_vec_elem_mul_
 	lmmp_limb_elem_mul_
 	lmmp_slimb_elem_mul_

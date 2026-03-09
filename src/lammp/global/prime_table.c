@@ -9,7 +9,7 @@ ulong lmmp_prime_size_(ulong n) {
         return (ulong)ceil((double)n / (log(n) - 1.0975)) + 1;
     } else if (n < 1332479531) {
         // Dusart 2000 估计 - π(x)的上界
-        // lmmp_debug_assert(n > 355991);
+        // lmmp_debug_assert(n >= 355991);
         double x = (double)n;
         double lnx = log(x);
         double lnx2 = lnx * lnx;
@@ -29,7 +29,7 @@ ulong lmmp_prime_size_(ulong n) {
                      - 466.1275/(lnx⁵)
                      - 3489.8225/(lnx⁶)]
     */
-    // lmmp_debug_assert(n > 1332479531);
+    // lmmp_debug_assert(n >= 1332479531);
     double lnx = log(n);
     double lnx2 = lnx * lnx;
     double lnx3 = lnx2 * lnx;
