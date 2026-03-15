@@ -142,6 +142,7 @@ EXPORTS
 	lmmp_4_pow_1_
 	lmmp_8_pow_1_
 	lmmp_16_pow_1_
+	lmmp_pow_1_
 
 	lmmp_pow_win2_
 	lmmp_pow_
