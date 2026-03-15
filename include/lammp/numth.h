@@ -289,25 +289,9 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param base 底数
  * @param exp 指数
  * @warning base>1, exp>0
- * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_pow_1_size_ 函数）
- *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
-INLINE_ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp) {
-    lmmp_param_assert(base > 1);
-    lmmp_param_assert(exp > 0);
-    if (base <= (mp_limb_t)0xf) {
-        return lmmp_1_pow_1_(dst, rn, base, exp);
-    } else if (base <= (mp_limb_t)0xff) {
-        return lmmp_2_pow_1_(dst, rn, base, exp);
-    } else if (base <= (mp_limb_t)0xffff) {
-        return lmmp_4_pow_1_(dst, rn, base, exp);
-    } else if (base <= (mp_limb_t)0xffffffff) {
-        return lmmp_8_pow_1_(dst, rn, base, exp);
-    } else {
-        return lmmp_16_pow_1_(dst, rn, base, exp);
-    }
-}
+mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
 
 /**
  * @brief 计算幂次方2比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
@@ -329,8 +313,6 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
  * @param n 底数的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
- * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_pow_size_ 函数）
- *       dst缓冲区会被安全的写入，而无需担心 dst 的初始值产生影响，以免调用者额外将缓冲区置零。
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
