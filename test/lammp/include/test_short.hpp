@@ -9,7 +9,7 @@
 void test_add_nc();
 void test_umul64to128();
 void test_sqrt();
-int test_pow(uint len, uint exp);
+int test_pow();
 void test_powmod();
 void test_isprime_ulong();
 void test_factorial();
