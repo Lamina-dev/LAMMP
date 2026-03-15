@@ -6,14 +6,14 @@
     rn += b##_i_##n;                               \
     rn -= (dst[rn - 1] == 0) ? 1 : 0
 
-mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
+mp_size_t lmmp_pow_basecase_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict base, mp_size_t n, ulong exp) {
     lmmp_param_assert(exp >= 3);
     lmmp_param_assert(exp % 2 == 1);
     TEMP_DECL;
 
 #define b1 base
 #define b1n n
-    mp_ptr sq = TALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr restrict sq = TALLOC_TYPE(rn, mp_limb_t);
     rn = n;
     lmmp_copy(dst, base, n);
     lmmp_sqr_(sq, dst, rn);
