@@ -20,7 +20,7 @@
         rsq = true;                                    \
     }
 
-mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp) {
+mp_size_t lmmp_pow_win2_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict base, mp_size_t n, ulong exp) {
     lmmp_param_assert(exp > 0);
     lmmp_param_assert(n > 0);
     lmmp_param_assert(dst != NULL);
@@ -28,7 +28,7 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
 
 #define b1 base
 #define b1n n
-#define new_b(_i_) mp_ptr b##_i_ = TALLOC_TYPE(b##_i_##n, mp_limb_t)
+#define new_b(_i_) mp_ptr restrict b##_i_ = TALLOC_TYPE(b##_i_##n, mp_limb_t)
 
     mp_size_t b2n = n << 1, b3n = b2n + n;
     new_b(2);
@@ -42,7 +42,7 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
     b3n -= b3[b3n - 1] == 0 ? 1 : 0;
 
     bool rsq = true;
-    mp_ptr sq = BALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr restrict sq = BALLOC_TYPE(rn, mp_limb_t);
     rn = 1;
     sq[0] = 1;
     int i = 31;
