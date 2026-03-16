@@ -2,7 +2,7 @@
 #include "../../../include/lammp/impl/heap.h"
 #include "../../../include/lammp/impl/prime_table.h"
 
-mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     lmmp_param_assert(n <= 0xffff);
     if (n <= 20) {
@@ -93,27 +93,29 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         lmmp_debug_assert(n <= 0xffff);
 
         TEMP_DECL;
-        uint nfactors = lmmp_prime_cnt_table_(n) - 1;
-        factors fac = TALLOC_TYPE(nfactors, factor);
+        uint nfactors = lmmp_prime_size_(n);
+        factors restrict fac = TALLOC_TYPE(nfactors, factor);
         r = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
-        for (uint i = 0; i < nfactors; ++i) {
-            fac[i].f = lmmp_nth_prime_table_(i + 1);
-            fac[i].j = 0;
+        nfactors = 0;
+        for (uint i = 3; i <= n; ++i) {
+            if (!lmmp_is_prime_table_(i))
+                continue;
             uint pn = n;
             uint e = 0;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e -= pn;
             }
-            fac[i].j = e;
+            fac[nfactors].f = i;
+            fac[nfactors++].j = e;
         }
 
         mp_size_t shl = n - lmmp_limb_popcnt_(n);
@@ -133,7 +135,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     }
 }
 
-mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     lmmp_param_assert(n <= 0xffffffff);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
@@ -173,7 +175,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 #undef heap_size
 
         mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
+        mp_ptr restrict mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
         for (ulong i = n - r + 1; i <= n; ++i) {
             mp[mpn] = lmmp_mul_1_(mp, mp, mpn, i);
@@ -203,28 +205,30 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
         lmmp_debug_assert(n <= 0xffffffff);
 
         TEMP_B_DECL;
-        lmmp_prime_int_table_init_(n, true);
-        uint nfactors = lmmp_prime_cnt_table_(n) - 1;
-        factors fac = BALLOC_TYPE(nfactors, factor);
+        lmmp_prime_int_table_init_(n);
+        uint nfactors = lmmp_prime_size_(n);
+        factors restrict fac = BALLOC_TYPE(nfactors, factor);
         r = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
-        for (uint i = 0; i < nfactors; ++i) {
-            fac[i].f = lmmp_nth_prime_table_(i + 1);
-            fac[i].j = 0;
+        nfactors = 0;
+        for (uint i = 3; i <= n; ++i) {
+            if (!lmmp_is_prime_table_(i))
+                continue;
             uint pn = n;
             uint e = 0;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e -= pn;
             }
-            fac[i].j = e;
+            fac[nfactors].f = i;
+            fac[nfactors++].j = e;
         }
 
         mp_size_t shl = n - lmmp_limb_popcnt_(n);
@@ -244,7 +248,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     }
 }
 
-mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         if (n == 0xffffffffffffffff || r <= 3) {
@@ -273,7 +277,7 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 #undef heap_size
 
         mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
+        mp_ptr restrict mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
         for (ulong i = n - r + 1; i <= n; ++i) {
             mp[mpn] = lmmp_mul_1_(mp, mp, mpn, i);

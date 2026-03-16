@@ -18,6 +18,9 @@ typedef struct factor* factors;
  * @param nfactors 因子数组的长度
  * @param N 因子的最大值（或最大范围）
  * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
+ *          因子数组必须为小因子大指数形式，可以存在大的因子有较大的指数，但整体的趋势必须是小因子大指数。
+ *          暂不清楚其最差可以接受至何种形式的因子数组。在组合数以及由阶乘和幂次构成的有理数中，未见不满足
+ *          此条件的例子。
  * @return 结果数组的长度
  */
 mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N);

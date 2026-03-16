@@ -44,26 +44,14 @@ ulong lmmp_prime_size_(ulong n) {
 }
 
 typedef struct prime_int {
-    uintp p;      // prime 数组指针（仅存储大于65536的素数）
-    ulongp m;     // prime 位图指针（1为质数，0为合数）
-    uint n;       // prime 数量（当前p数组中素数数量）
+    ulongp restrict m;     // prime 位图指针（1为质数，0为合数）
     uint m_size;  // prime 位图容量
     uint N;       // 位图记录的最大值 N
-    uint pN;      // prime 数组当前记录的是不超过 pN 的素数
 } prime_int;
 
-THREAD_LOCAL static prime_int global_prime_int_table = { NULL, NULL, 0, 0, 0, 0 };
+THREAD_LOCAL static prime_int global_prime_int_table = { NULL, 0, 0 };
 
 #define G global_prime_int_table
-
-uint lmmp_prime_cnt_table_(uint n) {
-    if (n <= PRIME_SHORT_TABLE_N) {
-        return lmmp_prime_cnt16_(n);
-    } else {
-        lmmp_debug_assert(n <= G.N);
-        return G.n + PRIME_SHORT_TABLE_SIZE;
-    }
-}
 
 // 计算从5到n的可能素数个数
 static inline uint count_possible_primes(uint n) {
@@ -72,7 +60,7 @@ static inline uint count_possible_primes(uint n) {
     return ((n - 1) / 6) + ((n - 5) / 6) + 1;
 }
 
-void lmmp_prime_int_table_init_(uint n, bool init_primes) {
+void lmmp_prime_int_table_init_(uint n) {
     if (n <= PRIME_SHORT_TABLE_N || G.N >= n)
         return;
 
@@ -111,16 +99,6 @@ void lmmp_prime_int_table_init_(uint n, bool init_primes) {
             }
         }
 
-        if (init_primes) {
-            uint pn = lmmp_prime_size_(n) - PRIME_SHORT_TABLE_SIZE;
-            G.p = ALLOC_TYPE(pn, uint);
-            for (ulong j = PRIME_SHORT_TABLE_N; j <= (ulong)n; ++j) {
-                if (is_prime(j)) {
-                    G.p[G.n++] = j;
-                }
-            }
-            G.pN = n;
-        }
     } else {
         uint new_count = count_possible_primes(n);
         uint new_size = LMMP_ROUND_UP_MULTIPLE(new_count, ULONG_BITS);
@@ -152,38 +130,15 @@ void lmmp_prime_int_table_init_(uint n, bool init_primes) {
                 }
             }
         }
-
-        if (init_primes) {
-            uint pn = lmmp_prime_size_(n) - PRIME_SHORT_TABLE_SIZE;
-            G.p = lmmp_realloc(G.p, pn * sizeof(uint));
-            for (ulong j = G.N + 1; j <= (ulong)n; ++j) {
-                if (is_prime(j)) {
-                    G.p[G.n++] = j;
-                }
-            }
-            G.pN = n;
-        }
         G.N = n;
     }
-}
-
-void lmmp_prime_int_table_update_(uint n) {
-    if (n <= G.pN || n > G.N)
-        return;
-    uint pn = lmmp_prime_size_(n) - PRIME_SHORT_TABLE_SIZE;
-    G.p = lmmp_realloc(G.p, pn * sizeof(uint));
-    for (ulong j = LMMP_MAX(PRIME_SHORT_TABLE_N, G.pN) + 1; j <= (ulong)n; ++j) {
-        if (is_prime(j)) {
-            G.p[G.n++] = j;
-        }
-    }
-    G.pN = n;
 }
 
 bool lmmp_is_prime_table_(uint p) {
     if (p < PRIME_SHORT_TABLE_N) {
         ushort i = lmmp_prime_cnt16_(p);
-        if (prime_short_table[i - 1] == p) return true;
+        if (prime_short_table[i - 1] == p)
+            return true;
         return false;
     } else {
         lmmp_debug_assert(G.N >= p);
@@ -214,22 +169,10 @@ ushort lmmp_prime_cnt16_(ushort n) {
     return lo; 
 }
 
-uint lmmp_nth_prime_table_(uint n) {
-    if (n < PRIME_SHORT_TABLE_SIZE) {
-        return prime_short_table[n];
-    } else {
-        lmmp_debug_assert(G.pN >= n);
-        return G.p[n - PRIME_SHORT_TABLE_SIZE];
-    }
-}
-
 void lmmp_prime_int_table_free_(void) {
-    if (G.p != NULL)
-        lmmp_free(G.p);
     if (G.m != NULL)
         lmmp_free(G.m);
     G.m = NULL;
-    G.p = NULL;
     G.N = 0;
     G.m = 0;
     G.m_size = 0;
