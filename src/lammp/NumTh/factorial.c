@@ -10,7 +10,7 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
-mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nfactors, uint N) {
+mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors restrict fac, uint nfactors, uint N) {
     if (N <= 0xff || nfactors <= 20) {
     // 对于某些比较大的N，而因子又不多，递归深度可能不足，所以需要用nfactors来进行额外判断。    
         lmmp_debug_assert(nfactors > 0);
@@ -68,9 +68,9 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
         return rn;
     } else {
         TEMP_B_DECL;
-        mp_size_t new_fac_cap = lmmp_prime_cnt_table_(N / 2) + 1;
-        factors new_fac = BALLOC_TYPE(new_fac_cap, factor);
-        mp_size_t new_nfactors = 0;
+        mp_size_t new_nfactors = lmmp_prime_size_(N / 2);
+        factors restrict new_fac = BALLOC_TYPE(new_nfactors, factor);
+        new_nfactors = 0;
 
         num_heap heap;
 /*
@@ -81,7 +81,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
 #undef heap_size
 
         mp_size_t mpn = 1;
-        mp_ptr mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
+        mp_ptr restrict mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
         mp[0] = 1;
         ulong ulongt = 1;
         for (mp_size_t i = 0; i < nfactors; i++) {
@@ -89,7 +89,6 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
             if (fac[i].j > 1) {
                 new_fac[new_nfactors].f = fac[i].f;
                 new_fac[new_nfactors++].j = fac[i].j >> 1;
-                lmmp_debug_assert(new_nfactors <= new_fac_cap);
             } 
             if (fac[i].j & 1) {
                 ulongt *= fac[i].f;
@@ -126,11 +125,11 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
             lmmp_debug_assert(rn >= mpn);
             mp_size_t tn = ((rn - mpn) >> 1) + 1;
 
-            mp_ptr tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
+            mp_ptr restrict tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
 
             tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
 
-            mp_ptr tp2 = tp + tn + 1;
+            mp_ptr restrict tp2 = tp + tn + 1;
             lmmp_sqr_(tp2, tp, tn);
             tn <<= 1;
             tn -= tp2[tn - 1] == 0;
@@ -148,24 +147,26 @@ mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, const factors fac, uint nf
     }
 }
 
-mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n) {
-    lmmp_prime_int_table_init_(n, true);
+mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
+    lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
-    uint nfactors = lmmp_prime_cnt_table_(n) - 1;
-    factors fac = BALLOC_TYPE(nfactors, factor);
-/*
-    对于2这个因子，我们单独处理，因为可以通过移位来计算。
- */
-    for (uint i = 0; i < nfactors; ++i) {
-        fac[i].f = lmmp_nth_prime_table_(i + 1);
-        fac[i].j = 0;
+    uint nfactors = lmmp_prime_size_(n);
+    factors restrict fac = BALLOC_TYPE(nfactors, factor);
+    /*
+        对于2这个因子，我们单独处理，因为可以通过移位来计算。
+     */
+    nfactors = 0;
+    for (uint i = 3; i <= n; ++i) {
+        if (!lmmp_is_prime_table_(i))
+            continue;
         uint pn = n;
         uint e = 0;
         while (pn > 0) {
-            pn /= fac[i].f;
+            pn /= i;
             e += pn;
         }
-        fac[i].j = e;
+        fac[nfactors].f = i;
+        fac[nfactors++].j = e;
     }
 
     mp_size_t shl = n - lmmp_limb_popcnt_(n);

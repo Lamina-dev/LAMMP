@@ -1,13 +1,13 @@
 #include "../../../include/lammp/impl/heap.h"
 
-static inline void swap_num_node(num_node_ptr a, num_node_ptr b) {
+static inline void swap_num_node(num_node_ptr restrict a, num_node_ptr restrict b) {
     num_node temp = *a;
     *a = *b;
     *b = temp;
 }
 
 // 向上调整最小堆（插入元素后维护堆性质：len小的在上）
-static void heapifyUp(num_heap* pq, size_t index) {
+static void heapifyUp(num_heap* restrict pq, size_t index) {
     size_t parent = (index - 1) / 2; 
 
     // 最小堆：当前节点len < 父节点len 时交换
@@ -19,7 +19,7 @@ static void heapifyUp(num_heap* pq, size_t index) {
 }
 
 // 向下调整最小堆
-static void heapifyDown(num_heap* pq, size_t index) {
+static void heapifyDown(num_heap* restrict pq, size_t index) {
     if (pq->size == 0) {
         return;
     }
@@ -38,15 +38,15 @@ static void heapifyDown(num_heap* pq, size_t index) {
         }
 
         if (smallest == index) {
-            break;  // 堆性质已满足，退出循环
+            break; 
         }
 
         swap_num_node(&pq->head[index], &pq->head[smallest]);
-        index = smallest;  // 继续向下调整
+        index = smallest; 
     }
 }
 
-void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n) {
+void lmmp_num_heap_push_(num_heap* restrict pq, mp_ptr elem, mp_size_t n) {
     lmmp_param_assert(pq->size < pq->cap);
     pq->head[pq->size].num = elem;
     pq->head[pq->size].n = n;
@@ -54,7 +54,7 @@ void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n) {
     heapifyUp(pq, pq->size - 1);
 }
 
-bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr outElem) {
+bool lmmp_num_heap_pop_(num_heap* restrict pq, num_node_ptr restrict outElem) {
     if (pq->size == 0) {
         outElem->num = NULL;
         outElem->n = 0;
@@ -67,7 +67,7 @@ bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr outElem) {
     return true;
 }
 
-mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn) {
+mp_ptr lmmp_num_heap_mul_(num_heap* restrict pq, mp_size_t* restrict rn) {
     num_node numa, numb;
     numa.num = NULL;
     numb.num = NULL;
@@ -78,7 +78,7 @@ mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn) {
         if (!lmmp_num_heap_pop_(pq, &numb)) {
             break;
         }
-        mp_ptr prod = ALLOC_TYPE(numa.n + numb.n, mp_limb_t);
+        mp_ptr restrict prod = ALLOC_TYPE(numa.n + numb.n, mp_limb_t);
         lmmp_mul_(prod, numb.num, numb.n, numa.num, numa.n);
         lmmp_free(numa.num);
         lmmp_free(numb.num);

@@ -14,7 +14,7 @@ typedef struct num_node {
 typedef num_node* num_node_ptr;
 
 typedef struct num_heap {
-    num_node_ptr head;
+    num_node_ptr restrict head;
     size_t size;
     size_t cap;
 } num_heap;
@@ -24,7 +24,7 @@ typedef struct num_heap {
  * @param pq 优先队列指针
  * @param capa 优先队列容量
  */
-INLINE_ void lmmp_num_heap_init_(num_heap* pq, size_t capa) {
+INLINE_ void lmmp_num_heap_init_(num_heap* restrict pq, size_t capa) {
     pq->head = ALLOC_TYPE(capa, num_node);
     for (size_t i = 0; i < capa; ++i) {
         pq->head[i].num = NULL;
@@ -38,7 +38,7 @@ INLINE_ void lmmp_num_heap_init_(num_heap* pq, size_t capa) {
  * @brief 释放优先队列
  * @param pq 优先队列指针
  */
-INLINE_ void lmmp_num_heap_free_(num_heap* pq) {
+INLINE_ void lmmp_num_heap_free_(num_heap* restrict pq) {
     lmmp_debug_assert(pq->size == 0);
     lmmp_free(pq->head);
     pq->cap = 0;

@@ -3,7 +3,7 @@
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/numth.h"
 
-mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
+mp_size_t lmmp_nCr_short_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= 0xffff);
     lmmp_param_assert(r <= n / 2);
     if (n <= 67) {
@@ -53,32 +53,36 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         }
     } else {
         TEMP_DECL;
-        uint nfactors = lmmp_prime_cnt_table_(n) - 1;
-        factors fac = TALLOC_TYPE(nfactors, factor);
+        uint nfactors = lmmp_prime_size_(n);
+        factors restrict fac = TALLOC_TYPE(nfactors, factor);
         uint nr = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
-        for (uint i = 0; i < nfactors; ++i) {
-            fac[i].f = lmmp_nth_prime_table_(i + 1);
-            fac[i].j = 0;
+        nfactors = 0;
+        for (uint i = 3; i <= n; ++i) {
+            if (!lmmp_is_prime_table_(i))
+                continue;
             uint pn = n;
             uint e = 0;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e -= pn;
             }
             pn = nr;
             while (pn > 0) {
-                pn /= fac[i].f;
+                pn /= i;
                 e -= pn;
             }
-            fac[i].j = e;
+            if (e > 0) {
+                fac[nfactors].f = i;
+                fac[nfactors++].j = e;
+            }
         }
 
         mp_size_t shl = n - lmmp_limb_popcnt_(n);
@@ -99,7 +103,7 @@ mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     }
 }
 
-mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
+mp_size_t lmmp_nCr_int_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(r <= (n / 2));
     if (r <= 3 || n > 0xfffffff) {
         dst[0] = 1;
@@ -139,36 +143,37 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
         }
         return rn;
     } else {
-        lmmp_prime_int_table_init_(n, true);
+        lmmp_prime_int_table_init_(n);
         TEMP_B_DECL;
-        uint nfactors_max = lmmp_prime_cnt_table_(n) - 1;
-        uint nfactors = 0;
-        factors fac = BALLOC_TYPE(nfactors_max, factor);
+        uint nfactors = lmmp_prime_size_(n);
+        factors restrict fac = BALLOC_TYPE(nfactors, factor);
         uint nr = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
-        for (uint i = 0; i < nfactors_max; ++i) {
-            uint prime = lmmp_nth_prime_table_(i + 1);
+        nfactors = 0;
+        for (uint i = 3; i <= n; ++i) {
+            if (!lmmp_is_prime_table_(i))
+                continue;
             uint pn = n;
             uint e = 0;
             while (pn > 0) {
-                pn /= prime;
+                pn /= i;
                 e += pn;
             }
             pn = r;
             while (pn > 0) {
-                pn /= prime;
+                pn /= i;
                 e -= pn;
             }
             pn = nr;
             while (pn > 0) {
-                pn /= prime;
+                pn /= i;
                 e -= pn;
             }
             if (e > 0) {
                 fac[nfactors].j = e;
-                fac[nfactors++].f = prime;
+                fac[nfactors++].f = i;
             }
         }
 

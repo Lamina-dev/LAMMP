@@ -4,7 +4,7 @@
 
 #define LOG2_ 0.693147180559945
 
-mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n) {
+mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
     *n = 0;
     uint i = 0;
     for (; i < m; ++i) *n += r[i];
@@ -20,7 +20,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n) {
     return rn;
 }
 
-mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m) {
+mp_size_t lmmp_multinomial_(mp_ptr restrict dst, mp_size_t rn, uint n, const uintp restrict r, uint m) {
     lmmp_param_assert(m > 0 && n > 0);
     if (n <= 20) {
         lmmp_nPr_short_(dst, rn, n, n);
@@ -33,30 +33,30 @@ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uin
     }
 
     TEMP_B_DECL;
-    uint nfactors_max = lmmp_prime_cnt_table_(n) - 1;
-    uint nfactors = 0;
-    factors fac = BALLOC_TYPE(nfactors_max, factor);
+    uint nfactors = lmmp_prime_size_(n);
+    factors restrict fac = BALLOC_TYPE(nfactors, factor);
     /*
         对于2这个因子，我们单独处理，因为可以通过移位来计算。
      */
-    for (uint i = 0; i < nfactors_max; ++i) {
-        uint prime = lmmp_nth_prime_table_(i + 1);
-        fac[i].j = 0;
+    nfactors = 0;
+    for (uint i = 3; i <= n; ++i) {
+        if (!lmmp_is_prime_table_(i))
+            continue;
         uint pn = n;
         uint e = 0;
         while (pn > 0) {
-            pn /= prime;
+            pn /= i;
             e += pn;
         }
         for (uint j = 0; j < m; ++j) {
             pn = r[j];
             while (pn > 0) {
-                pn /= prime;
+                pn /= i;
                 e -= pn;
             }
         }
         if (e > 0) {
-            fac[nfactors].f = prime;
+            fac[nfactors].f = i;
             fac[nfactors++].j = e;
         }
     }
