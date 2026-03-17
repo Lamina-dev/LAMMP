@@ -56,6 +56,13 @@ extern "C" {
 
 #endif
 
+#if defined(USE_ASM)
+#if defined(__x86_64__) || defined(_M_X64)
+#else
+#error "USE_ASM is only supported on x86_64 platforms"
+#endif
+#endif
+
 /*
  LAMMP 内存分配函数指针类型：
  1. heap_alloc : 堆内存分配器
@@ -219,6 +226,9 @@ typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操
 #define LIMB_BYTES 8
 #define LOG2_LIMB_BITS 6
 #define LIMB_MAX (~(mp_limb_t)0)
+#define LLIMB_BITS 32
+#define LLIMB_BYTES 4
+#define LLIMB_MASK ((mp_limb_t)0xffffffff)
 
 #define THREAD_LOCAL _Thread_local
 
