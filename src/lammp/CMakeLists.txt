@@ -1,21 +1,26 @@
 ﻿# 递归收集源代码
-file(GLOB_RECURSE LAMMP_CORE_SRCS 
-    ${CMAKE_CURRENT_SOURCE_DIR}/*.c
+file(GLOB_RECURSE LAMMP_CORE_SRCS
     LIST_DIRECTORIES FALSE
+    ${CMAKE_CURRENT_SOURCE_DIR}/*.c
 )
-
-if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-    file(GLOB MASM_SRCS 
-        ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
-        LIST_DIRECTORIES FALSE
-    )
-elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-    file(GLOB MASM_SRCS 
-        ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
-        LIST_DIRECTORIES FALSE
-    )
+if(USE_ASM)
+    # 排除所有包含 "/generic/" 路径的文件（正则表达式）
+    list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX ".*/generic/.*")
 endif()
 
+if(USE_ASM)
+    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
+        file(GLOB MASM_SRCS 
+            ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
+            LIST_DIRECTORIES FALSE
+        )
+    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
+        file(GLOB MASM_SRCS 
+            ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
+            LIST_DIRECTORIES FALSE
+        )
+    endif()
+endif()
 # 仅在MASM文件存在时添加
 if(MASM_SRCS)
     list(APPEND LAMMP_CORE_SRCS ${MASM_SRCS})
