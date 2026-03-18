@@ -755,7 +755,7 @@ INLINE_ void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
  * @param numb 输入除数（长度2）
  * @param inv21 除数的2-1阶逆元（提前计算好的inv21([numb,2])）
  * @return 商值（单精度数）
- * @warning [numa,3]<[numb,2]*B, MSB(numb)=1, inv21=inv21([numb,2])
+ * @warning [numa,3]<[numb,2]*B, MSB(numb)=1, inv21=inv21([numb,2]), eqsep(numa,numb)
  */
 mp_limb_t lmmp_div_3_2_(mp_ptr numa, mp_srcptr numb, mp_limb_t inv21);
 

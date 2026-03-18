@@ -210,4 +210,60 @@ def montgomery_mul(a_mont, b_mont, p):
         (i192)[2] = (i192)[2] - ((j192)[2] + _b1_);      \
     } while (0)
 
+#define _add_ssaaaa(sh, sl, ah, al, bh, bl) \
+    do {                                    \
+        uint64_t _x_;                       \
+        _x_ = (al) + (bl);                  \
+        (sh) = (ah) + (bh) + (_x_ < (al));  \
+        (sl) = _x_;                         \
+    } while (0)
+
+#define _sub_ddmmss(sh, sl, ah, al, bh, bl) \
+    do {                                    \
+        uint64_t _x_;                       \
+        _x_ = (al) - (bl);                  \
+        (sh) = (ah) - (bh) - ((al) < (bl)); \
+        (sl) = _x_;                         \
+    } while (0)
+
+#define _udiv_qrnnd_preinv(q, r, nh, nl, d, di)              \
+    do {                                                     \
+        uint64_t _qh_, _ql_, _r_, _mask_;                    \
+        _umul64to128_((nh), (di), &_ql_, &_qh_);             \
+        _add_ssaaaa(_qh_, _ql_, _qh_, _ql_, (nh) + 1, (nl)); \
+        _r_ = (nl) - _qh_ * (d);                             \
+        _mask_ = -(mp_limb_t)(_r_ > _ql_);                   \
+        _qh_ += _mask_;                                      \
+        _r_ += _mask_ & (d);                                 \
+        if (_r_ >= (d)) {                                    \
+            _r_ -= (d);                                      \
+            _qh_++;                                          \
+        }                                                    \
+        (r) = _r_;                                           \
+        (q) = _qh_;                                          \
+    } while (0)
+
+#define _udiv_qr_3by2(q, r1, r0, n2, n1, n0, d1, d0, dinv)                 \
+    do {                                                                   \
+        mp_limb_t _q0_, _t1_, _t0_, _mask_;                                \
+        _umul64to128_((n2), (dinv), &_q0_, &(q));                          \
+        _add_ssaaaa((q), _q0_, (q), _q0_, (n2), (n1));                     \
+        /* Compute the two most significant limbs of n - q'd */            \
+        (r1) = (n1) - (d1) * (q);                                          \
+        _sub_ddmmss((r1), (r0), (r1), (n0), (d1), (d0));                   \
+        _umul64to128_((d0), (q), &_t0_, &_t1_);                            \
+        _sub_ddmmss((r1), (r0), (r1), (r0), _t1_, _t0_);                   \
+        (q)++;                                                             \
+        /* Conditionally adjust q and the remainders */                    \
+        _mask_ = -(uint64_t)((r1) >= _q0_);                                \
+        (q) += _mask_;                                                     \
+        _add_ssaaaa((r1), (r0), (r1), (r0), _mask_ & (d1), _mask_ & (d0)); \
+        if ((r1) >= (d1)) {                                                \
+            if ((r1) > (d1) || (r0) >= (d0)) {                             \
+                (q)++;                                                     \
+                _sub_ddmmss((r1), (r0), (r1), (r0), (d1), (d0));           \
+            }                                                              \
+        }                                                                  \
+    } while (0)
+
 #endif  // __LAMMP_U128_U192_H__
