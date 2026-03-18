@@ -19,37 +19,39 @@
 #ifndef __UMUL64TO128_H__
 #define __UMUL64TO128_H__
 
-#if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
-#pragma message("Using __asm__ to compute 64bit x 64bit to 128bit")
-#elif defined(_WIN64)
-#include <intrin.h>
-#pragma message("Using _umul128 to compute 64bit x 64bit to 128bit")
-#else
-#pragma message("Using 32bit to compute 64bit x 64bit to 128bit")
-#endif
-
 #include <stdint.h>
 
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
 #if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
+#if defined(USE_ASM)
     __asm__("mul %[b]" 
             : "=a"(*low),
               "=d"(*high)         
             : "a"(a), [b] "r"(b)  
             :                    
     );
-#elif defined(_WIN64)
-    *low = _umul128(a, b, high);
+#else
+    __uint128_t prod = (__uint128_t)a * b;
+    *low = (uint64_t)prod;
+    *high = (uint64_t)(prod >> 64);
+#endif
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_M_IA64))
+#if defined(_M_X64)
+    *high = _umul128(a, b, low);
+#else
+    *high = __umulh(a, b);
+    *low = a * b;
+#endif
 #else
     uint64_t ah = a >> 32, bh = b >> 32;
-    a = uint32_t(a), b = uint32_t(b);
+    a = (uint32_t)a, b = (uint32_t)b;
     uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
     r3 += (r1 >> 32) + (r2 >> 32);
-    r1 = uint32_t(r1), r2 = uint32_t(r2);
+    r1 = (uint32_t)r1, r2 = (uint32_t)r2;
     r1 += r2;
     r1 += (r0 >> 32);
     *high = r3 + (r1 >> 32);
-    *low = (r1 << 32) | uint32_t(r0);
+    *low = (r1 << 32) | (uint32_t)r0;
 #endif
 }
 
