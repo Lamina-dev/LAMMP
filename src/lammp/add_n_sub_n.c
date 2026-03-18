@@ -1,6 +1,12 @@
 #include "../../include/lammp/lmmpn.h"
 
 mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    /*
+    这段代码看起来有点奇怪的原因是，对于使用x64汇编时，我们会使用带进位的加法和减法，而x64中
+    只能使用同一个进位寄存器，所以我们需要将两条指令分开执行。
+    而不使用汇编时，编译器通常不会使用进位寄存器。因此我们可以同时读取两路内存，以减少读写次数。
+    */
+#ifdef USE_ASM
     mp_limb_t acyo = 0, scyo = 0;
     mp_size_t off, this_n;
 
@@ -26,4 +32,25 @@ mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr 
         }
     }
     return 2 * acyo + scyo;
+#else
+    mp_size_t i;
+    mp_limb_t acyo, scyo;
+
+    for (i = 0, acyo = 0, scyo = 0; i < n; i++) {
+        mp_limb_t a, b, r;
+        a = numa[i];
+        b = numb[i];
+        r = a + acyo;
+        acyo = (r < acyo);
+        r += b;
+        acyo += (r < b);
+        dsta[i] = r;
+
+        b += scyo;
+        scyo = (b < scyo);
+        scyo += (a < b);
+        dstb[i] = a - b;
+    }
+    return 2 * acyo + scyo;
+#endif
 }

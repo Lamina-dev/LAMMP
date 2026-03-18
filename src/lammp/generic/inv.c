@@ -99,5 +99,39 @@ mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl) {
 }
 
 mp_limb_t lmmp_inv_1_(mp_limb_t x) {
-    return lmmp_inv_2_1_(x, 0);
+    mp_limb_t r, m;
+    {
+        mp_limb_t p, ql;
+        unsigned ul, uh, qh;
+
+        ul = x & LLIMB_MASK;
+        uh = x >> (LIMB_BITS / 2);
+        qh = (x ^ LIMB_MAX) / uh;
+
+        r = ((~x - (mp_limb_t)qh * uh) << (LIMB_BITS / 2)) | LLIMB_MASK;
+        p = (mp_limb_t)qh * ul;
+        if (r < p) {
+            qh--;
+            r += x;
+            if (r >= x)
+                if (r < p) {
+                    qh--;
+                    r += x;
+                }
+        }
+        r -= p;
+        p = (r >> (LIMB_BITS / 2)) * qh + r;
+        ql = (p >> (LIMB_BITS / 2)) + 1;
+        r = (r << (LIMB_BITS / 2)) + LLIMB_MASK - ql * x;
+        if (r >= (LIMB_MAX & (p << (LIMB_BITS / 2)))) {
+            ql--;
+            r += x;
+        }
+        m = ((mp_limb_t)qh << (LIMB_BITS / 2)) + ql;
+        if (r >= x) {
+            m++;
+            r -= x;
+        }
+    }
+    return m;
 }
