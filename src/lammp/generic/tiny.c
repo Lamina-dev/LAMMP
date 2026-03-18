@@ -1,5 +1,6 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/u128_u192.h"
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
@@ -110,5 +111,13 @@ void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr restrict dst) {
 }
 
 ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp restrict q) {
-
+    int shl = lmmp_leading_zeros_(mod);
+    mod <<= shl;
+    ulong inv = lmmp_inv_1_(mod);
+    ulong ab[2];
+    ulong r;
+    _umul64to128_(a, b, ab, ab + 1);
+    _u128lshl(ab, ab, shl);
+    _udiv_qrnnd_preinv(*q, r, ab[1], ab[0], mod, inv);
+    return r >> shl;
 }
