@@ -6,12 +6,13 @@
 mp_size_t lmmp_nCr_short_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= 0xffff);
     lmmp_param_assert(r <= n / 2);
-    if (n <= 67) {
+    if (r <= 20) {
         rn = lmmp_nPr_short_(dst, rn, n, r);
         mp_limb_t t = 0;
         lmmp_nPr_short_(&t, 1, r, r);
-        dst[0] /= t;
-        return 1;
+        lmmp_div_1_(dst, dst, rn, t);
+        rn -= dst[rn - 1] == 0 ? 1 : 0;
+        return rn;
     } else if (rn < BINOMIAL_RN_BASECASE_THRESHOLD) {
         if (r <= 4 || n > 0xfff) {
             dst[0] = 1;
