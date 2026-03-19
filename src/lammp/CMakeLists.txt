@@ -4,7 +4,7 @@ file(GLOB_RECURSE LAMMP_CORE_SRCS
     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
 )
 if(USE_ASM)
-    # 排除所有包含 "/generic/" 路径的文件（正则表达式）
+    # 排除所有包含 "/generic/" 路径的文件
     list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX ".*/generic/.*")
 endif()
 
