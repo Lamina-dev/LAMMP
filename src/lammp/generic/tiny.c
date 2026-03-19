@@ -117,7 +117,8 @@ ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp restrict q) {
     ulong ab[2];
     ulong r;
     _umul64to128_(a, b, ab, ab + 1);
-    _u128lshl(ab, ab, shl);
+    if (shl > 0)
+        _u128lshl(ab, ab, shl);
     _udiv_qrnnd_preinv(*q, r, ab[1], ab[0], mod, inv);
     return r >> shl;
 }

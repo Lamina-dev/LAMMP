@@ -21,5 +21,3 @@ void lmmp_mul_basecase_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t 
         dst[na] = lmmp_addmul_1_(dst, numa, na, numb[0]);
     }
 }
-
-
