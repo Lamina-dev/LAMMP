@@ -1,7 +1,9 @@
 ﻿cmake_minimum_required(VERSION 3.10)
 project(Lammp LANGUAGES C CXX)
 
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+option(USE_ASM "Disable x64 assembly, use generic C implementation (no arch restriction)" OFF)
+
+if(USE_ASM AND WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         enable_language(ASM_MASM)
     elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
@@ -22,7 +24,7 @@ if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST VALID_BUILD_TYPES)
 endif()
 
 # ===================== MASM 汇编器配置 =====================
-if(WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(USE_ASM AND WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         # MSVC的MASM配置
         set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
@@ -67,7 +69,9 @@ function(set_common_compiler_options target)
         CXX_STANDARD_REQUIRED ON
         CXX_EXTENSIONS OFF
     )
-    
+    if(USE_ASM)
+        target_compile_definitions(${target} PRIVATE USE_ASM)
+    endif()
     if(CMAKE_C_COMPILER_ID MATCHES "GNU")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
