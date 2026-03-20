@@ -119,6 +119,9 @@ EXPORTS
 	lmmp_global_rng_init_
 	lmmp_seed_random_
 	lmmp_random_
+	lmmp_strong_rng_init_
+	lmmp_strong_rng_free_
+	lmmp_strong_random_
 
 
 ; from numth.h
