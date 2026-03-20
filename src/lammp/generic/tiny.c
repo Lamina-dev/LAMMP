@@ -69,9 +69,9 @@ int lmmp_tailing_zeros_(mp_limb_t x) {
 
 mp_limb_t lmmp_mulh_(mp_limb_t a, mp_limb_t b) {
 #if defined(__GNUC__) || defined(__clang__) && defined(__SIZEOF_INT128__)
-__uint128_t t = (__uint128_t)a * (__uint128_t)b;
-return (mp_limb_t)(t >> 64);
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_M_IA64))
+    __uint128_t t = (__uint128_t)a * (__uint128_t)b;
+    return (mp_limb_t)(t >> 64);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
     return __umulh(a, b);
 #else
     uint64_t ah = a >> 32, bh = b >> 32;
@@ -90,13 +90,8 @@ void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr restrict dst) {
     __uint128_t prod = (__uint128_t)a * b;
     dst[0] = (mp_limb_t)prod;        
     dst[1] = (mp_limb_t)(prod >> 64);  
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_M_IA64))
-#if defined(_M_X64)
-    dst[1] = _umul128(a, b, dst);
-#else
-    dst[1] = __umulh(a, b);
-    dst[0] = a * b;
-#endif 
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    dst[0] = _umul128(a, b, dst + 1);
 #else
     uint64_t ah = a >> 32, bh = b >> 32;
     a = (uint32_t)a, b = (uint32_t)b;
