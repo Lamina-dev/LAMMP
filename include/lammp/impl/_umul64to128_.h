@@ -22,8 +22,8 @@
 #include <stdint.h>
 
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
-#if (defined(__GNUC__) || defined(__clang__)) && defined(__x86_64__)
-#if defined(USE_ASM)
+#if (defined(__GNUC__) || defined(__clang__))
+#if defined(USE_ASM) && (defined(__x86_64__))
     __asm__("mul %[b]" 
             : "=a"(*low),
               "=d"(*high)         
@@ -35,13 +35,8 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
     *low = (uint64_t)prod;
     *high = (uint64_t)(prod >> 64);
 #endif
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64) || defined(_M_AMD64) || defined(_M_IA64))
-#if defined(_M_X64)
-    *high = _umul128(a, b, low);
-#else
-    *high = __umulh(a, b);
-    *low = a * b;
-#endif
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    *low = _umul128(a, b, high);
 #else
     uint64_t ah = a >> 32, bh = b >> 32;
     a = (uint32_t)a, b = (uint32_t)b;
