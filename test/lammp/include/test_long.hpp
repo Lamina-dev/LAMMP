@@ -4,3 +4,4 @@
 #include "../../../include/lammp/lmmpn.h"
 
 void test_hash();
+void test_random();

@@ -6,6 +6,6 @@
 #include "../../include/lammp/impl/prime_table.h"
 
 int main() {
-    test_pow();
+    test_rand();
     return 0;
 }
