@@ -2,7 +2,7 @@
 #include "../../../include/lammp/impl/rand_state.h"
 
 typedef struct {
-    uint64_t state;
+    mp_limb_t state;
     int seed_type;
 } lmmp_global_rng_t;
 
@@ -15,7 +15,7 @@ void lmmp_global_rng_init_(int seed, int seed_type) {
     lmmp_global_rng.seed_type = seed_type % 2;
 }
 
-mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_type) {
+mp_size_t lmmp_seed_random_(mp_ptr restrict dst, mp_size_t n, mp_limb_t seed, int seed_type) {
     seed_type %= 2;
     if (seed_type == 0) {
         pcg64_128_state rng;
@@ -50,7 +50,7 @@ mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_ty
     return n;
 }
 
-mp_size_t lmmp_random_(mp_ptr dst, mp_size_t n) {
+mp_size_t lmmp_random_(mp_ptr restrict dst, mp_size_t n) {
     if (n == 0 || dst == NULL) {
         return 0;
     }
@@ -65,17 +65,28 @@ typedef struct lmmp_strong_rng_t {
 } lmmp_strong_rng_t;
 
 lmmp_strong_rng_t* lmmp_strong_rng_init_(mp_size_t k, int seed) {
-    lmmp_param_assert(rng != NULL);
     lmmp_param_assert(k > 0);
 
     lmmp_strong_rng_t* rng = (lmmp_strong_rng_t*)lmmp_alloc(sizeof(lmmp_strong_rng_t));
     rng->stream.k = k;
-    rng->stream.state = (uint64_t*)lmmp_alloc(k * sizeof(uint64_t));
+    rng->stream.state = ALLOC_TYPE(k, mp_limb_t);
 
-    uint64_t new_seed = lmmp_seed_generator(seed);
+    mp_limb_t new_seed = lmmp_seed_generator(seed);
     new_seed = rotl(new_seed, 17) ^ lmmp_seed_generator(k);
-    pcg64_le_seq_init(&rng->stream, new_seed);
+    pcg64_le_seq_init(&rng->stream, 0, new_seed);
     return rng;
+}
+
+void lmmp_strong_rng_extern_(lmmp_strong_rng_t* rng, mp_size_t k) {
+    lmmp_param_assert(rng != NULL);
+    lmmp_param_assert(k > 0);
+    if (k <= rng->stream.k) return;
+    rng->stream.state = (mp_limb_t*)lmmp_realloc(rng->stream.state, k * sizeof(mp_limb_t));
+
+    mp_limb_t new_seed = lmmp_seed_generator(rng->stream.k);
+    new_seed = rotl(new_seed, 37) ^ lmmp_seed_generator(k);
+    pcg64_le_seq_init(&rng->stream, rng->stream.k, new_seed);
+    rng->stream.k = k;
 }
 
 void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng) {
@@ -87,9 +98,13 @@ void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng) {
     }
 }
 
-mp_size_t lmmp_strong_random_(mp_ptr dst, lmmp_strong_rng_t* rng) {
-    pcg64_le_seq_next(dst, &rng->stream);
-    mp_size_t n = rng->stream.k;
+mp_size_t lmmp_strong_random_(mp_ptr restrict dst, mp_size_t n, lmmp_strong_rng_t* rng) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(rng != NULL);
+    lmmp_param_assert(rng->stream.state != NULL);
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(n <= rng->stream.k);
+    pcg64_le_seq_next(dst, n, &rng->stream);
     while (n > 0 && dst[n - 1] == 0) {
         --n;
     }
