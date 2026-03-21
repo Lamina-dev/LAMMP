@@ -34,17 +34,18 @@
  PCG网站<https://www.pcg-random.org>中也有PCG和xoshiro256++及其他随机生成器的比较。
 
  PCG-XSL-RR-128/64 生成的随机数序列通常拥有比xoshiro256++更好的统计性能，当然两者的统计性能
- 在大部分场景下都足够的好。生成速度中，在64位平台上，对生成超大随机数的测试发现，平均生成单个limb的耗时大致如下：
+ 在大部分场景下都足够的好。生成速度上，在64位平台且吞吐量较好的情况下，各个随机数发生器平均生成
+ 单个limb的耗时大致如下：
  
     随机生成器          平均耗时（ns）
      mt19937              3.9
-  PCG-XSL-RR-128/64       1.2
-  xorshift256++           0.75
-     strong_rng           1.3
+  PCG-XSL-RR-128/64       1.3
+   xoshiro256++           0.8
+    strong_rng            1.4/2.9
 
-    （备注：strong_rng耗时未考虑随机状态初始化的时间）
+    （备注：strong_rng第一个耗时未考虑随机状态初始化的时间，第二个耗时是在初始化状态后，生成单个limb的耗时）
 
- LAMMP 实现的强随机数生成器，通常用于多次大量生成固定长度的随机大整数序列，比如用于多次生成
+ LAMMP 实现的强随机数生成器，通常用于多次大量生成较长的随机大整数序列，比如用于多次生成
  1000个limb长度的随机大整数。其随机状态为一个长度为 k 的limb数组，初始状态由种子决定，每个limb都
  会由种子和limb的位置唯一确定，因此初始状态几乎完全不同，用以保证各个limb之间没有相关性。
  
@@ -106,26 +107,39 @@ typedef struct lmmp_strong_rng_t lmmp_strong_rng_t;
  * @brief 创建k维度强随机数生成器
  * @param k 随机数长度（单位：limb）
  * @param seed 种子
- * @note 请注意，此操作是一个开销很大的操作，在仅生成一次的情况下，甚至初始化时间会慢于生成一个随机数的时间。
+ * @warning k>0
+ * @note 请注意，此操作是一个开销很大的操作，且会分配内存，在仅生成一次的情况下，甚至初始化时间会慢于生成
+ *       一个随机数的时间。
  * @return 强随机数生成器指针
  */
 lmmp_strong_rng_t* lmmp_strong_rng_init_(mp_size_t k, int seed);
 
 /**
+ * @brief 将rng内部状态拓展至k维度
+ * @param rng 强随机数生成器指针
+ * @param k 随机数长度（单位：limb）
+ * @warning rng!=NULL, k>0
+ * @note 若k<=rng->stream.k，则不进行任何操作。否则，将rng内部状态拓展至k维度。
+ */
+void lmmp_strong_rng_extern_(lmmp_strong_rng_t* rng, mp_size_t k);
+
+/**
  * @brief 销毁强随机数生成器
  * @param rng 强随机数生成器指针
  */
-void lmmp_strong_rng_destroy_(lmmp_strong_rng_t* rng);
+void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng);
 
 /**
- * @brief 生成k维度强随机数（0 - B^k-1 均匀分布）
+ * @brief 生成n维度强随机数（0 - B^n-1 均匀分布）
  * @param dst 随机数存储位置（长度为k个limb）
+ * @param n dst的 limb 长度（n<=k）
  * @param rng 强随机数生成器指针，每生成一次，内部状态将会更新
+ * @warning rng!=NULL, dst!=NULL, 0<n<=k, 
  * @note rng为强随机数生成器指针，每调用一次此函数，内部状态将会更新，以进行重复生成长度相同的随机大整数序列
  *       此方法生成的随机数序列具有极好的k-维均匀性，单个随机大整数间的各个limb都是几乎完全独立的序列。
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_strong_random_(mp_ptr dst, lmmp_strong_rng_t* rng);
+mp_size_t lmmp_strong_random_(mp_ptr dst, mp_size_t n, lmmp_strong_rng_t* rng);
 
 #ifdef __cplusplus
 }

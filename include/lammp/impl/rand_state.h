@@ -134,34 +134,45 @@ typedef struct {
     mp_limb_t* restrict state;
 } pcg64_le_seq_t;
 
-INLINE_ void pcg64_le_seq_init(pcg64_le_seq_t* rng, mp_limb_t seed) {
+INLINE_ void pcg64_le_seq_init(pcg64_le_seq_t* rng, mp_size_t i, mp_limb_t seed) {
     lmmp_param_assert(rng != NULL);
     lmmp_param_assert(rng->k > 0);
     lmmp_param_assert(rng->state != NULL);
 
-    mp_size_t i;
-    for (i = 0; i < rng->k; i += 4) {
-        mp_limb_t s0 = lmmp_seed_generator(seed + i + 0);
-        mp_limb_t s1 = lmmp_seed_generator(seed + i + 1);
-        mp_limb_t s2 = lmmp_seed_generator(seed + i + 2);
-        mp_limb_t s3 = lmmp_seed_generator(seed + i + 3);
-        s0 ^= (i + 0) ^ ((i + 0) << 32);
-        s1 ^= (i + 1) ^ ((i + 1) << 32);
-        s2 ^= (i + 2) ^ ((i + 2) << 32);
-        s3 ^= (i + 3) ^ ((i + 3) << 32);
+#define PRIME64_0 0x9E3779B185EBCA87ULL
+#define PRIME64_1 0xC2B2AE3D27D4EB4FULL
+#define PRIME64_2 0x165667B19E3779F9ULL
+#define PRIME64_3 0x85EBCA77C2B2AE63ULL
+
+    mp_limb_t s0, s1, s2, s3;
+
+    for (; i + 3 < rng->k; i += 4) {
+        s0 = rotl(seed + i + 0, 41);
+        s1 = rotl(seed + i + 1, 29);
+        s2 = rotl(seed + i + 2, 23);
+        s3 = rotl(seed + i + 3, 7);
+        s0 *= PRIME64_0;
+        s1 *= PRIME64_1;
+        s2 *= PRIME64_2;
+        s3 *= PRIME64_3;
         rng->state[i + 0] = lmmp_seed_generator(s0 ^ rotl(s0, 17));
         rng->state[i + 1] = lmmp_seed_generator(s1 ^ rotl(s1, 21));
         rng->state[i + 2] = lmmp_seed_generator(s2 ^ rotl(s2, 13));
         rng->state[i + 3] = lmmp_seed_generator(s3 ^ rotl(s3, 33));
     }
     for (; i < rng->k; i++) {
-        mp_limb_t s = lmmp_seed_generator(seed + i);
-        s ^= (i + 0) ^ ((i + 0) << 32);
-        rng->state[i] = lmmp_seed_generator(s ^ rotl(s, 45));
+        s0 = rotl(seed + i, 41);
+        s0 *= PRIME64_0;
+        rng->state[i] = lmmp_seed_generator(s0 ^ rotl(s0, 17));
     }
+
+#undef PRIME64_0
+#undef PRIME64_1
+#undef PRIME64_2
+#undef PRIME64_3
 }
 
-INLINE_ mp_limb_t pcg64_le_action(mp_limb_t* state) {
+INLINE_ mp_limb_t pcg64_le_action(mp_limb_t* restrict state) {
     mp_limb_t old_state = *state;
     *state = old_state * PCG64_LE_MULTIPLIER + PCG64_LE_INCREMENT;
 
@@ -175,20 +186,24 @@ INLINE_ mp_limb_t pcg64_le_action(mp_limb_t* state) {
     return x;
 }
 
-INLINE_ void pcg64_le_seq_next(mp_ptr dst, pcg64_le_seq_t* rng) {
+INLINE_ void pcg64_le_seq_next(mp_ptr restrict dst, mp_size_t n, pcg64_le_seq_t* rng) {
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(rng != NULL);
-    lmmp_param_assert(rng->state != NULL);
+    lmmp_param_assert(n <= rng->k);
     mp_size_t i;
-
-    for (i = 0; i < rng->k; i += 4) {
-        dst[i + 0] = pcg64_le_action(&rng->state[i + 0]);
-        dst[i + 1] = pcg64_le_action(&rng->state[i + 1]);
-        dst[i + 2] = pcg64_le_action(&rng->state[i + 2]);
-        dst[i + 3] = pcg64_le_action(&rng->state[i + 3]);
+    mp_limb_t mixn = lmmp_seed_generator(n * 0xb9ce52b55c72d585ULL);
+    for (i = 0; i + 3 < n; i += 4) {
+        dst[i + 0] = pcg64_le_action(&rng->state[i + 0]) ^ mixn;
+        dst[i + 1] = pcg64_le_action(&rng->state[i + 1]) ^ mixn;
+        dst[i + 2] = pcg64_le_action(&rng->state[i + 2]) ^ mixn;
+        dst[i + 3] = pcg64_le_action(&rng->state[i + 3]) ^ mixn;
+    }
+    for (; i < n; i++) {
+        dst[i] = pcg64_le_action(&rng->state[i]) ^ mixn;
     }
     for (; i < rng->k; i++) {
-        dst[i] = pcg64_le_action(&rng->state[i]);
+        mp_limb_t old_state = rng->state[i];
+        rng->state[i] = old_state * PCG64_LE_MULTIPLIER + PCG64_LE_INCREMENT;
     }
 }
 
