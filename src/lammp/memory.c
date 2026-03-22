@@ -1,6 +1,15 @@
 ﻿#include "../../include/lammp/lmmpn.h"
-#include "../../include/lammp/impl/default_stack.h"
 #include "../../include/lammp/impl/prime_table.h"
+
+/**
+ * @brief 默认栈获取栈顶
+ */
+static void* lmmp_default_stack_get_top(void);
+
+/**
+ * @brief 默认栈设置栈顶
+ */
+static void lmmp_default_stack_set_top(void* top);
 
 #undef lmmp_alloc
 #undef lmmp_realloc
