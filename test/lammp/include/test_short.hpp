@@ -1,4 +1,12 @@
-﻿#include <iostream>
+﻿/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
+#ifndef __LAMMP_TEST_SHORT_H__
+#define __LAMMP_TEST_SHORT_H__
+#include <iostream>
 #include "../../../include/lammp/impl/_umul64to128_.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
@@ -24,3 +32,4 @@ void test_matrix();
 void test_vec_ele_mul();
 void test_mod();
 void test_mullo();
+#endif // __LAMMP_TEST_SHORT_H__

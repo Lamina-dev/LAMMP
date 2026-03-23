@@ -1,6 +1,6 @@
 /*
  * [LAMMP]
- * Copyright (C) [2025] [HJimmyK/LAMINA]
+ * Copyright (C) [2025-2026] [HJimmyK(Jericho Knox)]
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,6 +15,7 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
 #ifndef __LAMMP_FACTORS_MUL_H__
 #define __LAMMP_FACTORS_MUL_H__
 
