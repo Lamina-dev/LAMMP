@@ -1,3 +1,9 @@
+/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
 #include "../../../include/lammp/secret.h"
 
 static inline uint64_t rotl64(uint64_t x, int b) {

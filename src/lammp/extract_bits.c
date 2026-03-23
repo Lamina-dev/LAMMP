@@ -1,3 +1,9 @@
+/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
 #include "../../include/lammp/lmmpn.h"
 
 mp_size_t lmmp_extract_bits_(mp_srcptr num, mp_size_t n, mp_limb_t* ext, int bits) {
