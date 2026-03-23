@@ -1,5 +1,10 @@
-﻿#include <stdio.h>
-#include "../../include/lammp/lmmp.h"
+﻿/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
+#include <stdio.h>
 #include "../../include/lammp/numth.h"
 
 int main() {

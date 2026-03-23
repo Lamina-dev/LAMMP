@@ -1,5 +1,11 @@
-﻿#ifndef __BENCHMARK_HPP__
-#define __BENCHMARK_HPP__
+﻿/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
+#ifndef __LAMMP_BENCHMARK_HPP__
+#define __LAMMP_BENCHMARK_HPP__
 
 #include <chrono>
 #include <chrono>
@@ -32,4 +38,4 @@ void bench_div_128();
 long long bench_hash(int len, int type);
 void bench_gcd2();
 
-#endif  // __BENCHMARK_HPP__
+#endif  // __LAMMP_BENCHMARK_HPP__

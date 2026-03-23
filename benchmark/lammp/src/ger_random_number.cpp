@@ -1,3 +1,9 @@
+/*
+ * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * See LICENSE in the project root for the full license text.
+ */
+
 #include "../include/benchmark.hpp"
 
 void ger_random_numbers(int len, mp_ptr dst, mp_size_t min, mp_size_t max) {

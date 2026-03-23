@@ -1,7 +1,7 @@
 /*
 ===============================================================================
 1. LGPL v2.1 LICENSED CODE (LAMMP Project)
-Copyright (c) 2025-2026 HJimmyK/LAMINA
+Copyright (c) 2025-2026 HJimmyK(Jericho Knox)
 This file is part of LAMMP (LGPL v2.1 License)
 Full LGPL v2.1 License Text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 LAMMP Repository: https://github.com/Lamina-dev/LAMMP

@@ -1,3 +1,7 @@
+ # LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
+ # This file is part of mylgpllib, under the GNU LGPL v2 license.
+ # See LICENSE in the project root for the full license text.
+
 # 收集所有示例文件
 file(GLOB EXAMPLE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/example*.cpp)
 
