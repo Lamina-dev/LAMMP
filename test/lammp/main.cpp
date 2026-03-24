@@ -12,6 +12,6 @@
 #include "../../include/lammp/impl/prime_table.h"
 
 int main() {
-    test_rand();
+    test_isprime_ulong();
     return 0;
 }
