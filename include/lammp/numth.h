@@ -507,6 +507,34 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
  */
 mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
 
+/**
+ * @brief 计算等差数列乘积 x(x+m)...(x+n*m)的 limb 缓冲区长度
+ * @param x 首项
+ * @param n 等差数列共n+1项
+ * @param m 公差
+ * @warning x>0, m>0, n>0
+ * @return 等差数列乘积的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ */
+INLINE_ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
+    double x_m = (double)x / m;
+    double log_l = (n + 1) * log(m) + lgamma(x_m + n + 1) - lgamma(x_m);
+    double log2_l = log_l / LOG2_;
+    mp_size_t rn = ceil(log2_l / LIMB_BITS) + 2; /* more two limbs */
+    return rn;
+}
+
+/**
+ * @brief 计算等差数列乘积 x(x+m)...(x+n*m)
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度
+ * @param x 首项
+ * @param n 等差数列共n+1项
+ * @param m 公差
+ * @warning x>0, m>0, n>0, dst!=NULL, rn>0, x+n*m<=0xffffffff
+ * @return 结果的实际的 limb 缓冲区长度
+ */
+mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
+
 #undef LOG2_
 
 #ifdef INLINE_
