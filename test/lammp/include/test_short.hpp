@@ -1,6 +1,6 @@
 ﻿/*
  * LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
- * This file is part of mylgpllib, under the GNU LGPL v2 license.
+ * This file is part of lammp, under the GNU LGPL v2 license.
  * See LICENSE in the project root for the full license text.
  */
 
@@ -32,4 +32,6 @@ void test_matrix();
 void test_vec_ele_mul();
 void test_mod();
 void test_mullo();
+void test_arith_seqprod();
+
 #endif // __LAMMP_TEST_SHORT_H__
