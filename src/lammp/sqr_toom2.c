@@ -7,7 +7,6 @@
 #include "../../include/lammp/lmmpn.h"
 
 /*
-
 Evaluate in: -1, 0, +inf
 
    <-s--><--n-->
@@ -16,10 +15,9 @@ Evaluate in: -1, 0, +inf
 v0  =  a0    ^2  #   A(0)^2
 vm1 = (a0-a1)^2  #  A(-1)^2
 vinf=     a1 ^2  # A(inf)^2
-
 */
 
-void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+void lmmp_sqr_toom2_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(numa!= NULL);

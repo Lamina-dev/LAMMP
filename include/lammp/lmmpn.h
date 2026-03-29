@@ -83,13 +83,15 @@
 #define MUL_TOOMX2_THRESHOLD 30
 // Toom-33乘法阈值：超过此规模使用Toom-33乘法
 #define MUL_TOOM33_THRESHOLD 65
+// Toom-44乘法阈值：超过此规模使用Toom-44乘法
+#define MUL_TOOM44_THRESHOLD 526
 // FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法
-#define MUL_FFT_THRESHOLD 1736
+#define MUL_FFT_THRESHOLD 2916
 
 // 低位乘法阈值：低于此规模使用朴素乘法
 #define MULLO_BASECASE_THRESHOLD 20
 // 低位除法阈值：低于此规模使用不平衡分治乘法
-#define MULLO_DC_THRESHOLD 2238
+#define MULLO_DC_THRESHOLD 11238
 
 // 费马变换阈值：低于此规模使用直接乘法而不再进行递归
 #define MUL_FFT_MODF_THRESHOLD 477
@@ -106,7 +108,7 @@
 #define INLINE_ static inline
 
 // L1缓存大小，请将此值设置为实际单核CPU的L1缓存大小（字节数）
-// 8192 字节通常远远小于现代CPU的L1缓存大小，但仍然可以满足分块需要了
+// 8192 字节通常远远小于现代CPU的L1缓存大小，主要为分块缓存大小考虑
 #define L1_CACHE_SIZE 8192
 
 // L2缓存大小，请将此值设置为实际单核CPU的L2缓存大小（字节数）
@@ -171,64 +173,65 @@ mp_limb_t lmmp_mulh_(mp_limb_t a, mp_limb_t b);
  * @param dst 输出结果缓冲区，存储乘积结果，长度为 2
  * @param a 第一个64位无符号整数
  * @param b 第二个64位无符号整数
+ * @warning dst 必须指向一个长度为 2 的数组
  * @return 无返回值
  */
 void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr dst);
 
 /**
  * @brief 带进位的n位加法 [dst,n] = [numa,n] + [numb,n] + c
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
  * @param c 初始进位值 [0|1]
+ * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @return 运算后的最终进位值 [0|1]
  */
 mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
  * @brief 无进位的n位加法 [dst,n] = [numa,n] + [numb,n]
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 运算后的最终进位值 [0|1]
  */
 mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 带借位的n位减法 [dst,n] = [numa,n] - [numb,n] - c
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n limb长度
  * @param c 初始借位值 [0|1]
+ * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
  * @return 运算后的最终借位值 [0|1]
  */
 mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
  * @brief 无借位的n位减法 [dst,n] = [numa,n] - [numb,n]
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n limb长度
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 运算后的最终借位值 [0|1]
  */
 mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 同时执行n位加法和减法 ([dsta,n],[dstb,n]) = ([numa,n]+[numb,n],[numa,n]-[numb,n])
- * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb])
  * @param dsta 加法结果输出指针
  * @param dstb 减法结果输出指针
  * @param numa 第一个操作数指针（被加数/被减数）
  * @param numb 第二个操作数指针（加数/减数）
  * @param n limb长度
+ * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb])
  * @return 组合返回值 cb = 2*c + b (c为加法进位, b为减法借位)
  *         返回值范围: 0(无进位无借位),1(无进位有借位),2(有进位无借位),3(有进位有借位)
  */
@@ -236,197 +239,184 @@ mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, mp_srcptr 
 
 /**
  * @brief 加法后右移1位 [dst,n] = ([numa,n] + [numb,n]) >> 1
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 右移操作产生的进位值 [0|1]
  */
 mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 带进位加法后右移1位 [dst,n] = ([numa,n] + [numb,n] + c) >> 1
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
  * @param c 初始进位值 [0|1]
+ * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @return 右移操作产生的进位值 [0|1]
  */
 mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
  * @brief 减法后右移1位 [dst,n] = ([numa,n] - [numb,n]) >> 1
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n 操作数的位数（limb数量）
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 右移操作产生的进位值 (0或1)
  */
 mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 带借位减法后右移1位 [dst,n] = ([numa,n] - [numb,n] - c) >> 1
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n limb长度
  * @param c 初始借位值 [0|1]
+ * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
  * @return 右移操作产生的进位值 [0|1]
  */
 mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
  * @brief 大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充0
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
- *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shr 右移的位数 (0~63)
+ * @warning na>0, 0<=shr<64, eqsep(dst,numa)
+ *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
  */
 mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
 
 /**
  * @brief 带进位的大数右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充c的高shr位
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
- *          c的低(64-shr)位必须为0
- *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shr 右移的位数 (0~63)
  * @param c 进位值（其低(64-shr)位必须为0）
+ * @warning na>0, 0<=shr<64, eqsep(dst,numa)
+ *          c的低(64-shr)位必须为0
+ *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
  */
 mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, mp_limb_t c);
 
 /**
  * @brief 大数左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充0
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
- *         允许dst指针地址大于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ *          允许dst指针地址大于numa（即支持原地长移位操作）
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
  */
 mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 
 /**
  * @brief 带进位的大数左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充c的低shl位
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
- *          c的高(64-shl)位必须为0
- *          允许dst指针地址大于numa（即支持原地长移位操作）
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
  * @param c 进位值（其高(64-shl)位必须为0）
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ *          c的高(64-shl)位必须为0
+ *          允许dst指针地址大于numa（即支持原地长移位操作）
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
  */
 mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, mp_limb_t c);
 
 /**
  * @brief 大数按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
- * @warning na>0, eqsep(dst,numa)
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
+ * @warning na>0, eqsep(dst,numa)
  */
 void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
  * @brief 左移后按位取反操作 [dst,na] = ~([numa,na] << shl)，dst的低shl位填充1
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa)
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
  */
 mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 
 /**
  * @brief 加法结合左移1位操作 [dst,n] = [numa,n] + ([numb,n] << 1)
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被加数指针
  * @param numb 加数指针（先左移1位）
  * @param n limb长度
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 运算后的进位值 [0|1|2]
  */
 mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 减法结合左移1位操作 [dst,n] = [numa,n] - ([numb,n] << 1)
- * @warning n>0, eqsep(dst,[numa|numb])
  * @param dst 结果输出指针
  * @param numa 被减数指针
  * @param numb 减数指针（先左移1位）
  * @param n limb长度
+ * @warning n>0, eqsep(dst,[numa|numb])
  * @return 运算后的借位值 [0|1|2]
  */
 mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 大数乘以单limb并累加操作 [numa,n] += [numb,n] * b
- * @warning n>0, eqsep(numa,numb))
  * @param numa 被加数指针（结果也存储在此）
  * @param numb 乘数指针
  * @param n limb长度
  * @param b 乘数
+ * @warning n>0, eqsep(numa,numb))
  * @return 运算后的进位limb值
  */
 mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
  * @brief 大数乘以单limb并累减操作 [numa,n] -= [numb,n] * b
- * @warning n>0, eqsep(numa,numb))
  * @param numa 被减数指针（结果也存储在此）
  * @param numb 乘数指针
  * @param n limb长度
  * @param b 乘数
+ * @warning n>0, eqsep(numa,numb))
  * @return 运算后的借位limb值
  */
 mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
  * @brief 大数乘以单limb操作 [dst,na] = [numa,na] * x
- * @warning na>0, eqsep(dst,numa)
- *       支持 dst<=numa+1 的内存布局
  * @param dst 结果输出指针
  * @param numa 被乘数指针
  * @param na 操作数的位数（limb数量）
  * @param x 单个limb乘数
+ * @warning na>0, eqsep(dst,numa)
+ *          支持 dst<=numa+1 的内存布局
  * @return 运算后的进位limb值
  */
 mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x);
-
-/**
- * @brief Toom插值计算（5点插值），用于Toom-33和Toom-42乘法算法
- * @param dst 输出结果缓冲区，存储插值计算结果
- *        v(0)储存在[dst,2n]，v(1)储存在[dst+2n,2n]
- * @param v2 v(2)插值点值，长度为 2n+1
- * @param vm1 v(-1)插值点值，长度为 2n+1
- * @param n 操作数的 limb 长度
- * @param spt 系数r4的长度
- * @param vm1_neg 符号标记：v(-1)是否为负数（1表示负，0表示正）
- * @param vinf0 无穷远点插值的低64位值
- */
-void lmmp_toom_interp5_(mp_ptr dst, mp_ptr v2, mp_ptr vm1, mp_size_t n, mp_size_t spt, int vm1_neg, mp_limb_t vinf0);
 
 /**
  * @brief 基础平方运算 [dst,2*na] = [numa,na]^2
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
- * @warning na>0，sep(dst,numa)
+ * @warning 0<na, sep(dst,numa)
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
@@ -436,7 +426,7 @@ void lmmp_sqr_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param dst 输出结果缓冲区，长度至少为 2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
- * @warning na>0，sep(dst,numa)，na需大于特定阈值
+ * @warning ??<na, sep(dst,numa)
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
@@ -446,10 +436,20 @@ void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的单精度数(limb)长度
- * @warning na>0，sep(dst,numa)，na需大于特定阈值
+ * @warning ??<na, sep(dst,numa)
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief Toom-4平方运算 [dst,2*na] = [numa,na]^2
+ * @param dst 输出结果缓冲区，长度至少为2*na
+ * @param numa 输入操作数，长度为na
+ * @param na 输入操作数的单精度数(limb)长度
+ * @warning ??<na, sep(dst,numa)
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_sqr_toom4_(mp_ptr pp, mp_srcptr ap, mp_size_t an);
 
 /**
  * @brief 基础乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -458,7 +458,7 @@ void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<nb<=na，sep(dst,[numa|numb])
+ * @warning 0<nb<=na, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -470,7 +470,7 @@ void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 4/5<=nb/na<=1，nb>=5，sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1, nb>=5, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -482,7 +482,7 @@ void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 5/9<=nb/na<=4/5，nb>=12，sep(dst,[numa|numb])
+ * @warning 5/9<=nb/na<=4/5, nb>=12, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -494,7 +494,7 @@ void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 4/5<=nb/na<=1，nb>=26，sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1, nb>=26, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -506,7 +506,7 @@ void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
+ * @warning 1/3<=nb/na<=5/9, nb>=20, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -518,7 +518,7 @@ void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/3<=nb/na<=5/9，nb>=20，sep(dst,[numa|numb])
+ * @warning 1/3<=nb/na<=5/9, nb>=20, sep(dst,[numa|numb])
  * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算并记录
  *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果。
  * @return 无返回值，结果存储在dst中
@@ -530,6 +530,66 @@ void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcpt
  * @note 请在调用lmmp_mul_toom42_history_()后调用此函数释放历史记录。
  */
 void lmmp_mul_toom42_history_free_(void);
+
+/**
+ * @brief Toom-43乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 3/5<=nb/na<=4/5, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom43_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+
+/**
+ * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 4/5<=nb/na<=1, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom44_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+
+/**
+ * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 1/3<=nb/na<=9/20, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom52_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+
+/**
+ * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 9/20<=nb/na<=3/5, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom53_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+
+/**
+ * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning 1/5<=nb/na<=1/3, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom62_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
 
 /**
  * @brief 计算满足 >=n 的最小费马/梅森乘法可行尺寸
@@ -609,8 +669,10 @@ INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         lmmp_sqr_basecase_(dst, numa, na);
     else if (na < MUL_TOOM33_THRESHOLD)
         lmmp_sqr_toom2_(dst, numa, na);
-    else if (na < MUL_FFT_THRESHOLD)
+    else if (na < MUL_TOOM44_THRESHOLD)
         lmmp_sqr_toom3_(dst, numa, na);
+    else if (na < MUL_FFT_THRESHOLD)
+        lmmp_sqr_toom4_(dst, numa, na);
     else
         lmmp_mul_fft_(dst, numa, na, numa, na);
 }
@@ -630,8 +692,10 @@ INLINE_ void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n
         lmmp_mul_basecase_(dst, numa, n, numb, n);
     else if (n < MUL_TOOM33_THRESHOLD)
         lmmp_mul_toom22_(dst, numa, n, numb, n);
-    else if (n < MUL_FFT_THRESHOLD)
+    else if (n < MUL_TOOM44_THRESHOLD)
         lmmp_mul_toom33_(dst, numa, n, numb, n);
+    else if (n < MUL_FFT_THRESHOLD)
+        lmmp_mul_toom44_(dst, numa, n, numb, n);
     else
         lmmp_mul_fft_(dst, numa, n, numb, n);
 }
@@ -668,7 +732,7 @@ void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
  * @param numb 第二个输入操作数，长度为 n
  * @param tp 临时缓冲区，长度至少为 2*n
  * @param n limb长度
- * @warning n>0, sep(dst,[numa|numb|tp])
+ * @warning n>0, sep(dst,[numa|numb],tp)
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
 void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_size_t n);
@@ -679,7 +743,7 @@ void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_si
  * @param numa 第一个输入操作数，长度为 n
  * @param tp 临时缓冲区，长度至少为 2*n
  * @param n limb长度
- * @warning n>0, sep(dst,[numa|tp])
+ * @warning n>0, sep(dst,numa,tp)
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n]^2 mod B^n
  */
 void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n);

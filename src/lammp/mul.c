@@ -6,27 +6,27 @@
 
 #include "../../include/lammp/lmmpn.h"
 
-// This is a simplified version of mul.c
 /*
         Areas where the different toom algorithms can be called
-0         1/5 1/4  1/3 2/5  1/2 5/9 3/5 2/3 3/4 4/5  9/10   1  nb/na
-                                5/12            11/16
-                             |-------------------|xxxxxxxxxx+  toom22
-                    |------------|xxxxxxx+xxxxxxx|----------|  toom32
-               |----|xxxxxxxx+xxx|-------|                     toom42
-                                         |-------|xxxxxxxxxx+  toom33
-***********************    NOT IMPLEMENTED    ***********************
-                                             |--------|xxxxx+  toom44
-                                     |-------|xxx+xxxx|-----|  toom54
-                             |------------|xx+xxx|----------|  toom43
-                        |--------|xxx+xxxx|--|                 toom53
-                    |----|xxx+xxx|---|                         toom63
-           |--------|xxx+|---|                                 toom52
-                                5/12            11/16
-0         1/5 1/4  1/3 2/5  1/2 5/9 3/5 2/3 3/4 4/5  9/10   1  nb/na
+0    1/6  1/5 1/4  1/3 2/5  1/2 5/9 3/5 2/3 3/4 4/5  9/10   1  nb/na
+
+                             (-------------------(xxxxxxxxxx|  toom22
+                    (------------(xxxxxxxxxxxxxxx|----------)  toom32
+               (----(xxxxxxxxxxxx|-------)                     toom42
+                                         (-------(xxxxxxxxxx|  toom33
+(xxxxxxxxxxxxxxxxxxx|                                          toom42-unblanced
+
+                                             (---(xxxxxxxxxx|  toom44
+                             (-------(xxxxxxxxxxx|----------)  toom43
+                        (--(xxxxxxxxx|-------)                 toom53
+           (--------(xxxxxx|-)                                 toom52
+      (----(xxxxxxxx|---)  |                                   toom62
+(xxxxxxxxxx|               |                                   toom62-unblanced
+                          9/20
+0    1/6  1/5 1/4  1/3 2/5  1/2 5/9 3/5 2/3 3/4 4/5  9/10   1  nb/na
 */
 
-void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_srcptr restrict numb, mp_size_t nb) {
     lmmp_param_assert(na >= nb);
     lmmp_param_assert(nb > 0);
     if (na == nb) {
@@ -60,7 +60,7 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
             if (lmmp_add_n_(dst, dst, tp, nb))
                 lmmp_inc(dst + nb);
         }
-    } else if (((na + nb) >> 1) < MUL_FFT_THRESHOLD || 2 * nb < MUL_FFT_THRESHOLD) {
+    } else if (((na + nb) >> 1) < MUL_TOOM44_THRESHOLD || 2 * nb < MUL_TOOM44_THRESHOLD) {
         if (na < 3 * nb) {
             if (4 * na < 5 * nb) {
                 if (nb < MUL_TOOM33_THRESHOLD)
@@ -90,6 +90,44 @@ void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size
             }
             lmmp_mul_toom42_history_free_();
             // 0.5 nb <= na < 2.5 nb
+            if (na >= nb)
+                lmmp_mul_(dst, numa, na, numb, nb);
+            else
+                lmmp_mul_(dst, numb, nb, numa, na);
+            if (lmmp_add_n_(dst, dst, ws, nb))
+                lmmp_inc(dst + nb);
+            TEMP_S_FREE;
+        }
+    } else if (((na + nb) >> 1) < MUL_FFT_THRESHOLD || 2 * nb < MUL_FFT_THRESHOLD) {
+        if (na < 5 * nb) {
+            if (4 * na < 5 * nb) 
+                lmmp_mul_toom44_(dst, numa, na, numb, nb);
+            else if (3 * na < 5 * nb)
+                lmmp_mul_toom43_(dst, numa, na, numb, nb);
+            else if (9 * na < 20 * nb)
+                lmmp_mul_toom53_(dst, numa, na, numb, nb);
+            else if (na < 3 * nb)
+                lmmp_mul_toom52_(dst, numa, na, numb, nb);
+            else 
+                lmmp_mul_toom62_(dst, numa, na, numb, nb);
+        } else {
+            TEMP_S_DECL;
+            mp_limb_t* ws = SALLOC_TYPE(nb, mp_limb_t);
+            lmmp_mul_toom62_(dst, numa, 3 * nb, numb, nb);
+            dst += 3 * nb;
+            numa += 3 * nb;
+            na -= 3 * nb;
+            lmmp_copy(ws, dst, nb);
+            while (na >= 5 * nb) {
+                lmmp_mul_toom62_(dst, numa, 3 * nb, numb, nb);
+                if (lmmp_add_n_(dst, dst, ws, nb))
+                    lmmp_inc(dst + nb);
+                dst += 3 * nb;
+                numa += 3 * nb;
+                na -= 3 * nb;
+                lmmp_copy(ws, dst, nb);
+            }
+            // 0 <= na < 2 nb
             if (na >= nb)
                 lmmp_mul_(dst, numa, na, numb, nb);
             else
