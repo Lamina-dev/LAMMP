@@ -5,9 +5,9 @@
  */
 
 #include "../../include/lammp/lmmpn.h"
+#include "../../include/lammp/impl/toom_interp.h"
 
 /*
-
 Evaluate in: -1, 0, +1, +2, +inf
 
   <-s--><--n--><--n-->
@@ -18,17 +18,16 @@ v1  = (a0+ a1+ a2)*^2 #   A(1)^2    ah  <= 2
 vm1 = (a0- a1+ a2)*^2 #  A(-1)^2   |ah| <= 1
 v2  = (a0+2a1+4a2)*^2 #   A(2)^2    ah  <= 6
 vinf=          a2 *^2 # A(inf)^2
-
 */
 
-void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+void lmmp_sqr_toom3_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa != NULL);
     lmmp_param_assert(dst != NULL);
     TEMP_S_DECL;
     mp_size_t n = (na + 2) / 3, s = na - 2 * n;
     mp_limb_t cy, cy2, vinf0, am1h;
-    mp_limb_t* tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
+    mp_limb_t* restrict tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
 
 #define a0 numa
 #define a1 (numa + n)

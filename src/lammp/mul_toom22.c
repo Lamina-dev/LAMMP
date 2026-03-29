@@ -7,7 +7,6 @@
 #include "../../include/lammp/lmmpn.h"
 
 /*
-
 Evaluate in: -1, 0, +inf
 
    <-s--><--n-->
@@ -18,16 +17,15 @@ Evaluate in: -1, 0, +inf
 v0  =  a0    * b0      #   A(0)*B(0)
 vm1 = (a0-a1)*(b0-b1)  #  A(-1)*B(-1)
 vinf=     a1 *    b1   # A(inf)*B(inf)
-
 */
 
-void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+void lmmp_mul_toom22_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_srcptr restrict numb, mp_size_t nb) {
     lmmp_param_assert(nb >= 5);
     lmmp_param_assert(na >= nb);
     lmmp_param_assert(4 * na <= 5 * nb);
     TEMP_S_DECL;
     mp_size_t s = na >> 1, n = na - s, t = nb - n;
-    mp_limb_t* vm1 = SALLOC_TYPE(2 * n, mp_limb_t);
+    mp_limb_t* restrict vm1 = SALLOC_TYPE(2 * n, mp_limb_t);
     int vm1_neg = 0;
     mp_slimb_t cy, cy2;
 

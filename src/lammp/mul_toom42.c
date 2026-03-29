@@ -5,9 +5,9 @@
  */
 
 #include "../../include/lammp/lmmpn.h"
+#include "../../include/lammp/impl/toom_interp.h"
 
 /*
-
 Evaluate in: -1, 0, +1, +2, +inf
 
   <-s-><--n--><--n--><--n-->
@@ -20,10 +20,9 @@ v1  = (a0+ a1+ a2+ a3)*(b0+ b1) #   A(1)*B(1)      ah  <= 3  bh <= 1
 vm1 = (a0- a1+ a2- a3)*(b0- b1) #  A(-1)*B(-1)    |ah| <= 1  bh  = 0
 v2  = (a0+2a1+4a2+8a3)*(b0+2b1) #   A(2)*B(2)      ah  <= 14 bh <= 2
 vinf=              a3 *     b1  # A(inf)*B(inf)
-
 */
 
-void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+void lmmp_mul_toom42_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_srcptr restrict numb, mp_size_t nb) {
     lmmp_param_assert(nb >= 20);
     lmmp_param_assert(na <= 3 * nb);
     lmmp_param_assert(5 * na >= 9 * nb);
@@ -31,7 +30,7 @@ void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
     mp_size_t n = na >= 2 * nb ? (na + 3) >> 2 : (nb + 1) >> 1, s = na - 3 * n, t = nb - n;
     int vm1_neg;
     mp_limb_t cy, vinf0, am1h;
-    mp_limb_t* tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
+    mp_limb_t* restrict tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
 
 #define a0 numa
 #define a1 (numa + n)

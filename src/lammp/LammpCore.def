@@ -78,10 +78,10 @@ EXPORTS
 	lmmp_mulh_
 	lmmp_mullh_
 
-	lmmp_toom_interp5_
 	lmmp_sqr_basecase_
 	lmmp_sqr_toom2_
 	lmmp_sqr_toom3_
+	lmmp_sqr_toom4_
 	lmmp_mul_basecase_
 	lmmp_mul_toom22_
 	lmmp_mul_toom32_
@@ -89,6 +89,11 @@ EXPORTS
 	lmmp_mul_toom42_
 	lmmp_mul_toom42_history_
 	lmmp_mul_toom42_history_free_
+	lmmp_mul_toom43_
+	lmmp_mul_toom44_
+	lmmp_mul_toom52_
+	lmmp_mul_toom53_
+	lmmp_mul_toom62_
 
 	lmmp_fft_next_size_
 	lmmp_mul_fermat_
