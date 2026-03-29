@@ -80,7 +80,16 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
  e=log(15)/log(8) [Toom-8] -> a ~= 1/10
 */
 
-void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_size_t n) {
+#define MUL_TOOM66_THRESHOLD MUL_FFT_THRESHOLD
+#define MUL_TOOM88_THRESHOLD 5621
+
+void lmmp_mullo_dc_(
+    mp_ptr    restrict  dst, 
+    mp_srcptr restrict numa, 
+    mp_srcptr restrict numb, 
+    mp_ptr    restrict   tp, 
+    mp_size_t             n
+) {
     if (n < MULLO_BASECASE_THRESHOLD) {
         lmmp_mul_1_(dst, numa, n, numb[0]);
         for (mp_size_t i = 1; i < n; ++i) {
@@ -92,8 +101,14 @@ void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_si
         mp_size_t m, t;
         if (n < MUL_TOOM33_THRESHOLD) {
             m = 25 * n / 36;
-        } else {
+        } else if (n < MUL_TOOM44_THRESHOLD) {
             m = 31 * n / 40;
+        } else if (n < MUL_TOOM66_THRESHOLD) {
+            m = 32 * n / 39;
+        } else if (n < MUL_TOOM88_THRESHOLD) {
+            m = 7 * n / 8;
+        } else {
+            m = 9 * n / 10;
         }
         t = n - m;
 
@@ -117,7 +132,7 @@ void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_si
     }
 }
 
-void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n) {
+void lmmp_sqrlo_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_ptr restrict tp, mp_size_t n) {
     if (n < MULLO_BASECASE_THRESHOLD) {
         lmmp_mul_1_(dst, numa, n, numa[0]);
         for (mp_size_t i = 1; i < n; ++i) {
@@ -129,8 +144,14 @@ void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n) {
         mp_size_t m, t;
         if (n < MUL_TOOM33_THRESHOLD) {
             m = 25 * n / 36;
-        } else {
+        } else if (n < MUL_TOOM44_THRESHOLD) {
             m = 31 * n / 40;
+        } else if (n < MUL_TOOM66_THRESHOLD) {
+            m = 32 * n / 39;
+        } else if (n < MUL_TOOM88_THRESHOLD) {
+            m = 7 * n / 8;
+        } else {
+            m = 9 * n / 10;
         }
         t = n - m;
 #define a0 (numa)
@@ -146,18 +167,18 @@ void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n) {
     }
 }
 
-void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+void lmmp_mullo_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_srcptr restrict numb, mp_size_t n) {
     lmmp_param_assert(n > 0);
     if (n < MULLO_DC_THRESHOLD) {
         if (numa == numb) {
             TEMP_DECL;
-            mp_ptr tp = TALLOC_TYPE(2 * n, mp_limb_t);
+            mp_ptr restrict tp = TALLOC_TYPE(2 * n, mp_limb_t);
             lmmp_sqrlo_dc_(dst, numa, tp, n);
             TEMP_FREE;
             return;
         }
         TEMP_DECL;
-        mp_ptr tp = TALLOC_TYPE(2 * n, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE(2 * n, mp_limb_t);
         lmmp_mullo_dc_(dst, numa, numb, tp, n);
         TEMP_FREE;
         return;
