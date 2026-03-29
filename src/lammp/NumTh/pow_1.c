@@ -294,7 +294,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 
     mp_ptr restrict sq = TALLOC_TYPE(rn, mp_limb_t);
     rn = 1;
-    dst[0] = 1;
+    sq[0] = 1;
     int i = 21;
     while ((exp & (0x7ull << ((i--) * 3))) == 0);
     for (++i; i >= 0; --i) {
@@ -302,25 +302,24 @@ mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
         mp_srcptr tap = tab[p];
         mp_size_t tan = (tap[1] != 0) ? 2 : 1;
         if (rn >= tan)
-            lmmp_mul_basecase_(sq, dst, rn, tap, tan);
+            lmmp_mul_basecase_(dst, sq, rn, tap, tan);
         else 
-            lmmp_mul_basecase_(sq, tap, tan, dst, rn);
+            lmmp_mul_basecase_(dst, tap, tan, sq, rn);
         rn += tan;
-        rn -= (sq[rn - 1] == 0) ? 1 : 0;
+        rn -= (dst[rn - 1] == 0) ? 1 : 0;
 
         if (i > 0) {
-            lmmp_sqr_(dst, sq, rn);
-            rn <<= 1;
-            rn -= (dst[rn - 1] == 0) ? 1 : 0;
             lmmp_sqr_(sq, dst, rn);
             rn <<= 1;
             rn -= (sq[rn - 1] == 0) ? 1 : 0;
             lmmp_sqr_(dst, sq, rn);
             rn <<= 1;
             rn -= (dst[rn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(sq, dst, rn);
+            rn <<= 1;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
         }
     }
-    lmmp_copy(dst, sq, rn);
     TEMP_FREE;
     return rn;
 }
@@ -483,7 +482,7 @@ mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong e
         int tz = lmmp_tailing_zeros_(base);
         base >>= tz;
         mp_size_t shw = (exp * tz) / LIMB_BITS;
-        int shl = (exp * tz) % LIMB_BITS;
+        mp_size_t shl = (exp * tz) % LIMB_BITS;
 
         lmmp_zero(dst, shw);
         if (base <= (mp_limb_t)0xf)
