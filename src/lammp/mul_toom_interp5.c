@@ -4,26 +4,8 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../include/lammp/lmmpn.h"
-
-#define MODLIMB_INVERSE_3 ((mp_limb_t)0xAAAAAAAAAAAAAAAB)
-// dst = [numa,na]/3
-static inline void lmmp_divexact_by3_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    mp_limb_t c = 0;
-    mp_limb_t l, q, s;
-    mp_size_t i = 0;
-    do {
-        s = numa[i];
-        l = s - c;
-        c = l > s;
-        q = l * MODLIMB_INVERSE_3;
-        dst[i] = q;
-        l = q + q;
-        c += l < q;
-        l += q;
-        c += l < q;
-    } while (++i < na);
-}
+#include "../../include/lammp/impl/divexact.h"
+#include "../../include/lammp/impl/toom_interp.h"
 
 void lmmp_toom_interp5_(mp_ptr dst, mp_ptr v2, mp_ptr vm1, mp_size_t n, mp_size_t spt, int vm1_neg, mp_limb_t vinf0) {
     mp_limb_t cy, saved;
