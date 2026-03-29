@@ -99,7 +99,7 @@ typedef struct {
     lmmp_stack_set_top_fn set;
 } lmmp_stack_alloctor_t;
 
-#define LAMMP_DEFAULT_STACK_SIZE 128 * 1024  // 默认全局栈大小，单位为字节
+#define LAMMP_DEFAULT_STACK_SIZE 256 * 1024  // 默认全局栈大小，单位为字节
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
@@ -318,6 +318,7 @@ void* lmmp_stack_alloc(size_t size, const char* file, int line);
  * @brief 栈内存分配函数（使用stack_get_top和stack_set_top）
  * @param size 要分配的内存字节数
  * @warning 请严格按照分配顺序的逆序释放内存，否则会导致未定义行为或导致栈溢出触发lmmp_abort
+ *          且严禁用于分配持久内存，如全局变量等。
  * @return 成功返回指向分配内存的指针，栈溢出时，会触发lmmp_abort
  */
 void* lmmp_stack_alloc(size_t size);
