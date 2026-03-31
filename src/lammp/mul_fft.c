@@ -15,45 +15,44 @@
 // table[i+1][0]-1 必须是 2^(table[i][1]-LOG2_LIMB_BITS) 的整数倍
 // LOG2_LIMB_BITS：每个 limb 的比特数的2对数，为 log2(64) = 6
 static const mp_size_t lmmp_fft_table_[][2] = {
-    {0, 6},      
-    {1597, 7},  
-    {1655, 6},    
-    {1917, 7},    
-    {3447, 8},      
-    {3565, 7},       
-    {3831, 8},      
-    {7661, 9},      
-    {8145, 8},      
-    {8685, 9},      
-    {14289, 10},      
-    {16289, 9},        
-    {20433, 10},         
-    {24481, 9},        
-    {26577, 10},         
-    {28593, 11},         
-    {32545, 10},        
-    {57249, 11},         
-    {65313, 10},      
-    {73633, 11},        
-    {98081, 12},         
-    {130625, 11},       
-    {196385, 12},     
-    {261697, 11},        
-    {294689, 12},        
-    {392769, 13},        
-    {523265, 12},       
-    {654913, 11},        
-    {917281, 13},        
-    {1047553, 11},        
-    {1600001, 12},      
-    {1834561, 14},        
-    {2095105, 12},          
-    _FFT_TABLE_ENTRY4(13),  
-    _FFT_TABLE_ENTRY4(17), 
-    _FFT_TABLE_ENTRY4(21),  
-    _FFT_TABLE_ENTRY4(25),  
-    {(mp_size_t)-1, 127}    
-};
+    {0, 6},
+    {1597, 7},
+    {1655, 6},
+    {1917, 7},
+    {3447, 8},
+    {3565, 7},
+    {3831, 8},
+    {7661, 9},
+    {8145, 8},
+    {8685, 9},
+    {14289, 10},
+    {16289, 9},
+    {20433, 10},
+    {24481, 9},
+    {26577, 10},
+    {28593, 11},
+    {32545, 10},
+    {57249, 11},
+    {65313, 10},
+    {73633, 11},
+    {98081, 12},
+    {130625, 11},
+    {196385, 12},
+    {261697, 11},
+    {294689, 12},
+    {392769, 13},
+    {523265, 12},
+    {654913, 11},
+    {917281, 13},
+    {1047553, 11},
+    {1600001, 12},
+    {1834561, 14},
+    {2095105, 12},
+    _FFT_TABLE_ENTRY4(13),
+    _FFT_TABLE_ENTRY4(17),
+    _FFT_TABLE_ENTRY4(21),
+    _FFT_TABLE_ENTRY4(25),
+    {(mp_size_t)-1, 127}};
 
 typedef struct {
     mp_ptr temp_coef;       // 用于数据交换的临时系数数组
@@ -95,19 +94,19 @@ mp_size_t lmmp_fft_next_size_(mp_size_t n) {
  * @return 分配成功：返回mp_ptr*；释放：返回0
  */
 static void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
-    if (size) { 
+    if (size) {
         if (++ms->tempdepth > ms->maxdepth) {
-            ms->mem[++ms->maxdepth] = lmmp_alloc(size); 
-            ms->memsize[ms->maxdepth] = size;           
+            ms->mem[++ms->maxdepth] = lmmp_alloc(size);
+            ms->memsize[ms->maxdepth] = size;
         }
         lmmp_debug_assert(ms->memsize[ms->tempdepth] == size);
-        return ms->mem[ms->tempdepth];  
-    } else { 
+        return ms->mem[ms->tempdepth];
+    } else {
         if (--ms->tempdepth < 0) {
             for (mp_size_t i = 0; i <= (mp_size_t)(ms->maxdepth); ++i) lmmp_free(ms->mem[i]);
-            ms->maxdepth = -1;  
+            ms->maxdepth = -1;
         }
-        return 0; 
+        return 0;
     }
 }
 
@@ -128,9 +127,9 @@ static void lmmp_fft_extract_coef_(mp_ptr dst, mp_srcptr numa, mp_size_t bitoffs
     mp_size_t lena = (bitoffset + bits - 1) / LIMB_BITS - offset + 1, endp = (bits - 1) / LIMB_BITS;
 
     if (shr)
-        lmmp_shr_(dst, numa + offset, lena, shr);  
+        lmmp_shr_(dst, numa + offset, lena, shr);
     else
-        lmmp_copy(dst, numa + offset, lena);  
+        lmmp_copy(dst, numa + offset, lena);
 
     dst[endp] &= LIMB_MAX >> (-bits & (LIMB_BITS - 1));
 
@@ -155,43 +154,42 @@ static void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
     mp_limb_t cc, rd;               // 进位变量（cc=carry, rd=read）
 
     if (w >= l) {
-        w -= l;   
-        if (shl) {  
+        w -= l;
+        if (shl) {
             lmmp_shl_(dst, src + l - w, w + 1, shl);
-            rd = dst[w]; 
+            rd = dst[w];
             cc = lmmp_shlnot_(dst + w, src, l - w, shl);
-        } else {   
-            if (w) 
+        } else {
+            if (w)
                 lmmp_copy(dst, src + l - w, w);
-            rd = src[l]; 
+            rd = src[l];
             lmmp_not_(dst + w, src, l - w);
-            cc = 0;  
+            cc = 0;
         }
-        dst[l] = 0;          
-        ++cc;                 
-        lmmp_inc_1(dst, cc); 
+        dst[l] = 0;
+        ++cc;
+        lmmp_inc_1(dst, cc);
 
         if (++rd == 0)
-            lmmp_inc(dst + w + 1); 
+            lmmp_inc(dst + w + 1);
         else
-            lmmp_inc_1(dst + w, rd); 
-    }
-    else {
-        if (shl) {  
+            lmmp_inc_1(dst + w, rd);
+    } else {
+        if (shl) {
             lmmp_shlnot_(dst, src + l - w, w + 1, shl);
-            rd = ~dst[w]; 
+            rd = ~dst[w];
             cc = lmmp_shl_(dst + w, src, l - w, shl);
-        } else {   
-            if (w) 
+        } else {
+            if (w)
                 lmmp_not_(dst, src + l - w, w);
-            rd = src[l]; 
+            rd = src[l];
 
             lmmp_copy(dst + w, src, l - w);
             cc = 0;
         }
-        dst[l] = 2;          
-        lmmp_inc_1(dst, 3);  
-        lmmp_dec_1(dst, cc);  
+        dst[l] = 2;
+        lmmp_inc_1(dst, 3);
+        lmmp_dec_1(dst, cc);
 
         if (++rd == 0)
             lmmp_dec(dst + w + 1);
@@ -199,8 +197,8 @@ static void lmmp_fft_shl_coef_(fft_memstack* ms, mp_ptr* coef, mp_size_t shl) {
             lmmp_dec_1(dst + w, rd);
 
         cc = dst[l];
-        dst[l] = dst[0] < cc;        
-        lmmp_dec_1(dst, cc - dst[l]);  
+        dst[l] = dst[0] < cc;
+        lmmp_dec_1(dst, cc - dst[l]);
     }
 
     ms->temp_coef = src;
@@ -270,28 +268,28 @@ static void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_siz
     scyo = -scyo + numb[l] - numa[l];  // 调整借位（包含最高位）
     acyo += numa[l] + numb[l];         // 调整进位（包含最高位）
 
-    numa[l] = numa[0] < (mp_limb_t)(acyo); 
-    lmmp_dec_1(numa, acyo - numa[l]);      
+    numa[l] = numa[0] < (mp_limb_t)(acyo);
+    lmmp_dec_1(numa, acyo - numa[l]);
 
-    numc[l] = 1; 
-    ++chn;       
+    numc[l] = 1;
+    ++chn;
     if (scyo > 0)
-        lmmp_inc_1(numc + w, scyo << shl); 
+        lmmp_inc_1(numc + w, scyo << shl);
     else if (scyo < 0) {
         if (scyo == -2 && shl == LIMB_BITS - 1)
             lmmp_dec(numc + w + 1);
         else
-            lmmp_dec_1(numc + w, -scyo << shl);  
+            lmmp_dec_1(numc + w, -scyo << shl);
     }
-    chp += numc[l];  
+    chp += numc[l];
 
     if (chn >= chp) {
         numc[l] = 0;
-        lmmp_inc_1(numc, chn - chp); 
+        lmmp_inc_1(numc, chn - chp);
     } else {
         chp -= chn;
-        numc[l] = numc[0] < chp;         
-        lmmp_dec_1(numc, chp - numc[l]); 
+        numc[l] = numc[0] < chp;
+        lmmp_dec_1(numc, chp - numc[l]);
     }
 
     coef[wing] = numc;
@@ -338,50 +336,50 @@ static void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_si
         acyo = lmmp_add_nc_(numa + off, numa + off, numb + w + off, cursize, acyo);
     }
 
-    acyo += numb[l] >> shr;          
-    bcyo = -bcyo - (numb[l] >> shr); 
+    acyo += numb[l] >> shr;
+    bcyo = -bcyo - (numb[l] >> shr);
 
-    acyo -= numa[l - w - 1] < shrcyo;  
-    numa[l - w - 1] -= shrcyo;        
-    numc[l - w - 1] += shrcyo;       
-    bcyo += numc[l - w - 1] < shrcyo; 
+    acyo -= numa[l - w - 1] < shrcyo;
+    numa[l - w - 1] -= shrcyo;
+    numc[l - w - 1] += shrcyo;
+    bcyo += numc[l - w - 1] < shrcyo;
 
-    ah = numa[l];  
+    ah = numa[l];
 
-    numa[l] += 1; 
+    numa[l] += 1;
     if (w == 0)
-        numa[l] += acyo;  
+        numa[l] += acyo;
     else {
         if (acyo < 0)
-            lmmp_dec(numa + l - w); 
+            lmmp_dec(numa + l - w);
         else
-            lmmp_inc_1(numa + l - w, acyo); 
+            lmmp_inc_1(numa + l - w, acyo);
     }
-    acyo = numa[l] - 1;  
+    acyo = numa[l] - 1;
     if (acyo < 0) {
         numa[l] = 0;
-        lmmp_inc(numa); 
+        lmmp_inc(numa);
     } else {
-        numa[l] = numa[0] < (mp_limb_t)acyo; 
-        lmmp_dec_1(numa, acyo - numa[l]);     
+        numa[l] = numa[0] < (mp_limb_t)acyo;
+        lmmp_dec_1(numa, acyo - numa[l]);
     }
 
-    numc[l] = ah + 2;  
+    numc[l] = ah + 2;
     if (w == 0)
-        numc[l] += bcyo; 
+        numc[l] += bcyo;
     else {
         if (bcyo > 0)
-            lmmp_inc(numc + l - w); 
+            lmmp_inc(numc + l - w);
         else
-            lmmp_dec_1(numc + l - w, -bcyo);  
+            lmmp_dec_1(numc + l - w, -bcyo);
     }
-    bcyo = numc[l] - 2; 
+    bcyo = numc[l] - 2;
     if (bcyo <= 0) {
         numc[l] = 0;
-        lmmp_inc_1(numc, -bcyo);  
+        lmmp_inc_1(numc, -bcyo);
     } else {
-        numc[l] = numc[0] < (mp_limb_t)bcyo;  
-        lmmp_dec_1(numc, bcyo - numc[l]);     
+        numc[l] = numc[0] < (mp_limb_t)bcyo;
+        lmmp_dec_1(numc, bcyo - numc[l]);
     }
 
     coef[wing] = numc;
@@ -401,19 +399,19 @@ static void lmmp_fft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size_
     if (k == 1)
         lmmp_fft_bfy_(ms, coef, dis, w0);
     else {
-        k -= 2;                  
-        mp_size_t Kq = dis << k;  
+        k -= 2;
+        mp_size_t Kq = dis << k;
         for (mp_size_t i = 0; i < Kq; i += dis) {
-            lmmp_fft_bfy_(ms, coef + i, 2 * Kq, i * w + w0);             
-            lmmp_fft_bfy_(ms, coef + i + Kq, 2 * Kq, (i + Kq) * w + w0);  
-            lmmp_fft_bfy_(ms, coef + i, Kq, 2 * (i * w + w0));           
-            lmmp_fft_bfy_(ms, coef + i + Kq * 2, Kq, 2 * (i * w + w0));  
+            lmmp_fft_bfy_(ms, coef + i, 2 * Kq, i * w + w0);
+            lmmp_fft_bfy_(ms, coef + i + Kq, 2 * Kq, (i + Kq) * w + w0);
+            lmmp_fft_bfy_(ms, coef + i, Kq, 2 * (i * w + w0));
+            lmmp_fft_bfy_(ms, coef + i + Kq * 2, Kq, 2 * (i * w + w0));
         }
         if (k > 0) {
-            lmmp_fft_b1_(ms, coef, dis, k, 4 * w, 4 * w0);          
-            lmmp_fft_b1_(ms, coef + Kq, dis, k, 4 * w, 4 * w0);    
-            lmmp_fft_b1_(ms, coef + Kq * 2, dis, k, 4 * w, 4 * w0);  
-            lmmp_fft_b1_(ms, coef + Kq * 3, dis, k, 4 * w, 4 * w0);  
+            lmmp_fft_b1_(ms, coef, dis, k, 4 * w, 4 * w0);
+            lmmp_fft_b1_(ms, coef + Kq, dis, k, 4 * w, 4 * w0);
+            lmmp_fft_b1_(ms, coef + Kq * 2, dis, k, 4 * w, 4 * w0);
+            lmmp_fft_b1_(ms, coef + Kq * 3, dis, k, 4 * w, 4 * w0);
         }
     }
 }
@@ -422,19 +420,19 @@ static void lmmp_fft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w
     if (k == 1)
         lmmp_fft_bfy_(ms, coef, 1, 0);
     else {
-        k -= 2;                             
-        mp_size_t Kq = ((mp_size_t)1) << k; 
+        k -= 2;
+        mp_size_t Kq = ((mp_size_t)1) << k;
         for (mp_size_t i = 0; i < Kq; ++i) {
-            lmmp_fft_bfy_(ms, coef + i, Kq * 2, i * w);             
-            lmmp_fft_bfy_(ms, coef + i + Kq, Kq * 2, (i + Kq) * w);  
-            lmmp_fft_bfy_(ms, coef + i, Kq, 2 * i * w);            
-            lmmp_fft_bfy_(ms, coef + i + 2 * Kq, Kq, 2 * i * w);    
+            lmmp_fft_bfy_(ms, coef + i, Kq * 2, i * w);
+            lmmp_fft_bfy_(ms, coef + i + Kq, Kq * 2, (i + Kq) * w);
+            lmmp_fft_bfy_(ms, coef + i, Kq, 2 * i * w);
+            lmmp_fft_bfy_(ms, coef + i + 2 * Kq, Kq, 2 * i * w);
         }
         if (k > 0) {
-            lmmp_fft_4_(ms, coef, k, w * 4);         
-            lmmp_fft_4_(ms, coef + Kq, k, w * 4);     
-            lmmp_fft_4_(ms, coef + 2 * Kq, k, w * 4); 
-            lmmp_fft_4_(ms, coef + 3 * Kq, k, w * 4); 
+            lmmp_fft_4_(ms, coef, k, w * 4);
+            lmmp_fft_4_(ms, coef + Kq, k, w * 4);
+            lmmp_fft_4_(ms, coef + 2 * Kq, k, w * 4);
+            lmmp_fft_4_(ms, coef + 3 * Kq, k, w * 4);
         }
     }
 }
@@ -454,19 +452,19 @@ static void lmmp_ifft_b1_(fft_memstack* ms, mp_ptr* coef, mp_size_t dis, mp_size
     if (k == 1)
         lmmp_ifft_bfy_(ms, coef, dis, w0);
     else {
-        k -= 2;                 
-        mp_size_t Kq = dis << k;  
+        k -= 2;
+        mp_size_t Kq = dis << k;
         if (k > 0) {
-            lmmp_ifft_b1_(ms, coef, dis, k, 4 * w, 4 * w0);          
-            lmmp_ifft_b1_(ms, coef + Kq, dis, k, 4 * w, 4 * w0);     
-            lmmp_ifft_b1_(ms, coef + Kq * 2, dis, k, 4 * w, 4 * w0); 
-            lmmp_ifft_b1_(ms, coef + Kq * 3, dis, k, 4 * w, 4 * w0); 
+            lmmp_ifft_b1_(ms, coef, dis, k, 4 * w, 4 * w0);
+            lmmp_ifft_b1_(ms, coef + Kq, dis, k, 4 * w, 4 * w0);
+            lmmp_ifft_b1_(ms, coef + Kq * 2, dis, k, 4 * w, 4 * w0);
+            lmmp_ifft_b1_(ms, coef + Kq * 3, dis, k, 4 * w, 4 * w0);
         }
         for (mp_size_t i = 0; i < Kq; i += dis) {
-            lmmp_ifft_bfy_(ms, coef + i, Kq, 2 * (i * w + w0));          
-            lmmp_ifft_bfy_(ms, coef + i + Kq * 2, Kq, 2 * (i * w + w0));  
-            lmmp_ifft_bfy_(ms, coef + i, 2 * Kq, i * w + w0);            
-            lmmp_ifft_bfy_(ms, coef + i + Kq, 2 * Kq, (i + Kq) * w + w0); 
+            lmmp_ifft_bfy_(ms, coef + i, Kq, 2 * (i * w + w0));
+            lmmp_ifft_bfy_(ms, coef + i + Kq * 2, Kq, 2 * (i * w + w0));
+            lmmp_ifft_bfy_(ms, coef + i, 2 * Kq, i * w + w0);
+            lmmp_ifft_bfy_(ms, coef + i + Kq, 2 * Kq, (i + Kq) * w + w0);
         }
     }
 }
@@ -475,19 +473,19 @@ static void lmmp_ifft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t 
     if (k == 1)
         lmmp_ifft_bfy_(ms, coef, 1, 0);
     else {
-        k -= 2;                             
-        mp_size_t Kq = ((mp_size_t)1) << k; 
+        k -= 2;
+        mp_size_t Kq = ((mp_size_t)1) << k;
         if (k > 0) {
-            lmmp_ifft_4_(ms, coef, k, w * 4);         
-            lmmp_ifft_4_(ms, coef + Kq, k, w * 4);   
-            lmmp_ifft_4_(ms, coef + 2 * Kq, k, w * 4); 
-            lmmp_ifft_4_(ms, coef + 3 * Kq, k, w * 4); 
+            lmmp_ifft_4_(ms, coef, k, w * 4);
+            lmmp_ifft_4_(ms, coef + Kq, k, w * 4);
+            lmmp_ifft_4_(ms, coef + 2 * Kq, k, w * 4);
+            lmmp_ifft_4_(ms, coef + 3 * Kq, k, w * 4);
         }
         for (mp_size_t i = 0; i < Kq; ++i) {
-            lmmp_ifft_bfy_(ms, coef + i, Kq, 2 * i * w);            
-            lmmp_ifft_bfy_(ms, coef + i + 2 * Kq, Kq, 2 * i * w);    
-            lmmp_ifft_bfy_(ms, coef + i, Kq * 2, i * w);             
-            lmmp_ifft_bfy_(ms, coef + i + Kq, Kq * 2, (i + Kq) * w); 
+            lmmp_ifft_bfy_(ms, coef + i, Kq, 2 * i * w);
+            lmmp_ifft_bfy_(ms, coef + i + 2 * Kq, Kq, 2 * i * w);
+            lmmp_ifft_bfy_(ms, coef + i, Kq * 2, i * w);
+            lmmp_ifft_bfy_(ms, coef + i + Kq, Kq * 2, (i + Kq) * w);
         }
     }
 }
@@ -514,28 +512,30 @@ static void lmmp_ifft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w)
  * @param M - 每个块的比特数
  * @param rn - 结果长度（机器字）
  */
-static void lmmp_mul_fermat_recombine_(fft_memstack* ms,
-                                       mp_ptr dst,
-                                       mp_ptr* pfca,
-                                       mp_size_t K,
-                                       mp_size_t k,
-                                       mp_size_t n,
-                                       mp_size_t M,
-                                       mp_size_t rn) {
-    mp_size_t rhead = 0, nlen = ms->lenw + 1; 
-    mp_slimb_t borrow = 0, maxc = 0;         
+static void lmmp_mul_fermat_recombine_(
+    fft_memstack* ms,
+    mp_ptr       dst,
+    mp_ptr*     pfca,
+    mp_size_t      K,
+    mp_size_t      k,
+    mp_size_t      n,
+    mp_size_t      M,
+    mp_size_t     rn
+) {
+    mp_size_t rhead = 0, nlen = ms->lenw + 1;
+    mp_slimb_t borrow = 0, maxc = 0;
 
     for (mp_size_t i = 0; i < K; ++i) {
         lmmp_fft_shr_coef_(ms, pfca + i, (i * n >> k) + k);
-        mp_ptr nums = pfca[i]; 
+        mp_ptr nums = pfca[i];
 
         if (nums[nlen - 1]) {
-            lmmp_dec(nums);    
-            --nums[nlen - 1];  
+            lmmp_dec(nums);
+            --nums[nlen - 1];
         }
         if (nums[nlen - 1] == 0 && nums[nlen - 2] >> (LIMB_BITS - 1)) {
-            lmmp_dec(nums);    
-            --nums[nlen - 1]; 
+            lmmp_dec(nums);
+            --nums[nlen - 1];
         }
 
         if (borrow) {
@@ -547,11 +547,11 @@ static void lmmp_mul_fermat_recombine_(fft_memstack* ms,
             ++nums[nlen - 1];
         }
         borrow = -nums[nlen - 1];
-        nums[nlen - 1] = 0;       
+        nums[nlen - 1] = 0;
 
         mp_size_t roffset = i * M;
-        mp_size_t shl = roffset & (LIMB_BITS - 1); 
-        roffset /= LIMB_BITS;                      
+        mp_size_t shl = roffset & (LIMB_BITS - 1);
+        roffset /= LIMB_BITS;
 
         if (shl)
             lmmp_shl_(nums, nums, nlen, shl);
@@ -577,11 +577,11 @@ static void lmmp_mul_fermat_recombine_(fft_memstack* ms,
     }
 
     if (maxc > 0) {
-        dst[rn] = dst[0] < (mp_limb_t)maxc;  
-        lmmp_dec_1(dst, maxc - dst[rn]);     
+        dst[rn] = dst[0] < (mp_limb_t)maxc;
+        lmmp_dec_1(dst, maxc - dst[rn]);
     } else {
         dst[rn] = 0;
-        lmmp_inc_1(dst, -maxc);  
+        lmmp_inc_1(dst, -maxc);
     }
 }
 
@@ -605,18 +605,17 @@ static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2,
         mp_ptr temp_mul = (mp_ptr)lmmp_fft_memstack_(ms, (rn + 1) * 2 * LIMB_BYTES);
         for (mp_size_t i = 0; i < K0; ++i) {
             if (nsqr)
-                lmmp_mul_n_(temp_mul, pc1[i], pc2[i], rn + 1); 
+                lmmp_mul_n_(temp_mul, pc1[i], pc2[i], rn + 1);
             else
-                lmmp_sqr_(temp_mul, pc1[i], rn + 1);  
+                lmmp_sqr_(temp_mul, pc1[i], rn + 1);
 
             // 模 B^rn+1 归一化：temp_mul - temp_mul[rn ...]
             mp_limb_t maxc = lmmp_sub_n_(pc1[i], temp_mul, temp_mul + rn, rn) + temp_mul[rn * 2];
-            pc1[i][rn] = 0;           
-            lmmp_inc_1(pc1[i], maxc); 
+            pc1[i][rn] = 0;
+            lmmp_inc_1(pc1[i], maxc);
         }
-        lmmp_fft_memstack_(ms, 0); 
-    }
-    else {
+        lmmp_fft_memstack_(ms, 0);
+    } else {
         mp_size_t N = rn * LIMB_BITS;        // 总比特数
         mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
         mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
@@ -628,20 +627,20 @@ static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2,
         n = (n + LIMB_BITS - 1) & (-LIMB_BITS);  // 向上取整到LIMB_BITS的倍数
         n = (((n - 1) >> k) + 1) << k;           // 向上取整到K的倍数
 
-        ms->lenw = n / LIMB_BITS;       
-        mp_size_t nlen = ms->lenw + 1; 
+        ms->lenw = n / LIMB_BITS;
+        mp_size_t nlen = ms->lenw + 1;
 
         ms->temp_coef = (mp_ptr)lmmp_fft_memstack_(ms, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
         mp_ptr *pfca = (mp_ptr*)(ms->temp_coef + nlen), *pfcb = pfca;
         for (mp_size_t i = 0; i < K; ++i) pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
         if (nsqr) {
-            pfcb += (nlen + 1) << k;  
+            pfcb += (nlen + 1) << k;
             for (mp_size_t i = 0; i < K; ++i) pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
         }
 
         for (mp_size_t j = 0; j < K0; ++j) {
-            mp_ptr numa = pc1[j]; 
-            mp_ptr numb = pc2[j];  
+            mp_ptr numa = pc1[j];
+            mp_ptr numb = pc2[j];
 
             for (mp_size_t i = 0; i < K; ++i) {
                 lmmp_fft_extract_coef_(pfca[i], numa, M * i, M + (i == K - 1), ms->lenw);
@@ -666,7 +665,7 @@ static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2,
 
             lmmp_mul_fermat_recombine_(ms, numa, pfca, K, k, n, M, rn);
         }
-        lmmp_fft_memstack_(ms, 0); 
+        lmmp_fft_memstack_(ms, 0);
     }
 
     ms->temp_coef = push_temp_coef;
@@ -695,11 +694,11 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     msr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&msr, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
 
     mp_ptr *pfca = (mp_ptr*)(msr.temp_coef + nlen), *pfcb = pfca;
-    mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;  
+    mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;
 
     for (mp_size_t i = 0; i < K; ++i) {
         mp_size_t coeflen;
-        pfca[i] = (mp_ptr)(pfca + K) + i * nlen; 
+        pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
         if (narest > 0) {
             coeflen = M + (i == K - 1);
             coeflen = LMMP_MIN(narest, coeflen);
@@ -772,13 +771,13 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
     msr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&msr, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
 
     mp_ptr *pfca = (mp_ptr*)(msr.temp_coef + nlen), *pfcb = pfca;
-    mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS; 
+    mp_size_t narest = na * LIMB_BITS, nbrest = nb * LIMB_BITS;
 
     for (mp_size_t i = 0; i < K; ++i) {
         mp_size_t coeflen;
         pfca[i] = (mp_ptr)(pfca + K) + i * nlen;
         if (narest > 0) {
-            coeflen = LMMP_MIN(narest, M); 
+            coeflen = LMMP_MIN(narest, M);
             narest -= coeflen;
             lmmp_fft_extract_coef_(pfca[i], numa, M * i, coeflen, msr.lenw);
         } else {
@@ -814,7 +813,7 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 
         if (nums[nlen - 1]) {
             lmmp_dec(nums);
-            lmmp_debug_assert(nums[nlen - 1] == 1);  
+            lmmp_debug_assert(nums[nlen - 1] == 1);
             nums[nlen - 1] = 0;
         }
 
@@ -845,40 +844,35 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 }
 
 typedef struct {
-    mp_srcptr numb;
-    mp_size_t nb;
-    mp_size_t rn;
     fft_memstack msr_fermat;
     fft_memstack msr_mersenne;
     mp_ptr temp_coef_fermat;
     mp_ptr temp_coef_mersenne;
-    int fermat_flag;   // 是否分配了费马内存
-    int mersenne_flag; // 是否分配了梅森内存
-} fft_history;
+    int fermat_flag;    // 是否分配了费马内存
+    int mersenne_flag;  // 是否分配了梅森内存
+} fft_cache;
 
-THREAD_LOCAL static fft_history numb_history;
-#define GH numb_history
-
-void lmmp_mul_fft_history_free_(void) {
-    if (GH.fermat_flag)
-        lmmp_fft_memstack_(&GH.msr_fermat, 0);
-    if (GH.mersenne_flag)
-        lmmp_fft_memstack_(&GH.msr_mersenne, 0);
-    GH.numb = NULL;
-    GH.nb = 0;
-    GH.fermat_flag = 0;
-    GH.mersenne_flag = 0;
-    GH.temp_coef_fermat = NULL;
-    GH.temp_coef_mersenne = NULL;
-    GH.rn = 0;
+static inline void lmmp_mul_fft_cache_free_(fft_cache* GH) {
+    if (GH->fermat_flag)
+        lmmp_fft_memstack_(&GH->msr_fermat, 0);
+    if (GH->mersenne_flag)
+        lmmp_fft_memstack_(&GH->msr_mersenne, 0);
 }
 
-static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+static void lmmp_mul_fermat_single_(
+    mp_ptr     dst,
+    mp_size_t   rn,
+    mp_srcptr numa,
+    mp_size_t   na,
+    mp_srcptr numb,
+    mp_size_t   nb,
+    fft_cache*  GH
+) {
     int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
     lmmp_assert(nsqr);
-    mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
-    mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
-    mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
+    mp_size_t N = rn * LIMB_BITS;        // 结果总比特数
+    mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
+    mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
     lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;         // 每个块的比特数
     mp_size_t n = 2 * M + k + 2;  // 扩展系数长度
@@ -886,36 +880,30 @@ static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp
     n = (n + LIMB_BITS - 1) & (-LIMB_BITS);
     n = (((n - 1) >> k) + 1) << k;
 
-
-    fft_memstack *bmsr = NULL;
+    fft_memstack* bmsr = NULL;
     fft_memstack amsr;
     amsr.maxdepth = -1;
     amsr.tempdepth = -1;
     amsr.lenw = n / LIMB_BITS;       // 系数长度（机器字）
-    mp_size_t nlen = amsr.lenw + 1;            // 系数总长度
+    mp_size_t nlen = amsr.lenw + 1;  // 系数总长度
     mp_size_t a_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     mp_size_t b_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     amsr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&amsr, a_size);
 
-    mp_ptr *pfca = (mp_ptr*)(amsr.temp_coef + nlen);
-    mp_ptr *pfcb = NULL;
+    mp_ptr* pfca = (mp_ptr*)(amsr.temp_coef + nlen);
+    mp_ptr* pfcb = NULL;
 
-    if (GH.rn == rn && GH.fermat_flag && GH.nb == nb && GH.numb == numb) {
-        bmsr = &GH.msr_fermat;
+    if (GH->fermat_flag) {
+        bmsr = &GH->msr_fermat;
         bmsr->lenw = n / LIMB_BITS;
-        pfcb = (mp_ptr*)(GH.temp_coef_fermat + nlen);
+        pfcb = (mp_ptr*)(GH->temp_coef_fermat + nlen);
     } else {
-        if (GH.fermat_flag)
-            lmmp_fft_memstack_(&GH.msr_fermat, 0);
-        bmsr = &GH.msr_fermat;
+        bmsr = &GH->msr_fermat;
         bmsr->maxdepth = -1;
         bmsr->tempdepth = -1;
-        bmsr->lenw = n / LIMB_BITS; 
+        bmsr->lenw = n / LIMB_BITS;
         bmsr->temp_coef = (mp_ptr)lmmp_fft_memstack_(bmsr, b_size);
-        GH.temp_coef_fermat = bmsr->temp_coef;
-        GH.numb = numb;
-        GH.nb = nb;
-        GH.rn = rn;
+        GH->temp_coef_fermat = bmsr->temp_coef;
         pfcb = (mp_ptr*)(bmsr->temp_coef + nlen);
     }
 
@@ -936,8 +924,8 @@ static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp
     }
     lmmp_fft_(&amsr, pfca, k, n >> (k - 1));
 
-    if (!GH.fermat_flag) {
-        GH.fermat_flag = 1;
+    if (!GH->fermat_flag) {
+        GH->fermat_flag = 1;
         for (mp_size_t i = 0; i < K; ++i) {
             mp_size_t coeflen;
             pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
@@ -969,12 +957,20 @@ static void lmmp_mul_fermat_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp
     lmmp_fft_memstack_(&amsr, 0);
 }
 
-static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+static void lmmp_mul_mersenne_single_(
+    mp_ptr     dst,
+    mp_size_t   rn,
+    mp_srcptr numa,
+    mp_size_t   na,
+    mp_srcptr numb,
+    mp_size_t   nb,
+    fft_cache*  GH
+) {
     int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
     lmmp_assert(nsqr);
-    mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
-    mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
-    mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
+    mp_size_t N = rn * LIMB_BITS;        // 结果总比特数
+    mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
+    mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
     // 断言：N必须是K的整数倍
     lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;     // 每个块的比特数
@@ -998,22 +994,17 @@ static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, 
     mp_ptr* pfca = (mp_ptr*)(amsr.temp_coef + nlen);
     mp_ptr* pfcb = NULL;
 
-    if (GH.rn == rn && GH.mersenne_flag && GH.nb == nb && GH.numb == numb) {
-        bmsr = &GH.msr_mersenne;
+    if (GH->mersenne_flag) {
+        bmsr = &GH->msr_mersenne;
         bmsr->lenw = n / LIMB_BITS;
-        pfcb = (mp_ptr*)(GH.temp_coef_mersenne + nlen);
+        pfcb = (mp_ptr*)(GH->temp_coef_mersenne + nlen);
     } else {
-        if (GH.mersenne_flag)
-            lmmp_fft_memstack_(&GH.msr_mersenne, 0);
-        bmsr = &GH.msr_mersenne;
+        bmsr = &GH->msr_mersenne;
         bmsr->maxdepth = -1;
         bmsr->tempdepth = -1;
         bmsr->lenw = n / LIMB_BITS;
         bmsr->temp_coef = (mp_ptr)lmmp_fft_memstack_(bmsr, b_size);
-        GH.temp_coef_mersenne = bmsr->temp_coef;
-        GH.numb = numb;
-        GH.nb = nb;
-        GH.rn = rn;
+        GH->temp_coef_mersenne = bmsr->temp_coef;
         pfcb = (mp_ptr*)(bmsr->temp_coef + nlen);
     }
 
@@ -1032,8 +1023,8 @@ static void lmmp_mul_mersenne_single_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, 
     }
     lmmp_fft_(&amsr, pfca, k, n >> (k - 1));
 
-    if (!GH.mersenne_flag) {
-        GH.mersenne_flag = 1;
+    if (!GH->mersenne_flag) {
+        GH->mersenne_flag = 1;
         for (mp_size_t i = 0; i < K; ++i) {
             mp_size_t coeflen;
             pfcb[i] = (mp_ptr)(pfcb + K) + i * nlen;
@@ -1145,7 +1136,15 @@ void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_
     lmmp_free(tp);
 }
 
-void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+static void lmmp_mul_fft_cache_(
+    mp_ptr     dst,
+    mp_size_t   hn,
+    mp_srcptr numa,
+    mp_size_t   na,
+    mp_srcptr numb,
+    mp_size_t   nb,
+    fft_cache*  GH
+) {
     lmmp_param_assert(na > 0 && nb > 0);
     lmmp_param_assert(na >= nb);
     lmmp_assert(na + nb > hn);
@@ -1163,7 +1162,7 @@ void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t n
         amodm = dst;
         nam = hn;
     }
-    lmmp_mul_mersenne_single_(dst, hn, amodm, nam, numb, nb);
+    lmmp_mul_mersenne_single_(dst, hn, amodm, nam, numb, nb, GH);
 
     mp_srcptr amodp = numa;
     mp_size_t nap = na;
@@ -1178,7 +1177,7 @@ void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t n
         amodp = tp;
         nap = hn + 1;
     }
-    lmmp_mul_fermat_single_(tp, hn, amodp, nap, numb, nb);
+    lmmp_mul_fermat_single_(tp, hn, amodp, nap, numb, nb, GH);
 
     mp_limb_t cy = lmmp_shr1add_nc_(dst, dst, tp, hn, tp[hn]);
     cy <<= LIMB_BITS - 1;
@@ -1198,4 +1197,44 @@ void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t n
         cy = lmmp_sub_1_(dst, dst, na + nb, cy);
     }
     lmmp_free(tp);
+}
+
+void lmmp_mul_fft_unbalance_(
+    mp_ptr    restrict  dst,
+    mp_srcptr restrict numa,
+    mp_size_t            na,
+    mp_srcptr restrict numb,
+    mp_size_t            nb
+) {
+    lmmp_param_assert(na >= 3 * nb);
+    mp_ptr restrict ws = ALLOC_TYPE(nb, mp_limb_t);
+    mp_size_t sna = 3 * nb;
+    mp_size_t hn = lmmp_fft_next_size_((sna + nb + 1) >> 1);
+    sna = (hn << 1) - 1 - nb;
+    fft_cache GH = {.mersenne_flag = 0, .fermat_flag = 0};
+    lmmp_mul_fft_cache_(dst, hn, numa, sna, numb, nb, &GH);
+    dst += sna;
+    numa += sna;
+    na -= sna;
+    lmmp_copy(ws, dst, nb);
+    while (na >= sna) {
+        lmmp_mul_fft_cache_(dst, hn, numa, sna, numb, nb, &GH);
+        if (lmmp_add_n_(dst, dst, ws, nb))
+            lmmp_inc(dst + nb);
+        dst += sna;
+        numa += sna;
+        na -= sna;
+        lmmp_copy(ws, dst, nb);
+    }
+    lmmp_mul_fft_cache_free_(&GH);
+    // remaining na < sna
+    if (na >= nb)
+        lmmp_mul_(dst, numa, na, numb, nb);
+    else if (na > 0)
+        lmmp_mul_(dst, numb, nb, numa, na);
+    else  // na == 0
+        lmmp_zero(dst, nb);
+    if (lmmp_add_n_(dst, dst, ws, nb))
+        lmmp_inc(dst + nb);
+    lmmp_free(ws);
 }
