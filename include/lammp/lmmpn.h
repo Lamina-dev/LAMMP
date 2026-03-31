@@ -512,24 +512,16 @@ void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, 
 void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-42乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-42不平衡乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/3<=nb/na<=5/9, nb>=20, sep(dst,[numa|numb])
- * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算并记录
- *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果。
+ * @warning na>=3*nb, nb>=20, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom42_history_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * @brief 释放历史Toom-42乘法运算的结果
- * @note 请在调用lmmp_mul_toom42_history_()后调用此函数释放历史记录。
- */
-void lmmp_mul_toom42_history_free_(void);
+void lmmp_mul_toom42_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief Toom-43乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -541,7 +533,7 @@ void lmmp_mul_toom42_history_free_(void);
  * @warning 3/5<=nb/na<=4/5, nb>=??, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom43_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+void lmmp_mul_toom43_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -553,10 +545,10 @@ void lmmp_mul_toom43_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_si
  * @warning 4/5<=nb/na<=1, nb>=??, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom44_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+void lmmp_mul_toom44_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-52乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
@@ -565,10 +557,10 @@ void lmmp_mul_toom44_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_si
  * @warning 1/3<=nb/na<=9/20, nb>=??, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom52_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+void lmmp_mul_toom52_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-53乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
@@ -577,10 +569,10 @@ void lmmp_mul_toom52_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_si
  * @warning 9/20<=nb/na<=3/5, nb>=??, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom53_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+void lmmp_mul_toom53_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief Toom-44乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief Toom-62乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
@@ -589,7 +581,19 @@ void lmmp_mul_toom53_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_si
  * @warning 1/5<=nb/na<=1/3, nb>=??, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_toom62_(mp_ptr pp, mp_srcptr ap, mp_size_t an, mp_srcptr bp, mp_size_t bn);
+void lmmp_mul_toom62_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief Toom-62不平衡乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param numa 第一个输入操作数，长度为 na
+ * @param na 第一个操作数的 limb 长度
+ * @param numb 第二个输入操作数，长度为 nb
+ * @param nb 第二个操作数的 limb 长度
+ * @warning na>=5*nb, nb>=??, sep(dst,[numa|numb])
+ * @return 无返回值，结果存储在dst中
+ */
+void lmmp_mul_toom62_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief 计算满足 >=n 的最小费马/梅森乘法可行尺寸
@@ -637,25 +641,17 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
 void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief FFT不平衡乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  * @param dst 输出结果缓冲区，长度至少为 na+nb
  * @param hn FFT模域参数
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning ???<=nb<=na, sep(dst,[numa|numb])
- * @note 将会记录numb的历史变换结果，如果numb的历史变换结果与当前值不同，则会重新计算FFT乘积
- *       请注意使用lmmp_mul_fft_history_free_()释放历史变换结果。
+ * @warning ???<=nb<=na, na>=3*nb, sep(dst,[numa|numb])
  * @return 无返回值，结果存储在dst中
  */
-void lmmp_mul_fft_history_(mp_ptr dst, mp_size_t hn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
-
-/**
- * @brief 释放历史FFT乘法运算的结果
- * @note 请在调用lmmp_mul_fft_history_()后调用此函数释放历史记录。
- */
-void lmmp_mul_fft_history_free_(void);
+void lmmp_mul_fft_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
  * @brief 大数平方操作 [dst,2*na] = [numa,na]^2
