@@ -254,8 +254,8 @@ void* lmmp_alloc(size_t size, const char* file, int line);
 /**
  * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
  * @param size 要分配的内存字节数
- * @return 成功返回指向分配内存的指针，失败返回NULL
- * @note 是标准malloc的安全封装版本
+ * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
+ * @return 返回指向分配内存的指针
  */
 void* lmmp_alloc(size_t size);
 #endif 
@@ -268,8 +268,8 @@ void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
  * @brief 内存重分配函数（调用lmmp_realloc_fn）
  * @param ptr 已分配的内存指针
  * @param size 新的内存大小（字节）
- * @return 成功返回指向新内存区域的指针，失败返回NULL
- * @note 是标准realloc的安全封装版本
+ * @note 调用堆内存重新分配器，分配失败将触发 lmmp_abort
+ * @return 成功返回指向新内存区域的指针
  */
 void* lmmp_realloc(void* ptr, size_t size);
 #endif 
@@ -281,7 +281,6 @@ void lmmp_free(void* ptr, const char* file, int line);
 /**
  * @brief 内存释放函数（调用lmmp_heap_free_fn）
  * @param ptr 要释放的内存指针
- * @note 是标准free的安全封装版本，确保空指针释放安全
  */
 void lmmp_free(void* ptr);
 #endif
