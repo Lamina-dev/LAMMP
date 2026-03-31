@@ -45,7 +45,7 @@ void lmmp_mul_toom62_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
 #define b0 numb
 #define b1 (numb + n)
 
-    n = 1 + (na >= 3 * nb ? (na - 1) / (size_t)6 : (nb - 1) >> 1);
+    n = 1 + (na >= 3 * nb ? (na - 1) / (mp_size_t)6 : (nb - 1) >> 1);
 
     s = na - 5 * n;
     t = nb - n;
@@ -203,4 +203,334 @@ void lmmp_mul_toom62_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
     lmmp_toom_interp7_(dst, n, (enum toom7_flags)(aflags ^ bflags), vm2, vm1, v2, vh, s + t, scratch_out);
 
     TEMP_S_FREE;
+}
+
+static enum toom7_flags lmmp_mul_toom62_cache_init_(
+    mp_ptr    restrict     dst,
+    mp_srcptr restrict    numa,
+    mp_srcptr restrict    numb,
+    mp_size_t                n,
+    mp_size_t                s,
+    mp_size_t                t,
+    mp_ptr    restrict scratch,
+    mp_ptr    restrict     tmp,
+    mp_ptr    restrict     bs1,
+    mp_ptr    restrict    bsm1,
+    mp_ptr    restrict     bs2,
+    mp_ptr    restrict    bsm2,
+    mp_ptr    restrict     bsh
+) {
+
+    mp_limb_t cy;
+    mp_ptr restrict as1, asm1, as2, asm2, ash;
+    enum toom7_flags aflags, bflags;
+
+#define a0 numa
+#define a1 (numa + n)
+#define a2 (numa + 2 * n)
+#define a3 (numa + 3 * n)
+#define a4 (numa + 4 * n)
+#define a5 (numa + 5 * n)
+#define b0 numb
+#define b1 (numb + n)
+
+
+    as1 = tmp;
+    asm1 = as1 + n + 1;
+    as2 = asm1 + n + 1;
+    asm2 = as2 + n + 1;
+    ash = asm2 + n + 1;
+
+
+    /* Compute as1 and asm1.  */
+    aflags = (enum toom7_flags)(toom7_w3_neg & lmmp_toom_eval_pm1_(as1, asm1, 5, numa, n, s, dst));
+
+    /* Compute as2 and asm2. */
+    aflags = (enum toom7_flags)(aflags | (toom7_w1_neg & lmmp_toom_eval_pm2_(as2, asm2, 5, numa, n, s, dst)));
+
+    /* Compute ash = 32 a0 + 16 a1 + 8 a2 + 4 a3 + 2 a4 + a5
+       = 2*(2*(2*(2*(2*a0 + a1) + a2) + a3) + a4) + a5  */
+
+    cy = lmmp_addshl1_n_(ash, a1, a0, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a2, ash, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a3, ash, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a4, ash, n);
+    if (s < n) {
+        mp_limb_t cy2;
+        cy2 = lmmp_addshl1_n_(ash, a5, ash, s);
+        ash[n] = 2 * cy + lmmp_shl_(ash + s, ash + s, n - s, 1);
+        lmmp_inc_1(ash + s, cy2);
+    } else
+        ash[n] = 2 * cy + lmmp_addshl1_n_(ash, a5, ash, n);
+
+    /* Compute bs1 and bsm1.  */
+    if (t == n) {
+        if (lmmp_cmp_(b0, b1, n) < 0) {
+            cy = lmmp_add_n_sub_n_(bs1, bsm1, b1, b0, n);
+            bflags = toom7_w3_neg;
+        } else {
+            cy = lmmp_add_n_sub_n_(bs1, bsm1, b0, b1, n);
+            bflags = (enum toom7_flags)0;
+        }
+        bs1[n] = cy >> 1;
+    } else {
+        bs1[n] = lmmp_add_(bs1, b0, n, b1, t);
+        if (lmmp_zero_q_(b0 + t, n - t) && lmmp_cmp_(b0, b1, t) < 0) {
+            lmmp_sub_n_(bsm1, b1, b0, t);
+            lmmp_zero(bsm1 + t, n - t);
+            bflags = toom7_w3_neg;
+        } else {
+            lmmp_sub_(bsm1, b0, n, b1, t);
+            bflags = (enum toom7_flags)0;
+        }
+    }
+
+    /* Compute bs2 and bsm2. Recycling bs1 and bsm1; bs2=bs1+b1, bsm2 =
+       bsm1 - b1 */
+    lmmp_add_(bs2, bs1, n + 1, b1, t);
+    if (bflags & toom7_w3_neg) {
+        bsm2[n] = lmmp_add_(bsm2, bsm1, n, b1, t);
+        bflags = (enum toom7_flags)(bflags | toom7_w1_neg);
+    } else {
+        if (t < n) {
+            if (lmmp_zero_q_(bsm1 + t, n - t) && lmmp_cmp_(bsm1, b1, t) < 0) {
+                lmmp_sub_n_(bsm2, b1, bsm1, t);
+                lmmp_zero(bsm2 + t, n + 1 - t);
+                bflags = (enum toom7_flags)(bflags | toom7_w1_neg);
+            } else {
+                lmmp_sub_(bsm2, bsm1, n, b1, t);
+                bsm2[n] = 0;
+            }
+        } else {
+            if (lmmp_cmp_(bsm1, b1, n) < 0) {
+                lmmp_sub_n_(bsm2, b1, bsm1, n);
+                bflags = (enum toom7_flags)(bflags | toom7_w1_neg);
+            } else {
+                lmmp_sub_n_(bsm2, bsm1, b1, n);
+            }
+            bsm2[n] = 0;
+        }
+    }
+
+    /* Compute bsh, recycling bs1. bsh=bs1+b0;  */
+    bsh[n] = bs1[n] + lmmp_add_n_(bsh, bs1, b0, n);
+
+    lmmp_debug_assert(as1[n] <= 5);
+    lmmp_debug_assert(bs1[n] <= 1);
+    lmmp_debug_assert(asm1[n] <= 2);
+    lmmp_debug_assert(as2[n] <= 62);
+    lmmp_debug_assert(bs2[n] <= 2);
+    lmmp_debug_assert(asm2[n] <= 41);
+    lmmp_debug_assert(bsm2[n] <= 1);
+    lmmp_debug_assert(ash[n] <= 62);
+    lmmp_debug_assert(bsh[n] <= 2);
+
+#define v0 dst                            /* 2n   */
+#define v1 (dst + 2 * n)                  /* 2n+1 */
+#define vinf (dst + 6 * n)                /* s+t  */
+#define v2 scratch                        /* 2n+1 */
+#define vm2 (scratch + 2 * n + 1)         /* 2n+1 */
+#define vh (scratch + 4 * n + 2)          /* 2n+1 */
+#define vm1 (scratch + 6 * n + 3)         /* 2n+1 */
+#define scratch_out (scratch + 8 * n + 4) /* 2n+1 */
+    /* Total scratch need: 10*n+5 */
+
+    /* Must be in allocation order, as they overwrite one limb beyond
+     * 2n+1. */
+    lmmp_mul_n_(v2, as2, bs2, n + 1);    /* v2, 2n+1 limbs */
+    lmmp_mul_n_(vm2, asm2, bsm2, n + 1); /* vm2, 2n+1 limbs */
+    lmmp_mul_n_(vh, ash, bsh, n + 1);    /* vh, 2n+1 limbs */
+
+    /* vm1, 2n+1 limbs */
+    lmmp_mul_n_(vm1, asm1, bsm1, n);
+    cy = 0;
+    if (asm1[n] == 1) {
+        cy = lmmp_add_n_(vm1 + n, vm1 + n, bsm1, n);
+    } else if (asm1[n] == 2) {
+        cy = lmmp_addshl1_n_(vm1 + n, vm1 + n, bsm1, n);
+    }
+    vm1[2 * n] = cy;
+
+    /* v1, 2n+1 limbs */
+    lmmp_mul_n_(v1, as1, bs1, n);
+    if (as1[n] == 1) {
+        cy = bs1[n] + lmmp_add_n_(v1 + n, v1 + n, bs1, n);
+    } else if (as1[n] == 2) {
+        cy = 2 * bs1[n] + lmmp_addshl1_n_(v1 + n, v1 + n, bs1, n);
+    } else if (as1[n] != 0) {
+        cy = as1[n] * bs1[n] + lmmp_addmul_1_(v1 + n, bs1, n, as1[n]);
+    } else
+        cy = 0;
+    if (bs1[n] != 0)
+        cy += lmmp_add_n_(v1 + n, v1 + n, as1, n);
+    v1[2 * n] = cy;
+
+    lmmp_mul_n_(v0, a0, b0, n); /* v0, 2n limbs */
+
+    /* vinf, s+t limbs */
+    if (s > t)
+        lmmp_mul_(vinf, a5, s, b1, t);
+    else
+        lmmp_mul_(vinf, b1, t, a5, s);
+
+    lmmp_toom_interp7_(dst, n, (enum toom7_flags)(aflags ^ bflags), vm2, vm1, v2, vh, s + t, scratch_out);
+
+    return bflags;
+}
+
+static void lmmp_mul_toom62_cache_(
+    mp_ptr    restrict     dst,
+    mp_srcptr restrict    numa,
+    mp_srcptr restrict    numb,
+    mp_size_t                n,
+    mp_size_t                s,
+    mp_size_t                t,
+    mp_ptr    restrict scratch,
+    mp_ptr    restrict     tmp,
+    mp_srcptr restrict     bs1,
+    mp_srcptr restrict    bsm1,
+    mp_srcptr restrict     bs2,
+    mp_srcptr restrict    bsm2,
+    mp_srcptr restrict     bsh,
+    enum toom7_flags bflags
+) {
+    mp_limb_t cy;
+    mp_ptr as1, asm1, as2, asm2, ash;
+    enum toom7_flags aflags;
+
+#define a0 numa
+#define a1 (numa + n)
+#define a2 (numa + 2 * n)
+#define a3 (numa + 3 * n)
+#define a4 (numa + 4 * n)
+#define a5 (numa + 5 * n)
+#define b0 numb
+#define b1 (numb + n)
+
+    as1 = tmp;
+    asm1 = as1 + n + 1;
+    as2 = asm1 + n + 1;
+    asm2 = as2 + n + 1;
+    ash = asm2 + n + 1;
+
+
+    /* Compute as1 and asm1.  */
+    aflags = (enum toom7_flags)(toom7_w3_neg & lmmp_toom_eval_pm1_(as1, asm1, 5, numa, n, s, dst));
+
+    /* Compute as2 and asm2. */
+    aflags = (enum toom7_flags)(aflags | (toom7_w1_neg & lmmp_toom_eval_pm2_(as2, asm2, 5, numa, n, s, dst)));
+
+    /* Compute ash = 32 a0 + 16 a1 + 8 a2 + 4 a3 + 2 a4 + a5
+       = 2*(2*(2*(2*(2*a0 + a1) + a2) + a3) + a4) + a5  */
+
+    cy = lmmp_addshl1_n_(ash, a1, a0, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a2, ash, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a3, ash, n);
+    cy = 2 * cy + lmmp_addshl1_n_(ash, a4, ash, n);
+    if (s < n) {
+        mp_limb_t cy2;
+        cy2 = lmmp_addshl1_n_(ash, a5, ash, s);
+        ash[n] = 2 * cy + lmmp_shl_(ash + s, ash + s, n - s, 1);
+        lmmp_inc_1(ash + s, cy2);
+    } else
+        ash[n] = 2 * cy + lmmp_addshl1_n_(ash, a5, ash, n);
+
+    lmmp_debug_assert(as1[n] <= 5);
+    lmmp_debug_assert(asm1[n] <= 2);
+    lmmp_debug_assert(as2[n] <= 62);
+    lmmp_debug_assert(asm2[n] <= 41);
+    lmmp_debug_assert(ash[n] <= 62);
+
+#define v0 dst                            /* 2n   */
+#define v1 (dst + 2 * n)                  /* 2n+1 */
+#define vinf (dst + 6 * n)                /* s+t  */
+#define v2 scratch                        /* 2n+1 */
+#define vm2 (scratch + 2 * n + 1)         /* 2n+1 */
+#define vh (scratch + 4 * n + 2)          /* 2n+1 */
+#define vm1 (scratch + 6 * n + 3)         /* 2n+1 */
+#define scratch_out (scratch + 8 * n + 4) /* 2n+1 */
+    /* Total scratch need: 10*n+5 */
+
+    /* Must be in allocation order, as they overwrite one limb beyond
+     * 2n+1. */
+    lmmp_mul_n_(v2, as2, bs2, n + 1);    /* v2, 2n+1 limbs */
+    lmmp_mul_n_(vm2, asm2, bsm2, n + 1); /* vm2, 2n+1 limbs */
+    lmmp_mul_n_(vh, ash, bsh, n + 1);    /* vh, 2n+1 limbs */
+
+    /* vm1, 2n+1 limbs */
+    lmmp_mul_n_(vm1, asm1, bsm1, n);
+    cy = 0;
+    if (asm1[n] == 1) {
+        cy = lmmp_add_n_(vm1 + n, vm1 + n, bsm1, n);
+    } else if (asm1[n] == 2) {
+        cy = lmmp_addshl1_n_(vm1 + n, vm1 + n, bsm1, n);
+    }
+    vm1[2 * n] = cy;
+
+    /* v1, 2n+1 limbs */
+    lmmp_mul_n_(v1, as1, bs1, n);
+    if (as1[n] == 1) {
+        cy = bs1[n] + lmmp_add_n_(v1 + n, v1 + n, bs1, n);
+    } else if (as1[n] == 2) {
+        cy = 2 * bs1[n] + lmmp_addshl1_n_(v1 + n, v1 + n, bs1, n);
+    } else if (as1[n] != 0) {
+        cy = as1[n] * bs1[n] + lmmp_addmul_1_(v1 + n, bs1, n, as1[n]);
+    } else
+        cy = 0;
+    if (bs1[n] != 0)
+        cy += lmmp_add_n_(v1 + n, v1 + n, as1, n);
+    v1[2 * n] = cy;
+
+    lmmp_mul_n_(v0, a0, b0, n); /* v0, 2n limbs */
+
+    /* vinf, s+t limbs */
+    if (s > t)
+        lmmp_mul_(vinf, a5, s, b1, t);
+    else
+        lmmp_mul_(vinf, b1, t, a5, s);
+
+    lmmp_toom_interp7_(dst, n, (enum toom7_flags)(aflags ^ bflags), vm2, vm1, v2, vh, s + t, scratch_out);
+}
+
+void lmmp_mul_toom62_unbalance_(
+    mp_ptr    restrict  dst, 
+    mp_srcptr restrict numa, 
+    mp_size_t            na, 
+    mp_srcptr restrict numb, 
+    mp_size_t            nb
+) {
+    lmmp_param_assert(na >= 5 * nb);
+    TEMP_DECL;
+    mp_size_t n = 1 +  (3 * nb - 1) / (mp_size_t)6, s = 3 * nb - 5 * n, t = nb - n;
+    mp_limb_t* restrict ws = SALLOC_TYPE(nb, mp_limb_t);
+    mp_ptr restrict scratch = BALLOC_TYPE(20 * n + 20, mp_limb_t);
+    mp_ptr restrict tmp = scratch + 10 * n + 10;
+    mp_ptr restrict bs1, bsm1, bs2, bsm2, bsh;
+    bs1 = tmp + 5 * n + 5;
+    bsm1 = bs1 + n + 1;
+    bs2 = bsm1 + n;
+    bsm2 = bs2 + n + 1;
+    bsh = bsm2 + n + 1;
+    enum toom7_flags bflags = lmmp_mul_toom62_cache_init_(dst, numa, numb, n, s, t, scratch, tmp, bs1, bsm1, bs2, bsm2, bsh);
+    dst += 3 * nb;
+    numa += 3 * nb;
+    na -= 3 * nb;
+    lmmp_copy(ws, dst, nb);
+    while (na >= 5 * nb) {
+        lmmp_mul_toom62_cache_(dst, numa, numb, n, s, t, scratch, tmp, bs1, bsm1, bs2, bsm2, bsh, bflags);
+        if (lmmp_add_n_(dst, dst, ws, nb))
+            lmmp_inc(dst + nb);
+        dst += 3 * nb;
+        numa += 3 * nb;
+        na -= 3 * nb;
+        lmmp_copy(ws, dst, nb);
+    }
+    // 0 <= na < 2 nb
+    if (na >= nb)
+        lmmp_mul_(dst, numa, na, numb, nb);
+    else
+        lmmp_mul_(dst, numb, nb, numa, na);
+    if (lmmp_add_n_(dst, dst, ws, nb))
+        lmmp_inc(dst + nb);
+    TEMP_FREE;
 }

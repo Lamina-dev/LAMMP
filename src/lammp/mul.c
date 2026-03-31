@@ -71,33 +71,8 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
                 lmmp_mul_toom32_(dst, numa, na, numb, nb);
             else
                 lmmp_mul_toom42_(dst, numa, na, numb, nb);
-        } else {
-            TEMP_S_DECL;
-            mp_limb_t* ws = SALLOC_TYPE(nb, mp_limb_t);
-            lmmp_mul_toom42_history_(dst, numa, 2 * nb, numb, nb);
-            dst += 2 * nb;
-            numa += 2 * nb;
-            na -= 2 * nb;
-            lmmp_copy(ws, dst, nb);
-            while (2 * na >= 5 * nb) {
-                lmmp_mul_toom42_history_(dst, numa, 2 * nb, numb, nb);
-                if (lmmp_add_n_(dst, dst, ws, nb))
-                    lmmp_inc(dst + nb);
-                dst += 2 * nb;
-                numa += 2 * nb;
-                na -= 2 * nb;
-                lmmp_copy(ws, dst, nb);
-            }
-            lmmp_mul_toom42_history_free_();
-            // 0.5 nb <= na < 2.5 nb
-            if (na >= nb)
-                lmmp_mul_(dst, numa, na, numb, nb);
-            else
-                lmmp_mul_(dst, numb, nb, numa, na);
-            if (lmmp_add_n_(dst, dst, ws, nb))
-                lmmp_inc(dst + nb);
-            TEMP_S_FREE;
-        }
+        } else 
+            lmmp_mul_toom42_unbalance_(dst, numa, na, numb, nb);
     } else if (((na + nb) >> 1) < MUL_FFT_THRESHOLD || 2 * nb < MUL_FFT_THRESHOLD) {
         if (na < 5 * nb) {
             if (4 * na < 5 * nb) 
@@ -110,66 +85,12 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
                 lmmp_mul_toom52_(dst, numa, na, numb, nb);
             else 
                 lmmp_mul_toom62_(dst, numa, na, numb, nb);
-        } else {
-            TEMP_S_DECL;
-            mp_limb_t* ws = SALLOC_TYPE(nb, mp_limb_t);
-            lmmp_mul_toom62_(dst, numa, 3 * nb, numb, nb);
-            dst += 3 * nb;
-            numa += 3 * nb;
-            na -= 3 * nb;
-            lmmp_copy(ws, dst, nb);
-            while (na >= 5 * nb) {
-                lmmp_mul_toom62_(dst, numa, 3 * nb, numb, nb);
-                if (lmmp_add_n_(dst, dst, ws, nb))
-                    lmmp_inc(dst + nb);
-                dst += 3 * nb;
-                numa += 3 * nb;
-                na -= 3 * nb;
-                lmmp_copy(ws, dst, nb);
-            }
-            // 0 <= na < 2 nb
-            if (na >= nb)
-                lmmp_mul_(dst, numa, na, numb, nb);
-            else
-                lmmp_mul_(dst, numb, nb, numa, na);
-            if (lmmp_add_n_(dst, dst, ws, nb))
-                lmmp_inc(dst + nb);
-            TEMP_S_FREE;
-        }
+        } else 
+            lmmp_mul_toom62_unbalance_(dst, numa, na, numb, nb);
     } else {
         if (na < 8 * nb)
             lmmp_mul_fft_(dst, numa, na, numb, nb);
-        else {
-            mp_ptr ws = ALLOC_TYPE(nb, mp_limb_t);
-            mp_size_t sna = 3 * nb;
-            mp_size_t hn = lmmp_fft_next_size_((sna + nb + 1) >> 1);
-            sna = (hn << 1) - 1 - nb;
-        
-            lmmp_mul_fft_history_(dst, hn, numa, sna, numb, nb);
-            dst += sna;
-            numa += sna;
-            na -= sna;
-            lmmp_copy(ws, dst, nb);
-            while (na >= sna) {
-                lmmp_mul_fft_history_(dst, hn, numa, sna, numb, nb);
-                if (lmmp_add_n_(dst, dst, ws, nb))
-                    lmmp_inc(dst + nb);
-                dst += sna;
-                numa += sna;
-                na -= sna;
-                lmmp_copy(ws, dst, nb);
-            }
-            lmmp_mul_fft_history_free_();
-            // remaining na < sna
-            if (na >= nb)
-                lmmp_mul_(dst, numa, na, numb, nb);
-            else if (na > 0)
-                lmmp_mul_(dst, numb, nb, numa, na);
-            else // na == 0 
-                lmmp_zero(dst, nb);
-            if (lmmp_add_n_(dst, dst, ws, nb))
-                lmmp_inc(dst + nb);
-            lmmp_free(ws);
-        }
+        else 
+            lmmp_mul_fft_unbalance_(dst, numa, na, numb, nb);
     }
 }
