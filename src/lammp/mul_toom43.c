@@ -37,7 +37,7 @@ void lmmp_mul_toom43_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
 #define b1 (numb + n)
 #define b2 (numb + 2 * n)
 
-    n = 1 + (3 * na >= 4 * nb ? (na - 1) >> 2 : (nb - 1) / (size_t)3);
+    n = 1 + (3 * na >= 4 * nb ? (na - 1) >> 2 : (nb - 1) / (mp_size_t)3);
     TEMP_S_DECL;
     mp_limb_t* restrict scratch = SALLOC_TYPE(6 * n + 6, mp_limb_t);
 

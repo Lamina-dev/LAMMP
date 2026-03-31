@@ -87,20 +87,19 @@ EXPORTS
 	lmmp_mul_toom32_
 	lmmp_mul_toom33_
 	lmmp_mul_toom42_
-	lmmp_mul_toom42_history_
-	lmmp_mul_toom42_history_free_
+	lmmp_mul_toom42_unbalance_
 	lmmp_mul_toom43_
 	lmmp_mul_toom44_
 	lmmp_mul_toom52_
 	lmmp_mul_toom53_
 	lmmp_mul_toom62_
+	lmmp_mul_toom62_unbalance_
 
 	lmmp_fft_next_size_
 	lmmp_mul_fermat_
 	lmmp_mul_mersenne_
 	lmmp_mul_fft_
-	lmmp_mul_fft_history_
-	lmmp_mul_fft_history_free_
+	lmmp_mul_fft_unbalance_
 
 	lmmp_mullo_dc_
 	lmmp_sqrlo_dc_
