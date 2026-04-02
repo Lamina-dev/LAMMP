@@ -225,7 +225,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
         case 14:
             return lmmp_14pow_1_(dst, rn, exp);
         default:
-            lmmp_assert(base <= 15 && base >= 1);
+            lmmp_param_assert(base <= 15 && base >= 1);
             return 0;
     }
 }
@@ -324,153 +324,180 @@ mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
     return rn;
 }
 
+#define mul_b(i)                                        \
+    if (rn >= b##i##n)                                  \
+        lmmp_mul_basecase_(dst, sq, rn, b##i, b##i##n); \
+    else                                                \
+        lmmp_mul_basecase_(dst, b##i, b##i##n, sq, rn); \
+    rn += b##i##n;                                      \
+    rn -= (dst[rn - 1] == 0) ? 1 : 0;
+
 mp_size_t lmmp_8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
     lmmp_param_assert(base <= 0xffffffff);
     TEMP_DECL;
-    mp_limb_t tab[4][2];
-    tab[0][0] = 1;
-    tab[0][1] = 0;
-    tab[1][0] = base;
-    tab[1][1] = 0;
-    tab[2][0] = tab[1][0] * base;
-    tab[2][1] = 0;
-    lmmp_mullh_(tab[2][0], base, tab[3]);
-    tab[3][1] += tab[2][1] * base;
+    mp_limb_t b1[1] = { base};
+#define b1n 1
+    mp_limb_t b2[1] = { base * base};
+#define b2n 1
+    
+    mp_limb_t b3[2];
+#define b3n 2
+    lmmp_mullh_(b2[0], base, b3);
+    
+    mp_limb_t b4[2];
+#define b4n 2
+    lmmp_mullh_(b2[0], b2[0], b4);
+    
+    mp_limb_t b5[3];
+    b5[2] = lmmp_mul_1_(b5, b4, b4n, base);
+    mp_size_t b5n = b5[2] != 0 ? 3 : 2;
+    
+    mp_limb_t b6[3];
+    lmmp_sqr_basecase_(b6, b3, b3n);
+    mp_size_t b6n = b6[2] != 0 ? 3 : 2;
 
-    bool rsq = true; /* is true mean now sq is result */
+    mp_limb_t b7[4];
+    b7[3] = lmmp_mul_1_(b7, b5, b5n, b2[0]);
+    mp_size_t b7n = 4;
+    while (b7[b7n - 1] == 0) --b7n;
+
     mp_ptr restrict sq = TALLOC_TYPE(rn, mp_limb_t);
     sq[0] = 1;
     rn = 1;
-    int i = 31;
-    while ((exp & (0x3ull << ((i--) * 2))) == 0);
+    int i = 21;
+    while ((exp & (0x7ull << ((i--) * 3))) == 0);
     for (++i; i >= 0; --i) {
-        mp_size_t p = (exp & (0x3ull << (i * 2))) >> (i * 2);
-        mp_srcptr tap = tab[p];
-        mp_size_t tan = (tap[1] != 0) ? 2 : 1;
-        if (rsq) {
-            if (tan >= rn)
-                lmmp_mul_basecase_(dst, tap, tan, sq, rn);
-            else
-                lmmp_mul_basecase_(dst, sq, rn, tap, tan);
-            rn += tan;
-            rn -= (dst[rn - 1] == 0) ? 1 : 0;
-            rsq = false;
-        } else {
-            lmmp_mul_basecase_(sq, dst, rn, tap, tan);
-            rn += tan;
-            rn -= (sq[rn - 1] == 0) ? 1 : 0;
-            rsq = true;
+        mp_size_t p = (exp & (0x7ull << (i * 3))) >> (i * 3);
+        switch (p) {
+            case 0:
+                lmmp_copy(dst, sq, rn);
+                break;
+            case 1:
+                mul_b(1);
+                break;
+            case 2:
+                mul_b(2);
+                break;
+            case 3:
+                mul_b(3);
+                break;
+            case 4:
+                mul_b(4);
+                break;
+            case 5:
+                mul_b(5);
+                break;
+            case 6:
+                mul_b(6);
+                break;
+            case 7:
+                mul_b(7);
+                break;
         }
-
         if (i > 0) {
-            if (rsq) {
-                lmmp_sqr_(dst, sq, rn);
-                rn <<= 1;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-                lmmp_sqr_(sq, dst, rn);
-                rn <<= 1;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-            } else {
-                lmmp_sqr_(sq, dst, rn);
-                rn <<= 1;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-                lmmp_sqr_(dst, sq, rn);
-                rn <<= 1;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-            }
+            lmmp_sqr_(sq, dst, rn);
+            rn <<= 1;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(dst, sq, rn);
+            rn <<= 1;
+            rn -= (dst[rn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(sq, dst, rn);
+            rn <<= 1;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
         }
     }
-    if (rsq)
-        lmmp_copy(dst, sq, rn);
     TEMP_FREE;
     return rn;
+#undef b1n
+#undef b2n
+#undef b3n
+#undef b4n
 }
 
 mp_size_t lmmp_16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base > 0xffffffff);
     TEMP_DECL;
 
+#define b1n 1
+    mp_limb_t b1[1] = { base};
+#define b2n 2
     mp_limb_t b2[2];
     lmmp_mullh_(base, base, b2);
     mp_limb_t b3[3];
-    b3[2] = lmmp_mul_1_(b3, b2, 2, base);
+    b3[2] = lmmp_mul_1_(b3, b2, b2n, base);
     mp_size_t b3n = b3[2] != 0 ? 3 : 2;
 
-    bool rsq = true; /* is true mean now sq is result */
+    mp_limb_t b4[4];
+    lmmp_sqr_basecase_(b4, b2, b2n);
+    mp_size_t b4n = b4[3] != 0 ? 4 : 3;
+
+    mp_limb_t b5[5];
+    b5[b4n] = lmmp_mul_1_(b5, b4, b4n, base);
+    mp_size_t b5n = b4n + 1;
+    b5n -= (b5[b5n - 1] == 0) ? 1 : 0;
+
+    mp_limb_t b6[6];
+    lmmp_sqr_basecase_(b6, b3, b3n);
+    mp_size_t b6n = 2 * b3n;
+    b6n -= (b6[b6n - 1] == 0) ? 1 : 0;
+
+    mp_limb_t b7[7];
+    b7[b6n] = lmmp_mul_1_(b7, b6, b6n, b1[0]);
+    mp_size_t b7n = b6n + 1;
+    b7n -= (b7[b7n - 1] == 0) ? 1 : 0;
+
     mp_ptr restrict sq = TALLOC_TYPE(rn, mp_limb_t);
-    rn = 1;
     sq[0] = 1;
-    int i = 31;
-    while ((exp & (0x3ull << ((i--) * 2))) == 0);
+    rn = 1;
+    int i = 21;
+    while ((exp & (0x7ull << ((i--) * 3))) == 0);
     for (++i; i >= 0; --i) {
-        mp_size_t p = (exp & (0x3ull << (i * 2))) >> (i * 2);
-        if (p == 0) {
-            ;
-        } else if (p == 1) {
-            if (rsq) {
-                sq[rn] = lmmp_mul_1_(sq, sq, rn, base);
-                ++rn;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-            } else {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, base);
-                ++rn;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-            }
-        } else if (p == 2) {
-            if (rsq) {
-                if (2 >= rn)
-                    lmmp_mul_basecase_(dst, b2, 2, sq, rn);
-                else
-                    lmmp_mul_basecase_(dst, sq, rn, b2, 2);
-                rn += 2;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-                rsq = false;
-            } else {
-                lmmp_mul_basecase_(sq, dst, rn, b2, 2);
-                rn += 2;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-                rsq = true;
-            }
-        } else {
-            if (rsq) {
-                if (b3n >= rn)
-                    lmmp_mul_basecase_(dst, b3, b3n, sq, rn);
-                else
-                    lmmp_mul_basecase_(dst, sq, rn, b3, b3n);
-                rn += b3n;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-                rsq = false;
-            } else {
-                lmmp_mul_basecase_(sq, dst, rn, b3, b3n);
-                rn += b3n;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-                rsq = true;
-            }
+        mp_size_t p = (exp & (0x7ull << (i * 3))) >> (i * 3);
+        switch (p) {
+            case 0:
+                lmmp_copy(dst, sq, rn);
+                break;
+            case 1:
+                mul_b(1);
+                break;
+            case 2:
+                mul_b(2);
+                break;
+            case 3:
+                mul_b(3);
+                break;
+            case 4:
+                mul_b(4);
+                break;
+            case 5:
+                mul_b(5);
+                break;
+            case 6:
+                mul_b(6);
+                break;
+            case 7:
+                mul_b(7);
+                break;
         }
         
         if (i > 0) {
-            if (rsq) {
-                lmmp_sqr_(dst, sq, rn);
-                rn <<= 1;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-                lmmp_sqr_(sq, dst, rn);
-                rn <<= 1;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-            } else {
-                lmmp_sqr_(sq, dst, rn);
-                rn <<= 1;
-                rn -= (sq[rn - 1] == 0) ? 1 : 0;
-                lmmp_sqr_(dst, sq, rn);
-                rn <<= 1;
-                rn -= (dst[rn - 1] == 0) ? 1 : 0;
-            }
+            lmmp_sqr_(sq, dst, rn);
+            rn <<= 1;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(dst, sq, rn);
+            rn <<= 1;
+            rn -= (dst[rn - 1] == 0) ? 1 : 0;
+            lmmp_sqr_(sq, dst, rn);
+            rn <<= 1;
+            rn -= (sq[rn - 1] == 0) ? 1 : 0;
         }
     }
-    if (rsq)
-        lmmp_copy(dst, sq, rn);
     TEMP_FREE;
     return rn;
+#undef b1n
+#undef b2n
+#undef mul_b
 }
 
 mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong exp) {
