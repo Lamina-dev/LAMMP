@@ -64,6 +64,8 @@ EXPORTS
 	
 	lmmp_inv_
 
+	lmmp_bninv_
+
 	lmmp_from_str_
 	lmmp_from_str_len_
 	lmmp_to_str_
