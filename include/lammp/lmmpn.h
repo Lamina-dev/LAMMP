@@ -93,6 +93,8 @@
 // 低位除法阈值：低于此规模使用不平衡分治乘法
 #define MULLO_DC_THRESHOLD 11238
 
+#define BNINV_NEWTON_THRESHOLD 20
+
 // 费马变换阈值：低于此规模使用直接乘法而不再进行递归
 #define MUL_FFT_MODF_THRESHOLD 477
 
@@ -910,6 +912,17 @@ void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
  * @param nf 精度因子
  */
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
+
+/**
+ * @brief 精确逆元计算 dstq = B^(2*(na+ni)) div ([numa,na] * B^ni)
+ * @param dstq 输出商的缓冲区，长度至少为na+ni+2
+ * @param numa 输入被除数（长度na）
+ * @param na 被除数的 limb 长度
+ * @param ni 精度因子
+ * @warning na>0, sep(dstq,numa), dstq!=NULL, numa[na-1]!=0
+ * @note 也就是计算 floor( B^(2*na+ni) / ([numa,na] )
+ */
+void lmmp_bninv_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
 /**
  * @brief 乘法逆元除法
