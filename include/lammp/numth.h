@@ -234,7 +234,7 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=0xf, exp>0
+ * @warning 1<=base<=0xf, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
