@@ -123,7 +123,7 @@ void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* stack);
 
 /**
  * @brief LAMMP 全局默认栈重置函数
- * @param size 新的默认栈大小，单位为字节
+ * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈）
  * @warning 请注意，此函数会释放掉当前的默认栈，如果使用的是自定义栈，则将被弃用，
  *          并重新分配一块新的堆内存作为默认栈。且后续的栈将会改为使用新的默认栈。
  *          调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
@@ -286,7 +286,7 @@ void lmmp_free(void* ptr);
 #endif
 
 /**
- * @brief 堆内存分配计数器
+ * @brief 堆内存分配计数器（线程局部）
  * @param cnt 若不为0，则将堆内存计数器置为cnt
  * @return 返回当前的heap分配计数（如果被设置，即返回旧的计数值），即目前未被释放的堆内存数量
  */
@@ -296,6 +296,7 @@ int lmmp_alloc_count(int cnt);
  * @brief 内存泄漏检测器
  * @param file 泄漏发生的文件名
  * @param line 泄漏发生的行号
+ * @warning 内存计数器均是线程局部的，仅会检测单线程的内存泄漏。
  * @note 将会同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
  *       两者同时发生则将输出两者的信息。
  */
@@ -304,6 +305,7 @@ void lmmp_leak_tracker(const char* file, int line);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
 // 同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
 // 两者同时发生则将输出两者的信息。
+// 请注意，内存计数器均是线程局部的，仅会检测单线程的内存泄漏。
 #define lmmp_leak_tracker lmmp_leak_tracker(__FILE__, __LINE__)
 #else
 #define lmmp_leak_tracker ((void)0)
