@@ -12,6 +12,6 @@
 #include "../../include/lammp/impl/prime_table.h"
 
 int main() {
-    test_arith_seqprod();
+    test_bninv();
     return 0;
 }
