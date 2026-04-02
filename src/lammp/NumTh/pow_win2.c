@@ -40,10 +40,10 @@ mp_size_t lmmp_pow_win2_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict b
     new_b(2);
     new_b(3);
 
-    lmmp_sqr_basecase_(b2, b1, b1n);
+    lmmp_sqr_(b2, b1, b1n);
     b2n = b1n << 1;
     b2n -= b2[b2n - 1] == 0 ? 1 : 0;
-    lmmp_mul_basecase_(b3, b2, b2n, b1, b1n);
+    lmmp_mul_(b3, b2, b2n, b1, b1n);
     b3n = b2n + b1n;
     b3n -= b3[b3n - 1] == 0 ? 1 : 0;
 
