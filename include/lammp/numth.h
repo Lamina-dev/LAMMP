@@ -55,8 +55,6 @@
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
 
-#define BINOMIAL_RN_FACMUL_THRESHOLD 10000
-
 #define LOG2_ 0.693147180559945
 
 #ifdef __cplusplus
@@ -207,7 +205,7 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @brief 计算幂次方需要的limb缓冲区长度 base ^ exp
  * @param base 底数
  * @param exp 指数
- * @warning exp>0, base>1
+ * @warning exp>0, base>=1
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
@@ -288,7 +286,7 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param dst 结果指针
  * @param base 底数
  * @param exp 指数
- * @warning base>1, exp>0
+ * @warning base>=1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
