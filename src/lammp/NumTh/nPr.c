@@ -6,11 +6,12 @@
 
 #include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
 
 mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
-    lmmp_param_assert(n <= 0xffff);
+    lmmp_param_assert(n <= MP_USHORT_MAX);
     if (n <= 20) {
         static const ulong factorial[21] = {1,
                                             1,
@@ -55,7 +56,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         ++rn;
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
-    } else if (n <= 0xff) {
+    } else if (n <= MP_UCHAR_MAX) {
         dst[0] = n - r + 1;
         rn = 1;
         ulong t = 0;
@@ -96,7 +97,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
     } else {
-        lmmp_debug_assert(n <= 0xffff);
+        lmmp_debug_assert(n <= MP_USHORT_MAX);
 
         TEMP_DECL;
         uint nfactors = lmmp_prime_size_(n);
@@ -143,7 +144,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
 
 mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
-    lmmp_param_assert(n <= 0xffffffff);
+    lmmp_param_assert(n <= MP_UINT_MAX);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         if (r <= 10 || n >= 0x10000000) {
             dst[0] = 1;
@@ -208,7 +209,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
 
         return mpn;
     } else {
-        lmmp_debug_assert(n <= 0xffffffff);
+        lmmp_debug_assert(n <= MP_UINT_MAX);
 
         TEMP_B_DECL;
         lmmp_prime_int_table_init_(n);
@@ -257,7 +258,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
 mp_size_t lmmp_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        if (n == 0xffffffffffffffff || r <= 3) {
+        if (n == MP_ULONG_MAX || r <= 3) {
             dst[0] = 1;
             rn = 1;
             for (ulong i = n - r + 1; i != 0 && i <= n; ++i) {

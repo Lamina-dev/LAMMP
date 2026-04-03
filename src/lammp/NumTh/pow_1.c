@@ -4,6 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
@@ -241,7 +242,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 
 mp_size_t lmmp_2_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
-    lmmp_param_assert(base <= 0xff);
+    lmmp_param_assert(base <= MP_UCHAR_MAX);
     TEMP_DECL;
     mp_limb_t tab[8];
     tab[0] = 1;
@@ -275,7 +276,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 
 mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
-    lmmp_param_assert(base <= 0xffff);
+    lmmp_param_assert(base <= MP_USHORT_MAX);
     TEMP_DECL;
     mp_limb_t tab[8][2];
     tab[0][0] = 1;
@@ -334,7 +335,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 
 mp_size_t lmmp_8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
-    lmmp_param_assert(base <= 0xffffffff);
+    lmmp_param_assert(base <= MP_UINT_MAX);
     TEMP_DECL;
     mp_limb_t b1[1] = { base};
 #define b1n 1
@@ -416,7 +417,7 @@ mp_size_t lmmp_8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 }
 
 mp_size_t lmmp_16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
-    lmmp_param_assert(base > 0xffffffff);
+    lmmp_param_assert(base > MP_UINT_MAX);
     TEMP_DECL;
 
 #define b1n 1
@@ -514,11 +515,11 @@ mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong e
         lmmp_zero(dst, shw);
         if (base <= (mp_limb_t)0xf)
             rn = lmmp_1_pow_1_(dst + shw, rn - shw, base, exp);
-        else if (base <= (mp_limb_t)0xff)
+        else if (base <= (mp_limb_t)MP_UCHAR_MAX)
             rn = lmmp_2_pow_1_(dst + shw, rn - shw, base, exp);
-        else if (base <= (mp_limb_t)0xffff)
+        else if (base <= (mp_limb_t)MP_USHORT_MAX)
             rn = lmmp_4_pow_1_(dst + shw, rn - shw, base, exp);
-        else if (base <= (mp_limb_t)0xffffffff)
+        else if (base <= (mp_limb_t)MP_UINT_MAX)
             rn = lmmp_8_pow_1_(dst + shw, rn - shw, base, exp);
         else
             rn = lmmp_16_pow_1_(dst + shw, rn - shw, base, exp);

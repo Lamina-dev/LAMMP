@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/mpdef.h"
 
 ulong lmmp_prime_size_(ulong n) {
     if (n <= PRIME_SHORT_TABLE_N) {
@@ -73,20 +74,20 @@ void lmmp_prime_int_table_init_(uint n) {
 #define IS_POSSIBLE(x) ((x) >= 5 && (((x) % 6 == 1) || ((x) % 6 == 5)))
 #define IDX(x) (2 * ((x) / 6) + (((x) % 6 == 5) ? 1 : 0) - 1)
 #define is_prime(_i_) \
-    ((_i_) == 2 || (_i_) == 3 || (IS_POSSIBLE(_i_) && (G.m[IDX(_i_) / ULONG_BITS] >> (IDX(_i_) % ULONG_BITS) & 1)))
-#define set_not_prime(_i_)                                      \
-    do {                                                        \
-        uint idx = IDX(_i_);                                    \
-        G.m[idx / ULONG_BITS] &= ~(1ULL << (idx % ULONG_BITS)); \
+    ((_i_) == 2 || (_i_) == 3 || (IS_POSSIBLE(_i_) && (G.m[IDX(_i_) / MP_LONG_BITS] >> (IDX(_i_) % MP_LONG_BITS) & 1)))
+#define set_not_prime(_i_)                                          \
+    do {                                                            \
+        uint idx = IDX(_i_);                                        \
+        G.m[idx / MP_LONG_BITS] &= ~(1ULL << (idx % MP_LONG_BITS)); \
     } while (0)
 
     if (G.m == NULL) {
         G.N = n;
         uint count = count_possible_primes(n);
-        G.m_size = LMMP_ROUND_UP_MULTIPLE(count, ULONG_BITS) + 1;
+        G.m_size = LMMP_ROUND_UP_MULTIPLE(count, MP_LONG_BITS) + 1;
         G.m = ALLOC_TYPE(G.m_size, ulong);
         for (ulong i = 0; i < G.m_size; ++i) {
-            G.m[i] = (ulong)0xffffffffffffffffULL; 
+            G.m[i] = MP_ULONG_MAX; 
         }
 
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
@@ -107,12 +108,12 @@ void lmmp_prime_int_table_init_(uint n) {
 
     } else {
         uint new_count = count_possible_primes(n);
-        uint new_size = LMMP_ROUND_UP_MULTIPLE(new_count, ULONG_BITS);
+        uint new_size = LMMP_ROUND_UP_MULTIPLE(new_count, MP_LONG_BITS);
         if (new_size == 0)
             new_size = 1;
         G.m = lmmp_realloc(G.m, new_size * sizeof(ulong));
         for (ulong i = G.m_size; i < new_size; ++i) {
-            G.m[i] = (ulong)0xffffffffffffffffULL; 
+            G.m[i] = MP_ULONG_MAX; 
         }
         G.m_size = new_size;
 

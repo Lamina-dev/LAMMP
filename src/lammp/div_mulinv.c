@@ -4,12 +4,13 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni) {
     lmmp_param_assert(na >= ni);
     lmmp_param_assert(ni > 0);
-    lmmp_param_assert(numa[na - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(numa[na - 1] >= LIMB_B_2);
     TEMP_DECL;
     mp_limb_t cy;
     mp_ptr tp = TALLOC_TYPE(ni + 1, mp_limb_t);
@@ -31,16 +32,18 @@ void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni) {
     TEMP_FREE;
 }
 
-mp_limb_t lmmp_div_mulinv_(mp_ptr dstq,
-                           mp_ptr numa,
-                           mp_size_t na,
-                           mp_srcptr numb,
-                           mp_size_t nb,
-                           mp_srcptr invappr,
-                           mp_size_t ni) {
+mp_limb_t lmmp_div_mulinv_(
+    mp_ptr       dstq,
+    mp_ptr       numa,
+    mp_size_t      na,
+    mp_srcptr    numb,
+    mp_size_t      nb,
+    mp_srcptr invappr,
+    mp_size_t      ni
+) {
     lmmp_param_assert(na >= nb && nb >= ni);
     lmmp_param_assert(ni > 0);
-    lmmp_param_assert(numb[nb - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(numb[nb - 1] >= LIMB_B_2);
     mp_size_t nq = na - nb, ntp = LMMP_MIN(ni, nq) + nb;
     mp_limb_t qh;
     TEMP_DECL;

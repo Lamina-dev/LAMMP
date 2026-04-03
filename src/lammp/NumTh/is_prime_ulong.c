@@ -4,11 +4,12 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/numth.h"
-#include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/impl/u128_u192.h"
 #include "../../../include/lammp/impl/is_prime_table.h"
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
 
 /*
 mont63 只能用于小于 2^63 的数，否则会溢出导致计算结果不正确
@@ -108,7 +109,7 @@ static inline uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod) {
 }
 
 ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod) {
-    if (mod <= 0xffffffff)
+    if (mod <= MP_UINT_MAX)
         return lmmp_powmod_uint_(base, exp, mod);
     else if (mod <= MONT63_MAX) {
         ulong R2 = mont63_R2(mod);

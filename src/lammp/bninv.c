@@ -4,6 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
 
 /*
@@ -67,7 +68,7 @@ output:
 static void lmmp_bninv_appr_newton_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp_size_t ni) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(dstq != NULL && numa != NULL);
-    lmmp_param_assert(numa[na - 1] > 0x8000000000000000);
+    lmmp_param_assert(numa[na - 1] > LIMB_B_2);
     if (na == 1) {
         TEMP_DECL;
         mp_ptr restrict bnp = TALLOC_TYPE(3 + ni, mp_limb_t);

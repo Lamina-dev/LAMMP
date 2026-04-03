@@ -4,9 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/matrix.h"
+#include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n, uint m) {
     lmmp_param_assert(dst != NULL);
@@ -72,7 +73,7 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
     } else {
         mp_ptr b;
         mp_size_t bn;
-        if (x + n * m <= 0xffff) {
+        if (x + n * m <= MP_USHORT_MAX) {
             TEMP_B_DECL;
             mp_size_t tn = (n + 4) / 4;
             mp_limb_t* restrict t = BALLOC_TYPE(tn, mp_limb_t);
