@@ -78,9 +78,6 @@ typedef int32_t* sintp;
 typedef uint64_t* ulongp;
 typedef int64_t* slongp;
 
-#define ULONG_BITS 64
-#define SLONG_BITS 64
-
 #ifndef INLINE_
 #define INLINE_ static inline
 #endif // INLINE_
@@ -243,7 +240,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=0xff, exp>0
+ * @warning 0<base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -254,7 +251,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=0xffff, exp>0
+ * @warning 0<base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -265,7 +262,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=2^32-1, exp>0
+ * @warning 0<base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -380,9 +377,11 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  */
 INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_debug_assert(n >= r);
-    if (n <= 0xffff) 
+#define LMMP_NPR_SHORT_LIMIT 0xffff
+#define LMMP_NPR_INT_LIMIT 0xffffffff
+    if (n <= LMMP_NPR_SHORT_LIMIT) 
         return lmmp_nPr_short_(dst, rn, n, r);
-    else if (n <= 0xffffffff)
+    else if (n <= LMMP_NPR_INT_LIMIT)
         return lmmp_nPr_int_(dst, rn, n, r);
     else
         return lmmp_nPr_long_(dst, rn, n, r);
@@ -420,10 +419,12 @@ mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
-    if (n <= 0xffff) 
+    if (n <= LMMP_NPR_SHORT_LIMIT)
         return lmmp_nPr_short_(dst, rn, n, n);
     else
         return lmmp_factorial_int_(dst, rn, n);
+#undef LMMP_NPR_SHORT_LIMIT
+#undef LMMP_NPR_INT_LIMIT
 }
 
 /**
@@ -472,10 +473,12 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  */
 INLINE_ mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     lmmp_debug_assert(r <= (n / 2));
-    if (n <= 0xffff) 
+#define LMMP_NCR_SHORT_LIMIT 0xffff
+    if (n <= LMMP_NCR_SHORT_LIMIT)
         return lmmp_nCr_short_(dst, rn, n, r);
     else
         return lmmp_nCr_int_(dst, rn, n, r);
+#undef LMMP_NCR_SHORT_LIMIT
 }
 
 /**
