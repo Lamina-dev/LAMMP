@@ -144,6 +144,7 @@ INLINE_ void pcg64_le_seq_init(pcg64_le_seq_t* rng, mp_size_t i, mp_limb_t seed)
 #define PRIME64_1 0xC2B2AE3D27D4EB4FULL
 #define PRIME64_2 0x165667B19E3779F9ULL
 #define PRIME64_3 0x85EBCA77C2B2AE63ULL
+#define PRIME64_4 0x27D4EB2F165667C5ULL
 
     mp_limb_t s0, s1, s2, s3;
 
@@ -162,15 +163,16 @@ INLINE_ void pcg64_le_seq_init(pcg64_le_seq_t* rng, mp_size_t i, mp_limb_t seed)
         rng->state[i + 3] = lmmp_seed_generator(s3 ^ rotl(s3, 33));
     }
     for (; i < rng->k; i++) {
-        s0 = rotl(seed + i, 41);
-        s0 *= PRIME64_0;
-        rng->state[i] = lmmp_seed_generator(s0 ^ rotl(s0, 17));
+        s0 = rotl(seed + i, 31);
+        s0 *= PRIME64_4;
+        rng->state[i] = lmmp_seed_generator(s0 ^ rotl(s0, 27));
     }
 
 #undef PRIME64_0
 #undef PRIME64_1
 #undef PRIME64_2
 #undef PRIME64_3
+#undef PRIME64_4
 }
 
 INLINE_ mp_limb_t pcg64_le_action(mp_limb_t* restrict state) {
