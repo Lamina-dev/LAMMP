@@ -4,6 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
 
 // round(sqrt(2^25/(i+128+1/2)))-256
@@ -30,12 +31,11 @@ static const mp_byte_t lmmp_invsqrt_table_[] = {
     0x06, 0x06, 0x05, 0x05, 0x05, 0x04, 0x04, 0x04, 0x04, 0x03, 0x03, 0x03, 0x03, 0x02, 0x02, 0x02, 0x02, 0x01, 0x01,
     0x01, 0x01, 0x00, 0x00};
 
-#define B_4 (1ull << 62)  // B/4
 
 //[dsts,1]=floor(sqrt(x)), return remainder
 // need(x>=B/4)
 static mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x) {
-    lmmp_param_assert(x >= B_4);
+    lmmp_param_assert(x >= LIMB_B_4);
     mp_limb_t v, xh = x >> 24, s, s2;
     mp_slimb_t t;
 
@@ -67,7 +67,7 @@ static mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x) {
 //[dsts,1]=floor(sqrt([numa,2])), rh:[dstr,1]=remainder, return rh
 // need(numa[1]>=B/4)
 static mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
-    lmmp_param_assert(numa[1] >= B_4);
+    lmmp_param_assert(numa[1] >= LIMB_B_4);
     mp_limb_t rl, s, q, al, u;
     mp_slimb_t rh;
 
@@ -106,7 +106,7 @@ static mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
 static mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int nsh) {
     lmmp_param_assert(ns > 0);
     lmmp_param_assert(nsh >= 0 && nsh < LIMB_BITS);
-    lmmp_param_assert(numa[2 * ns - 1] >= B_4);
+    lmmp_param_assert(numa[2 * ns - 1] >= LIMB_B_4);
     mp_slimb_t rh;
     if (ns == 1) {
         rh = lmmp_sqrt_2_(dsts, numa, numa);
@@ -146,7 +146,7 @@ static mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int n
 static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
     lmmp_param_assert(ns >= 3);
     lmmp_param_assert(na > 0);
-    lmmp_param_assert(numa[na - 1] >= B_4);
+    lmmp_param_assert(numa[na - 1] >= LIMB_B_4);
     mp_size_t nr = ns, namax = na, mn;
     mp_size_t sizes[LIMB_BITS], *sizp = sizes;
 

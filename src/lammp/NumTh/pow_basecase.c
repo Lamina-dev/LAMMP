@@ -4,6 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
@@ -74,7 +75,7 @@ mp_size_t lmmp_pow_basecase_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restri
             exp <<= lz;
         }
     }
-    lmmp_debug_assert(exp == 0x8000000000000000ull);
+    lmmp_debug_assert(exp == LIMB_B_2);
 
     mul_b(1);
     
