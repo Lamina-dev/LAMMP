@@ -34,9 +34,6 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数，二项式、多项式系数计算中，大于此阈值的质数幂将使用快速幂算法
-#define PERMUTATION_PRIME_POW_THRESHOLD 32
-
 // 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
 #define PERMUTATION_MUL_MAX_THRESHOLD 20
 
