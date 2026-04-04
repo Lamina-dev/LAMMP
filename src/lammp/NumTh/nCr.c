@@ -6,11 +6,12 @@
 
 #include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_nCr_short_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
-    lmmp_param_assert(n <= 0xffff);
+    lmmp_param_assert(n <= MP_USHORT_MAX);
     lmmp_param_assert(r <= n / 2);
     if (r <= 20) {
         rn = lmmp_nPr_short_(dst, rn, n, r);
