@@ -37,6 +37,6 @@
 // B / 2
 #define LIMB_B_2 (0x8000000000000000ull)
 // B / 4
-#define LIMB_B_4 (0x40000000000000000ull)
+#define LIMB_B_4 (0x4000000000000000ull)
 
 #endif // __LAMMP_MPDEF_H__
