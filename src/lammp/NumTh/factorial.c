@@ -4,9 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/heap.h"
-#include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/factors_mul.h"
+#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/mpdef.h"
+#include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
@@ -24,7 +25,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         rn = 1;
         for (uint i = 0; i < nfactors; i++) {
             ulong f = fac[i].f;
-            lmmp_debug_assert(f < 0xffff);
+            lmmp_debug_assert(f < MP_USHORT_MAX);
             if (fac[i].j == 1) {
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, f);
                 ++rn;
@@ -98,7 +99,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
             } 
             if (fac[i].j & 1) {
                 ulongt *= fac[i].f;
-                if (ulongt >= 0xffffffff) {
+                if (ulongt >= MP_UINT_MAX) {
                     mp[mpn] = lmmp_mul_1_(mp, mp, mpn, ulongt);
                     ulongt = 1;
                     ++mpn;

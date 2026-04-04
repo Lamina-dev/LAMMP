@@ -149,10 +149,10 @@ typedef enum {
  * @brief LAMMP 全局退出函数指针类型
  * @param type 退出类型（可以查看lmmp_abort函数对此参数的说明，这里不再重复）
  * @param msg 退出信息，取决于type
- * @param file 退出处的文件名
+ * @param func 退出处的函数名
  * @param line 退出处的行号
  */
-typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* file, int line);
+typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* func, int line);
 
 /**
  * @brief 设置 LAMMP 全局退出函数
@@ -166,7 +166,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
 /**
  * @brief LAMMP 全局退出函数，内部错误或断言失败时调用，若设置了全局退出函数，则会调用该函数，否则会调用默认的退出函数。
  * @param msg 退出信息，assert类型的错误信息通常仅包含断言内容，其他类型的错误则因类型不同而不同。
- * @param file 退出处的文件名
+ * @param func 退出处的函数名
  * @param line 退出处的行号
  * @param type 退出类型。有以下几个类型：
  *
@@ -209,7 +209,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *          abort 函数中断程序。自定义全局退出函数请通过 lmmp_set_abort_fn 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
-void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line);
+void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line);
 
 
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
@@ -248,8 +248,8 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
 // ============================内存管理相关函数=============================
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_alloc(size_t size, const char* file, int line);
-#define lmmp_alloc(size) lmmp_alloc(size, __FILE__, __LINE__)
+void* lmmp_alloc(size_t size, const char* func, int line);
+#define lmmp_alloc(size) lmmp_alloc(size, __func__, __LINE__)
 #else
 /**
  * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
@@ -261,8 +261,8 @@ void* lmmp_alloc(size_t size);
 #endif 
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_realloc(void* ptr, size_t size, const char* file, int line);
-#define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __FILE__, __LINE__)
+void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
+#define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __func__, __LINE__)
 #else
 /**
  * @brief 内存重分配函数（调用lmmp_realloc_fn）
@@ -275,8 +275,8 @@ void* lmmp_realloc(void* ptr, size_t size);
 #endif 
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void lmmp_free(void* ptr, const char* file, int line);
-#define lmmp_free(ptr) lmmp_free(ptr, __FILE__, __LINE__)
+void lmmp_free(void* ptr, const char* func, int line);
+#define lmmp_free(ptr) lmmp_free(ptr, __func__, __LINE__)
 #else
 /**
  * @brief 内存释放函数（调用lmmp_heap_free_fn）
@@ -294,26 +294,26 @@ int lmmp_alloc_count(int cnt);
 
 /**
  * @brief 内存泄漏检测器
- * @param file 泄漏发生的文件名
+ * @param func 泄漏发生的函数名
  * @param line 泄漏发生的行号
  * @warning 内存计数器均是线程局部的，仅会检测单线程的内存泄漏。
  * @note 将会同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
  *       两者同时发生则将输出两者的信息。
  */
-void lmmp_leak_tracker(const char* file, int line);
+void lmmp_leak_tracker(const char* func, int line);
 
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
 // 同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
 // 两者同时发生则将输出两者的信息。
 // 请注意，内存计数器均是线程局部的，仅会检测单线程的内存泄漏。
-#define lmmp_leak_tracker lmmp_leak_tracker(__FILE__, __LINE__)
+#define lmmp_leak_tracker lmmp_leak_tracker(__func__, __LINE__)
 #else
 #define lmmp_leak_tracker ((void)0)
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_stack_alloc(size_t size, const char* file, int line);
-#define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __FILE__, __LINE__)
+void* lmmp_stack_alloc(size_t size, const char* func, int line);
+#define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __func__, __LINE__)
 #else
 /**
  * @brief 栈内存分配函数（使用stack_get_top和stack_set_top）
@@ -326,8 +326,8 @@ void* lmmp_stack_alloc(size_t size);
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void lmmp_stack_free(void* ptr, const char* file, int line);
-#define lmmp_stack_free(ptr) lmmp_stack_free(ptr, __FILE__, __LINE__)
+void lmmp_stack_free(void* ptr, const char* func, int line);
+#define lmmp_stack_free(ptr) lmmp_stack_free(ptr, __func__, __LINE__)
 #else
 /**
  * @brief 栈内存释放函数（使用stack_get_top和stack_set_top）
@@ -436,7 +436,7 @@ void lmmp_temp_stack_free_(void* marker);
 #define lmmp_assert(x)                                                      \
     do {                                                                    \
         if (!(x)) {                                                         \
-            lmmp_abort(LAMMP_ERROR_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+            lmmp_abort(LAMMP_ERROR_ASSERT_FAILURE, #x, __func__, __LINE__); \
         }                                                                   \
     } while (0)
 
@@ -445,7 +445,7 @@ void lmmp_temp_stack_free_(void* marker);
 #define lmmp_debug_assert(x)                                                      \
     do {                                                                          \
         if (!(x)) {                                                               \
-            lmmp_abort(LAMMP_ERROR_DEBUG_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+            lmmp_abort(LAMMP_ERROR_DEBUG_ASSERT_FAILURE, #x, __func__, __LINE__); \
         }                                                                         \
     } while (0)
 #else
@@ -457,7 +457,7 @@ void lmmp_temp_stack_free_(void* marker);
 #define lmmp_param_assert(x)                                                      \
     do {                                                                          \
         if (!(x)) {                                                               \
-            lmmp_abort(LAMMP_ERROR_PARAM_ASSERT_FAILURE, #x, __FILE__, __LINE__); \
+            lmmp_abort(LAMMP_ERROR_PARAM_ASSERT_FAILURE, #x, __func__, __LINE__); \
         }                                                                         \
     } while (0)
 #else

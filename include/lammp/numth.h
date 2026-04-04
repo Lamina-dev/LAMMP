@@ -34,9 +34,6 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数，二项式、多项式系数计算中，大于此阈值的质数幂将使用快速幂算法
-#define PERMUTATION_PRIME_POW_THRESHOLD 32
-
 // 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
 #define PERMUTATION_MUL_MAX_THRESHOLD 20
 
@@ -54,8 +51,6 @@
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
-
-#define BINOMIAL_RN_FACMUL_THRESHOLD 10000
 
 #define LOG2_ 0.693147180559945
 
@@ -79,9 +74,6 @@ typedef uint32_t* uintp;
 typedef int32_t* sintp;
 typedef uint64_t* ulongp;
 typedef int64_t* slongp;
-
-#define ULONG_BITS 64
-#define SLONG_BITS 64
 
 #ifndef INLINE_
 #define INLINE_ static inline
@@ -207,7 +199,7 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @brief 计算幂次方需要的limb缓冲区长度 base ^ exp
  * @param base 底数
  * @param exp 指数
- * @warning exp>0, base>1
+ * @warning exp>0, base>=1
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
@@ -245,7 +237,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=0xff, exp>0
+ * @warning 0<base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -256,7 +248,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=0xffff, exp>0
+ * @warning 0<base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -267,7 +259,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param rn 结果 limb 长度
  * @param base 底数
  * @param exp 指数
- * @warning base<=2^32-1, exp>0
+ * @warning 0<base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
@@ -288,7 +280,7 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @param dst 结果指针
  * @param base 底数
  * @param exp 指数
- * @warning base>1, exp>0
+ * @warning base>=1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
 mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
@@ -382,9 +374,11 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  */
 INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_debug_assert(n >= r);
-    if (n <= 0xffff) 
+#define LMMP_NPR_SHORT_LIMIT 0xffff
+#define LMMP_NPR_INT_LIMIT 0xffffffff
+    if (n <= LMMP_NPR_SHORT_LIMIT) 
         return lmmp_nPr_short_(dst, rn, n, r);
-    else if (n <= 0xffffffff)
+    else if (n <= LMMP_NPR_INT_LIMIT)
         return lmmp_nPr_int_(dst, rn, n, r);
     else
         return lmmp_nPr_long_(dst, rn, n, r);
@@ -422,10 +416,12 @@ mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
  * @return 返回 dst 的实际 limb 长度
  */
 INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
-    if (n <= 0xffff) 
+    if (n <= LMMP_NPR_SHORT_LIMIT)
         return lmmp_nPr_short_(dst, rn, n, n);
     else
         return lmmp_factorial_int_(dst, rn, n);
+#undef LMMP_NPR_SHORT_LIMIT
+#undef LMMP_NPR_INT_LIMIT
 }
 
 /**
@@ -474,10 +470,12 @@ mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  */
 INLINE_ mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
     lmmp_debug_assert(r <= (n / 2));
-    if (n <= 0xffff) 
+#define LMMP_NCR_SHORT_LIMIT 0xffff
+    if (n <= LMMP_NCR_SHORT_LIMIT)
         return lmmp_nCr_short_(dst, rn, n, r);
     else
         return lmmp_nCr_int_(dst, rn, n, r);
+#undef LMMP_NCR_SHORT_LIMIT
 }
 
 /**

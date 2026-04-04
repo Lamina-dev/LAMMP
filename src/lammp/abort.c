@@ -39,11 +39,11 @@ static const char* type_to_str(lmmp_error_t type) {
     }
 }
 
-void lmmp_abort(lmmp_error_t type, const char* msg, const char* file, int line) {
+void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line) {
     if (lmmp_abort_func != NULL) {
-        lmmp_abort_func(type, msg, file, line);
+        lmmp_abort_func(type, msg, func, line);
     } else {
-        fprintf(stderr, "LAMMP abort at %s:%d\n", file, line);
+        fprintf(stderr, "LAMMP abort at [%s]:%d\n", func, line);
         fprintf(stderr, "Abort type: %s, abort msg: \n%s\n", type_to_str(type), msg);
         fflush(stderr);
         abort();

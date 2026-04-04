@@ -8,7 +8,13 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/matrix.h"
 
-int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_size_t* tn, mp_size_t* maxa) {
+int lmmp_mat22_mul_size_(
+          lmmp_mat22_t*  dst, 
+    const lmmp_mat22_t* matA, 
+    const lmmp_mat22_t* matB, 
+             mp_size_t*   tn, 
+             mp_size_t* maxa
+) {
     lmmp_param_assert(matA!= NULL && matB!= NULL && dst!= NULL);
     lmmp_param_assert(tn != NULL);
     if (matA == matB) {
@@ -72,11 +78,13 @@ int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp
     }
 }
 
-void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst,
-                              const lmmp_mat22_t* matA,
-                              const lmmp_mat22_t* matB,
-                              mp_ptr tp,
-                              mp_size_t tn) {
+void lmmp_mat22_mul_basecase_(
+          lmmp_mat22_t*  dst,
+    const lmmp_mat22_t* matA,
+    const lmmp_mat22_t* matB,
+                mp_ptr    tp,
+             mp_size_t    tn
+) {
     lmmp_param_assert(matA != NULL && matB != NULL && dst != NULL);
     lmmp_param_assert(tn > 0);
     if (matA == matB) {
@@ -106,10 +114,12 @@ void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst,
     TEMP_FREE;
 }
 
-void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst,
-                              const lmmp_mat22_t* matA,
-                              mp_ptr tp,
-                              mp_size_t tn) {
+void lmmp_mat22_sqr_basecase_(
+          lmmp_mat22_t*  dst,
+    const lmmp_mat22_t* matA,
+                mp_ptr    tp,
+             mp_size_t    tn
+) {
     TEMP_DECL;
     if (tp == NULL)
         tp = TALLOC_TYPE(tn * 2, mp_limb_t);
@@ -133,8 +143,60 @@ void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst,
     TEMP_FREE;
 }
 
-void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, 
-                              mp_ptr tp, mp_size_t tn, mp_size_t maxa) {
+/*
+ * Strassen 2x2 矩阵乘法的 Winograd 变体
+ *
+ * 输入矩阵：
+ *   A = | A11  A12 |
+ *       | A21  A22 |
+ *   B = | B11  B12 |
+ *       | B21  B22 |
+ *
+ * 输出矩阵 C = A * B：
+ *   C = | C11  C12 |
+ *       | C21  C22 |
+ *
+ *
+ *   s1 = A22 + A12
+ *   s2 = A22 - A21
+ *   s3 = s2  + A12 = A22 - A21 + A12
+ *   s4 = s3  - A11 = A22 - A21 + A12 - A11
+ *
+ *   t1 = B22 + B12
+ *   t2 = B22 - B21
+ *   t3 = t2  + B12 = B22 - B21 + B12
+ *   t4 = t3  - B11 = B22 - B21 + B12 - B11
+ *
+ * 7 个 Strassen 乘积项
+ *   p1 = s1  * t1   = (A22 + A12      ) * (B22 + B12      )
+ *   p2 = s2  * t2   = (A22 - A21      ) * (B22 - B21      )
+ *   p3 = s3  * t3   = (A22 - A21 + A12) * (B22 - B21 + B12)
+ *   p4 = A11 * B11
+ *   p5 = A12 * B21
+ *   p6 = s4  * B12
+ *   p7 = A21 * t4
+ *
+ *   U1 = p3 + p5
+ *   U2 = p1 - U1
+ *   U3 = U1 - p2
+ *
+ * result:
+ *   C11 = p4 + p5
+ *   C12 = U3 - p6
+ *   C21 = U2 - p7
+ *   C22 = p2 + U2
+ *
+ * 平方版本（A*A）：所有乘法替换为平方/自身相乘，流程一致。
+ */
+
+void lmmp_mat22_mul_strassen_(
+          lmmp_mat22_t*  dst, 
+    const lmmp_mat22_t* matA, 
+    const lmmp_mat22_t* matB, 
+                mp_ptr    tp, 
+             mp_size_t    tn, 
+             mp_size_t  maxa
+) {
     lmmp_param_assert(matA != NULL && matB != NULL && dst != NULL);
     lmmp_param_assert(tn > 0 && maxa > 0);
     if (matA == matB) {
