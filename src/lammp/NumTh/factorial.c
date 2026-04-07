@@ -8,8 +8,10 @@
 #include "../../../include/lammp/impl/heap.h"
 #include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
 
 #define MUL(dst, ap, an, bp, bn)        \
     if (an >= bn)                       \
@@ -96,7 +98,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
             if (fac[i].j > 1) {
                 new_fac[new_nfactors].f = fac[i].f;
                 new_fac[new_nfactors++].j = fac[i].j >> 1;
-            } 
+            }
             if (fac[i].j & 1) {
                 ulongt *= fac[i].f;
                 if (ulongt >= MP_UINT_MAX) {
@@ -141,7 +143,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
             tn <<= 1;
             tn -= tp2[tn - 1] == 0;
 
-            MUL(dst, mp, mpn, tp2, tn);
+            MUL(dst, tp2, tn, mp, mpn);
             rn = tn + mpn;
             rn -= dst[rn - 1] == 0;
         } else {
