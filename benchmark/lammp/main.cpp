@@ -5,6 +5,7 @@
 
 
 int main() {
-    std::cout << bench_factorial(10000000) << std::endl;
+    lmmp_stack_init();
+    std::cout << bench_factorial(1000000) << std::endl;
     return 0;
 }

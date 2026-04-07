@@ -12,6 +12,6 @@
 #include "../../include/lammp/impl/prime_table.h"
 
 int main() {
-    test_bninv();
+    test_mullo();
     return 0;
 }

@@ -7,16 +7,17 @@
 #include "../include/test_short.hpp"
 #include <chrono>
 
-void test_gcd() {
-    TEMP_DECL;
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
+void test_gcd() {
+    lmmp_stack_init();
     mp_size_t an = 1, bn = 1, cn = 1;
 
-    mp_ptr a = TALLOC_TYPE(an, mp_limb_t);
-    mp_ptr b = TALLOC_TYPE(bn, mp_limb_t);
-    mp_ptr _a = TALLOC_TYPE(an + cn, mp_limb_t);
-    mp_ptr _b = TALLOC_TYPE(bn + cn, mp_limb_t);
-    mp_ptr c = TALLOC_TYPE(cn, mp_limb_t);
+    mp_ptr a = ALLOC_TYPE(an, mp_limb_t);
+    mp_ptr b = ALLOC_TYPE(bn, mp_limb_t);
+    mp_ptr _a = ALLOC_TYPE(an + cn, mp_limb_t);
+    mp_ptr _b = ALLOC_TYPE(bn + cn, mp_limb_t);
+    mp_ptr c = ALLOC_TYPE(cn, mp_limb_t);
 
     lmmp_global_rng_init_(22212313, 1);
     lmmp_random_(a, an);
@@ -32,7 +33,7 @@ void test_gcd() {
     bn -= _b[bn - 1] == 0 ? 1 : 0;
 
     mp_size_t rn1 = LMMP_MIN(an, bn);
-    mp_ptr dst1 = TALLOC_TYPE(rn1, mp_limb_t);
+    mp_ptr dst1 = ALLOC_TYPE(rn1, mp_limb_t);
     auto start = std::chrono::high_resolution_clock::now();
     rn1 = lmmp_gcd_basecase_(dst1, _a, an, _b, bn);
     auto end = std::chrono::high_resolution_clock::now();
@@ -40,7 +41,7 @@ void test_gcd() {
     std::cout << "gcd_basecase time: " << duration.count() << " microseconds" << std::endl;
 
     mp_size_t rn2 = LMMP_MIN(an, bn);
-    mp_ptr dst2 = TALLOC_TYPE(rn2, mp_limb_t);
+    mp_ptr dst2 = ALLOC_TYPE(rn2, mp_limb_t);
     start = std::chrono::high_resolution_clock::now();
     rn2 = lmmp_gcd_lehmer_(dst2, _a, an, _b, bn);
     end = std::chrono::high_resolution_clock::now();
@@ -55,9 +56,15 @@ void test_gcd() {
     for (mp_size_t i = 0; i < rn1; i++) {
         if (dst1[i] != dst2[i]) {
             std::cout << "Error: gcd_basecase and gcd_lehmer return different results" << std::endl;
-            break;
+            goto end;
         }
     }
-
-    TEMP_FREE;
+    end:
+    lmmp_free(a);
+    lmmp_free(b);
+    lmmp_free(_a);
+    lmmp_free(_b);
+    lmmp_free(c);
+    lmmp_free(dst1);
+    lmmp_free(dst2);
 }
