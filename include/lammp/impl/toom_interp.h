@@ -19,6 +19,7 @@
 #ifndef __LAMMP_TOOM_INTERP_H__
 #define __LAMMP_TOOM_INTERP_H__
 
+#include "tmp_alloc.h"
 #include "../lmmpn.h"
 
 enum toom6_flags { toom6_all_pos = 0, toom6_vm1_neg = 1, toom6_vm2_neg = 2 };

@@ -18,7 +18,9 @@
 
 #ifndef __LAMMP_HEAP_H__
 #define __LAMMP_HEAP_H__
+
 #include "../lmmpn.h"
+#include "tmp_alloc.h"
 
 #ifndef INLINE_
 #define INLINE_ static inline
