@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/impl/tmp_alloc.h"
 
 typedef struct {
     slong m11, m12;

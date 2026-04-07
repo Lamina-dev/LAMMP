@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/mpdef.h"
+#include "../../../include/lammp/impl/tmp_alloc.h"
 
 ulong lmmp_prime_size_(ulong n) {
     if (n <= PRIME_SHORT_TABLE_N) {

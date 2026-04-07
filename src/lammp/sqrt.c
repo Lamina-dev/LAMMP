@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/mpdef.h"
+#include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
 // round(sqrt(2^25/(i+128+1/2)))-256
