@@ -4,9 +4,12 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../include/test_short.hpp"
-#include <random>
 #include <chrono>
+#include <random>
+
+#include "../include/test_short.hpp"
+
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_rand() {
 

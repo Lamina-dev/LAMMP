@@ -8,20 +8,20 @@
 #include "../include/test_short.hpp"
 
 mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
-    TEMP_DECL;
-
+    
     mp_size_t tn = lmmp_nPr_size_(n, r);
-    mp_ptr t = TALLOC_TYPE(tn, mp_limb_t);
+    mp_ptr t = (mp_ptr)lmmp_alloc(tn * sizeof(mp_limb_t));
 
     tn = lmmp_nPr_(t, tn, n, r);
 
     mp_size_t prn = lmmp_nPr_size_(r, r);
-    mp_ptr pr = TALLOC_TYPE(prn, mp_limb_t);
+    mp_ptr pr = (mp_ptr)lmmp_alloc(prn * sizeof(mp_limb_t));
 
     prn = lmmp_factorial_(pr, prn, r);
 
     lmmp_div_(dst, NULL, t, tn, pr, prn);
-    TEMP_FREE;
+    lmmp_free(t);
+    lmmp_free(pr);
     rn = tn - prn + 1;
     while (dst[rn - 1] == 0) {
         --rn;
@@ -29,7 +29,10 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     return rn;
 }
 
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
+
 void test_bino() {
+    lmmp_stack_init();
     size_t n = 0x872f, r = n / 3;
     size_t len = lmmp_nCr_size_(n, r);
     std::cout << "len = " << len << std::endl;

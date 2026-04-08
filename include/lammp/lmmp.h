@@ -92,13 +92,6 @@ typedef struct {
     lmmp_realloc_fn realloc;
 } lmmp_heap_alloctor_t;
 
-typedef struct {
-    void* begin;
-    void* end;
-    lmmp_stack_get_top_fn get;
-    lmmp_stack_set_top_fn set;
-} lmmp_stack_alloctor_t;
-
 #define LAMMP_DEFAULT_STACK_SIZE 256 * 1024  // 默认全局栈大小，单位为字节
 
 /**
@@ -107,32 +100,29 @@ typedef struct {
  * @warning 由于默认栈采用堆内存的模拟，因此，传入新的堆分配器将导致默认栈被清空，
  *          同时，为保证内存不泄露，在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对堆栈分配器进行检查。
  *          若此时堆栈分配计数器不为 0，则会触发lmmp_abort函数，并输出相应的错误信息。
- * @note 自行保证分配器和释放器相匹配，
- * @return 之前的堆内存分配函数
+ * @note 自行保证分配器和释放器相匹配。
  */
 void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
 
 /**
- * @brief 设置 LAMMP 全局栈分配器
- * @param stack 新的栈分配器，可以为NULL，表示使用默认的堆栈分配器
- * @note 默认栈分配器的内存地址是从低地址到高地址，因此，如果需要使用自定义栈，请自行保证，
- *       若传入的分配器的内存地址是从高地址到低地址，则行为等价于传入 NULL。
- * @warning 请注意，出于对性能的考虑，此函数不会释放掉当前的默认栈。
+ * @brief LAMMP 全局栈重置函数
+ * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈）
+ * @warning 请注意调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
+ *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
+ *          若默认栈不为空，则会触发lmmp_abort函数。栈为空时，或者无法确定栈是否初始化，
+ *          均可以调用此函数，如果设置的大小比此前的大小小，则会直接返回，否则，会重新分
+ *          配一块新的栈内存。同时，为保证内存不泄露，请自行确保调用此函数时，栈为空。
+ *          在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对栈进行检查。若此时栈不为空，
+ *          则会触发lmmp_abort函数。
+ * @note 当 size 为 0 时，将会释放栈，如果此后再使用栈内存。
  */
-void lmmp_set_stack_alloctor(const lmmp_stack_alloctor_t* stack);
+void lmmp_stack_reset(size_t size);
 
 /**
- * @brief LAMMP 全局默认栈重置函数
- * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈）
- * @warning 请注意，此函数会释放掉当前的默认栈，如果使用的是自定义栈，则将被弃用，
- *          并重新分配一块新的堆内存作为默认栈。且后续的栈将会改为使用新的默认栈。
- *          调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
- *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
- *          若默认栈不为空，则会触发lmmp_abort函数。
- * @note 当 size 为 0 时，将会释放调用默认栈，如果此后再使用默认栈内存，将会重新申请一块大小为
- *        LAMMP_DEFAULT_STACK_SIZE 的堆内存作为默认栈。
+ * @brief LAMMP 全局栈初始化函数
+ * @note 按照默认的栈大小，对栈进行初始化，若栈已经初始化，则不进行任何操作。
  */
-void lmmp_default_stack_reset(size_t size);
+void lmmp_stack_init(void);
 
 typedef enum {
     LAMMP_ERROR_ASSERT_FAILURE = 1,
@@ -199,9 +189,9 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *
  *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出，有两种情况，一种情况为堆内存计数器不为0，另一种情况为当前栈帧
  *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_MEMORY_LEAK 宏为 1，才会触发。通常情况下，此错误需要手动调用
- *             lmmp_leak_tracker宏进行检查，但在调用堆栈分配器重置时，也将会检查此时的堆计数器是否为0，栈是否为空，若不满足，
- *             触发此错误。特别注意，当手动调用检查宏时，在某些情况下，可能会进行一些全局堆资源的初始化，但未释放，如想正确计数，
- *             请先调用 lmmp_global_deinit 进行全局共享的堆资源的安全释放。
+ *             lmmp_leak_tracker宏进行检查。但在调用堆分配器重置时，将会显式检查此时的堆计数器是否为0；在进行栈重置时，会显式检
+ *             查栈是否为空，若不满足，触发此错误。特别注意，当手动调用检查宏时，在某些情况下，可能会进行一些全局堆资源的初始化，
+ *             但未释放，如想正确计数，请先调用 lmmp_global_deinit 进行全局共享的堆资源的安全释放。
  *
  *        8. UNEXPECTED_ERROR （枚举值为8）为其他未知错误导致的退出。
  *
@@ -230,7 +220,13 @@ typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操
 #define LLIMB_BYTES 4
 #define LLIMB_MASK ((mp_limb_t)0xffffffff)
 
+#if defined(__GNUC__) || defined(__clang__)
+#define THREAD_LOCAL __attribute__((section(".tls$"), used))
+#elif defined(_MSC_VER)
+#define THREAD_LOCAL __declspec(thread)
+#else
 #define THREAD_LOCAL _Thread_local
+#endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
 #define STATIC_ASSERT _Static_assert
@@ -354,75 +350,6 @@ void lmmp_stack_free(void* ptr);
 #define LMMP_POW2_Q(n) (((n) & ((n) - 1)) == 0)
 // 将a向上取整为m的整数倍
 #define LMMP_ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
-
-/**
- * @brief 临时堆内存分配函数
- * @param pmarker 标记
- * @param size 要分配的内存字节数
- */
-void* lmmp_temp_heap_alloc_(void** pmarker, size_t size);
-
-/**
- * @brief 临时栈内存分配函数
- * @param pmarker 标记
- * @param size 要分配的内存字节数
- */
-void* lmmp_temp_stack_alloc_(void** pmarker, size_t size);
-
-/**
- * @brief 临时堆内存释放函数
- * @param marker 要释放的临时内存标记
- */
-void lmmp_temp_heap_free_(void* marker);
-
-/**
- * @brief 临时栈内存释放函数
- * @param marker 要释放的临时内存标记
- */
-void lmmp_temp_stack_free_(void* marker);
-
-// 临时内存标记声明：用于跟踪临时内存分配
-#define TEMP_DECL void *lmmp_temp_alloc_marker_ = NULL, *lmmp_temp_stack_marker_ = NULL
-#define TEMP_B_DECL void *lmmp_temp_alloc_marker_ = NULL
-#define TEMP_S_DECL void *lmmp_temp_stack_marker_ = NULL
-
-#define TEMP_SALLOC_THRESHOLD 0x7f00  // 小内存分配阈值（小于等于该值的内存分配在栈上）
-
-// 栈内存分配：使用lmmp_temp_stack_alloc_在栈上分配n字节内存（小内存）
-#define TEMP_SALLOC(n) lmmp_temp_stack_alloc_(&lmmp_temp_stack_marker_, (n))
-// 堆内存分配：使用lmmp_temp_heap_alloc_在堆上分配n字节内存（大内存）
-#define TEMP_BALLOC(n) lmmp_temp_heap_alloc_(&lmmp_temp_alloc_marker_, (n))
-// 临时内存分配：小内存用栈，大内存用堆
-#define TEMP_TALLOC(n) ((n) <= TEMP_SALLOC_THRESHOLD ? TEMP_SALLOC(n) : TEMP_BALLOC(n))
-// 类型化栈内存分配：分配n个type类型的栈内存
-#define SALLOC_TYPE(n, type) ((type*)TEMP_SALLOC((n) * sizeof(type)))
-// 类型化堆内存分配：分配n个type类型的堆内存
-#define BALLOC_TYPE(n, type) ((type*)TEMP_BALLOC((n) * sizeof(type)))
-// 类型化临时内存分配：智能选择栈/堆分配n个type类型内存
-#define TALLOC_TYPE(n, type) ((type*)TEMP_TALLOC((n) * sizeof(type)))
-// 临时内存释放：释放所有通过TEMP_XALLOC系列函数分配的临时内存
-#define TEMP_FREE                                           \
-    do {                                                    \
-        if (lmmp_temp_alloc_marker_)                        \
-            lmmp_temp_heap_free_(lmmp_temp_alloc_marker_);  \
-        if (lmmp_temp_stack_marker_)                        \
-            lmmp_temp_stack_free_(lmmp_temp_stack_marker_); \
-    } while (0)
-#define TEMP_B_FREE                                        \
-    do {                                                   \
-        if (lmmp_temp_alloc_marker_)                       \
-            lmmp_temp_heap_free_(lmmp_temp_alloc_marker_); \
-    } while (0)
-#define TEMP_S_FREE                                         \
-    do {                                                    \
-        if (lmmp_temp_stack_marker_)                        \
-            lmmp_temp_stack_free_(lmmp_temp_stack_marker_); \
-    } while (0)
-
-// 类型化内存分配：分配n个type类型的内存（堆）
-#define ALLOC_TYPE(n, type) ((type*)lmmp_alloc((size_t)(n) * sizeof(type)))
-// 类型化内存重分配：将p指向的内存重分配为new_size个type类型
-#define REALLOC_TYPE(p, new_size, type) ((type*)lmmp_realloc((p), (new_size) * sizeof(type)))
 
 // 内存拷贝宏：拷贝n个limb（每个8字节），使用memmove保证重叠安全
 #define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)

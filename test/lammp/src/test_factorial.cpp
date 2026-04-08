@@ -4,10 +4,15 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../include/test_short.hpp"
 #include <chrono>
 
+#include "../include/test_short.hpp"
+
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
+
 void test_factorial() {
+    lmmp_stack_init();
+
     size_t n = 0x22123;
     size_t len = lmmp_factorial_size_(n);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);

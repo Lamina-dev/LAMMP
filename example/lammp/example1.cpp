@@ -12,6 +12,8 @@
 #include "../../include/lammp/lmmpn.h"
 
 int main() {
+    lmmp_stack_init();
+
     mp_size_t len1 = 50000, len2 = len1 * 500;
     mp_size_t len = len1 + len2;
     mp_ptr a = (mp_ptr)lmmp_alloc(len1 * sizeof(mp_limb_t));

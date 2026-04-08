@@ -7,14 +7,16 @@
 #include "../include/test_short.hpp"
 #include <chrono>
 
-void test_mullo() {
-    TEMP_B_DECL;
-    mp_size_t n = 2238;
-    mp_ptr a = BALLOC_TYPE(n, mp_limb_t);
-    mp_ptr b = BALLOC_TYPE(n, mp_limb_t);
-    mp_ptr c = BALLOC_TYPE(n, mp_limb_t);
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
-    mp_ptr d = BALLOC_TYPE(2 * n, mp_limb_t);
+void test_mullo() {
+    lmmp_stack_init();
+    mp_size_t n = 2238;
+    mp_ptr a = ALLOC_TYPE(n, mp_limb_t);
+    mp_ptr b = ALLOC_TYPE(n, mp_limb_t);
+    mp_ptr c = ALLOC_TYPE(n, mp_limb_t);
+
+    mp_ptr d = ALLOC_TYPE(2 * n, mp_limb_t);
 
     lmmp_random_(a, n);
     lmmp_random_(b, n);
@@ -40,6 +42,9 @@ void test_mullo() {
             break;
         }
     }
-    TEMP_B_FREE;
+    lmmp_free(a);
+    lmmp_free(b);
+    lmmp_free(c);
+    lmmp_free(d);
     lmmp_leak_tracker;
 }

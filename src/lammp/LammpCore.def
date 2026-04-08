@@ -7,9 +7,9 @@ EXPORTS
  
 ; from lmmp.h
 	lmmp_set_heap_alloctor
-	lmmp_set_stack_alloctor
-	lmmp_default_stack_reset
-	
+
+	lmmp_stack_reset
+	lmmp_stack_init
 	lmmp_set_abort_fn
 	lmmp_abort
 
@@ -22,11 +22,6 @@ EXPORTS
 
 	lmmp_stack_alloc
 	lmmp_stack_free
-
-	lmmp_temp_heap_alloc_
-	lmmp_temp_heap_free_
-	lmmp_temp_stack_alloc_
-	lmmp_temp_stack_free_
 
 	lmmp_global_deinit
 	
