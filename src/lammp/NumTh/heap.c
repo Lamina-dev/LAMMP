@@ -5,7 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/heap.h"
-
+#include "../../../include/lammp/impl/mpdef.h"
 
 static inline void swap_num_node(num_node_ptr restrict a, num_node_ptr restrict b) {
     num_node temp = *a;
@@ -96,4 +96,66 @@ mp_ptr lmmp_num_heap_mul_(num_heap* restrict pq, mp_size_t* restrict rn) {
     }
     *rn = numa.n;
     return numa.num;
+}
+
+mp_size_t lmmp_elem_mul_ulong_(mp_ptr restrict dst, const ulongp restrict limbs, mp_size_t n, mp_ptr restrict tp) {
+    if (n < ELEM_MUL_BASECASE_THRESHOLD) {
+        lmmp_debug_assert(n > 0);
+        dst[0] = limbs[0];
+        mp_size_t rn = 1;
+        for (mp_size_t i = 1; i < n; i++) {
+            dst[rn] = lmmp_mul_1_(dst, dst, rn, limbs[i]);
+            rn++;
+            rn -= dst[rn - 1] == 0 ? 1 : 0;
+        }
+        return rn;
+    }
+    mp_size_t halfn = n / 2;
+    mp_size_t n1 = lmmp_elem_mul_ulong_(tp, limbs, halfn, dst);
+    mp_size_t n2 = lmmp_elem_mul_ulong_(tp + halfn, limbs + halfn, n - halfn, dst + halfn);
+    if (n1 > n2)
+        lmmp_mul_(dst, tp, n1, tp + halfn, n2);
+    else
+        lmmp_mul_(dst, tp + halfn, n2, tp, n1);
+    n = n1 + n2;
+    n -= dst[n - 1] == 0 ? 1 : 0;
+    return n;
+}
+
+mp_size_t lmmp_elem_mul_uint_(mp_ptr restrict dst, const uintp restrict limbs, mp_size_t n, mp_ptr restrict tp) {
+    if (n == 1) {
+        dst[0] = limbs[0];
+        return 1;
+    } else if (n < ELEM_MUL_BASECASE_THRESHOLD * 2) {
+        lmmp_debug_assert(n > 0);
+        dst[0] = (mp_limb_t)limbs[0] * limbs[1];
+        mp_size_t rn = 1;
+        mp_limb_t t = 1;
+        for (mp_size_t i = 2; i < n; i++) {
+            t *= limbs[i];
+            if (t > MP_UINT_MAX) {
+                dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
+                rn++;
+                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                t = 1;
+            }
+        }
+        if (t != 1) {
+            dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
+            rn++;
+            rn -= dst[rn - 1] == 0 ? 1 : 0;
+        }
+        return rn;
+    }
+    mp_size_t halfn = n / 2;
+    mp_size_t ren = n - halfn;
+    mp_size_t n1 = lmmp_elem_mul_uint_(tp, limbs, halfn, dst);
+    mp_size_t n2 = lmmp_elem_mul_uint_(tp + halfn, limbs + halfn, ren, dst + halfn);
+    if (n1 > n2)
+        lmmp_mul_(dst, tp, n1, tp + halfn, n2);
+    else
+        lmmp_mul_(dst, tp + halfn, n2, tp, n1);
+    n = n1 + n2;
+    n -= dst[n - 1] == 0 ? 1 : 0;
+    return n;
 }
