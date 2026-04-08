@@ -7,7 +7,10 @@
 #include <chrono>
 #include "../include/test_short.hpp"
 
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
+
 void test_perm() {
+    lmmp_stack_init();
     const size_t n = 0x2ffffff, r = n / 13.5;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;

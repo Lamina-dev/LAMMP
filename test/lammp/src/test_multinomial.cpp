@@ -7,8 +7,10 @@
 #include <chrono>
 #include "../include/test_short.hpp"
 
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_multinomial() {
+    lmmp_stack_init();
     size_t m = 22;
     uint r[22] = {0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
     ulong n = 0;

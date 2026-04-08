@@ -4,6 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {

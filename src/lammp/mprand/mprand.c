@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/mprand.h"
 #include "../../../include/lammp/impl/rand_state.h"
+#include "../../../include/lammp/impl/tmp_alloc.h"
 
 typedef struct {
     mp_limb_t state;

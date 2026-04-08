@@ -6,6 +6,8 @@
 
 #include "../include/benchmark.hpp"
 
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
+
 long long bench_pow_win2(int len1, int len2) {
     mp_ptr a = ALLOC_TYPE(len1, mp_limb_t);
     ger_random_numbers(len1, a);

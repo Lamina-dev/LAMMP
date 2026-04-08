@@ -6,6 +6,8 @@
 
 #include "../include/benchmark.hpp"
 
+#define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
+
 long long bench_factorial(unsigned len1) {
     mp_size_t rn = lmmp_factorial_size_(len1);
     mp_ptr dst = ALLOC_TYPE(rn, mp_limb_t);

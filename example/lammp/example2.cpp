@@ -8,6 +8,8 @@
 #include "../../include/lammp/numth.h"
 
 int main() {
+    lmmp_stack_init();
+
     uint n = 100000;
     printf("calculating factorial of %d...\n", n);
     mp_size_t len = lmmp_factorial_size_(n);
