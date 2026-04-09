@@ -38,6 +38,7 @@ mp_size_t lmmp_multinomial_(mp_ptr restrict dst, mp_size_t rn, uint n, const uin
         return 1;
     }
 
+    lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
     factors restrict fac = BALLOC_TYPE(nfactors, factor);
