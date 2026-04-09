@@ -96,9 +96,28 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         ++rn;
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
+    } else if (4 * n >= 5 * r || rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
+        TEMP_DECL;
+        ulongp restrict limbs = TALLOC_TYPE(r / 2 + 1, ulong);
+        mp_size_t limbn = 0;
+        ulong t = n - r + 1;
+        uint i = n - r + 2;
+        for (; i <= n; ++i) {
+            t *= i;
+            if (t > MP_UINT_MAX) {
+                limbs[limbn++] = t;
+                t = 1;
+            }
+        }
+        if (t != 1)
+            limbs[limbn++] = t;
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+        TEMP_FREE;
+        return rn;
     } else {
         lmmp_debug_assert(n <= MP_USHORT_MAX);
-
         TEMP_DECL;
         uint nfactors = lmmp_prime_size_(n);
         factors restrict fac = TALLOC_TYPE(nfactors, factor);
@@ -176,38 +195,25 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
             return rn;
         }
     } else if (rn < PERMUTATION_RN_MUL_THRESHOLD || n >= (PERMUTATION_NR_TIMES_THRESHOLD * r)) {
-        num_heap heap;
-#define heap_size (r / PERMUTATION_MUL_MAX_THRESHOLD)
-        lmmp_num_heap_init_(&heap, LMMP_MAX(heap_size, 4));
-#undef heap_size
-
-        mp_size_t mpn = 1;
-        mp_ptr restrict mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-        mp[0] = 1;
-        for (ulong i = n - r + 1; i <= n; ++i) {
-            mp[mpn] = lmmp_mul_1_(mp, mp, mpn, i);
-            ++mpn;
-            mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
-                lmmp_num_heap_push_(&heap, mp, mpn);
-                mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-                mpn = 1;
-                mp[0] = 1;
+        TEMP_DECL;
+        ulongp restrict limbs = TALLOC_TYPE(r / 2 + 1, ulong);
+        mp_size_t limbn = 0;
+        ulong t = n - r + 1;
+        uint i = n - r + 2;
+        for (; i <= n; ++i) {
+            t *= i;
+            if (t > MP_UINT_MAX) {
+                limbs[limbn++] = t;
+                t = 1;
             }
         }
-        if (!(mpn == 1 && mp[0] == 1))
-            lmmp_num_heap_push_(&heap, mp, mpn);
-        else
-            lmmp_free(mp);
-
-        mp = lmmp_num_heap_mul_(&heap, &mpn);
-
-        lmmp_num_heap_free_(&heap);
-        lmmp_copy(dst, mp, mpn);
-        
-        lmmp_free(mp);
-
-        return mpn;
+        if (t != 1)
+            limbs[limbn++] = t;
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+        TEMP_FREE;
+        return rn;
     } else {
         lmmp_debug_assert(n <= MP_UINT_MAX);
 
@@ -278,36 +284,16 @@ mp_size_t lmmp_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
             return rn;
         }
     } else {
-        num_heap heap;
-#define heap_size (r / PERMUTATION_MUL_MAX_THRESHOLD)
-        lmmp_num_heap_init_(&heap, LMMP_MAX(heap_size, 4));
-#undef heap_size
-
-        mp_size_t mpn = 1;
-        mp_ptr restrict mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-        mp[0] = 1;
-        for (ulong i = n - r + 1; i <= n; ++i) {
-            mp[mpn] = lmmp_mul_1_(mp, mp, mpn, i);
-            ++mpn;
-            mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-            if (mpn == PERMUTATION_MUL_MAX_THRESHOLD) {
-                lmmp_num_heap_push_(&heap, mp, mpn);
-                mp = ALLOC_TYPE(PERMUTATION_MUL_MAX_THRESHOLD, mp_limb_t);
-                mpn = 1;
-                mp[0] = 1;
-            }
+        TEMP_DECL;
+        ulongp restrict limbs = TALLOC_TYPE(r, ulong);
+        mp_size_t limbn = r;
+        for (uint i = 1; i <= r; ++i) {
+            limbs[i - 1] = n - r + i;
         }
-
-        if (!(mpn == 1 && mp[0] == 1))
-            lmmp_num_heap_push_(&heap, mp, mpn);
-        else
-            lmmp_free(mp);
-
-        mp = lmmp_num_heap_mul_(&heap, &mpn);
-
-        lmmp_copy(dst, mp, mpn);
-        lmmp_free(mp);
-        lmmp_num_heap_free_(&heap);
-        return mpn;
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+        TEMP_FREE;
+        return rn;
     }
 }

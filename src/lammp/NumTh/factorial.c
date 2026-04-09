@@ -76,23 +76,14 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         }
         return rn;
     } else {
-        TEMP_B_DECL;
+        TEMP_DECL;
+        // 只有小于 N/2 的质数，其因子的指数才可能大于1，所以新的因子数目不超过 N/2 的素数计数。
         mp_size_t new_nfactors = lmmp_prime_size_(N / 2);
-        factors restrict new_fac = BALLOC_TYPE(new_nfactors, factor);
+        factors restrict new_fac = TALLOC_TYPE(new_nfactors, factor);
         new_nfactors = 0;
-
-        num_heap heap;
-/*
- 这是一个比较保守的估计，在阶乘形式下的因子乘积中，可能不需要这么多空间。但这也是为了最坏情况的考虑。
- */
-#define heap_size ((nfactors) / FACTORS_MUL_MAX_THRESHOLD)
-        lmmp_num_heap_init_(&heap, heap_size + 4);
-#undef heap_size
-
-        mp_size_t mpn = 1;
-        mp_ptr restrict mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
-        mp[0] = 1;
-        ulong ulongt = 1;
+        ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
+        mp_limb_t t = 1;
+        mp_size_t limbn = 0;
         for (mp_size_t i = 0; i < nfactors; i++) {
             lmmp_debug_assert(fac[i].j != 0);
             if (fac[i].j > 1) {
@@ -100,36 +91,19 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
                 new_fac[new_nfactors++].j = fac[i].j >> 1;
             }
             if (fac[i].j & 1) {
-                ulongt *= fac[i].f;
-                if (ulongt >= MP_UINT_MAX) {
-                    mp[mpn] = lmmp_mul_1_(mp, mp, mpn, ulongt);
-                    ulongt = 1;
-                    ++mpn;
-                    mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-                    if (mpn == FACTORS_MUL_MAX_THRESHOLD) {
-                        lmmp_num_heap_push_(&heap, mp, mpn);
-                        mp = ALLOC_TYPE(FACTORS_MUL_MAX_THRESHOLD, mp_limb_t);
-                        mpn = 1;
-                        mp[0] = 1;
-                    }
+                t *= fac[i].f;
+                if (t > MP_UINT_MAX) {
+                    limbs[limbn++] = t;
+                    t = 1;
                 }
             }
         }
-        if (ulongt != 1) {
-            mp[mpn] = lmmp_mul_1_(mp, mp, mpn, ulongt);
-            ulongt = 1;
-            ++mpn;
-            mpn -= mp[mpn - 1] == 0 ? 1 : 0;
+        if (t != 1) {
+            limbs[limbn++] = t;
         }
-        if (!(mpn == 1 && mp[0] == 1))
-            lmmp_num_heap_push_(&heap, mp, mpn);
-        else
-            lmmp_free(mp);
 
-        lmmp_debug_assert(heap.size != 0);
-        mp = lmmp_num_heap_mul_(&heap, &mpn);
-        lmmp_num_heap_free_(&heap);
-
+        mp_ptr restrict mp = BALLOC_TYPE(limbn * 2, mp_limb_t);
+        mp_size_t mpn = lmmp_elem_mul_ulong_(mp, limbs, limbn, mp + limbn);
         if (new_nfactors > 0) {
             lmmp_debug_assert(rn >= mpn);
             mp_size_t tn = ((rn - mpn) >> 1) + 1;
@@ -150,8 +124,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
             lmmp_copy(dst, mp, mpn);
             rn = mpn;
         }
-        lmmp_free(mp);
-        TEMP_B_FREE;
+        TEMP_FREE;
         return rn;
     }
 }
