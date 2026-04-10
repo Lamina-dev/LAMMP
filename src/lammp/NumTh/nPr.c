@@ -208,6 +208,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         r = n - r;
         /*
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
+            同时，我们从3开始处理，也是因为可以跳过所有偶数。
          */
         nfactors = 0;
         for (uint i = 3; i <= n; i += 2) {
@@ -260,5 +261,4 @@ mp_size_t lmmp_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_copy(dst, tp, rn);
     TEMP_FREE;
     return rn;
-    
 }
