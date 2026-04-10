@@ -13,13 +13,13 @@
 void test_factorial() {
     lmmp_stack_init();
 
-    size_t n = 0x22123;
+    size_t n = 0xf2233;
     size_t len = lmmp_factorial_size_(n);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);
 
     auto start = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_factorial_(b, len, n);
+    mp_size_t bn = lmmp_nPr_(b, len, n, n);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;

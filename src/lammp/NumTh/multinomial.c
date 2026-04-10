@@ -38,14 +38,12 @@ mp_size_t lmmp_multinomial_(mp_ptr restrict dst, mp_size_t rn, uint n, const uin
         return 1;
     }
 
+    lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
     factors restrict fac = BALLOC_TYPE(nfactors, factor);
-    /*
-        对于2这个因子，我们单独处理，因为可以通过移位来计算。
-     */
     nfactors = 0;
-    for (uint i = 3; i <= n; ++i) {
+    for (uint i = 3; i <= n; i += 2) {
         if (!lmmp_is_prime_table_(i))
             continue;
         uint pn = n;

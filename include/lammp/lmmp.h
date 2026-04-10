@@ -220,12 +220,15 @@ typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操
 #define LLIMB_BYTES 4
 #define LLIMB_MASK ((mp_limb_t)0xffffffff)
 
-#if defined(__GNUC__) || defined(__clang__)
-#define THREAD_LOCAL __attribute__((section(".tls$"), used))
+#if defined(_WIN32) && (defined(__GNUC__) || defined(__clang__))
+    // MinGW on Windows: use native TLS section
+    #define THREAD_LOCAL __attribute__((section(".tls$")))
 #elif defined(_MSC_VER)
-#define THREAD_LOCAL __declspec(thread)
+    #define THREAD_LOCAL __declspec(thread)
+#elif defined(__GNUC__) // Linux/macOS
+    #define THREAD_LOCAL __thread
 #else
-#define THREAD_LOCAL _Thread_local
+    #define THREAD_LOCAL _Thread_local
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L

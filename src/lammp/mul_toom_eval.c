@@ -143,8 +143,8 @@ int lmmp_toom_eval_pm2_(mp_ptr xp2, mp_ptr xm2, unsigned k, mp_srcptr xp, mp_siz
     else
         lmmp_add_n_sub_n_(xp2, xm2, xp2, tp, n + 1);
 
-    lmmp_debug_assert(xp2[n] < (1 << (k + 2)) - 1);
-    lmmp_debug_assert(xm2[n] < ((1 << (k + 3)) - 1 - (1 ^ k & 1)) / 3);
+    lmmp_debug_assert(xp2[n] < (1ull << (k + 2)) - 1);
+    lmmp_debug_assert(xm2[n] < ((1 << (k + 3)) - 1 - (1 ^ (k & 1))) / 3);
 
     neg ^= ((k & 1) - 1);
 
