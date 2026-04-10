@@ -11,8 +11,8 @@
 
 void test_multinomial() {
     lmmp_stack_init();
-    size_t m = 22;
-    uint r[22] = {0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
+    size_t m = 4;
+    uint r[4] = {12330, 2331, 1234, 81392};
     ulong n = 0;
     size_t len = lmmp_multinomial_size_(r, m, &n);
     std::cout << "len = " << len << std::endl;
@@ -24,9 +24,9 @@ void test_multinomial() {
     mp_size_t bn = lmmp_multinomial_(a, len, n, r, m);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
-    std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
+    std::cout << "Time elapsed: " << duration2 << " microseconds" << std::endl;
 
     std::cout << "bn = " << bn << std::endl;
-
+    std::cout << a[bn - 1] << std::endl;
     lmmp_free(a);
 }

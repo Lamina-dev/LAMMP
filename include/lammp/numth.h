@@ -34,20 +34,14 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数，二项式、多项式系数计算中，朴素连乘的乘法空间长度阈值
-#define PERMUTATION_MUL_MAX_THRESHOLD 20
-
-// 因子乘法中，朴素连乘的乘法空间长度
-#define FACTORS_MUL_MAX_THRESHOLD 20
-
 // 排列数计算中，结果长度小于此阈值的将使用朴素连乘
-#define PERMUTATION_RN_BASECASE_THRESHOLD 330
+#define PERMUTATION_RN_BASECASE_THRESHOLD 450
 
-// 排列数计算中，结果长度小于此阈值的将使用哈夫曼队列连乘
-#define PERMUTATION_RN_MUL_THRESHOLD 9000
+// 排列数计算中，结果长度小于此阈值的将使用累乘
+#define PERMUTATION_RN_MUL_THRESHOLD 15000
 
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用哈夫曼队列连乘
-#define PERMUTATION_NR_TIMES_THRESHOLD 14
+// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
+#define PERMUTATION_NR_TIMES_THRESHOLD 3
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
@@ -55,6 +49,8 @@
 #define ELEM_MUL_BASECASE_THRESHOLD 20
 
 #define LOG2_ 0.693147180559945
+
+#define DBL_2POW_MANT_DIG_ (0x20000000000000ull)
 
 #ifdef __cplusplus
 extern "C" {
@@ -325,10 +321,15 @@ bool lmmp_is_prime_ulong_(ulong n);
  * @return nPr 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 INLINE_ mp_size_t lmmp_nPr_size_(ulong n, ulong r) {
-    double ln_perm = lgamma(n + 1.0) - lgamma(n - r + 1.0);
-    double log2_perm = ln_perm / LOG2_;
-    mp_size_t rn = ceil(log2_perm / LIMB_BITS) + 2; /* more two limbs */
-    return rn;
+    if (n < DBL_2POW_MANT_DIG_) {
+        double ln_perm = lgamma(n + 1.0) - lgamma(n - r + 1.0);
+        double log2_perm = ln_perm / LOG2_;
+        mp_size_t rn = ceil(log2_perm / LIMB_BITS) + 2; /* more two limbs */
+        return rn;
+    } else {
+        // nPr = n! / (n-r)! < n^r
+        return lmmp_pow_1_size_(n, r);
+    }
 }
 
 /**
@@ -536,6 +537,7 @@ INLINE_ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
 mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
 
 #undef LOG2_
+#undef DBL_2POW_MANT_DIG_
 
 #ifdef INLINE_
 #undef INLINE_

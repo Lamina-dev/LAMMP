@@ -93,85 +93,37 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec) {
     return sign ? mpn : -mpn;
 }
 
-mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n) {
+mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* restrict limb, mp_size_t n) {
     lmmp_param_assert(dst != NULL && limb != NULL);
     lmmp_param_assert(n > 0);
+    mp_ptr mp = ALLOC_TYPE(n, mp_limb_t);
+    mp_ptr tp = ALLOC_TYPE(n, mp_limb_t);
 
-    num_heap heap;
-#define heap_size (n / LIMB_ELEMMUL_MP_THRESHOLD)
-    lmmp_num_heap_init_(&heap, LMMP_MAX(heap_size, 4));
-#undef heap_size
-
-    mp_size_t mpn = 1;
-    mp_ptr mp = ALLOC_TYPE(LIMB_ELEMMUL_MP_THRESHOLD, mp_limb_t);
-    mp[0] = 1;
-    for (mat_size_t i = 0; i < n; ++i) {
-        if (limb[i] == 0) {
-            *dst = NULL;
-            return 0;
-        }
-        mp[mpn] = lmmp_mul_1_(mp, mp, mpn, limb[i]);
-        ++mpn;
-        mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-        if (mpn == LIMB_ELEMMUL_MP_THRESHOLD) {
-            lmmp_num_heap_push_(&heap, mp, mpn);
-            mp = ALLOC_TYPE(LIMB_ELEMMUL_MP_THRESHOLD, mp_limb_t);
-            mpn = 1;
-            mp[0] = 1;
-        }
-    }
-
-    if (!(mpn == 1 && mp[0] == 1))
-        lmmp_num_heap_push_(&heap, mp, mpn);
-    else
-        lmmp_free(mp);
-
-    mp = lmmp_num_heap_mul_(&heap, &mpn);
-    lmmp_num_heap_free_(&heap);
+    n = lmmp_elem_mul_ulong_(mp, (const ulongp)limb, n, tp);
     *dst = mp;
-    return mpn;
+    lmmp_free(tp);
+    return n;
 }
 
-mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t n) {
+mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* restrict slimb, mp_size_t n) {
     lmmp_debug_assert(dst != NULL && slimb != NULL);
     lmmp_debug_assert(n > 0);
-
-    num_heap heap;
-#define heap_size (n / LIMB_ELEMMUL_MP_THRESHOLD)
-    lmmp_num_heap_init_(&heap, LMMP_MAX(heap_size, 4));
-#undef heap_size
-
-    mp_size_t mpn = 1;
-    mp_ptr mp = ALLOC_TYPE(LIMB_ELEMMUL_MP_THRESHOLD, mp_limb_t);
-    mp[0] = 1;
+    TEMP_DECL;
+    ulongp limbs = TALLOC_TYPE(n, ulong);
     bool sign = true;
-    for (mat_size_t i = 0; i < n; ++i) {
-        if (slimb[i] == 0) {
-            *dst = NULL;
-            return 0;
-        } else if (slimb[i] < 0) {
+    for (mp_size_t i = 0; i < n; ++i) {
+        if (slimb[i] < 0) {
             sign = !sign;
-            mp[mpn] = lmmp_mul_1_(mp, mp, mpn, -slimb[i]);
+            limbs[i] = -slimb[i];
         } else {
-            mp[mpn] = lmmp_mul_1_(mp, mp, mpn, slimb[i]);
-        }
-        ++mpn;
-        mpn -= mp[mpn - 1] == 0 ? 1 : 0;
-        if (mpn == LIMB_ELEMMUL_MP_THRESHOLD) {
-            lmmp_num_heap_push_(&heap, mp, mpn);
-            mp = ALLOC_TYPE(LIMB_ELEMMUL_MP_THRESHOLD, mp_limb_t);
-            mpn = 1;
-            mp[0] = 1;
+            limbs[i] = slimb[i];
         }
     }
+    mp_ptr mp = ALLOC_TYPE(n, mp_limb_t);
+    mp_ptr tp = TALLOC_TYPE(n, mp_limb_t);
 
-    if (!(mpn == 1 && mp[0] == 1))
-        lmmp_num_heap_push_(&heap, mp, mpn);
-    else
-        lmmp_free(mp);
-
-    mp = lmmp_num_heap_mul_(&heap, &mpn);
-    lmmp_num_heap_free_(&heap);
+    n = lmmp_elem_mul_ulong_(mp, limbs, n, tp);
     *dst = mp;
-    return sign ? mpn : -mpn;
+    TEMP_FREE;
+    return sign ? n : -n;
 }

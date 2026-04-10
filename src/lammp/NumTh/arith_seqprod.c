@@ -4,10 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/heap.h"
 #include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/matrix.h"
 #include "../../../include/lammp/numth.h"
 
 mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n, uint m) {
@@ -72,46 +72,23 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
     } else {
-        mp_ptr b;
-        mp_size_t bn;
-        if (x + n * m <= MP_USHORT_MAX) {
-            TEMP_B_DECL;
-            mp_size_t tn = (n + 4) / 4;
-            mp_limb_t* restrict t = BALLOC_TYPE(tn, mp_limb_t);
-            mp_size_t i, j;
-            mp_limb_t count = 1, prod = 1;
-            for (i = 0, j = 0; j <= n; j += 4) {
-                prod *= x + j * m;
-                count++;
-                if (count == 4) {
-                    t[i++] = prod;
-                    count = 1;
-                    prod = 1;
-                }
+        TEMP_DECL;
+        ulongp restrict limbs = TALLOC_TYPE((n + 1) / 2 + 1, ulong);
+        mp_size_t limbn = 0;
+        ulong t = 1;
+        for (uint i = 0; i <= n; i++) {
+            t *= x + i * m;
+            if (t > MP_UINT_MAX) {
+                limbs[limbn++] = t;
+                t = 1;
             }
-            lmmp_debug_assert(i <= tn);
-            bn = lmmp_limb_elem_mul_(&b, t, i);
-            TEMP_B_FREE;
-        } else {
-            TEMP_B_DECL;
-            mp_size_t tn = (n + 1) / 2 + 1;
-            mp_limb_t* restrict t = BALLOC_TYPE(tn, mp_limb_t);
-            mp_size_t i, j;
-            for (i = 0, j = 0; j <= n; j += 2) {
-                if (j + 1 <= n) {
-                    t[i++] = (mp_limb_t)(x + j * m) * (x + (j + 1) * m);
-                } else {
-                    t[i++] = x + j * m;
-                }
-            }
-            lmmp_debug_assert(i <= tn);
-            bn = lmmp_limb_elem_mul_(&b, t, i);
-            TEMP_B_FREE;
         }
+        mp_ptr restrict b = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        mp_size_t bn = lmmp_elem_mul_ulong_(b, limbs, limbn, b + limbn);
         dst[shw + bn] = lmmp_shl_(dst + shw, b, bn, shl);
         rn = bn + shw + 1;
         rn -= dst[rn - 1] == 0 ? 1 : 0;
-        lmmp_free(b);
+        TEMP_FREE;
         return rn;
     }
 }
