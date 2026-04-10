@@ -57,11 +57,12 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
     } else if (n <= MP_UCHAR_MAX) {
+        lmmp_debug_assert(n >= 7);
+        lmmp_debug_assert(r >= 2);
         dst[0] = n - r + 1;
         rn = 1;
         ulong t = 0;
         ulong i = n - r + 2;
-        lmmp_debug_assert(n >= 7);
         for (; i <= (ulong)n - 7; i += 7) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4) * (i + 5) * (i + 6);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
@@ -76,25 +77,27 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
         ++rn;
         rn -= dst[rn - 1] == 0 ? 1 : 0;
         return rn;
-    } else if (n <= 0xfff && rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        dst[0] = n - r + 1;
-        rn = 1;
-        ulong t = 0;
-        ulong i = n - r + 2;
+    } else if (n <= 0xfff) {
+        TEMP_S_DECL;
+        ulongp restrict limbs = SALLOC_TYPE(r / 5 + 1, ulong);
+        mp_size_t limbn = 0;
+        ulong t;
+        ulong i = n - r + 1;
         lmmp_debug_assert(n >= 5);
         for (; i <= (ulong)n - 5; i += 5) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4);
-            dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
-            ++rn;
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            limbs[limbn++] = t;
         }
         t = 1;
         for (; i <= n; ++i) {
             t *= i;
         }
-        dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
-        ++rn;
-        rn -= dst[rn - 1] == 0 ? 1 : 0;
+        if (t != 1)
+            limbs[limbn++] = t;
+        mp_ptr restrict tp = SALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+        TEMP_S_FREE;
         return rn;
     } else if (4 * n >= 5 * r || rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
         TEMP_DECL;
@@ -126,7 +129,7 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
         nfactors = 0;
-        for (uint i = 3; i <= n; ++i) {
+        for (uint i = 3; i <= n; i += 2) {
             if (!lmmp_is_prime_table_(i))
                 continue;
             uint pn = n;
@@ -140,8 +143,10 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
                 pn /= i;
                 e -= pn;
             }
-            fac[nfactors].f = i;
-            fac[nfactors++].j = e;
+            if (e > 0) {
+                fac[nfactors].f = i;
+                fac[nfactors++].j = e;
+            }
         }
 
         mp_size_t shl = n - lmmp_limb_popcnt_(n);
@@ -164,36 +169,15 @@ mp_size_t lmmp_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
 mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     lmmp_param_assert(n <= MP_UINT_MAX);
-    if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        if (r <= 10 || n >= 0x10000000) {
-            dst[0] = 1;
-            rn = 1;
-            for (ulong i = n - r + 1; i <= n; ++i) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
-            }
-            return rn;
-        } else {
-            dst[0] = n - r + 1;
-            rn = 1;
-            ulong t = 0;
-            ulong i = n - r + 2;
-            for (; i <= (ulong)n - 2; i += 2) {
-                t = i * (i + 1);
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
-            }
-            t = 1;
-            for (; i <= n; ++i) {
-                t *= i;
-            }
-            dst[rn] = lmmp_mul_1_(dst, dst, rn, t);
+    if (r <= 10) {
+        dst[0] = 1;
+        rn = 1;
+        for (ulong i = n - r + 1; i <= n; ++i) {
+            dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            return rn;
         }
+        return rn;
     } else if (rn < PERMUTATION_RN_MUL_THRESHOLD || n >= (PERMUTATION_NR_TIMES_THRESHOLD * r)) {
         TEMP_DECL;
         ulongp restrict limbs = TALLOC_TYPE(r / 2 + 1, ulong);
@@ -226,7 +210,7 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
             对于2这个因子，我们单独处理，因为可以通过移位来计算。
          */
         nfactors = 0;
-        for (uint i = 3; i <= n; ++i) {
+        for (uint i = 3; i <= n; i += 2) {
             if (!lmmp_is_prime_table_(i))
                 continue;
             uint pn = n;
@@ -240,8 +224,10 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
                 pn /= i;
                 e -= pn;
             }
-            fac[nfactors].f = i;
-            fac[nfactors++].j = e;
+            if (e > 0) {
+                fac[nfactors].f = i;
+                fac[nfactors++].j = e;
+            }
         }
 
         mp_size_t shl = n - lmmp_limb_popcnt_(n);
@@ -263,37 +249,16 @@ mp_size_t lmmp_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
 
 mp_size_t lmmp_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
-    if (rn < PERMUTATION_RN_BASECASE_THRESHOLD) {
-        if (n == MP_ULONG_MAX || r <= 3) {
-            dst[0] = 1;
-            rn = 1;
-            for (ulong i = n - r + 1; i != 0 && i <= n; ++i) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
-            }
-            return rn;
-        } else {
-            dst[0] = n - r + 1;
-            rn = 1;
-            for (ulong i = n - r + 2; i <= n; ++i) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, i);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
-            }
-            return rn;
-        }
-    } else {
-        TEMP_DECL;
-        ulongp restrict limbs = TALLOC_TYPE(r, ulong);
-        mp_size_t limbn = r;
-        for (uint i = 1; i <= r; ++i) {
-            limbs[i - 1] = n - r + i;
-        }
-        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
-        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
-        lmmp_copy(dst, tp, rn);
-        TEMP_FREE;
-        return rn;
+    TEMP_DECL;
+    ulongp restrict limbs = TALLOC_TYPE(r + 1, ulong);
+    mp_size_t limbn = r;
+    for (ulong i = 1; i <= r; ++i) {
+        limbs[i - 1] = n - r + i;
     }
+    mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+    rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+    lmmp_copy(dst, tp, rn);
+    TEMP_FREE;
+    return rn;
+    
 }
