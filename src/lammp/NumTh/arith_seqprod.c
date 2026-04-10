@@ -73,13 +73,18 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
         return rn;
     } else {
         TEMP_DECL;
-        mp_ptr restrict b = TALLOC_TYPE(n + 1, mp_limb_t);
-        mp_ptr restrict tp = TALLOC_TYPE(n + 1, mp_limb_t);
-        uintp limbs = TALLOC_TYPE(n + 1, uint);
+        ulongp restrict limbs = TALLOC_TYPE((n + 1) / 2 + 1, ulong);
+        mp_size_t limbn = 0;
+        ulong t = 1;
         for (uint i = 0; i <= n; i++) {
-            limbs[i] = x + i * m;
+            t *= x + i * m;
+            if (t > MP_UINT_MAX) {
+                limbs[limbn++] = t;
+                t = 1;
+            }
         }
-        mp_size_t bn = lmmp_elem_mul_uint_(b, limbs, n + 1, tp);
+        mp_ptr restrict b = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        mp_size_t bn = lmmp_elem_mul_ulong_(b, limbs, limbn, b + limbn);
         dst[shw + bn] = lmmp_shl_(dst + shw, b, bn, shl);
         rn = bn + shw + 1;
         rn -= dst[rn - 1] == 0 ? 1 : 0;

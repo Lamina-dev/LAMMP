@@ -27,7 +27,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         rn = 1;
         for (uint i = 0; i < nfactors; i++) {
             ulong f = fac[i].f;
-            lmmp_debug_assert(f < MP_USHORT_MAX);
+            lmmp_debug_assert(f <= MP_USHORT_MAX);
             if (fac[i].j == 1) {
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, f);
                 ++rn;
@@ -84,7 +84,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
         mp_limb_t t = 1;
         mp_size_t limbn = 0;
-        for (mp_size_t i = 0; i < nfactors; i++) {
+        for (mp_size_t i = 0; i < nfactors; ++i) {
             lmmp_debug_assert(fac[i].j != 0);
             if (fac[i].j > 1) {
                 new_fac[new_nfactors].f = fac[i].f;
@@ -102,7 +102,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
             limbs[limbn++] = t;
         }
 
-        mp_ptr restrict mp = BALLOC_TYPE(limbn * 2, mp_limb_t);
+        mp_ptr restrict mp = TALLOC_TYPE(limbn * 2, mp_limb_t);
         mp_size_t mpn = lmmp_elem_mul_ulong_(mp, limbs, limbn, mp + limbn);
         if (new_nfactors > 0) {
             lmmp_debug_assert(rn >= mpn);
@@ -138,7 +138,7 @@ mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
         对于2这个因子，我们单独处理，因为可以通过移位来计算。
      */
     nfactors = 0;
-    for (uint i = 3; i <= n; ++i) {
+    for (uint i = 3; i <= n; i += 2) {
         if (!lmmp_is_prime_table_(i))
             continue;
         uint pn = n;
