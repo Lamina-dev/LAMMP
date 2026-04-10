@@ -104,16 +104,6 @@ mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn);
  */
 mp_size_t lmmp_elem_mul_ulong_(mp_ptr dst, const ulongp limbs, mp_size_t n, mp_ptr tp);
 
-/**
- * @brief 计算limbs数组的累乘积
- * @param dst 结果指针（长度为 n 个 limb）
- * @param limbs 数组指针
- * @param n limbs数组长度
- * @param tp 临时指针（长度为 n 个 limb）
- * @warning dst!=NULL, limbs!=NULL, n>0, tp!=NULL
- */
-mp_size_t lmmp_elem_mul_uint_(mp_ptr dst, const uintp limbs, mp_size_t n, mp_ptr tp);
-
 #undef INLINE_
 
 #endif // __LAMMP_HEAP_H__
