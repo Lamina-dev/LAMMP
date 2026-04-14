@@ -34,5 +34,7 @@ void test_mod();
 void test_mullo();
 void test_arith_seqprod();
 void test_bninv();
+void test_trialdiv();
+void test_remove();
 
 #endif // __LAMMP_TEST_SHORT_H__

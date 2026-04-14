@@ -12,7 +12,6 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_vec_ele_mul() {
-    lmmp_stack_init();
     const mp_ssize_t n = 300;
     mp_ssize_t a[n];
     mp_ptr p[n];
