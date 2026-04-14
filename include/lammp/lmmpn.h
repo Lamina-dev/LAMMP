@@ -30,20 +30,20 @@
                     p[i-1] 代表其第i位最低有效位 (0<i<=n)
                     如果省略b，则默认基数为B。通常情况下，
                     用此符号表示函数参数时，一般暗指高位不存在0，
-                    而用此符号表示函数返回值时，表示写入的位数，
+                    而用此符号表示函数返回值时，表示将会写入的区间，
                     即使可能写入为0。
 
         sep         指针指向的内存区域完全分离
 
         eqsep       完全相同的内存区域或者完全分离
 
-                    备注：我们都假定内存是向上增长的，dst <= num+1
+                    备注：我们都假定地址是向上增长的，dst <= num+1
                     的内存布局可以这样表示
                             dst ──┐
                    num ──┐        |00000000|00000000|
                          |********|********|
 
-        MSB(x)      x的最高有效位，比如最高有效位为1，大部分语境下
+        MSB(x)      x的最高有效位，比如最高有效位为1，MSB(x)=1
                     代表 x >= B / 2
 
         [x|y]       x或y，用于表示参数或返回值的取值范围
@@ -56,70 +56,7 @@
 #include <stdio.h>
 #include "lmmp.h"
 
-
-// 除法阈值：当操作数规模超过此值时，使用分治除法算法
-#define DIV_DIVIDE_THRESHOLD 50
-// 乘法逆元L阈值：用于选择乘法逆元计算策略的临界值
-#define DIV_MULINV_L_THRESHOLD 477
-// 乘法逆元N阈值：用于选择乘法逆元计算策略的临界值
-#define DIV_MULINV_N_THRESHOLD 1736
-
-// 牛顿迭代求逆阈值：超过此规模使用牛顿迭代法求逆
-#define INV_NEWTON_THRESHOLD 21
-// 梅森变换求逆阈值：超过此规模使用梅森变换法求逆
-#define INV_MODM_THRESHOLD 734
-
-// 梅森变换乘法逆元阈值：超过此规模选择梅森变换计算乘法逆元
-#define DIV_MULINV_MODM_THRESHOLD 477
-
-// 牛顿迭代开方阈值：超过此规模使用牛顿迭代法开方
-#define SQRT_NEWTON_THRESHOLD 50
-// 梅森变换开方阈值：超过此规模选择梅森变换计算
-#define SQRT_NEWTON_MODM_THRESHOLD 734
-
-// Toom-22乘法阈值：超过此规模使用Toom-22乘法
-#define MUL_TOOM22_THRESHOLD 20
-// Toom-X2乘法阈值：较短乘数小于此值使用Toom-X2不平衡乘法
-#define MUL_TOOMX2_THRESHOLD 30
-// Toom-33乘法阈值：超过此规模使用Toom-33乘法
-#define MUL_TOOM33_THRESHOLD 65
-// Toom-44乘法阈值：超过此规模使用Toom-44乘法
-#define MUL_TOOM44_THRESHOLD 526
-// FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法
-#define MUL_FFT_THRESHOLD 2916
-
-// 低位乘法阈值：低于此规模使用朴素乘法
-#define MULLO_BASECASE_THRESHOLD 20
-// 低位除法阈值：低于此规模使用不平衡分治乘法
-#define MULLO_DC_THRESHOLD 11238
-
-#define BNINV_NEWTON_THRESHOLD 20
-
-// 费马变换阈值：低于此规模使用直接乘法而不再进行递归
-#define MUL_FFT_MODF_THRESHOLD 477
-
-// 转字符串除法阈值：字符串转换时选择除法算法的临界值
-#define TO_STR_DIVIDE_THRESHOLD 20
-// 转字符串基数幂阈值：字符串转换时基数幂计算的策略选择临界值
-#define TO_STR_BASEPOW_THRESHOLD 30
-// 从字符串解析除法阈值：字符串解析时选择除法算法的临界值
-#define FROM_STR_DIVIDE_THRESHOLD 45
-// 从字符串解析基数幂阈值：字符串解析时基数幂计算的策略选择临界值
-#define FROM_STR_BASEPOW_THRESHOLD 100
-
 #define INLINE_ static inline
-
-// L1缓存大小，请将此值设置为实际单核CPU的L1缓存大小（字节数）
-// 8192 字节通常远远小于现代CPU的L1缓存大小，主要为分块缓存大小考虑
-#define L1_CACHE_SIZE 8192
-
-// L2缓存大小，请将此值设置为实际单核CPU的L2缓存大小（字节数）
-// 1Mb 字节是一个相对保守的数值
-#define L2_CACHE_SIZE (1ull << 20)
-
-// L1缓存分块大小
-#define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 4)
-
 
 #ifdef __cplusplus
 extern "C" {
@@ -662,18 +599,7 @@ void lmmp_mul_fft_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr
  * @param numa 源操作数指针
  * @param na limb长度
  */
-INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    if (na < MUL_TOOM22_THRESHOLD)
-        lmmp_sqr_basecase_(dst, numa, na);
-    else if (na < MUL_TOOM33_THRESHOLD)
-        lmmp_sqr_toom2_(dst, numa, na);
-    else if (na < MUL_TOOM44_THRESHOLD)
-        lmmp_sqr_toom3_(dst, numa, na);
-    else if (na < MUL_FFT_THRESHOLD)
-        lmmp_sqr_toom4_(dst, numa, na);
-    else
-        lmmp_mul_fft_(dst, numa, na, numa, na);
-}
+void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
  * @brief 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
@@ -685,18 +611,7 @@ INLINE_ void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
  * @param numb 第二个乘数指针
  * @param n limb长度
  */
-INLINE_ void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
-    if (n < MUL_TOOM22_THRESHOLD)
-        lmmp_mul_basecase_(dst, numa, n, numb, n);
-    else if (n < MUL_TOOM33_THRESHOLD)
-        lmmp_mul_toom22_(dst, numa, n, numb, n);
-    else if (n < MUL_TOOM44_THRESHOLD)
-        lmmp_mul_toom33_(dst, numa, n, numb, n);
-    else if (n < MUL_FFT_THRESHOLD)
-        lmmp_mul_toom44_(dst, numa, n, numb, n);
-    else
-        lmmp_mul_fft_(dst, numa, n, numb, n);
-}
+void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
  * @brief 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -804,12 +719,7 @@ void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @warning na>0, MSB(numa)=1, sep(dst,numa)
  * @return 无返回值，结果存储在dst中，[dst,na] = (B^(2*na)-1)/[numa,na] - B^na + [0|-1]
  */
-INLINE_ void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    if (na < INV_NEWTON_THRESHOLD)
-        lmmp_inv_basecase_(dst, numa, na);
-    else
-        lmmp_invappr_newton_(dst, numa, na);
-}
+void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
  * @brief 3/2位除法运算 [numa,2]=[numa,3] mod [numb,2]
@@ -930,11 +840,11 @@ void lmmp_bninv_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_size_t ni);
  * @param numa 输入被除数（长度na），运算后存储余数（长度nb）
  * @param na 被除数的 limb 长度
  * @param numb 输入除数，长度为nb
- * @param nb 除数的单精度数(limb)长度
+ * @param nb 除数的 limb 长度
  * @param invappr 预计算的近似逆元，长度为ni
- * @param ni 预计算逆元的尺寸
+ * @param ni 预计算逆元的 limb 长度
  * @return 商的最高位（qh）
- * @warning na>=nb>=ni>0, MSB(numb)=1, [invappr,ni]=invprediv([numb,nb]), sep(dstq,numa,numb,invappr))
+ * @warning na>=nb>=ni>0, MSB(numb)=1, [invappr,ni]=inv_prediv([numb,nb]), sep(dstq,numa,numb,invappr))
  * @note qh:[dstq,na-1]=[numa,na] div x, [numa,1]=[numa,na] mod x, return qh
  */
 mp_limb_t lmmp_div_mulinv_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_srcptr invappr,
