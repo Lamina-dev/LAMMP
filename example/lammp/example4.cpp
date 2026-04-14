@@ -17,7 +17,7 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 int main() {
-    lmmp_stack_init();
+    lmmp_global_init();
 
     mp_size_t n = 1000;
     mp_ptr a = ALLOC_TYPE(n, mp_limb_t);
