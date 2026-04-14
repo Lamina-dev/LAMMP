@@ -12,6 +12,8 @@
 #include "../../include/lammp/impl/prime_table.h"
 
 int main() {
-    test_perm();
+    lmmp_global_init();
+    test_remove();
+    lmmp_global_deinit();
     return 0;
 }

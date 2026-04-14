@@ -12,7 +12,6 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_perm() {
-    lmmp_stack_init();
     const size_t n = 0x12203, r = 52222;
     size_t len = lmmp_nPr_size_(n, r);
     std::cout << "len = " << len << std::endl;

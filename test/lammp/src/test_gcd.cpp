@@ -10,7 +10,6 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_gcd() {
-    lmmp_stack_init();
     mp_size_t an = 1, bn = 1, cn = 1;
 
     mp_ptr a = ALLOC_TYPE(an, mp_limb_t);
