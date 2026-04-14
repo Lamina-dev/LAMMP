@@ -7,6 +7,7 @@
 #include "../../../include/lammp/impl/signed.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/matrix.h"
 
 int lmmp_mat22_mul_size_(

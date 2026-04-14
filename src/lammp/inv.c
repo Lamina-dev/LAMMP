@@ -4,7 +4,8 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../include/lammp/impl/tmp_alloc.h"
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
@@ -170,4 +171,11 @@ void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
     else
         dst[na + nf] = 1;
     TEMP_FREE;
+}
+
+void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+    if (na < INV_NEWTON_THRESHOLD)
+        lmmp_inv_basecase_(dst, numa, na);
+    else
+        lmmp_invappr_newton_(dst, numa, na);
 }

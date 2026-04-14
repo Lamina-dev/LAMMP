@@ -4,8 +4,9 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/mpdef.h"
-#include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../include/lammp/impl/mparam.h"
+#include "../../include/lammp/impl/mpdef.h"
+#include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
 /*
