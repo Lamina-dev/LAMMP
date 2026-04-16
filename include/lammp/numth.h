@@ -529,7 +529,10 @@ ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
  * @param nn 被除数指针的 limb 长度，将会被修改除去因子后的长度
  * @param dp 除数指针
  * @param dn 除数指针的 limb 长度
- * @return [np,nn]中被[dp,dn]除去的因子的个数
+ * @warning np!=NULL, nn>0, dp!=NULL, dn>0
+ * @note 如果[np,nn]能被[dp,dn]整除，则[np,nn]将被修改为除去因子后的数，nn将被修改为除去因子后的长度。
+ *       如果不能被整除，则[np,nn]保持不变，并返回0。
+ * @return [np,nn]中被[dp,dn]除去的因子的个数，如果不能被整除，则返回0
  */
 mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
