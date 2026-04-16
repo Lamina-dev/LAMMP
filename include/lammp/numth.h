@@ -518,8 +518,9 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
  * @param nn 被除数的 limb 长度
  * @param N 试除法尝试的质数最大值
  * @param rn 结果指针的 limb 长度
- * @warning num!=NULL, nn>0, N>2
- * @return 结果指针，返回不超过N，且能整除[np,nn]的素数，若没有能够整除的素数，则返回NULL
+ * @warning num!=NULL, nn>0, N>2, rn!=NULL
+ * @note 试除法尝试从 2-N 中所有质数进行试除，如果能整除则会插入到返回结果数组中，没有整除的则会返回 NULL。
+ * @return 结果指针，返回不超过N，且能整除[np,nn]的素数（从小到大排列），若没有能够整除的素数，则返回NULL
  */
 ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
 
