@@ -20,34 +20,34 @@
 #define MAX_EXP 48
 
 /**
- * 如果 *mp 不能被整除，则返回false；并无任何操作，如果 *mp 能被整除，则返回true。
- * 且 *tp 被修改为商，然后交换 *mp 和 *tp
+ * qp 为商，rp 为余数，divp 为被除数，divn 为被除数长度，numb 为除数，nb 为除数长度
+ * 如果无法整除，则返回0，否则返回除数 qp 的长度
  */
-static inline bool try_div_(mp_ptr* tp, mp_ptr* mp, mp_size_t* nn, mp_srcptr numb, mp_size_t nb) {
-    if (*nn < nb) {
-        return false;
+static inline mp_size_t try_div_(mp_ptr qp, mp_ptr rp, mp_srcptr divp, mp_size_t divn, mp_srcptr numb, mp_size_t nb) {
+    if (divn < nb) {
+        return 0;
     } else {
         int cmp;
-        if (*nn > nb)
+        if (divn > nb)
             cmp = 1;
         else
-            cmp = lmmp_cmp_(*mp, numb, nb);
+            cmp = lmmp_cmp_(divp, numb, nb);
         if (cmp == 0) {
-            *mp[0] = 1;
-            *nn = 1;
-            return true;
+            qp[0] = 1;
+            return 1;
         } else if (cmp < 0) {
-            return false;
+            return 0;
         } else {
-            lmmp_div_(*tp, *mp, *mp, *nn, numb, nb);
-            if (lmmp_zero_q_(*mp, nb)) {
+            // 拷贝原始数，当无法整除时，再进行恢复
+            lmmp_div_(qp, rp, divp, divn, numb, nb);
+            if (lmmp_zero_q_(rp, nb)) {
                 // 整除
-                *nn = *nn - nb + 1;
-                while (*nn > 0 && (*tp)[*nn - 1] == 0) --(*nn);
-                LMMP_SWAP(*tp, *mp, mp_ptr);
-                return true;
+                divn = divn - nb + 1;
+                while (divn > 0 && qp[divn - 1] == 0) --divn;
+                return divn;
             } else {
-                return false;
+                // 无法整除
+                return 0;
             }
         }
     }
@@ -56,46 +56,63 @@ static inline bool try_div_(mp_ptr* tp, mp_ptr* mp, mp_size_t* nn, mp_srcptr num
 mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
     lmmp_param_assert(np != NULL && *nn > 0);
     lmmp_param_assert(dp != NULL && dn > 0);
-    mp_srcptr pd_pow[MAX_EXP + 1];
-    mp_size_t pn_pow[MAX_EXP + 1];
-    lmmp_zero(pn_pow, MAX_EXP + 1);
 
+    mp_srcptr pd_pow[MAX_EXP];
+    mp_size_t pn_pow[MAX_EXP];
+    // qp as quotient, rp as remainder, divp as divdend
+    mp_ptr qp, rp, divp;
     mp_ptr prod;
-    mp_size_t n = *nn;
+    mp_size_t divn = *nn, qn;
     mp_size_t ret = 0;
+    int i, j;
     pd_pow[0] = dp;
     pn_pow[0] = dn;
 
     TEMP_DECL;
-    mp_ptr tp = TALLOC_TYPE(n - dn + 1, mp_limb_t);
-    mp_ptr mp = np;
-    for (int i = 1; i <= MAX_EXP; ++i) {
-        if (!try_div_(&tp, &mp, &n, pd_pow[i - 1], pn_pow[i - 1])) break;
-        ret += 1 << (i - 1);
-        if (n < pn_pow[i - 1] * 2 - 1) break;
-        prod = TALLOC_TYPE(pn_pow[i - 1] * 2, mp_limb_t);
-        lmmp_sqr_(prod, pd_pow[i - 1], pn_pow[i - 1]);
-        pd_pow[i] = prod;
-        pn_pow[i] = pn_pow[i - 1] * 2;
-        pn_pow[i] -= (pd_pow[i][pn_pow[i] - 1] == 0) ? 1 : 0;
-    }
-    prod = TALLOC_TYPE(n, mp_limb_t);
-    mp_size_t pn;
-    for (;;) {
-        lmmp_copy(prod, mp, n);
-        pn = n;
-        if (!try_div_(&tp, &mp, &n, pd_pow[0], pn_pow[0])) {
-            // 此时*mp为余数，prod才是原本的已除尽的数
-            lmmp_copy(np, prod, pn);
+
+    qp = TALLOC_TYPE(*nn, mp_limb_t);
+    rp = TALLOC_TYPE(*nn, mp_limb_t);
+
+    divp = np;
+
+    for (i = 1; i < MAX_EXP; i++) {
+        // if qn == 0, means cannot be divided by pd_pow[i - 1]
+        if (qn = try_div_(qp, rp, divp, divn, pd_pow[i - 1], pn_pow[i - 1])) {
+            divn = qn;
+            LMMP_SWAP(qp, divp, mp_ptr);
+
+            ret += 1 << (i - 1);
+            pn_pow[i] = 2 * pn_pow[i - 1];
+            if (divn < pn_pow[i]) {
+                ++i;
+                break;
+            }
+            prod = TALLOC_TYPE(pn_pow[i], mp_limb_t);
+            lmmp_sqr_(prod, pd_pow[i - 1], pn_pow[i - 1]);
+            pn_pow[i] -= (prod[pn_pow[i] - 1] == 0) ? 1 : 0;
+            pd_pow[i] = prod;
+        } else {
             break;
         }
-        ++ret;
-        for (int i = 1; i <= MAX_EXP; ++i) {
-            if (!try_div_(&tp, &mp, &n, pd_pow[i], pn_pow[i])) break;
-            ret += 1 << i;
+    }
+    for (j = i - 1; j > 0; --j) {
+        if (qn = try_div_(qp, rp, divp, divn, pd_pow[j - 1], pn_pow[j - 1])) {
+            divn = qn;
+            LMMP_SWAP(qp, divp, mp_ptr);
+
+            ret += 1 << (j - 1);
         }
     }
-    *nn = n;
+    if (qn == 0) {
+        // 无法整除
+        lmmp_copy(np, divp, divn);
+        *nn = divn;
+    } else {
+        // 整除
+        lmmp_copy(np, qp, qn);
+        *nn = qn;
+    }
+
     TEMP_FREE;
     return ret;
 }
