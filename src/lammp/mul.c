@@ -5,6 +5,7 @@
  */
 
 #include "../../include/lammp/lmmpn.h"
+#include "../../include/lammp/impl/mparam.h"
 
 /*
         Areas where the different toom algorithms can be called
@@ -93,4 +94,17 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
         else 
             lmmp_mul_fft_unbalance_(dst, numa, na, numb, nb);
     }
+}
+
+void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    if (n < MUL_TOOM22_THRESHOLD)
+        lmmp_mul_basecase_(dst, numa, n, numb, n);
+    else if (n < MUL_TOOM33_THRESHOLD)
+        lmmp_mul_toom22_(dst, numa, n, numb, n);
+    else if (n < MUL_TOOM44_THRESHOLD)
+        lmmp_mul_toom33_(dst, numa, n, numb, n);
+    else if (n < MUL_FFT_THRESHOLD)
+        lmmp_mul_toom44_(dst, numa, n, numb, n);
+    else
+        lmmp_mul_fft_(dst, numa, n, numb, n);
 }

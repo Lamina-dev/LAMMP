@@ -6,9 +6,26 @@
 
 #include <stdio.h>
 #include "../../include/lammp/lmmp.h"
+#include "../../include/lammp/mprand.h"
 
 int main() {
-    lmmp_stack_init();
+    lmmp_global_init();
+    lmmp_global_rng_init_(0, 21);
+    mp_ptr dst = (mp_ptr)lmmp_alloc(20 * sizeof(mp_limb_t));
 
+    lmmp_random_(dst, 11);
+
+    for (int i = 0; i < 11; i++) {
+        printf("%llu ", dst[i]);
+    }
+    printf("\n");
+
+    lmmp_random_(dst, 10);
+
+    for (int i = 0; i < 10; i++) {
+        printf("%llu ", dst[i]);
+    }
+
+    lmmp_global_deinit();
     return 0;
 }

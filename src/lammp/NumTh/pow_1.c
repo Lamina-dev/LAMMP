@@ -502,6 +502,16 @@ mp_size_t lmmp_16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong ex
 #undef mul_b
 }
 
+/*
+ * base ^ exp
+ *
+ * - base ≤ 15      → 4-bit   lmmp_1_pow_1_
+ * - base ≤ 255     → 8-bit   lmmp_2_pow_1_
+ * - base ≤ 65535   → 16-bit  lmmp_4_pow_1_
+ * - base ≤ 2^32-1  → 32-bit  lmmp_8_pow_1_
+ * - base > 2^32    → 64-bit  lmmp_16_pow_1_
+ */
+
 mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong exp) {
     lmmp_param_assert(base > 1);
     lmmp_param_assert(exp > 0);

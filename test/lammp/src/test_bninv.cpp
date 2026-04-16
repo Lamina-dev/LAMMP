@@ -10,7 +10,6 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_bninv() {
-    lmmp_stack_init();
     mp_limb_t na = 234233;
     mp_limb_t ni = 2132;
 

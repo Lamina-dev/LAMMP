@@ -4,9 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/matrix.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/mparam.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/matrix.h"
 
 #define COPY(tp, src, n)           \
     tp = ALLOC_TYPE(n, mp_limb_t); \
@@ -29,7 +30,7 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec) {
     bool imp = true; // true 表示当前mp1存储连乘结果
 
     bool sign = true;
-    for (mat_size_t i = 0; i < vec->n; ++i) {
+    for (size_t i = 0; i < vec->n; ++i) {
         if (vec->num[i] == NULL || vec->len[i] == 0) {
             *dst = NULL;
             return 0;

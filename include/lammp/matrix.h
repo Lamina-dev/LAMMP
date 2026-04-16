@@ -47,18 +47,6 @@
 
 #include "lmmp.h"
 
-// 元素连乘朴素连乘空间长度
-#define LIMB_ELEMMUL_MP_THRESHOLD 20
-
-// 向量连乘朴素连乘空间长度
-#define VEC_ELEMMUL_MP_THRESHOLD 40
-
-// 2x2矩阵乘法选择STRASSEN算法的阈值
-#define MAT22_MUL_STRASSEN_THRESHOLD 60
-
-// 2x2矩阵平方选择STRASSEN算法的阈值
-#define MAT22_SQR_STRASSEN_THRESHOLD 50
-
 #ifndef INLINE_
 #define INLINE_ static inline
 #endif
@@ -66,8 +54,6 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-typedef size_t mat_size_t;
 
 typedef struct {
     mp_ptr a00;
@@ -94,7 +80,7 @@ typedef lmmp_mat21_t lmmp_svec2_t;
 typedef struct {
     mp_ptr* num;
     mp_ssize_t* len;
-    mat_size_t n;
+    size_t n;
 } lmmp_svecn_t;
 typedef lmmp_svecn_t lmmp_matn1_t;
 typedef lmmp_svecn_t lmmp_vecn_t;

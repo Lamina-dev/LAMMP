@@ -8,7 +8,7 @@
 #include "../../include/lammp/numth.h"
 
 int main() {
-    lmmp_stack_init();
+    lmmp_global_init();
 
     uint n = 100000;
     printf("calculating factorial of %d...\n", n);
@@ -17,5 +17,6 @@ int main() {
     len = lmmp_factorial_(dst, len, n);
     printf("completed.\n");
     lmmp_free(dst);
+    lmmp_global_deinit();
     return 0;
 }
