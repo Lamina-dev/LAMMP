@@ -9,10 +9,10 @@
 #include "../include/test_short.hpp"
 
 void test_remove() {
-    mp_limb_t base[3] = {2301, 0, 0xf123323};
-#define xn 5
-    mp_limb_t x[xn] = {9378649, 29233009820, 230, 91820192, 398330};
-    ulong exp = 211;
+    mp_limb_t base[3] = {2831, 2223330, 0x2231};
+#define xn 10
+    mp_limb_t x[xn] = {29387743, 2873, 3748, 22383, 9387793022, 9378649, 29233009820, 230, 91820192, 322298330};
+    ulong exp = 12223;
 
     mp_size_t bn = lmmp_pow_size_(base, 3, exp) + 1;
     mp_ptr b = (mp_ptr)lmmp_alloc(bn * sizeof(mp_limb_t));
@@ -24,15 +24,30 @@ void test_remove() {
     n2 -= a[n2 - 1] == 0;
 
     auto start = std::chrono::high_resolution_clock::now();
-    mp_size_t n3 = lmmp_remove_(a, &n2, x, xn - 1);
+    mp_size_t n3 = lmmp_remove_(a, &n2, base, 3);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << duration.count() << " microseconds" << std::endl;
-    for (mp_size_t i = 0; i < n2; i++) {
-        std::cout << a[i] << "\n";
+    
+    if (n3 != exp) {
+        std::cout << "n3 != exp" << std::endl;
+        std::cout << "n3: " << n3 << std::endl;
+        std::cout << "exp: " << exp << std::endl;
+        goto end;
     }
-    std::cout << std::endl;
+    if (n2 != xn) {
+        std::cout << "n2 != xn" << std::endl;
+        goto end;
+    }
+    for (ulong i = 0; i < xn; i++) {
+        if (a[i] != x[i]) {
+            std::cout << "a[" << i << "] != x[" << i << "]" << std::endl;
+            goto end;
+        }
+    }
     std::cout << "n3: " << n3 << std::endl;
-
+end:
     lmmp_free(b);
+    lmmp_free(a);
+    lmmp_leak_tracker;
 }
