@@ -177,6 +177,7 @@ EXPORTS
 	lmmp_arith_seqprod_
 	
 	lmmp_trialdiv_
+	lmmp_remove_
 
 
 ; from secret.h
