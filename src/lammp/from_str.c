@@ -4,9 +4,11 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../include/lammp/impl/mparam.h"
+#include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/impl/base_table.h"
 #include "../../include/lammp/lmmpn.h"
+
 
 mp_size_t lmmp_from_str_len_(const mp_byte_t* src, mp_size_t len, int base) {
     lmmp_param_assert(base >= 2 && base <= 256);

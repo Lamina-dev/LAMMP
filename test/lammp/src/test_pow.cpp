@@ -8,7 +8,6 @@
 #include <chrono>
 
 int test_pow() {
-    lmmp_stack_init();
     mp_limb_t base[3] = {0, 0, 0xf123323};
     ulong exp = 251871;
 

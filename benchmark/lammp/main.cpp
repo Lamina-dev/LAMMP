@@ -5,7 +5,8 @@
 
 
 int main() {
-    lmmp_stack_init();
-    std::cout << bench_factorial(1000000) << std::endl;
+    lmmp_global_init();
+    std::cout << bench_div(5000, 1400) << std::endl;
+    lmmp_global_deinit();
     return 0;
 }

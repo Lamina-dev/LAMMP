@@ -19,6 +19,14 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
+/*
+     N                      N/2                              N
+    +--+                /  +--+                  \ 2     /  +--+                     \
+    |  |  P_i ^ (e_i) = |  |  | P_i ^ (e_i / 2)  |    *  |  |  |  P_i ^ ( e_i mod 2) |  
+    |  |                \  |  |                  /       \  |  |                     /
+    i=0                    i=0                              i=0
+*/
+
 mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors restrict fac, uint nfactors, uint N) {
     if (N <= 0xff || nfactors <= 20) {
     // 对于某些比较大的N，而因子又不多，递归深度可能不足，所以需要用nfactors来进行额外判断。    

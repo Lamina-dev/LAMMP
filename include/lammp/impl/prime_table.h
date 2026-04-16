@@ -35,7 +35,7 @@ extern const ushort prime_short_table[PRIME_SHORT_TABLE_SIZE];
 bool lmmp_is_prime_table_(uint p);
 
 /**
- * @brief 计算 n 范围内的short素数数量
+ * @brief 计算小于等于 n 的素数数量
  * @param n 范围
  * @return 素数数量
  */

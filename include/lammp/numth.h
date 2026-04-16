@@ -24,33 +24,9 @@
 
 #include "lmmp.h"
 
-
-// 幂运算中，底数长度为 1 的幂运算指数阈值，低于此阈值使用连乘法
-#define POW_1_EXP_THRESHOLD 10
-
-// 幂运算中，指数大于此值可能使用win2算法
-#define POW_WIN2_EXP_THRESHOLD 50
-
-// 幂运算中，底数长度大于此值可能使用win2算法
-#define POW_WIN2_N_THRESHOLD 400
-
-// 排列数计算中，结果长度小于此阈值的将使用朴素连乘
-#define PERMUTATION_RN_BASECASE_THRESHOLD 450
-
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_RN_MUL_THRESHOLD 15000
-
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_NR_TIMES_THRESHOLD 3
-
-// 排列数计算中，结果长度小于此阈值的将使用朴素算法
-#define BINOMIAL_RN_BASECASE_THRESHOLD 30
-// 元素累乘中，低于此长度的累乘将使用朴素算法
-#define ELEM_MUL_BASECASE_THRESHOLD 20
-
 #define LOG2_ 0.693147180559945
 
-#define DBL_2POW_MANT_DIG_ (0x20000000000000ull)
+#define DBL_2POW_MANT_DIG_ 0x20000000000000ull
 
 #ifdef __cplusplus
 extern "C" {
@@ -535,6 +511,31 @@ INLINE_ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
  * @return 结果的实际的 limb 缓冲区长度
  */
 mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
+
+/**
+ * @brief 试除法
+ * @param num 被除数
+ * @param nn 被除数的 limb 长度
+ * @param N 试除法尝试的质数最大值
+ * @param rn 结果指针的 limb 长度
+ * @warning num!=NULL, nn>0, N>2, rn!=NULL
+ * @note 试除法尝试从 2-N 中所有质数进行试除，如果能整除则会插入到返回结果数组中，没有整除的则会返回 NULL。
+ * @return 结果指针，返回不超过N，且能整除[np,nn]的素数（从小到大排列），若没有能够整除的素数，则返回NULL
+ */
+ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
+
+/**
+ * @brief 除去[np,nn]中的[dp,dn]的因子
+ * @param np 被除数指针，将会被修改为除去因子后的数
+ * @param nn 被除数指针的 limb 长度，将会被修改除去因子后的长度
+ * @param dp 除数指针
+ * @param dn 除数指针的 limb 长度
+ * @warning np!=NULL, nn>0, dp!=NULL, dn>0
+ * @note 如果[np,nn]能被[dp,dn]整除，则[np,nn]将被修改为除去因子后的数，nn将被修改为除去因子后的长度。
+ *       如果不能被整除，则[np,nn]保持不变，并返回0。
+ * @return [np,nn]中被[dp,dn]除去的因子的个数，如果不能被整除，则返回0
+ */
+mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
 #undef LOG2_
 #undef DBL_2POW_MANT_DIG_

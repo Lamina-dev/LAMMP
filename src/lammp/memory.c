@@ -4,10 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/prime_table.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
-
 
 #undef lmmp_alloc
 #undef lmmp_realloc
@@ -76,7 +76,7 @@ void lmmp_stack_init(void) {
 void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap) {
     if (heap == NULL)
         return;
-    lmmp_stack_reset(0);
+    lmmp_global_deinit();
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
     if (heap_alloc_count != 0) {
         char msg[64];
@@ -85,6 +85,7 @@ void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap) {
     }
 #endif
     global_heap = *heap;
+    lmmp_global_init();
 }
 
 void* lmmp_temp_heap_alloc_(void** pmarker, size_t size) {
@@ -391,6 +392,10 @@ void lmmp_stack_free(void* ptr, const char* func, int line) {
     stack_set_top_func(new_top);
 }
 #endif  // LAMMP_DEBUG_MEMORY_CHECK != 1
+
+void lmmp_global_init(void) {
+    lmmp_stack_init();
+}
 
 void lmmp_global_deinit(void) {
     lmmp_stack_reset(0);

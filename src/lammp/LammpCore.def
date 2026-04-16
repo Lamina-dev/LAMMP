@@ -23,6 +23,7 @@ EXPORTS
 	lmmp_stack_alloc
 	lmmp_stack_free
 
+	lmmp_global_init
 	lmmp_global_deinit
 	
 
@@ -79,6 +80,9 @@ EXPORTS
 	lmmp_sqr_toom2_
 	lmmp_sqr_toom3_
 	lmmp_sqr_toom4_
+	lmmp_sqr_
+	lmmp_mul_n_
+
 	lmmp_mul_basecase_
 	lmmp_mul_toom22_
 	lmmp_mul_toom32_
@@ -107,6 +111,7 @@ EXPORTS
 	lmmp_inv_2_1_
 	lmmp_inv_basecase_
 	lmmp_invappr_newton_
+	lmmp_invappr_
 
 	lmmp_div_3_2_
 	lmmp_div_1_
@@ -171,6 +176,9 @@ EXPORTS
 	lmmp_multinomial_
 	lmmp_arith_seqprod_
 	
+	lmmp_trialdiv_
+	lmmp_remove_
+
 
 ; from secret.h
 	lmmp_siphash24_

@@ -116,10 +116,10 @@ INLINE_ void lmmp_xoshiro256pp_srandom(xoshiro256pp_state* rng, mp_limb_t seed) 
 
     // assert that the initial state is non-zero
     if (rng->s[0] == 0 && rng->s[1] == 0 && rng->s[2] == 0 && rng->s[3] == 0) {
-        rng->s[0] = 0xa12ef3383a3d2eefULL;
-        rng->s[1] = 0xcdfabe82ecd412ceULL;
-        rng->s[2] = 0x90b5ec55c9235815ULL;
-        rng->s[3] = 0xcfb28093ca79a3a7ULL;
+        rng->s[0] = 0xa12ef3383a3d2eefULL + seed;
+        rng->s[1] = 0xcdfabe82ecd412ceULL + seed;
+        rng->s[2] = 0x90b5ec55c9235815ULL + seed;
+        rng->s[3] = 0xcfb28093ca79a3a7ULL + seed;
     }
     // warm up
     lmmp_xoshiro256pp_random(rng);

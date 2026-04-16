@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/mpdef.h"
 
 static inline void swap_num_node(num_node_ptr restrict a, num_node_ptr restrict b) {
