@@ -58,14 +58,11 @@ lmmp_mullh_ endp
 
 	ALIGN 16
 lmmp_mulmod_ulong_ proc
-    push rbx
-    mov rbx, rx2      
     mov rax, rx0     
     mul rx1   
-    div rbx           
+    div rx2    
     mov [rx3], rax     
     mov rax, rdx    
-    pop rbx
     ret
 lmmp_mulmod_ulong_ endp
 
