@@ -157,9 +157,6 @@ if(NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${OUTPUT_ROOT}/lib/${CMAKE_BUILD_TYPE}")
 endif()
 
-# ===================== 头文件路径 =====================
-include_directories(${CMAKE_SOURCE_DIR}/include)
-
 # ===================== 构建子模块 =====================
 add_subdirectory(src/lammp)
 
