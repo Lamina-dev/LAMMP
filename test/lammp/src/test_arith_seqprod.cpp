@@ -7,7 +7,6 @@
 #include <chrono>
 
 #include "../include/test_short.hpp"
-#include "../../../include/lammp/impl/print_hex.h"
 #include "../../../include/lammp/matrix.h"
 
 void test_arith_seqprod() {
