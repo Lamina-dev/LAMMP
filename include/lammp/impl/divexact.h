@@ -63,11 +63,10 @@ static inline void lmmp_divexact_by9_(mp_ptr dst, mp_srcptr numa, mp_size_t na) 
     do {
         s = numa[i];
         l = s - c;
-        c = l > s;     
+        c = l > s;
         q = l * MODLIMB_INVERSE_9;
         dst[i] = q;
         // carry from 9*q = (q<<3) + q
-        // assert( q < floor((2^64 - 1) / 9) )
         t = q << 3;
         carry = (q >> (LIMB_BITS - 3)) + ((t + q) < t);
         c += carry;
@@ -90,11 +89,10 @@ static inline void lmmp_divexact_by15_(mp_ptr dst, mp_srcptr numa, mp_size_t na)
     do {
         s = numa[i];
         l = s - c;
-        c = l > s; 
+        c = l > s;
         q = l * MODLIMB_INVERSE_15;
         dst[i] = q;
         // carry from 15*q = (q<<4) - q
-        // assert( q < floor((2^64 - 1) / 15) )
         t = q << 4;
         carry = (q >> (LIMB_BITS - 4)) - (t < q);
         c += carry;
