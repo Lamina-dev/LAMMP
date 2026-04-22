@@ -697,7 +697,7 @@ mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl);
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
  * @warning na>0, MSB(numa)=1, sep(dst,numa)
- * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]
+ * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na] - B^na
  */
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
@@ -707,7 +707,7 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
  * @warning na>4, MSB(numa)=1, sep(dst,numa)
- * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]+[0|-1]
+ * @return 无返回值，结果存储在dst中，[dst,na]=(B^(2*na)-1)/[numa,na]-B^na+[0|-1]
  */
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
@@ -815,22 +815,22 @@ void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
 /**
  * @brief 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
- * @warning na>0, numa[na-1]!=0, eqsep(dst,numa)
  * @param dst 逆元结果输出指针
  * @param numa 源操作数指针
  * @param na 操作数的 limb 长度
  * @param nf 精度因子
+ * @warning na>0, numa[na-1]!=0, eqsep(dst,numa)
  */
 void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
- * @brief 精确逆元计算 dstq = B^(2*(na+ni)) div ([numa,na] * B^ni)
+ * @brief 精确逆元计算 [dstq,na+ni+2] = B^(2*(na+ni)) / ([numa,na] * B^ni)
  * @param dstq 输出商的缓冲区，长度至少为na+ni+2
  * @param numa 输入被除数（长度na）
  * @param na 被除数的 limb 长度
  * @param ni 精度因子
  * @warning na>0, sep(dstq,numa), dstq!=NULL, numa[na-1]!=0
- * @note 也就是计算 floor( B^(2*na+ni) / ([numa,na] )
+ * @note 也就是计算 B^(2*na+ni) div ([numa,na]
  */
 void lmmp_bninv_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
@@ -1160,7 +1160,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base);
  *       如果bits小于等于num的实际位数，则ext将会有bits位有效位数。
  * @return 剩余的低位bits数量
  */
-mp_size_t lmmp_extract_bits_(mp_srcptr num, mp_size_t n, mp_limb_t* ext, int bits);
+mp_bitcnt_t lmmp_extract_bits_(mp_srcptr num, mp_size_t n, mp_limb_t* ext, int bits);
 
 #ifdef __cplusplus
 }  // extern "C"

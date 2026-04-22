@@ -4,8 +4,9 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/impl/base_table.h"
+#include "../../include/lammp/impl/mparam.h"
+#include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
 mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
@@ -66,11 +67,11 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
 
 // assume numa[na-1]!=0, need an extra limb at numa[na]
 static mp_size_t lmmp_to_str_divide_(
-          mp_byte_t*    dst, 
-          mp_ptr        numa, 
-          mp_size_t     na, 
-          mp_basepow_t* pow, 
-          mp_ptr        tpq
+    mp_byte_t*     dst, 
+    mp_ptr        numa, 
+    mp_size_t       na, 
+    mp_basepow_t*  pow, 
+    mp_ptr         tpq
 ) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1] != 0);

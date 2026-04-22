@@ -73,13 +73,19 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
  取a和b的低位一定宽度为m，高位宽度为t，则有：
  计算一次完整的平衡乘法m，然后递归调用计算mullo，长度为t
  复杂度模型：
-   ML(n) = 2*ML(an) + M((1-a)n) => k*M(n) = 2*k*M(n)*a^e + M(n)*(1-a)^e
- 其中ML为mullo的复杂度，M为mul_n的复杂度，e为Toom-Cook系列的复杂度幂次。
- e=log(3)/log(2) [Toom-2] -> a ~= 1/2
- e=log(5)/log(3) [Toom-3] -> a ~= 9/40
- e=log(7)/log(4) [Toom-4] -> a ~= 7/39
- e=log(11)/log(6) [Toom-6] -> a ~= 1/8
- e=log(15)/log(8) [Toom-8] -> a ~= 1/10
+   ML(n) = 2*ML(a*n) + M((1-a)*n)
+ 其中ML为mullo的复杂度，M为mul_n的复杂度
+ 我们可以假定 M(n)=O(n^e) 即多项式复杂度
+ 则有：
+   ML(n) = C(a) * n^e
+   C(a) = a^e / (1-2*(1-a)^e)
+ 我们希望C(a)尽可能小，即希望ML(n)尽可能小，则有：
+   a_opt = 1 - 2^(-1/(e-1))
+ e=log(3)/log(2)  [Toom-2] -> a ~= 0.694
+ e=log(5)/log(3)  [Toom-3] -> a ~= 0.775
+ e=log(7)/log(4)  [Toom-4] -> a ~= 0.820
+ e=log(11)/log(6) [Toom-6] -> a ~= 0.871
+ e=log(15)/log(8) [Toom-8] -> a ~= 0.899
 */
 
 #define MUL_TOOM66_THRESHOLD MUL_FFT_THRESHOLD
@@ -89,7 +95,7 @@ void lmmp_mullo_dc_(
     mp_ptr    restrict  dst, 
     mp_srcptr restrict numa, 
     mp_srcptr restrict numb, 
-    mp_ptr    restrict   tp, 
+    mp_ptr    restrict   tp,
     mp_size_t             n
 ) {
     if (n < MULLO_BASECASE_THRESHOLD) {
@@ -108,7 +114,7 @@ void lmmp_mullo_dc_(
         } else if (n < MUL_TOOM66_THRESHOLD) {
             m = 32 * n / 39;
         } else if (n < MUL_TOOM88_THRESHOLD) {
-            m = 7 * n / 8;
+            m = 27 * n / 31;
         } else {
             m = 9 * n / 10;
         }
@@ -151,7 +157,7 @@ void lmmp_sqrlo_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_ptr restric
         } else if (n < MUL_TOOM66_THRESHOLD) {
             m = 32 * n / 39;
         } else if (n < MUL_TOOM88_THRESHOLD) {
-            m = 7 * n / 8;
+            m = 27 * n / 31;
         } else {
             m = 9 * n / 10;
         }

@@ -6,11 +6,12 @@
 
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/impl/mparam.h"
+#include "../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_param_assert(na > 0);
-    lmmp_param_assert(numa[na - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(numa[na - 1] >= LIMB_B_2);
     if (na == 1)
         *dst = lmmp_inv_1_(*numa);
     else {
@@ -39,7 +40,7 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 
 void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_param_assert(na > 4);
-    lmmp_param_assert(numa[na - 1] >= 0x8000000000000000ull);
+    lmmp_param_assert(numa[na - 1] >= LIMB_B_2);
     
     mp_limb_t cy;
     mp_size_t nr = na, mn;
