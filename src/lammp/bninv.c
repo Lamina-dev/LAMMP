@@ -67,29 +67,23 @@ output:
     and assert(ca == 0)
 */
 
+/**
+ * @brief 牛顿法求精确逆元（至多产生1的误差）
+ * @note dstq := B^(2*(na+ni)) // ([numa,na] * B^ni) + [0|1]
+ * @warning eqsep(dstq,numa), dstq!=NULL, numa!=NULL, na>=3, MSB(numa)=1
+ */
 static void lmmp_bninv_appr_newton_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp_size_t ni) {
-    lmmp_param_assert(na > 0);
+    lmmp_param_assert(na >= 3);
     lmmp_param_assert(dstq != NULL && numa != NULL);
     lmmp_param_assert(numa[na - 1] > LIMB_B_2);
-    if (na == 1) {
-        TEMP_DECL;
-        mp_ptr restrict bnp = TALLOC_TYPE(3 + ni, mp_limb_t);
-        lmmp_zero(bnp, 3 + ni);
-        bnp[2 + ni] = 1;
-        lmmp_div_1_(dstq, bnp, 3 + ni, numa[0]);
-        TEMP_FREE;
-        return;
-    } else if (na < BNINV_NEWTON_THRESHOLD) {
-        TEMP_DECL;
+    TEMP_DECL;
+    if (na < BNINV_NEWTON_THRESHOLD) {
         mp_ptr restrict bnp = TALLOC_TYPE(2 * na + ni + 1, mp_limb_t);
         lmmp_zero(bnp, 2 * na + ni + 1);
         bnp[2 * na + ni] = 1;
         mp_limb_t inv21 = lmmp_inv_2_1_(numa[na - 1], numa[na - 2]);
         lmmp_div_basecase_(dstq, bnp, 2 * na + ni + 1, numa, na, inv21);
-        TEMP_FREE;
-        return;
     } else {
-        TEMP_DECL;
         mp_srcptr restrict a_hat;
 
         mp_size_t N = na + ni;
@@ -125,34 +119,33 @@ static void lmmp_bninv_appr_newton_(mp_ptr restrict dstq, mp_srcptr restrict num
             lmmp_shl_(q_hat, q_hat, q_hatn, 1);  // assert no carry
             lmmp_sub_n_(dstq, dstq, q_hat_sqr_a + start, N + 1);
         }
-        TEMP_FREE;
     }
+    TEMP_FREE;
 }
 
 void lmmp_bninv_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp_size_t ni) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(dstq != NULL && numa != NULL);
     lmmp_param_assert(numa[na - 1] > 0);
+    TEMP_DECL;
     if (na == 1) {
-        TEMP_DECL;
         mp_ptr restrict bnp = TALLOC_TYPE(3 + ni, mp_limb_t);
         lmmp_zero(bnp, 2 + ni);
         bnp[2 + ni] = 1;
         lmmp_div_1_(dstq, bnp, 3 + ni, numa[0]);
-        TEMP_FREE;
-        return;
     } else if (na == 2) {
-        TEMP_DECL;
         mp_size_t bn = 2 * 2 + ni + 1;
         mp_ptr restrict bnp = TALLOC_TYPE(bn, mp_limb_t);
         lmmp_zero(bnp, bn - 1);
         bnp[bn - 1] = 1;
         mp_limb_t d[2] = {numa[0], numa[1]};
         lmmp_div_2_(dstq, bnp, bn, d);
-        TEMP_FREE;
-        return;
+    } else if (ni > na) {
+        mp_ptr restrict B = TALLOC_TYPE(2 * na + ni + 1, mp_limb_t);
+        lmmp_zero(B, 2 * na + ni);
+        B[2 * na + ni] = 1;
+        lmmp_div_(dstq, NULL, B, 2 * na + ni + 1, numa, na);
     } else {
-        TEMP_DECL;
         int shift = lmmp_leading_zeros_(numa[na - 1]);
         if (shift > 0) {
             mp_ptr restrict numa_shift = TALLOC_TYPE(na, mp_limb_t);
@@ -164,7 +157,7 @@ void lmmp_bninv_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp
             lmmp_copy(dstq, dstq + 1, na + ni + 1);
             dstq[na + ni + 1] = 0;
         }
-        TEMP_FREE;
-        return;
     }
+    TEMP_FREE;
+    return;
 }
