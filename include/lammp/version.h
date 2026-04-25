@@ -36,7 +36,7 @@
 #define LAMMP_COMPILER_VERSION 0
 #endif
 
-#define LAMMP_VERSION "4.0.0"
+#define LAMMP_VERSION "4.1.0"
 #define LAMMP_ALPHA_YEAR "2026"
 
 #endif /* __LAMMP_VERSION_H__ */
