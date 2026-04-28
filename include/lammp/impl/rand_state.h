@@ -20,7 +20,7 @@
 #define __LAMMP_RAND_STATE_H__
 
 #include "../lmmp.h"
-#include "../impl/u128_u192.h"
+#include "../impl/longlong.h"
 
 typedef struct {
     mp_limb_t state[2];
