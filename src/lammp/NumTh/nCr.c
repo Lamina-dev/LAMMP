@@ -5,9 +5,8 @@
  */
 
 #include "../../../include/lammp/impl/factors_mul.h"
-#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
-#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/numth.h"
 

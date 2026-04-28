@@ -4,7 +4,7 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/factors_mul.h"
 

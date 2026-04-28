@@ -8,7 +8,7 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
-#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/ele_mul.h"
 
 #define MAX_T 0xffffffffffffull
 
