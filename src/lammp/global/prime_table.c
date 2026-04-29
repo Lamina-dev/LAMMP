@@ -9,7 +9,7 @@
 #include "../../../include/lammp/impl/tmp_alloc.h"
 
 ulong lmmp_prime_size_(ulong n) {
-    if (n <= PRIME_SHORT_TABLE_N) {
+    if (n < PRIME_SHORT_TABLE_N) {
         return lmmp_prime_cnt16_(n);
     } else if (n < 95000) {
         return (ulong)ceil((double)n / (log(n) - 1.095)) + 1;
