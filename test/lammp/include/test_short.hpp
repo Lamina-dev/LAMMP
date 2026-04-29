@@ -7,7 +7,6 @@
 #ifndef __LAMMP_TEST_SHORT_H__
 #define __LAMMP_TEST_SHORT_H__
 #include <iostream>
-#include "../../../include/lammp/impl/_umul64to128_.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/mprand.h"
