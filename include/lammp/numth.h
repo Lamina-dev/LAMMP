@@ -355,11 +355,11 @@ mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  */
 INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_debug_assert(n >= r);
-#define LMMP_NPR_SHORT_LIMIT 0xffff
-#define LMMP_NPR_INT_LIMIT 0xffffffff
-    if (n <= LMMP_NPR_SHORT_LIMIT) 
+#define LMMP_NPR_SHORT_LIMIT (0xffff)
+#define LMMP_NPR_INT_LIMIT (0xffffffff)
+    if (n <= (ulong)LMMP_NPR_SHORT_LIMIT)
         return lmmp_nPr_short_(dst, rn, n, r);
-    else if (n <= LMMP_NPR_INT_LIMIT)
+    else if (n <= (ulong)LMMP_NPR_INT_LIMIT)
         return lmmp_nPr_int_(dst, rn, n, r);
     else
         return lmmp_nPr_long_(dst, rn, n, r);
