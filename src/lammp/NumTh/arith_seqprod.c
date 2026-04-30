@@ -4,12 +4,64 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/heap.h"
-#include "../../../include/lammp/impl/mpdef.h"
+#include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
+static inline mp_size_t mp_pow_(mp_ptr dst, mp_size_t rn, uint base, ulong exp) {
+    if (base < 0xf)
+        return lmmp_1_pow_1_(dst, rn, base, exp);
+    else if (base < MP_UCHAR_MAX)
+        return lmmp_2_pow_1_(dst, rn, base, exp);
+    else if (base < MP_USHORT_MAX)
+        return lmmp_4_pow_1_(dst, rn, base, exp);
+    else
+        return lmmp_8_pow_1_(dst, rn, base, exp);
+}
+
+/*
+当x=p*m时，
+x(x+1)...(x+n-1) = p*m * (p+1)*m * ... * (p+n)*m
+                 = m^(n+1) * p(p+1)...(p+n)
+分别计算幂和组合数，然后相乘
+*/
+static inline mp_size_t pow_nPr_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n, uint m) {
+    TEMP_DECL;
+    uint p = x / m;
+    mp_size_t tn = lmmp_nPr_size_(p + n, n + 1);
+    mp_size_t tz = lmmp_tailing_zeros_(m);
+    m >>= tz;
+    mp_size_t mpown = lmmp_pow_1_size_(m, n + 1);
+
+    mp_ptr restrict tp = TALLOC_TYPE(tn, mp_limb_t);
+    mp_ptr restrict mpow = TALLOC_TYPE(mpown, mp_limb_t);
+    tn = lmmp_nPr_(tp, tn, p + n, n + 1);
+    mpown = mp_pow_(mpow, mpown, m, n + 1);
+
+    tz *= n + 1;
+    int shl = tz % LIMB_BITS;
+    tz /= LIMB_BITS;
+    if (shl != 0) {
+        mpow[mpown] = lmmp_shl_(mpow, mpow, mpown, shl);
+        mpown -= mpow[mpown - 1] == 0 ? 1 : 0;
+    }
+    while (*tp == 0) {
+        tp++;
+        tn--;
+        tz++;
+    }
+    lmmp_zero(dst, tz);
+    if (tn >= mpown)
+        lmmp_mul_(dst + tz, tp, tn, mpow, mpown);
+    else
+        lmmp_mul_(dst + tz, mpow, mpown, tp, tn);
+    TEMP_FREE;
+    rn = tz + tn + mpown;
+    rn -= dst[rn - 1] == 0 ? 1 : 0;
+    return rn;
+}
 
 mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n, uint m) {
     lmmp_param_assert(dst != NULL);
@@ -19,44 +71,13 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
     lmmp_param_assert(m >= 1);
 
     if (x % m == 0 && m != 1) {
-        /* 
-           x = p * m
-           x(x+1)...(x+n-1) = p*m * (p+1)*m * ... * (p+n)*m
-                            = m^(n+1) * p(p+1)...(p+n)
-        */
-        uint p = x / m;
-        TEMP_B_DECL;
-        mp_size_t mpown = lmmp_pow_1_size_(m, n + 1);
-        mp_ptr restrict mpow = BALLOC_TYPE(mpown, mp_limb_t);
-        mpown = lmmp_pow_1_(mpow, mpown, m, n + 1);
-        mp_size_t tn = lmmp_nPr_size_(p + n, n + 1);
-        mp_ptr restrict tp = BALLOC_TYPE(tn, mp_limb_t);
-        tn = lmmp_nPr_(tp, tn, p + n, n + 1);
-
-        mp_size_t tz = 0;
-        while (*tp == 0) {
-            tp++;
-            tn--;
-            tz++;
-        }
-        while (*mpow == 0) {
-            mpow++;
-            mpown--;
-            tz++;
-        }
-        lmmp_zero(dst, tz);
-
-        if (tn >= mpown)
-            lmmp_mul_(dst + tz, tp, tn, mpow, mpown);
-        else
-            lmmp_mul_(dst + tz, mpow, mpown, tp, tn);
-        TEMP_B_FREE;
-        rn = tz + tn + mpown;
-        rn -= dst[rn - 1] == 0 ? 1 : 0;
-        return rn;
+        return pow_nPr_(dst, rn, x, n, m);
     }
 
     mp_size_t shl = 0;
+    /*
+    尽可能将二的因子移出来，当然这并不能移出所有的2的因子，但可以减少计算量
+    */
     while ((x & 1) == 0 && (m & 1) == 0) {
         x >>= 1;
         m >>= 1;

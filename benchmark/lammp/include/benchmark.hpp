@@ -22,8 +22,6 @@
 #include "../../../include/lammp/numth.h"
 #include "../../../include/lammp/mprand.h"
 
-bool is_writable(const std::filesystem::path& p);
-
 void ger_random_numbers(int len, mp_ptr dst, mp_size_t min = 0, mp_size_t max = LIMB_MAX);
 
 long long bench_add(int len1, int len2, int n);

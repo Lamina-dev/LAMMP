@@ -6,7 +6,6 @@
 
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/impl/mparam.h"
-#include "../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
 
 void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {

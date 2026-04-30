@@ -4,8 +4,8 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../include/lammp/impl/mpdef.h"
 #include "../../include/lammp/lmmpn.h"
+#include "../../include/lammp/impl/mparam.h"
 
 mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
     lmmp_param_assert(na >= nb);

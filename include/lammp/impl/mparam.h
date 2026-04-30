@@ -49,15 +49,16 @@
 // Toom-33乘法阈值：超过此规模使用Toom-33乘法
 #define MUL_TOOM33_THRESHOLD 65
 // Toom-44乘法阈值：超过此规模使用Toom-44乘法
-#define MUL_TOOM44_THRESHOLD 526
+#define MUL_TOOM44_THRESHOLD 581
 // FFT乘法阈值：超过此规模使用快速傅里叶变换(FFT)乘法
-#define MUL_FFT_THRESHOLD 2916
+#define MUL_FFT_THRESHOLD 2316
 
 // 低位乘法阈值：低于此规模使用朴素乘法
 #define MULLO_BASECASE_THRESHOLD 20
 // 低位除法阈值：低于此规模使用不平衡分治乘法
 #define MULLO_DC_THRESHOLD 11238
 
+// 精确逆元阈值：高于此规模使用牛顿迭代法
 #define BNINV_NEWTON_THRESHOLD 20
 
 // 费马变换阈值：低于此规模使用直接乘法而不再进行递归
@@ -79,6 +80,10 @@
 // L2缓存大小，请将此值设置为实际单核CPU的L2缓存大小（字节数）
 // 1Mb 字节是一个相对保守的数值
 #define L2_CACHE_SIZE (1ull << 20)
+
+#ifndef LIMB_BYTYS
+#define LIMB_BYTES 8
+#endif
 
 // L1缓存分块大小
 #define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 4)
@@ -104,18 +109,44 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数计算中，结果长度小于此阈值的将使用朴素连乘
-#define PERMUTATION_RN_BASECASE_THRESHOLD 450
+// 排列数计算中，结果长度小于此阈值的将使用朴素算法
+#define PERMUTATION_USHORT_BASECASE_THRESHOLD 60
 
 // 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_RN_MUL_THRESHOLD 15000
+#define PERMUTATION_USHORT_MUL_THRESHOLD 1310
+
+// 排列数计算中，结果长度小于此阈值的将使用累乘
+#define PERMUTATION_UINT_MUL_THRESHOLD 3600
 
 // 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_NR_TIMES_THRESHOLD 3
+#define PERMUTATION_USHORT_TIMES_THRESHOLD 8
+
+// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
+#define PERMUTATION_UINT_TIMES_THRESHOLD 12
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
 // 元素累乘中，低于此长度的累乘将使用朴素算法
 #define ELEM_MUL_BASECASE_THRESHOLD 20
+
+#define MP_UCHAR_MAX (0xff)
+#define MP_USHORT_MAX (0xffff)
+#define MP_UINT_MAX (0xffffffff)
+#define MP_ULONG_MAX (0xffffffffffffffffull)
+
+#define MP_CHAR_BITS (8)
+#define MP_SHORT_BITS (16)
+#define MP_INT_BITS (32)
+#define MP_LONG_BITS (64)
+
+#define MP_CHAR_BYTES (1)
+#define MP_SHORT_BYTES (2)
+#define MP_INT_BYTES (4)
+#define MP_LONG_BYTES (8)
+
+// B / 2
+#define LIMB_B_2 (0x8000000000000000ull)
+// B / 4
+#define LIMB_B_4 (0x4000000000000000ull)
 
 #endif // __LAMMP_MPARAM_H__
