@@ -109,14 +109,20 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数计算中，结果长度小于此阈值的将使用朴素连乘
-#define PERMUTATION_RN_BASECASE_THRESHOLD 450
+// 排列数计算中，结果长度小于此阈值的将使用朴素算法
+#define PERMUTATION_USHORT_BASECASE_THRESHOLD 60
 
 // 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_RN_MUL_THRESHOLD 15000
+#define PERMUTATION_USHORT_MUL_THRESHOLD 1310
+
+// 排列数计算中，结果长度小于此阈值的将使用累乘
+#define PERMUTATION_UINT_MUL_THRESHOLD 3600
 
 // 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_NR_TIMES_THRESHOLD 3
+#define PERMUTATION_USHORT_TIMES_THRESHOLD 8
+
+// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
+#define PERMUTATION_UINT_TIMES_THRESHOLD 12
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30

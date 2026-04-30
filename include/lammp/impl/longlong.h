@@ -19,7 +19,9 @@
 #ifndef __LAMMP_LONGLONG_H__
 #define __LAMMP_LONGLONG_H__
 
-
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
 #include <stdint.h>
 
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
@@ -50,6 +52,31 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
     *low = (r1 << 32) | (uint32_t)r0;
 #endif
 }
+
+#ifdef _MSC_VER
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shl(r, x, cnt)              \
+    do {                                \
+        unsigned long long _x_ = (x);   \
+        unsigned long _idx_;            \
+        _BitScanForward64(&_idx_, _x_); \
+        (cnt) = _idx_;                  \
+        (r) = _x_ >> _idx_;             \
+    } while (0)
+#else
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shl(r, x, cnt)                \
+    do {                                  \
+        unsigned long long _x_ = (x);     \
+        int _cnt_ = __builtin_ctzll(_x_); \
+        (cnt) = _cnt_;                    \
+        (r) = _x_ >> _cnt_;               \
+    } while (0)
+#endif
 
 /**
  * 请注意，此处的蒙哥马利域的R为2^64，p不可超过2^63-1
