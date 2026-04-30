@@ -16,8 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __LAMMP_HEAP_H__
-#define __LAMMP_HEAP_H__
+#ifndef __LAMMP_ELE_MUL_H__
+#define __LAMMP_ELE_MUL_H__
 
 #include "../lmmpn.h"
 #include "../numth.h"
@@ -106,4 +106,4 @@ mp_size_t lmmp_elem_mul_ulong_(mp_ptr dst, const ulongp limbs, mp_size_t n, mp_p
 
 #undef INLINE_
 
-#endif // __LAMMP_HEAP_H__
+#endif // __LAMMP_ELE_MUL_H__

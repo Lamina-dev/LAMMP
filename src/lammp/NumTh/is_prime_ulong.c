@@ -5,9 +5,9 @@
  */
 
 #include "../../../include/lammp/impl/is_prime_table.h"
-#include "../../../include/lammp/impl/mpdef.h"
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/impl/longlong.h"
+#include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 

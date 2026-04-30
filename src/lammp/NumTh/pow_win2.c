@@ -51,9 +51,25 @@ mp_size_t lmmp_pow_win2_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict b
     bool rsq = true;
     mp_ptr restrict sq = BALLOC_TYPE(rn, mp_limb_t);
     rn = 1;
-    sq[0] = 1;
-    int i = 31;
+    int i = 31, j;
     while ((exp & (0x3ull << ((i--) * 2))) == 0);
+
+    /*
+    模拟一次，让最后一次计算结果恰好是dst，避免最后一次可能的拷贝
+    */
+    for (j = i + 1; j != -1; --j) {
+        int p = (exp & (0x3ull << (j * 2))) >> (j * 2);
+        if (p != 0)
+            rsq = !rsq;
+    }
+    if (rsq) {
+        dst[0] = 1;
+        rsq = false;
+    } else {
+        sq[0] = 1;
+        rsq = true;
+    }
+
     for (++i; i != -1; --i) {
         int p = (exp & (0x3ull << (i * 2))) >> (i * 2);
         if (p == 0) {
@@ -84,8 +100,8 @@ mp_size_t lmmp_pow_win2_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict b
             }
         }
     }
-    if (rsq) 
-        lmmp_copy(dst, sq, rn);
+    lmmp_debug_assert(rsq == false);
+
     TEMP_FREE;
     return rn;
 

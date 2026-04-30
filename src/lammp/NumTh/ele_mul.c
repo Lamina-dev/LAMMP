@@ -4,9 +4,8 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/heap.h"
+#include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
-#include "../../../include/lammp/impl/mpdef.h"
 
 static inline void swap_num_node(num_node_ptr restrict a, num_node_ptr restrict b) {
     num_node temp = *a;

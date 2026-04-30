@@ -1,44 +1,83 @@
 /*
-===============================================================================
-1. LGPL v2.1 LICENSED CODE (LAMMP Project)
-Copyright (c) 2025-2026 HJimmyK(Jericho Knox)
-This file is part of LAMMP (LGPL v2.1 License)
-Full LGPL v2.1 License Text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
-LAMMP Repository: https://github.com/Lamina-dev/LAMMP
+ * [LAMMP]
+ * Copyright (C) [2025-2026] [HJimmyK(Jericho Knox)]
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 
-Modification Note: This file contains modifications to the original MIT-licensed code to adapt to LAMMP's LGPL v2.1
-environment.
+#ifndef __LAMMP_LONGLONG_H__
+#define __LAMMP_LONGLONG_H__
 
-===============================================================================
-2. MIT LICENSED CODE (Original Source)
-MIT License
+#ifdef _MSC_VER
+#include <intrin.h>
+#endif
+#include <stdint.h>
 
-Copyright (c) 2024-2050 HJimmyK
-Project URL: https://github.com/HJimmyK/fast_mul_3ntt_crt_CC
+static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
+#if (defined(__GNUC__) || defined(__clang__))
+#if defined(USE_ASM) && (defined(__x86_64__))
+    __asm__("mul %[b]" 
+            : "=a"(*low),
+              "=d"(*high)         
+            : "a"(a), [b] "r"(b)  
+            :                    
+    );
+#else
+    __uint128_t prod = (__uint128_t)a * b;
+    *low = (uint64_t)prod;
+    *high = (uint64_t)(prod >> 64);
+#endif
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    *low = _umul128(a, b, high);
+#else
+    uint64_t ah = a >> 32, bh = b >> 32;
+    a = (uint32_t)a, b = (uint32_t)b;
+    uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
+    r3 += (r1 >> 32) + (r2 >> 32);
+    r1 = (uint32_t)r1, r2 = (uint32_t)r2;
+    r1 += r2;
+    r1 += (r0 >> 32);
+    *high = r3 + (r1 >> 32);
+    *low = (r1 << 32) | (uint32_t)r0;
+#endif
+}
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+#ifdef _MSC_VER
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shl(r, x, cnt)              \
+    do {                                \
+        unsigned long long _x_ = (x);   \
+        unsigned long _idx_;            \
+        _BitScanForward64(&_idx_, _x_); \
+        (cnt) = _idx_;                  \
+        (r) = _x_ >> _idx_;             \
+    } while (0)
+#else
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shl(r, x, cnt)                \
+    do {                                  \
+        unsigned long long _x_ = (x);     \
+        int _cnt_ = __builtin_ctzll(_x_); \
+        (cnt) = _cnt_;                    \
+        (r) = _x_ >> _cnt_;               \
+    } while (0)
+#endif
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-*/
-
-#ifndef __LAMMP_U128_U192_H__
-#define __LAMMP_U128_U192_H__
-
-#include "_umul64to128_.h"
 /**
  * 请注意，此处的蒙哥马利域的R为2^64，p不可超过2^63-1
  */
@@ -266,4 +305,4 @@ def montgomery_mul(a_mont, b_mont, p):
         }                                                                  \
     } while (0)
 
-#endif  // __LAMMP_U128_U192_H__
+#endif // __LAMMP_LONGLONG_H__
