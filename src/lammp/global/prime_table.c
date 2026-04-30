@@ -5,7 +5,6 @@
  */
 
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 
 ulong lmmp_prime_size_(ulong n) {
@@ -51,8 +50,15 @@ ulong lmmp_prime_size_(ulong n) {
     return (ulong)ceil(n / denom);
 }
 
+typedef uint64_t prime_bitset_t;
+typedef uint64_t* prime_bitset_p;
+
+#define PRIME_BITSET_BITS (64)
+#define PRIME_BITSET_MASK (0xffffffffffffffffull)
+#define PRIME_BITSET_BYTES (8)
+
 typedef struct prime_int {
-    ulongp restrict m;     // prime 位图指针（1为质数，0为合数）
+    prime_bitset_p restrict m;     // prime 位图指针（1为质数，0为合数）
     uint m_size;  // prime 位图容量
     uint N;       // 位图记录的最大值 N
 } prime_int;
@@ -61,79 +67,68 @@ THREAD_LOCAL static prime_int global_prime_int_table = { NULL, 0, 0 };
 
 #define G global_prime_int_table
 
-// 计算从5到n的可能素数个数
-static inline uint count_possible_primes(uint n) {
-    if (n < 5)
-        return 0;
-    return ((n - 1) / 6) + ((n - 5) / 6) + 1;
+// prime_table的大小
+static inline uint prime_table_size(uint n) {
+    uint bits = n / 2 + 1;
+    bits /= PRIME_BITSET_BITS;
+    return bits + 1;
 }
 
 void lmmp_prime_int_table_init_(uint n) {
     if (n <= PRIME_SHORT_TABLE_N || G.N >= n)
         return;
 
-#define IS_POSSIBLE(x) ((x) >= 5 && (((x) % 6 == 1) || ((x) % 6 == 5)))
-#define IDX(x) (2 * ((x) / 6) + (((x) % 6 == 5) ? 1 : 0) - 1)
-#define is_prime(_i_) \
-    ((_i_) == 2 || (_i_) == 3 || (IS_POSSIBLE(_i_) && (G.m[IDX(_i_) / MP_LONG_BITS] >> (IDX(_i_) % MP_LONG_BITS) & 1)))
+#define IDX(x) ((x) / 2)
 #define set_not_prime(_i_)                                          \
     do {                                                            \
         uint idx = IDX(_i_);                                        \
-        G.m[idx / MP_LONG_BITS] &= ~(1ULL << (idx % MP_LONG_BITS)); \
+        G.m[idx / PRIME_BITSET_BITS] &= ~(1ULL << (idx % PRIME_BITSET_BITS)); \
     } while (0)
 
     if (G.m == NULL) {
         G.N = n;
-        uint count = count_possible_primes(n);
-        G.m_size = LMMP_ROUND_UP_MULTIPLE(count, MP_LONG_BITS) + 1;
-        G.m = ALLOC_TYPE(G.m_size, ulong);
-        for (ulong i = 0; i < G.m_size; ++i) {
-            G.m[i] = MP_ULONG_MAX; 
+        G.m_size = prime_table_size(n);
+        G.m = ALLOC_TYPE(G.m_size, prime_bitset_t);
+        for (uint i = 0; i < G.m_size; ++i) {
+            G.m[i] = PRIME_BITSET_MASK; 
         }
-
+        set_not_prime(1);
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
             uint prime = prime_short_table[i];
             if (prime > n)
                 break;
-            if (prime <= 3)
-                continue; 
             uint start = prime * prime;
             if (start > n)
                 break;
-            for (ulong j = start; j <= (ulong)n; j += prime) {
-                if (IS_POSSIBLE(j)) {
+            for (uint j = start; j <= n; j += prime) {
+                if (j % 2 == 1) {
                     set_not_prime(j);
                 }
             }
         }
-
     } else {
-        uint new_count = count_possible_primes(n);
-        uint new_size = LMMP_ROUND_UP_MULTIPLE(new_count, MP_LONG_BITS);
-        if (new_size == 0)
-            new_size = 1;
-        G.m = lmmp_realloc(G.m, new_size * sizeof(ulong));
-        for (ulong i = G.m_size; i < new_size; ++i) {
-            G.m[i] = MP_ULONG_MAX; 
+        uint new_size = prime_table_size(n);
+        G.m = REALLOC_TYPE(G.m, new_size, prime_bitset_t);
+        for (uint i = G.m_size; i < new_size; ++i) {
+            G.m[i] = PRIME_BITSET_MASK; 
         }
         G.m_size = new_size;
+        set_not_prime(1);
 
         // 继续筛法
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
             uint prime = prime_short_table[i];
             if (prime > n)
                 break;
-            if (prime <= 3)
-                continue;
             uint start = prime * prime;
             if (start > n)
                 break;
             if (start <= G.N) {
-                ulong k = (G.N - start) / prime + 1;
+                uint k = (G.N - start) / prime + 1;
                 start = start + k * prime;
             }
-            for (ulong j = start; j <= (ulong)n; j += prime) {
-                if (IS_POSSIBLE(j)) {
+            for (uint j = start; j <= n; j += prime) {
+                if (j % 2 == 1) {
                     set_not_prime(j);
                 }
             }
@@ -149,12 +144,112 @@ bool lmmp_is_prime_table_(uint p) {
             return true;
         return false;
     } else {
+        // p>=3
         lmmp_debug_assert(G.N >= p);
-        return is_prime(p);
+        lmmp_param_assert(p > 1);
+        lmmp_param_assert((p & 1) == 1);
+        uint idx = IDX(p);
+        return (G.m[idx / PRIME_BITSET_BITS] >> (idx % PRIME_BITSET_BITS) & 1);
     }
 }
 
-#undef is_prime
+// cache 一次处理的位图数量
+#define PRIME_CACHE_BLOCK_NUM 32
+// 一个位图中质数最多的数量（实际为31）
+#define PRIME_CACHE_BLOCK_SIZE 32
+
+void lmmp_prime_cache_init_(prime_cache_t* cache) {
+    cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);
+    cache->size = 0;
+    cache->start_idx = 0;
+    cache->is_end = 0;
+}
+
+void lmmp_prime_cache_next_(prime_cache_t* cache) {
+    uint size = 0;
+    ulong idx = cache->start_idx;
+
+    if (idx + PRIME_CACHE_BLOCK_NUM < G.m_size) {
+        uint buf[PRIME_CACHE_BLOCK_SIZE * 4];
+        prime_bitset_t m0, m1, m2, m3;
+        uintp p0, p1, p2, p3;
+        uintp begin = cache->pp, end;
+        for (uint i = 0; i < PRIME_CACHE_BLOCK_NUM / 4; ++i) {
+            m0 = G.m[idx + 0];
+            m1 = G.m[idx + 1];
+            m2 = G.m[idx + 2];
+            m3 = G.m[idx + 3];
+            p0 = buf + 0 * PRIME_CACHE_BLOCK_SIZE;
+            p1 = buf + 1 * PRIME_CACHE_BLOCK_SIZE;
+            p2 = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
+            p3 = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
+            for (uint j = 0; j < PRIME_BITSET_BITS; ++j) {
+                if (m0 & 1) *p0++ = ((idx + 0) * PRIME_BITSET_BITS + j) * 2 + 1;
+                if (m1 & 1) *p1++ = ((idx + 1) * PRIME_BITSET_BITS + j) * 2 + 1;
+                if (m2 & 1) *p2++ = ((idx + 2) * PRIME_BITSET_BITS + j) * 2 + 1;
+                if (m3 & 1) *p3++ = ((idx + 3) * PRIME_BITSET_BITS + j) * 2 + 1;
+
+                m0 >>= 1;
+                m1 >>= 1;
+                m2 >>= 1;
+                m3 >>= 1;
+            }
+            end = buf;
+            while(end < p0) {
+                *begin++ = *end++;
+                ++size;
+            }
+            end = buf + PRIME_CACHE_BLOCK_SIZE;
+            while(end < p1) {
+                *begin++ = *end++;
+                ++size;
+            }
+            end = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
+            while(end < p2) {
+                *begin++ = *end++;
+                ++size;
+            }
+            end = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
+            while(end < p3) {
+                *begin++ = *end++;
+                ++size;
+            }
+            idx += 4;
+        }
+        lmmp_debug_assert(idx - cache->start_idx == PRIME_CACHE_BLOCK_NUM);
+        cache->start_idx = idx;
+        cache->size = size;
+    } else {
+        prime_bitset_t m;
+        for (uint i = idx; i < G.m_size; ++i) {
+            m = G.m[i];
+            for (uint j = 0; j < PRIME_BITSET_BITS; ++j) {
+                if (m & 1) {
+                    uint t = (i * PRIME_BITSET_BITS + j) * 2 + 1;
+                    if (t > G.N) {
+                        goto end;
+                    } else {
+                        cache->pp[size++] = t;
+                    }
+                }
+                m >>= 1;
+            }
+        }
+        end:
+        cache->start_idx = G.m_size;
+        cache->size = size;
+        cache->is_end = 1;
+    }
+}
+
+void lmmp_prime_cache_free_(prime_cache_t* cache) {
+    lmmp_free(cache->pp);
+    cache->pp = NULL;
+    cache->size = 0;
+    cache->start_idx = 0;
+}
+
+#undef IDX
 #undef set_not_prime
 
 ushort lmmp_prime_cnt16_(ushort n) {
@@ -182,14 +277,13 @@ void lmmp_prime_int_table_free_(void) {
         lmmp_free(G.m);
     G.m = NULL;
     G.N = 0;
-    G.m = 0;
     G.m_size = 0;
 }
 
 /*
  12.7 kb data in prime_short_table
  */
-
+// all primes from 2 to 2^16-1
 const ushort prime_short_table[6542] = {
     2,     3,     5,     7,     11,    13,    17,    19,    23,    29,    31,    37,    41,    43,    47,    53,
     59,    61,    67,    71,    73,    79,    83,    89,    97,    101,   103,   107,   109,   113,   127,   131,
