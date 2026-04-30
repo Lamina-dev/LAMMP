@@ -10,6 +10,13 @@
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/numth.h"
 
+/*
+FIXME:
+  组合数计算存在较多改进点，包括：
+  1. 通过先分别计算排列数和阶乘的无2的因子结果，再使用除法来计算最终结果
+  2. 使用新的质数表遍历方式
+*/
+
 mp_size_t lmmp_nCr_short_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= MP_USHORT_MAX);
     lmmp_param_assert(r <= n / 2);

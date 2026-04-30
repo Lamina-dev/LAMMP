@@ -26,66 +26,71 @@
     i=0                    i=0                              i=0
 */
 
+#define mul_1(dst, rn, value)                   \
+    dst[rn] = lmmp_mul_1_(dst, dst, rn, value); \
+    ++rn;                                       \
+    rn -= dst[rn - 1] == 0
+
 mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors restrict fac, uint nfactors, uint N) {
+    lmmp_param_assert(dst != NULL && fac != NULL);
+    lmmp_param_assert(rn > 0 && nfactors > 0 && N > 0);
     if (N <= 0xff || nfactors <= 20) {
-    // 对于某些比较大的N，而因子又不多，递归深度可能不足，所以需要用nfactors来进行额外判断。    
-        lmmp_debug_assert(nfactors > 0);
+        // 对于组合数与多项式系数，某些很不平衡的情况下，N可能很大，所以使用nfactors来进行额外判断。
+        // 绝大多数情况下，大的质因数的指数都很小，所以这里只需要考虑小的质因数。
+        // 且随着递归的进行，进入这一步的质因数通常都很小。几乎不可能触发debug_assert
         dst[0] = 1;
         rn = 1;
         for (uint i = 0; i < nfactors; i++) {
             ulong f = fac[i].f;
-            lmmp_debug_assert(f <= MP_USHORT_MAX);
-            if (fac[i].j == 1) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, f);
-                ++rn;
-                rn -= dst[rn - 1] == 0;
-            } else if (fac[i].j == 2) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, f * f);
-                ++rn;
-                rn -= dst[rn - 1] == 0;
-            } else if (fac[i].j == 3) {
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, f * f * f);
-                ++rn;
-                rn -= dst[rn - 1] == 0;
-            } else if (fac[i].j == 4) {
-                f = f * f;
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, f * f);
-                ++rn;
-                rn -= dst[rn - 1] == 0;
-            } else {
-                ulong p2 = f * f;
-                ulong p4 = p2 * p2;
-                for (uint j = 0; j < fac[i].j - 3; j += 4) {
-                    dst[rn] = lmmp_mul_1_(dst, dst, rn, p4);
-                    ++rn;
-                    rn -= dst[rn - 1] == 0;
-                }
-                switch (fac[i].j % 4) {
-                    case 1:
-                        dst[rn] = lmmp_mul_1_(dst, dst, rn, fac[i].f);
-                        ++rn;
-                        rn -= dst[rn - 1] == 0;
-                        break;
-                    case 2:
-                        dst[rn] = lmmp_mul_1_(dst, dst, rn, p2);
-                        ++rn;
-                        rn -= dst[rn - 1] == 0;
-                        break;
-                    case 3:
-                        dst[rn] = lmmp_mul_1_(dst, dst, rn, p2 * fac[i].f);
-                        ++rn;
-                        rn -= dst[rn - 1] == 0;
-                        break;
-                    default:
-                        break;
-                }
+            uint j = fac[i].j;
+            lmmp_debug_assert(j != 0);
+            switch (j) {
+                case 1:
+                    mul_1(dst, rn, f);
+                    break;
+                case 2:
+                    lmmp_debug_assert(f <= MP_UINT_MAX);
+                    mul_1(dst, rn, f * f);
+                    break;
+                case 3:
+                    lmmp_debug_assert(f <= 2642245);  // 2642245 = floor(B^(1/3))
+                    mul_1(dst, rn, f * f * f);
+                    break;
+                case 4:
+                    lmmp_debug_assert(f <= MP_USHORT_MAX);
+                    mul_1(dst, rn, f * f * f * f);
+                    break;
+                default:
+                    lmmp_debug_assert(f <= MP_USHORT_MAX);
+                    ulong p2 = f * f;
+                    ulong p4 = p2 * p2;
+                    for (uint i = 0; i < j - 3; i += 4) {
+                        mul_1(dst, rn, p4);
+                    }
+                    switch (j % 4) {
+                        case 1:
+                            mul_1(dst, rn, f);
+                            break;
+                        case 2:
+                            mul_1(dst, rn, p2);
+                            break;
+                        case 3:
+                            mul_1(dst, rn, p2 * f);
+                            break;
+                        default:
+                            break;
+                    }
+                    break;
             }
         }
         return rn;
     } else {
         TEMP_DECL;
         // 只有小于 N/2 的质数，其因子的指数才可能大于1，所以新的因子数目不超过 N/2 的素数计数。
+        // 同时，由于此估计其实可能严重高估（因为在用于组合数以及多项式系数计算时，此函数的N的衰减远远慢于实际递归缩减），
+        // 而考虑到new_nfactors上限一定是nfactors，所以这里比较一次，以尽可能减少分配的空间。
         mp_size_t new_nfactors = lmmp_prime_size_(N / 2);
+        new_nfactors = (new_nfactors > nfactors) ? nfactors : new_nfactors;
         factors restrict new_fac = TALLOC_TYPE(new_nfactors, factor);
         new_nfactors = 0;
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
@@ -110,30 +115,52 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         }
 
         mp_ptr restrict mp = TALLOC_TYPE(limbn * 2, mp_limb_t);
-        mp_size_t mpn = lmmp_elem_mul_ulong_(mp, limbs, limbn, mp + limbn);
+        mp_size_t mpn = 0;
+
         if (new_nfactors > 0) {
-            lmmp_debug_assert(rn >= mpn);
-            mp_size_t tn = ((rn - mpn) >> 1) + 1;
+            if (limbn > 0) {
+                mpn = lmmp_elem_mul_ulong_(mp, limbs, limbn, mp + limbn);
+                lmmp_debug_assert(rn >= mpn);
+                mp_size_t tn = ((rn - mpn) >> 1) + 1;
+                // 这里根据mpn的大小估计剩余因子乘积的长度，额外分配两倍的tn，以进行平方。
+                mp_ptr restrict tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
+                tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
 
-            mp_ptr restrict tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
-
-            tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
-
-            mp_ptr restrict tp2 = tp + tn + 1;
-            lmmp_sqr_(tp2, tp, tn);
-            tn <<= 1;
-            tn -= tp2[tn - 1] == 0;
-
-            MUL(dst, tp2, tn, mp, mpn);
-            rn = tn + mpn;
-            rn -= dst[rn - 1] == 0;
+                mp_ptr restrict tp2 = tp + tn + 1;
+                lmmp_sqr_(tp2, tp, tn);
+                tn <<= 1;
+                tn -= tp2[tn - 1] == 0;
+                MUL(dst, tp2, tn, mp, mpn);
+                rn = tn + mpn;
+                rn -= dst[rn - 1] == 0;
+            } else {
+                mp_size_t tn = (rn >> 1) + 1;
+                mp_ptr restrict tp = TALLOC_TYPE(tn, mp_limb_t);
+                tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
+                lmmp_sqr_(dst, tp, tn);
+                rn = tn << 1;
+                rn -= dst[rn - 1] == 0;
+            }
         } else {
-            lmmp_copy(dst, mp, mpn);
-            rn = mpn;
+            lmmp_debug_assert(limbn > 0);
+            // 这里不能直接乘入dst，因为dst的大小可能小于limbn，导致溢出
+            rn = lmmp_elem_mul_ulong_(mp + limbn, limbs, limbn, mp + limbn);
+            lmmp_copy(dst, mp, rn);
         }
         TEMP_FREE;
         return rn;
     }
+}
+
+static inline void count_factors(factors fac, uint nfactors, uint n, uint p) {
+    uint pn = n;
+    uint e = 0;
+    while (pn > 0) {
+        pn /= p;
+        e += pn;
+    }
+    fac[nfactors].f = p;
+    fac[nfactors].j = e;
 }
 
 mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
@@ -145,18 +172,15 @@ mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
         对于2这个因子，我们单独处理，因为可以通过移位来计算。
      */
     nfactors = 0;
-    for (uint i = 3; i <= n; i += 2) {
-        if (!lmmp_is_prime_table_(i))
-            continue;
-        uint pn = n;
-        uint e = 0;
-        while (pn > 0) {
-            pn /= i;
-            e += pn;
+    prime_cache_t cache;
+    lmmp_prime_cache_init_(&cache);
+    while(cache.is_end == 0) {
+        lmmp_prime_cache_next_(&cache);
+        for (uint i = 0; i < cache.size; i++) {
+            count_factors(fac, nfactors++, n, cache.pp[i]);
         }
-        fac[nfactors].f = i;
-        fac[nfactors++].j = e;
     }
+    lmmp_prime_cache_free_(&cache);
 
     mp_size_t shl = n - lmmp_limb_popcnt_(n);
     mp_size_t shw = shl / LIMB_BITS;
