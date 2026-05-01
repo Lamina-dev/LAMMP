@@ -75,7 +75,7 @@ static inline uint prime_table_size(uint n) {
 }
 
 void lmmp_prime_int_table_init_(uint n) {
-    if (n <= PRIME_SHORT_TABLE_N || G.N >= n)
+    if (n < PRIME_SHORT_TABLE_N || G.N >= n)
         return;
 
 #define IDX(x) ((x) / 2)
@@ -158,10 +158,11 @@ bool lmmp_is_prime_table_(uint p) {
 // 一个位图中质数最多的数量（实际为31）
 #define PRIME_CACHE_BLOCK_SIZE 32
 
-void lmmp_prime_cache_init_(prime_cache_t* cache) {
+void lmmp_prime_cache_init_(prime_cache_t* cache, uint n) {
     cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);
     cache->size = 0;
     cache->start_idx = 0;
+    cache->end_num = n;
     cache->is_end = 0;
 }
 
@@ -196,21 +197,41 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             }
             end = buf;
             while(end < p0) {
+                if (*end > cache->end_num) {
+                    cache->is_end = 1;
+                    cache->size = size;
+                    return;
+                }
                 *begin++ = *end++;
                 ++size;
             }
             end = buf + PRIME_CACHE_BLOCK_SIZE;
             while(end < p1) {
+                if (*end > cache->end_num) {
+                    cache->is_end = 1;
+                    cache->size = size;
+                    return;
+                }
                 *begin++ = *end++;
                 ++size;
             }
             end = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
             while(end < p2) {
+                if (*end > cache->end_num) {
+                    cache->is_end = 1;
+                    cache->size = size;
+                    return;
+                }
                 *begin++ = *end++;
                 ++size;
             }
             end = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
             while(end < p3) {
+                if (*end > cache->end_num) {
+                    cache->is_end = 1;
+                    cache->size = size;
+                    return;
+                }
                 *begin++ = *end++;
                 ++size;
             }
@@ -226,8 +247,8 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             for (uint j = 0; j < PRIME_BITSET_BITS; ++j) {
                 if (m & 1) {
                     uint t = (i * PRIME_BITSET_BITS + j) * 2 + 1;
-                    if (t > G.N) {
-                        goto end;
+                    if (t > G.N || t > cache->end_num) {
+                        goto end2;
                     } else {
                         cache->pp[size++] = t;
                     }
@@ -235,7 +256,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
                 m >>= 1;
             }
         }
-        end:
+        end2:
         cache->start_idx = G.m_size;
         cache->size = size;
         cache->is_end = 1;
@@ -246,7 +267,9 @@ void lmmp_prime_cache_free_(prime_cache_t* cache) {
     lmmp_free(cache->pp);
     cache->pp = NULL;
     cache->size = 0;
+    cache->end_num = 0;
     cache->start_idx = 0;
+    cache->is_end = 0;
 }
 
 #undef IDX
