@@ -60,21 +60,18 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
 #define ctz_shl(r, x, cnt)              \
     do {                                \
         unsigned long long _x_ = (x);   \
-        unsigned long _idx_;            \
-        _BitScanForward64(&_idx_, _x_); \
-        (cnt) = _idx_;                  \
-        (r) = _x_ >> _idx_;             \
+        _BitScanForward64(&(cnt), _x_); \
+        (r) = _x_ >> (cnt);             \
     } while (0)
 #else
 // cnt = ctz(x)
 // r = x >> cnt
 // assume x is non-zero
-#define ctz_shl(r, x, cnt)                \
-    do {                                  \
-        unsigned long long _x_ = (x);     \
-        int _cnt_ = __builtin_ctzll(_x_); \
-        (cnt) = _cnt_;                    \
-        (r) = _x_ >> _cnt_;               \
+#define ctz_shl(r, x, cnt)            \
+    do {                              \
+        unsigned long long _x_ = (x); \
+        (cnt) = __builtin_ctzll(_x_); \
+        (r) = _x_ >> (cnt);           \
     } while (0)
 #endif
 
@@ -303,6 +300,15 @@ def montgomery_mul(a_mont, b_mont, p):
                 _sub_ddmmss((r1), (r0), (r1), (r0), (d1), (d0));           \
             }                                                              \
         }                                                                  \
+    } while (0)
+
+// q = n0 / d0, assuming d0 is a 32-bit number
+// dinv = (B-1)//d0 + 1
+#define _udiv32by32_q_preinv(q, n0, dinv)          \
+    do {                                           \
+        uint64_t _hi_, _lo_;                       \
+        _umul64to128_((n0), (dinv), &_lo_, &_hi_); \
+        (q) = _hi_;                                \
     } while (0)
 
 #endif // __LAMMP_LONGLONG_H__
