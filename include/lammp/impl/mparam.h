@@ -109,20 +109,17 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
-// 排列数计算中，结果长度小于此阈值的将使用朴素算法
-#define PERMUTATION_USHORT_BASECASE_THRESHOLD 60
+// 排列数计算中，结果长度小于此阈值的将使用累乘
+#define PERMUTATION_USHORT_MUL_THRESHOLD 1120
 
 // 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_USHORT_MUL_THRESHOLD 1310
-
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_UINT_MUL_THRESHOLD 3600
+#define PERMUTATION_UINT_MUL_THRESHOLD 3200
 
 // 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
 #define PERMUTATION_USHORT_TIMES_THRESHOLD 8
 
 // 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_UINT_TIMES_THRESHOLD 12
+#define PERMUTATION_UINT_TIMES_THRESHOLD 13
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
@@ -144,9 +141,22 @@
 #define MP_INT_BYTES (4)
 #define MP_LONG_BYTES (8)
 
+#define ODD_FACTORIAL_SIZE 25
+
+#define NPR_SHORT_LIMIT (0xffff)
+#define NPR_INT_LIMIT (0xffffffff)
+
+#define NCR_SHORT_LIMIT (0xffff)
+
 // B / 2
 #define LIMB_B_2 (0x8000000000000000ull)
 // B / 4
 #define LIMB_B_4 (0x4000000000000000ull)
+
+// log(2) 的数值
+#define LOG2_ 0.693147180559945
+
+// 2^53，为避免浮点数精度问题，大于此值某些浮点数缓冲区计算可能产生错误
+#define DBL_2POW_MANT_DIG_ 0x20000000000000ull
 
 #endif // __LAMMP_MPARAM_H__
