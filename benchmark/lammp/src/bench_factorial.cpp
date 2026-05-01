@@ -9,11 +9,12 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 long long bench_factorial(unsigned len1) {
-    mp_size_t rn = lmmp_factorial_size_(len1);
+    mp_bitcnt_t bits;
+    mp_size_t rn = lmmp_factorial_size_(len1, &bits);
     mp_ptr dst = ALLOC_TYPE(rn, mp_limb_t);
 
     auto start = std::chrono::high_resolution_clock::now();
-    rn = lmmp_factorial_(dst, rn, len1);
+    rn = lmmp_factorial_(dst, bits, rn, len1);
     auto end = std::chrono::high_resolution_clock::now();
 
     long long elapsed_us = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
