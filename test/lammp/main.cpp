@@ -13,7 +13,7 @@
 
 int main() {
     lmmp_global_init();
-    test_remove();
+    test_factorial();
     lmmp_global_deinit();
     return 0;
 }

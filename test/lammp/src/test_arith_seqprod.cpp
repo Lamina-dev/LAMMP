@@ -10,7 +10,7 @@
 #include "../../../include/lammp/matrix.h"
 
 void test_arith_seqprod() {
-    size_t n = 482404 - 1, x = 160, m = 3;
+    size_t n = 4824, x = 0x801, m = 0x80;
     size_t len = lmmp_arith_seqprod_size_(x, n, m);
     mp_ptr a = (mp_ptr)lmmp_alloc(len * sizeof(mp_limb_t));
     mp_ptr b;
