@@ -8,16 +8,16 @@
 #include "../include/test_short.hpp"
 
 mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
-    
-    mp_size_t tn = lmmp_nPr_size_(n, r);
+    mp_bitcnt_t bits;
+    mp_size_t tn = lmmp_nPr_size_(n, r, &bits);
     mp_ptr t = (mp_ptr)lmmp_alloc(tn * sizeof(mp_limb_t));
 
-    tn = lmmp_nPr_(t, tn, n, r);
+    tn = lmmp_nPr_(t, bits, tn, n, r);
 
-    mp_size_t prn = lmmp_nPr_size_(r, r);
+    mp_size_t prn = lmmp_factorial_size_(r, &bits);
     mp_ptr pr = (mp_ptr)lmmp_alloc(prn * sizeof(mp_limb_t));
 
-    prn = lmmp_factorial_(pr, prn, r);
+    prn = lmmp_factorial_(pr, bits, prn, r);
 
     lmmp_div_(dst, NULL, t, tn, pr, prn);
     lmmp_free(t);
@@ -32,8 +32,10 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_bino() {
-    size_t n = 0x872f, r = n / 3;
-    size_t len = lmmp_nCr_size_(n, r);
+    size_t n = 0x10000, r = 3321;
+
+    mp_bitcnt_t bits = 0;
+    size_t len = lmmp_nCr_size_(n, r, &bits);
     std::cout << "len = " << len << std::endl;
 
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
@@ -48,22 +50,24 @@ void test_bino() {
     std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
 
     auto start2 = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_nCr_(b, len, n, r);
+    mp_size_t bn = lmmp_nCr_(b, bits, len, n, r);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
 
-    if (bn != an)
+    if (bn != an) {
         std::cout << "bn != an" << std::endl;
-    else
         std::cout << bn << " == " << an << std::endl;
+        goto failed;
+    }
     for (size_t i = 0; i < an; i++) {
         if (a[i] != b[i]) {
             std::cout << "i = " << i << " a[i] = " << a[i] << " b[i] = " << b[i] << std::endl;
-            break;
+            goto failed;
         }
     }
     std::cout << "passed\n";
+    failed:
     lmmp_free(a);
     lmmp_free(b);
 }
