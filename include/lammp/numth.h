@@ -486,8 +486,6 @@ ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
  */
 mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
-#undef LOG2_
-#undef DBL_2POW_MANT_DIG_
 
 #ifdef INLINE_
 #undef INLINE_
