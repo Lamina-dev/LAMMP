@@ -5,13 +5,14 @@
  */
 
 #include <chrono>
+
 #include "../include/test_short.hpp"
 
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_multinomial() {
-    size_t m = 4;
-    uint r[4] = {12330, 2331, 1234, 81392};
+    size_t m = 5;
+    uint r[5] = {234, 340, 1042, 2034, 23042};
     ulong n = 0;
     size_t len = lmmp_multinomial_size_(r, m, &n);
     std::cout << "len = " << len << std::endl;
@@ -26,6 +27,6 @@ void test_multinomial() {
     std::cout << "Time elapsed: " << duration2 << " microseconds" << std::endl;
 
     std::cout << "bn = " << bn << std::endl;
-    std::cout << a[bn - 1] << std::endl;
+    std::cout << std::hex << a[bn - 1] << std::endl;
     lmmp_free(a);
 }

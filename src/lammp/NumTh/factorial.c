@@ -4,19 +4,33 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
+
 #define MUL(dst, ap, an, bp, bn)        \
     if (an >= bn)                       \
         lmmp_mul_(dst, ap, an, bp, bn); \
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
+
+#define mul_1(dst, rn, value)                   \
+    dst[rn] = lmmp_mul_1_(dst, dst, rn, value); \
+    ++rn;                                       \
+    rn -= dst[rn - 1] == 0
+
+mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
+    double ln_fact = lgamma(n + 1.0);
+    double log2_fact = ln_fact / LOG2_;
+    mp_size_t rn = ceil(log2_fact / LIMB_BITS) + 2; /* more two limbs */
+    *bits = n - lmmp_limb_popcnt_(n);
+    return rn;
+}
 
 /*
      N                      N/2                              N
@@ -25,11 +39,6 @@
     |  |                \  |  |                  /       \  |  |                     /
     i=0                    i=0                              i=0
 */
-
-#define mul_1(dst, rn, value)                   \
-    dst[rn] = lmmp_mul_1_(dst, dst, rn, value); \
-    ++rn;                                       \
-    rn -= dst[rn - 1] == 0
 
 mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors restrict fac, uint nfactors, uint N) {
     lmmp_param_assert(dst != NULL && fac != NULL);
@@ -163,17 +172,15 @@ static inline void count_factors(factors fac, uint nfactors, uint n, uint p) {
     fac[nfactors].j = e;
 }
 
-mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
+mp_size_t lmmp_odd_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
     factors restrict fac = BALLOC_TYPE(nfactors, factor);
-    /*
-        对于2这个因子，我们单独处理，因为可以通过移位来计算。
-     */
     nfactors = 0;
+    
     prime_cache_t cache;
-    lmmp_prime_cache_init_(&cache);
+    lmmp_prime_cache_init_(&cache, n);
     while(cache.is_end == 0) {
         lmmp_prime_cache_next_(&cache);
         for (uint i = 0; i < cache.size; i++) {
@@ -182,17 +189,27 @@ mp_size_t lmmp_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     }
     lmmp_prime_cache_free_(&cache);
 
-    mp_size_t shl = n - lmmp_limb_popcnt_(n);
-    mp_size_t shw = shl / LIMB_BITS;
-    shl %= LIMB_BITS;
-
-    lmmp_zero(dst, shw);
-    rn = lmmp_factors_mul_(dst + shw, rn - shw, fac, nfactors, n);
-
-    dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
-    rn += shw + 1;
-    rn -= dst[rn - 1] == 0 ? 1 : 0;
+    rn = lmmp_factors_mul_(dst, rn, fac, nfactors, n);
 
     TEMP_B_FREE;
+    return rn;
+}
+
+mp_size_t lmmp_factorial_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, uint n) {
+    mp_size_t shw = bits / LIMB_BITS;
+    bits %= LIMB_BITS;
+    lmmp_zero(dst, shw);
+    if (n <= NPR_SHORT_LIMIT)
+        rn = lmmp_odd_nPr_short_(dst + shw, rn - shw, n, n);
+    else
+        rn = lmmp_odd_factorial_int_(dst + shw, rn - shw, n);
+    
+    if (bits > 0) {
+        dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, bits);
+        rn += shw + 1;
+        rn -= dst[rn - 1] == 0;
+    } else {
+        rn += shw;
+    }
     return rn;
 }
