@@ -199,8 +199,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             while(end < p0) {
                 if (*end > cache->end_num) {
                     cache->is_end = 1;
-                    cache->size = size;
-                    return;
+                    goto end1;
                 }
                 *begin++ = *end++;
                 ++size;
@@ -209,8 +208,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             while(end < p1) {
                 if (*end > cache->end_num) {
                     cache->is_end = 1;
-                    cache->size = size;
-                    return;
+                    goto end1;
                 }
                 *begin++ = *end++;
                 ++size;
@@ -219,8 +217,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             while(end < p2) {
                 if (*end > cache->end_num) {
                     cache->is_end = 1;
-                    cache->size = size;
-                    return;
+                    goto end1;
                 }
                 *begin++ = *end++;
                 ++size;
@@ -229,8 +226,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             while(end < p3) {
                 if (*end > cache->end_num) {
                     cache->is_end = 1;
-                    cache->size = size;
-                    return;
+                    goto end1;
                 }
                 *begin++ = *end++;
                 ++size;
@@ -239,7 +235,9 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
         }
         lmmp_debug_assert(idx - cache->start_idx == PRIME_CACHE_BLOCK_NUM);
         cache->start_idx = idx;
+        end1:
         cache->size = size;
+        return;
     } else {
         prime_bitset_t m;
         for (uint i = idx; i < G.m_size; ++i) {
@@ -260,6 +258,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
         cache->start_idx = G.m_size;
         cache->size = size;
         cache->is_end = 1;
+        return;
     }
 }
 
