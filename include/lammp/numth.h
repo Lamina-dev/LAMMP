@@ -24,12 +24,6 @@
 
 #include "lmmp.h"
 
-// log(2) 的数值
-#define LOG2_ 0.693147180559945
-
-// 2^53，为避免浮点数精度问题，大于此值某些浮点数缓冲区计算可能产生错误
-#define DBL_2POW_MANT_DIG_ 0x20000000000000ull
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -179,7 +173,7 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
 INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
-    lmmp_param_assert(base > 1);
+    lmmp_param_assert(base >= 1);
     lmmp_param_assert(exp > 0);
     return (ceil((double)(exp)*log2((double)base)) + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
 }
@@ -296,168 +290,127 @@ bool lmmp_is_prime_ulong_(ulong n);
  * @brief 计算 nPr 排列数的 limb 缓冲区长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
+ * @param bits 被修改为 nPr 的2的因子数
  * @return nPr 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-INLINE_ mp_size_t lmmp_nPr_size_(ulong n, ulong r) {
-    if (n < DBL_2POW_MANT_DIG_) {
-        double ln_perm = lgamma(n + 1.0) - lgamma(n - r + 1.0);
-        double log2_perm = ln_perm / LOG2_;
-        mp_size_t rn = ceil(log2_perm / LIMB_BITS) + 2; /* more two limbs */
-        return rn;
-    } else {
-        // nPr = n! / (n-r)! < n^r
-        return lmmp_pow_1_size_(n, r);
-    }
-}
+mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
+
+/**
+ * @brief 计算 nPr 排列数的奇数部分
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度（nPr_size_ 函数的返回值 - bits/LIMB_BITS）
+ * @param n 排列数的总数
+ * @param r 排列数的选择数
+ * @warning 0xffff>=n>=r, dst!=NULL, rn>0
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_odd_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+
+/**
+ * @brief 计算 nPr 排列数的奇数部分
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度（nPr_size_ 函数的返回值 - bits/LIMB_BITS）
+ * @param n 排列数的总数
+ * @param r 排列数的选择数
+ * @warning 0xffffffff>=n>=r, dst!=NULL, rn>0
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_odd_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+
+/**
+ * @brief 计算 nPr 排列数的奇数部分
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度（nPr_size_ 函数的返回值 - bits/LIMB_BITS）
+ * @param n 排列数的总数
+ * @param r 排列数的选择数
+ * @warning n>=r, dst!=NULL, rn>0
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_odd_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
  * @param dst 结果指针
+ * @param bits nPr 的2的因子数
  * @param rn 结果指针的 limb 长度
  * @param n 排列数的总数
  * @param r 排列数的选择数
- * @warning 0xffff >= n >= r
+ * @warning n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
-
-/**
- * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n 排列数的总数
- * @param r 排列数的选择数
- * @warning 0xffffffff >= n >= r
- * @return 返回 dst 的实际 limb 长度
- */
-mp_size_t lmmp_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
-
-/**
- * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n 排列数的总数
- * @param r 排列数的选择数
- * @warning n >= r
- * @return 返回 dst 的实际 limb 长度
- */
-mp_size_t lmmp_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
-
-/**
- * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n 排列数的总数
- * @param r 排列数的选择数
- * @warning n >= r
- * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_nPr_size_ 函数）
- * @return 返回 dst 的实际 limb 长度
- */
-INLINE_ mp_size_t lmmp_nPr_(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
-    lmmp_debug_assert(n >= r);
-#define LMMP_NPR_SHORT_LIMIT (0xffff)
-#define LMMP_NPR_INT_LIMIT (0xffffffff)
-    if (n <= (ulong)LMMP_NPR_SHORT_LIMIT)
-        return lmmp_nPr_short_(dst, rn, n, r);
-    else if (n <= (ulong)LMMP_NPR_INT_LIMIT)
-        return lmmp_nPr_int_(dst, rn, n, r);
-    else
-        return lmmp_nPr_long_(dst, rn, n, r);
-}
+mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 n! 阶乘的 limb 缓冲区长度
  * @param n 阶乘的阶数
+ * @param bits 被修改为 n! 的2的因子数
  * @return n! 阶乘的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-INLINE_ mp_size_t lmmp_factorial_size_(uint n) {
-    double ln_fact = lgamma(n + 1.0);       
-    double log2_fact = ln_fact / LOG2_;
-    mp_size_t rn = ceil(log2_fact / LIMB_BITS) + 2; /* more two limbs */
-    return rn;
-}
+mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
+
+/**
+ * @brief 计算 n! 阶乘的奇数部分
+ * @param dst 结果指针
+ * @param rn 结果指针的 limb 长度（factorial_size_ 函数的返回值 - bits/LIMB_BITS）
+ * @param n 阶乘的阶数
+ * @warning n>0xffff, dst!=NULL, rn>0
+ * @return 返回 dst 的实际 limb 长度
+ */
+mp_size_t lmmp_odd_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 n! 阶乘
  * @param dst 结果指针
+ * @param bits n! 的2的因子数
  * @param rn 结果指针的 limb 长度
  * @param n 阶乘的阶数
- * @warning n>1, dst!=NULL, rn>0
- * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_factorial_size_ 函数）
+ * @warning dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
-
-/**
- * @brief 计算 n! 阶乘
- * @param dst 结果指针
- * @param rn 结果指针的 limb 长度
- * @param n 阶乘的阶数
- * @note dst缓冲区实际写入的空间为返回值+[0|1]，（必定小于 rn，当然前提是你调用的是 lmmp_factorial_size_ 函数）
- * @return 返回 dst 的实际 limb 长度
- */
-INLINE_ mp_size_t lmmp_factorial_(mp_ptr dst, mp_size_t rn, uint n) {
-    if (n <= LMMP_NPR_SHORT_LIMIT)
-        return lmmp_nPr_short_(dst, rn, n, n);
-    else
-        return lmmp_factorial_int_(dst, rn, n);
-#undef LMMP_NPR_SHORT_LIMIT
-#undef LMMP_NPR_INT_LIMIT
-}
+mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 nCr 组合数的 limb 缓冲区长度
  * @param n 组合数的总数
  * @param r 组合数的选择数
+ * @param bits 被修改为 nCr 的2的因子数
  * @return nCr 组合数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-INLINE_ mp_size_t lmmp_nCr_size_(uint n, uint r) {
-    double ln_comb = lgamma(n + 1.0) - lgamma(r + 1.0) - lgamma(n - r + 1.0);
-    double log2_comb = ln_comb / LOG2_;
-    mp_size_t rn = ceil(log2_comb / LIMB_BITS) + 2; /* more two limbs */
-    return rn;
-}
+mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
 
 /**
- * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
+ * @brief 计算 nCr 组合数的奇数部分
  * @param dst 结果指针
  * @param rn 结果指针的 limb 长度
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r<=n/2, n<=0xffff
+ * @warning r<=n/2, n<=0xffff, dst!=NULL, rn>0
  */
-mp_size_t lmmp_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+mp_size_t lmmp_odd_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
- * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
+ * @brief 计算 nCr 组合数的奇数部分
  * @param dst 结果指针
  * @param rn 结果指针的 limb 长度
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r<=n/2
+ * @warning r<=n/2, 0xffff<n, dst!=NULL, rn>0
  */
-mp_size_t lmmp_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+mp_size_t lmmp_odd_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
  * @param dst 结果指针
+ * @param bits nCr 的2的因子数
  * @param rn 结果指针的 limb 长度
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @return 返回 dst 的实际 limb 长度
- * @warning r <= floor(n/2)
+ * @warning r<=n/2, n<=0xffffffff, dst!=NULL, rn>0
  */
-INLINE_ mp_size_t lmmp_nCr_(mp_ptr dst, mp_size_t rn, uint n, uint r) {
-    lmmp_debug_assert(r <= (n / 2));
-#define LMMP_NCR_SHORT_LIMIT 0xffff
-    if (n <= LMMP_NCR_SHORT_LIMIT)
-        return lmmp_nCr_short_(dst, rn, n, r);
-    else
-        return lmmp_nCr_int_(dst, rn, n, r);
-#undef LMMP_NCR_SHORT_LIMIT
-}
+mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算多项式系数的 limb 缓冲区长度
@@ -491,16 +444,10 @@ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uin
  * @param x 首项
  * @param n 等差数列共n+1项
  * @param m 公差
- * @warning x>0, m>0, n>0
+ * @warning x>0, m>1, n>0
  * @return 等差数列乘积的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-INLINE_ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
-    double x_m = (double)x / m;
-    double log_l = (n + 1) * log(m) + lgamma(x_m + n + 1) - lgamma(x_m);
-    double log2_l = log_l / LOG2_;
-    mp_size_t rn = ceil(log2_l / LIMB_BITS) + 2; /* more two limbs */
-    return rn;
-}
+mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m);
 
 /**
  * @brief 计算等差数列乘积 x(x+m)...(x+n*m)
@@ -508,8 +455,8 @@ INLINE_ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
  * @param rn 结果指针的 limb 长度
  * @param x 首项
  * @param n 等差数列共n+1项
- * @param m 公差
- * @warning x>0, m>0, n>0, dst!=NULL, rn>0, x+n*m<=0xffffffff
+ * @param m 公差（大于1）
+ * @warning x>0, m>1, n>0, dst!=NULL, rn>0, x+n*m<=0xffffffff
  * @return 结果的实际的 limb 缓冲区长度
  */
 mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
@@ -539,8 +486,6 @@ ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
  */
 mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
-#undef LOG2_
-#undef DBL_2POW_MANT_DIG_
 
 #ifdef INLINE_
 #undef INLINE_

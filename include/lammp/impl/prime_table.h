@@ -52,7 +52,7 @@ ulong lmmp_prime_size_(ulong n);
 
 /**
  * @brief 初始化全局素数表
- * @param n 素数表大小
+ * @param n 素数表大小（含n）
  */
 void lmmp_prime_int_table_init_(uint n);
 
@@ -65,6 +65,7 @@ typedef struct {
     uintp pp;       // 仅存储奇素数
     uint size;      // pp 数组大小
     uint start_idx; // 位图下一次解析的起始索引
+    uint end_num;   // 达到此数时，位图解析结束
     int is_end;     // 是否已经遍历到全局质数表末尾
 } prime_cache_t;
 
@@ -73,7 +74,7 @@ typedef struct {
  *
     lmmp_prime_int_table_init_(n);
     prime_cache_t cache;
-    lmmp_prime_cache_init_(&cache);
+    lmmp_prime_cache_init_(&cache, n);
     while (cache.is_end == 0) {
         lmmp_prime_cache_next_(&cache);
         for (uint i = 0; i < cache.size; i++) {
@@ -86,13 +87,14 @@ typedef struct {
 /**
  * @brief 初始化素数表缓存
  * @param cache 缓存结构体
+ * @param n 遍历素数表的范围（超过n时或者遍历到全局质数表末尾，is_end 置为 1）
  */
-void lmmp_prime_cache_init_(prime_cache_t* cache);
+void lmmp_prime_cache_init_(prime_cache_t* cache, uint n);
 
 /**
  * @brief 素数表缓存更新（从小到大遍历全局质数表）
  * @param cache 缓存结构体
- * @note 缓存只存储奇素数，当遍历到全局质数表末尾时，is_end 置为 1
+ * @note 缓存只存储奇素数，当遍历到全局质数表末尾或者达到设置的范围时，is_end 置为 1
  */
 void lmmp_prime_cache_next_(prime_cache_t* cache);
 

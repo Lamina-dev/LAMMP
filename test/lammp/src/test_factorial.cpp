@@ -11,32 +11,38 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_factorial() {
-
-    size_t n = 0xf2233;
-    size_t len = lmmp_factorial_size_(n);
+    size_t n = 460952;
+    mp_bitcnt_t bits;
+    size_t len = lmmp_factorial_size_(n, &bits);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(len, mp_limb_t);
 
     auto start = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_nPr_(b, len, n, n);
+    mp_size_t bn = lmmp_nPr_(b, bits, len, n, n);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
-
+    std::cout << "Time elapsed: " << duration << " microseconds" << std::endl;
+    
     auto start2 = std::chrono::high_resolution_clock::now();
-    mp_size_t an = lmmp_factorial_int_(a, len, n);
+    mp_size_t an = lmmp_factorial_(a, bits, len, n);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
-    std::cout << "Time elapsed: (queued)" << duration2 << " microseconds" << std::endl;
+    std::cout << "Time elapsed: " << duration2 << " microseconds" << std::endl;
 
-    std::cout << an << " " << bn << std::endl;
+    if (an != bn) {
+        std::cout << "an != bn" << std::endl;
+        std::cout << "an = " << an << " bn = " << bn << std::endl;
+        goto fail;
+    }
+
     for (size_t i = 0; i < an; i++) {
         if (a[i] != b[i]) {
             std::cout << "i = " << i << " a = " << a[i] << " b = " << b[i] << std::endl;
-            break;
+            goto fail;
         }
     }
     std::cout << "passed\n";
+    fail:
     lmmp_free(a);
     lmmp_free(b);
     lmmp_global_deinit();
