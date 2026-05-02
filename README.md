@@ -77,13 +77,19 @@ LAMMP/                      # 项目根目录
 #include "include/lammp/numth.h"
 
 int main() {
-    uint n = 100000;
-    printf("calculating factorial of %d...\n", n);
-    mp_size_t len = lmmp_factorial_size_(n);
-    mp_ptr dst = (mp_ptr)lmmp_alloc(len * sizeof(mp_limb_t));
-    len = lmmp_factorial_(dst, len, n);
+    lmmp_global_init(); // 初始化Lammp（单线程）全局资源
+
+    uint n = 10000;
+    printf("calculating factorial of %d\n", n);
+    mp_bitcnt_t bits;
+    mp_size_t len = lmmp_factorial_size_(n, &bits); // 获取阶乘缓冲区大小
+    mp_ptr dst = (mp_ptr)lmmp_alloc(len * sizeof(mp_limb_t)); // 分配阶乘缓冲区
+    len = lmmp_factorial_(dst, bits, len, n); // 计算阶乘
     printf("completed.\n");
+
+    printf("result: %llx ... %llx\n", dst[len - 1], dst[0]);
+
     lmmp_free(dst);
-    return 0;
+    lmmp_global_deinit(); // 释放Lammp（单线程）全局资源
 }
 ```
