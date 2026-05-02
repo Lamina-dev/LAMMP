@@ -48,21 +48,16 @@ static inline uint count_factors(factors fac, uint nfactors, uint n, const uintp
     return nfactors;
 }
 
-static inline uint factor_size_int(mp_size_t rn) {
+static inline uint factor_size_int(mp_size_t rn, uint n) {
     /*
-     我们可以知道，nCr的大小一定不会超过B^rn，因此，B^rn的可以含有的质因数数量即为nCr可以含有的质因数数量的上限。
-     同时，我们这里只计算的是奇数部分，我们可以用B^rn可以含有的3的质因数个数来估计nCr的质因数种类数。
-     这是一个绝对上界，同时比pi(n)这个非平方上界要紧得多。当然即使是这个上界，实际的质因数个数也可能远远小于这个上界。
-     一个改进想法是，我们使用更大一点的质数，对于n>0xffff，我们选取这个质数为251
-     而log(B)/log(251)约等于8.02855802854906，我们近似视为8，这也是这里的常数的由来。
+     使用类似组合数的思路来估计缓冲区大小。
     */
-    return rn * 8;
+    uint approx1 = rn * 8;
+    uint approx2 = lmmp_prime_size_(n);
+    return approx1 < approx2 ? approx1 : approx2;
 }
 
 static inline uint factor_size_short(mp_size_t rn) {
-    /*
-     其实，经过大量的校验，*8几乎也不会低估，但是为了留有冗余，我们还是选择*10，大致相当于质数83。
-    */
     return rn * 10;
 }
 
@@ -103,7 +98,7 @@ static mp_size_t lmmp_odd_multinomial_short_(
 static mp_size_t lmmp_odd_multinomial_int_(mp_ptr restrict dst, mp_size_t rn, uint n, const uintp restrict r, uint m) {
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
-    uint nfactors = factor_size_int(rn);
+    uint nfactors = factor_size_int(rn, n);
     factors restrict fac = BALLOC_TYPE(nfactors, factor);
 
     nfactors = 0;
