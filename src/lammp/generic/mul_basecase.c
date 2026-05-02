@@ -5,7 +5,7 @@
  */
 
 #include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/impl/_umul64to128_.h"
+#include "../../../include/lammp/impl/longlong.h"
 
 void lmmp_sqr_basecase_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(na >= 1);
