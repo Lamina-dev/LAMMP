@@ -5,7 +5,7 @@
  */
 
 #include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/impl/u128_u192.h"
+#include "../../../include/lammp/impl/longlong.h"
 
 mp_limb_t lmmp_div_3_2_(mp_ptr restrict numa, mp_srcptr restrict numb, mp_limb_t inv21) {
     mp_limb_t q;

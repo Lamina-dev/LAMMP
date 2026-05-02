@@ -5,7 +5,7 @@
  */
 
 #include "../../../include/lammp/lmmpn.h"
-#include "../../../include/lammp/impl/_umul64to128_.h"
+#include "../../../include/lammp/impl/longlong.h"
 
 mp_limb_t lmmp_inv_2_1_(mp_limb_t xh, mp_limb_t xl) {
     mp_limb_t r, m;

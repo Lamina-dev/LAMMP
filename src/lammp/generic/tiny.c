@@ -6,10 +6,7 @@
 
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
-#include "../../../include/lammp/impl/u128_u192.h"
-#ifdef _MSC_VER
-#include <intrin.h>
-#endif
+#include "../../../include/lammp/impl/longlong.h"
 
 int lmmp_limb_bits_(mp_limb_t x) {
     int k = 0;
