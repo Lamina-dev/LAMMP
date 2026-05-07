@@ -115,7 +115,9 @@ EXPORTS
 
 	lmmp_div_3_2_
 	lmmp_div_1_
+	lmmp_mod_1_
 	lmmp_div_2_
+	lmmp_mod_2_
 	lmmp_div_basecase_
 	lmmp_div_divide_
 	lmmp_inv_prediv_

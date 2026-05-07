@@ -7,27 +7,31 @@ file(GLOB_RECURSE LAMMP_CORE_SRCS
     LIST_DIRECTORIES FALSE
     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
 )
-if(USE_ASM)
-    # 排除所有包含 "/generic/" 路径的文件
-    list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX ".*/generic/.*")
-endif()
 
-if(USE_ASM)
-    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-        file(GLOB MASM_SRCS 
-            ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
-            LIST_DIRECTORIES FALSE
-        )
-    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        file(GLOB MASM_SRCS 
-            ${CMAKE_CURRENT_SOURCE_DIR}/masm/*.asm
-            LIST_DIRECTORIES FALSE
-        )
+if(USE_ASM AND WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    # 排除所有包含 "/generic/" 路径的文件（使用汇编实现）
+    list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX ".*/generic/.*")
+    # 收集 NASM 汇编文件
+    # 目前仅编写了 x64 平台的汇编文件
+    # 其他平台的汇编文件可以放到 asm/ 目录下
+    # 以后可以根据需要编写其他平台的汇编文件
+    file(GLOB ASM_SRCS 
+        ${CMAKE_CURRENT_SOURCE_DIR}/asm/x64/*.asm
+        LIST_DIRECTORIES FALSE
+    )
+    if(ASM_SRCS)
+        list(APPEND LAMMP_CORE_SRCS ${ASM_SRCS})
     endif()
 endif()
-# 仅在MASM文件存在时添加
-if(MASM_SRCS)
-    list(APPEND LAMMP_CORE_SRCS ${MASM_SRCS})
+
+if(ASM_SRCS)
+    message(STATUS "NASM assembly files: ${ASM_SRCS}")
+    list(APPEND LAMMP_CORE_SRCS ${ASM_SRCS})
+else()
+    if(USE_ASM)
+        message(ERROR "No NASM assembly files found in ${CMAKE_CURRENT_SOURCE_DIR}/asm/")
+    else()
+    endif()
 endif()
 
 if(NOT TARGET LammpCore)
@@ -76,15 +80,6 @@ if(TARGET LammpCore)
             message(WARNING "LammpCore.def not found! MSVC import library may be incomplete.")
         endif()
     endif()
-
-    # 头文件包含
-    target_include_directories(LammpCore
-        PUBLIC
-            ${CMAKE_SOURCE_DIR}/include
-        PRIVATE
-            ${CMAKE_CURRENT_SOURCE_DIR}
-            ${CMAKE_CURRENT_SOURCE_DIR}/masm
-    )
 
     # 设置编译器选项
     set_common_compiler_options(LammpCore)

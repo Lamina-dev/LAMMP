@@ -13,19 +13,32 @@
  #
  # You should have received a copy of the GNU Lesser General Public License
  # along with this program.  If not, see <https://www.gnu.org/licenses/>.
- 
+
 cmake_minimum_required(VERSION 3.10)
 project(Lammp LANGUAGES C CXX)
 
-option(USE_ASM "Disable x64 assembly, use generic C implementation (no arch restriction)" ON)
+option(USE_ASM "Enable x64 assembly with NASM (fallback to generic C if disabled)" ON)
 
+# ===================== NASM 汇编器配置 =====================
 if(USE_ASM AND WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-        enable_language(ASM_MASM)
-    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        # 对于MinGW，我们仍然使用ASM_MASM，但手动配置ml64编译器
-        enable_language(ASM_MASM)
+    # 查找 NASM，结果存入缓存
+    find_program(NASM_EXECUTABLE nasm
+        PATHS
+            "$ENV{LOCALAPPDATA}/bin/NASM"
+            "C:/Users/Jimmy/AppData/Local/bin/NASM"
+            "C:/Program Files/NASM"
+            "C:/NASM"
+        DOC "Path to NASM assembler"
+    )
+    if(NOT NASM_EXECUTABLE)
+        message(FATAL_ERROR "NASM not found! Please install NASM or set the path manually.")
     endif()
+
+    # 设置为缓存变量，使 CMake 在 enable_language 时使用
+    set(CMAKE_ASM_NASM_COMPILER "${NASM_EXECUTABLE}" CACHE FILEPATH "NASM assembler" FORCE)
+
+    enable_language(ASM_NASM)
+    set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
 endif()
 
 # 设置默认构建类型为 Release
@@ -37,42 +50,6 @@ endif()
 set(VALID_BUILD_TYPES Debug Release RelWithDebInfo MinSizeRel)
 if(CMAKE_BUILD_TYPE AND NOT CMAKE_BUILD_TYPE IN_LIST VALID_BUILD_TYPES)
     message(FATAL_ERROR "Invalid CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}, valid types are: ${VALID_BUILD_TYPES}")
-endif()
-
-# ===================== MASM 汇编器配置 =====================
-if(USE_ASM AND WIN32 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-    if(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-        # MSVC的MASM配置
-        set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
-        set(CMAKE_ASM_MASM_FLAGS_INIT "${CMAKE_ASM_MASM_FLAGS}")
-        set(CMAKE_ASM_MASM_COMPILE_OBJECT "<CMAKE_ASM_MASM_COMPILER> <FLAGS> /Fo<OBJECT> <SOURCE>")
-    elseif(CMAKE_C_COMPILER_ID MATCHES "GNU")
-        # MinGW下使用MASM (ml64.exe) 
-        # 查找ml64.exe（MASM64位编译器）
-        find_program(ML64_EXECUTABLE
-            NAMES ml64.exe
-            PATHS 
-                "$ENV{VSINSTALLDIR}/bin/Hostx64/x64"
-                "$ENV{ProgramFiles}/Microsoft Visual Studio/*/BuildTools/bin/Hostx64/x64"
-                "$ENV{ProgramFiles}/Microsoft Visual Studio/*/Community/bin/Hostx64/x64"
-                "${PROGRAMFILES}/Microsoft Visual Studio/*/BuildTools/bin/Hostx64/x64"
-                "${PROGRAMFILES}/Microsoft Visual Studio/*/Community/bin/Hostx64/x64"
-                "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64"
-                "D:/vs2022/IDE/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64"
-            REQUIRED
-        )
-        
-        # 设置MASM汇编器
-        set(CMAKE_ASM_MASM_COMPILER ${ML64_EXECUTABLE})
-        # MASM编译参数
-        set(CMAKE_ASM_MASM_FLAGS "/c /nologo /DWIN64")
-        set(CMAKE_ASM_MASM_FLAGS_INIT "${CMAKE_ASM_MASM_FLAGS}")
-        set(CMAKE_ASM_MASM_COMPILE_OBJECT 
-            "<CMAKE_ASM_MASM_COMPILER> <FLAGS> /Fo<OBJECT> <SOURCE>"
-        )
-        
-        file(GLOB MASM_FILES ${CMAKE_SOURCE_DIR}/src/lammp/masm/*.asm)
-    endif()
 endif()
 
 # ===================== 通用编译器选项函数 =====================
@@ -87,24 +64,27 @@ function(set_common_compiler_options target)
     )
     if(USE_ASM)
         target_compile_definitions(${target} PRIVATE USE_ASM)
+        target_compile_definitions(${target} PRIVATE
+            $<$<AND:$<COMPILE_LANGUAGE:ASM_NASM>,$<PLATFORM_ID:Windows>>:LAMMP_ASM_WIN>
+        )
     endif()
     if(CMAKE_C_COMPILER_ID MATCHES "GNU")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
-                -Wall -Wextra -Wpedantic -fPIC -m64
+                -Wall -Wextra -Wpedantic -fPIC -m64 -mcmodel=large
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
-                -Wall -Wextra -Wpedantic -fPIC -m64
+                -Wall -Wextra -Wpedantic -fPIC -m64 -mcmodel=large
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
-            $<$<COMPILE_LANGUAGE:ASM_MASM>:/nologo /DWIN64>
+            $<$<COMPILE_LANGUAGE:ASM_NASM>:-DWIN64>
         )
         target_link_options(${target} PRIVATE
             -m64 -Wl,--enable-auto-import -Wl,--no-undefined
@@ -129,7 +109,7 @@ function(set_common_compiler_options target)
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
-            $<$<COMPILE_LANGUAGE:ASM_MASM>:/nologo /DWIN64>
+            $<$<COMPILE_LANGUAGE:ASM_NASM>:-DWIN64>
         )
         target_link_options(${target} PRIVATE
             /MACHINE:X64 /DYNAMICBASE /NXCOMPAT /SUBSYSTEM:CONSOLE
