@@ -744,6 +744,16 @@ mp_limb_t lmmp_div_3_2_(mp_ptr numa, mp_srcptr numb, mp_limb_t inv21);
 mp_limb_t lmmp_div_1_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_limb_t x);
 
 /**
+ * @brief 单精度数取余
+ * @param numa 输入被除数，长度为na
+ * @param na 被除数的 limb 长度
+ * @param x 除数（单个 limb ）
+ * @return 除法余数（单个 limb ）
+ * @warning na>0, x!=0, eqsep(dstq,numa), dstq>=numa-1 是可以接受的
+ */
+mp_limb_t lmmp_mod_1_(mp_srcptr numa, mp_size_t na, mp_limb_t x);
+
+/**
  * @brief 双精度数除法 (除数为2个limb)
  * @param dstq 输出商的缓冲区，长度至少为na-1
  * @param numa 输入被除数（长度na）
@@ -753,6 +763,15 @@ mp_limb_t lmmp_div_1_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_limb_t x);
  * @note if (dstq!=NULL) [dstq,na-1]=[numa,na] div [numb,2]
  */
 void lmmp_div_2_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_ptr numb);
+
+/**
+ * @brief 双精度数取余 (除数为2个limb)
+ * @param numa 输入被除数（长度na）
+ * @param na 被除数的 limb 长度
+ * @param numb 输入除数（长度2）[numb,2]=[numa,na] mod [numb,2]
+ * @warning na>=2, numb[1]!=0, eqsep(dstq,numa), dstq>=numa 是可以接受的
+ */
+void lmmp_mod_2_(mp_srcptr numa, mp_size_t na, mp_ptr numb);
 
 /**
  * @brief 基础除法运算
