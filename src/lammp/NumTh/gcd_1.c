@@ -35,7 +35,7 @@ mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb) {
         ulimb = up[0];
     }
     else {
-        ulimb = lmmp_div_1_(NULL, up, un, vlimb);
+        ulimb = lmmp_mod_1_(up, un, vlimb);
     }
     if (ulimb == 0)
         return vlimb;

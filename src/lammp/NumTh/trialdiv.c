@@ -32,7 +32,7 @@ static ushortp lmmp_trialdiv_short_(mp_srcptr restrict np, mp_size_t nn, ushort 
         t *= p;
         idx[idx_cnt++] = p;
         if (t > MAX_T || idx_cnt == 20) {
-            mp_limb_t r = lmmp_div_1_(NULL, np, nn, t);
+            mp_limb_t r = lmmp_mod_1_(np, nn, t);
             for (uint j = 0; j < idx_cnt; j++) {
                 if (r == 0 || r % idx[j] == 0) {
                     ret[retn++] = idx[j];
@@ -47,7 +47,7 @@ static ushortp lmmp_trialdiv_short_(mp_srcptr restrict np, mp_size_t nn, ushort 
         }
     }
     if (idx_cnt > 0) {
-        mp_limb_t r = lmmp_div_1_(NULL, np, nn, t);
+        mp_limb_t r = lmmp_mod_1_(np, nn, t);
         for (uint j = 0; j < idx_cnt; j++) {
             if (r == 0 || r % idx[j] == 0) {
                 ret[retn++] = idx[j];

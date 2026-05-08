@@ -150,7 +150,7 @@ mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp) {
     lmmp_param_assert(un > 2);
     lmmp_param_assert(vp[1] != 0);
     mp_limb_t u[2] = {vp[0], vp[1]};
-    lmmp_div_2_(NULL, up, un, u);
+    lmmp_mod_2_(up, un, u);
     if (u[1] == 0 && u[0] == 0) {
         dst[0] = vp[0];
         dst[1] = vp[1];
