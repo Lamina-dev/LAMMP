@@ -9,6 +9,8 @@ Lamina的高精度计算库。
 
 汇编使用nasm汇编器，设计目标可以跨系统（windows和linux）。对于非x64平台，未来仅会针对arm64架构再进行额外的汇编编写。同时目前已有generic实现，在``src/lammp/generic/``下。可以设置编译选项``--DUSE_ASM=ON``，请注意，对于非x64架构，开启此选项会导致编译失败。
 
+请注意，由于使用了BMI2指令集，所以x64架构的CPU最低要求 Intel Haswell及以上或者 AMD Zen 及以上。
+
 ## 接口与调用说明
 
 目前，Lammp的接口主要在``include/lammp/``目录下，分为两个系列：
