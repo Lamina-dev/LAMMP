@@ -61,7 +61,7 @@ static inline uint factor_size_short(mp_size_t rn) {
     return rn * 10;
 }
 
-static mp_size_t lmmp_odd_multinomial_short_(
+static mp_size_t lmmp_odd_multinomial_ushort_(
           mp_ptr    restrict dst, 
           mp_size_t           rn, 
           uint                 n, 
@@ -69,10 +69,10 @@ static mp_size_t lmmp_odd_multinomial_short_(
           uint                 m
 ) {
     if (n < ODD_FACTORIAL_SIZE) {
-        lmmp_odd_nPr_short_(dst, rn, n, n);
+        lmmp_odd_nPr_ushort_(dst, rn, n, n);
         mp_limb_t t = 0;
         for (uint i = 0; i < m; ++i) {
-            lmmp_odd_nPr_short_(&t, 1, r[i], r[i]);
+            lmmp_odd_nPr_ushort_(&t, 1, r[i], r[i]);
             dst[0] /= t;
         }
         return 1;
@@ -95,7 +95,7 @@ static mp_size_t lmmp_odd_multinomial_short_(
     }
 }
 
-static mp_size_t lmmp_odd_multinomial_int_(mp_ptr restrict dst, mp_size_t rn, uint n, const uintp restrict r, uint m) {
+static mp_size_t lmmp_odd_multinomial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, const uintp restrict r, uint m) {
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = factor_size_int(rn, n);
@@ -131,9 +131,9 @@ mp_size_t lmmp_multinomial_(mp_ptr restrict dst, mp_size_t rn, uint n, const uin
     shl %= LIMB_BITS;
     lmmp_zero(dst, shw);
     if (n <= MULTINOMIAL_SHORT_LIMIT) {
-        rn = lmmp_odd_multinomial_short_(dst + shw, rn - shw, n, r, m);
+        rn = lmmp_odd_multinomial_ushort_(dst + shw, rn - shw, n, r, m);
     } else {
-        rn = lmmp_odd_multinomial_int_(dst + shw, rn - shw, n, r, m);
+        rn = lmmp_odd_multinomial_uint_(dst + shw, rn - shw, n, r, m);
     }
 
     if (shl > 0) {
