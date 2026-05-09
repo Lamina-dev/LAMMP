@@ -333,7 +333,7 @@ mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
  * @warning 0xffff>=n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_odd_nPr_ushort_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数的奇数部分
@@ -344,7 +344,7 @@ mp_size_t lmmp_odd_nPr_short_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @warning 0xffffffff>=n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_odd_nPr_uint_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数的奇数部分
@@ -355,7 +355,7 @@ mp_size_t lmmp_odd_nPr_int_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @warning n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_long_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+mp_size_t lmmp_odd_nPr_ulong_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
@@ -385,7 +385,7 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
  * @warning n>0xffff, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_factorial_int_(mp_ptr dst, mp_size_t rn, uint n);
+mp_size_t lmmp_odd_factorial_uint_(mp_ptr dst, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 n! 阶乘
@@ -416,7 +416,7 @@ mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
  * @return 返回 dst 的实际 limb 长度
  * @warning r<=n/2, n<=0xffff, dst!=NULL, rn>0
  */
-mp_size_t lmmp_odd_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+mp_size_t lmmp_odd_nCr_ushort_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数的奇数部分
@@ -427,7 +427,7 @@ mp_size_t lmmp_odd_nCr_short_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  * @return 返回 dst 的实际 limb 长度
  * @warning r<=n/2, 0xffff<n, dst!=NULL, rn>0
  */
-mp_size_t lmmp_odd_nCr_int_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+mp_size_t lmmp_odd_nCr_uint_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
