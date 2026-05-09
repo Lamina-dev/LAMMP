@@ -15,7 +15,7 @@ typedef struct {
 
 #define GLOBAL_RNG_INIT_STATE 10451216379200822465ULL
 #define GLOBAL_RNG_INIT_SEED_TYPE 1
-THREAD_LOCAL static lmmp_global_rng_t lmmp_global_rng = {GLOBAL_RNG_INIT_STATE, GLOBAL_RNG_INIT_SEED_TYPE};
+LAMMP_THREAD_LOCAL static lmmp_global_rng_t lmmp_global_rng = {GLOBAL_RNG_INIT_STATE, GLOBAL_RNG_INIT_SEED_TYPE};
 
 void lmmp_global_rng_init_(int seed, int seed_type) {
     lmmp_global_rng.state = lmmp_seed_generator(seed + seed_type);
