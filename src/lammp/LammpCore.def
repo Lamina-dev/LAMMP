@@ -166,18 +166,18 @@ EXPORTS
 	lmmp_is_prime_ulong_
 
 	lmmp_nPr_size_
-	lmmp_odd_nPr_short_
-	lmmp_odd_nPr_int_
-	lmmp_odd_nPr_long_
+	lmmp_odd_nPr_ushort_
+	lmmp_odd_nPr_uint_
+	lmmp_odd_nPr_ulong_
 	lmmp_nPr_
 
 	lmmp_factorial_size_
-	lmmp_odd_factorial_int_
+	lmmp_odd_factorial_uint_
 	lmmp_factorial_
 	
 	lmmp_nCr_size_
-	lmmp_odd_nCr_short_
-	lmmp_odd_nCr_int_
+	lmmp_odd_nCr_ushort_
+	lmmp_odd_nCr_uint_
 	lmmp_nCr_
 
 	lmmp_multinomial_size_
