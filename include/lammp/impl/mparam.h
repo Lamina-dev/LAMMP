@@ -126,6 +126,11 @@
 // 元素累乘中，低于此长度的累乘将使用朴素算法
 #define ELEM_MUL_BASECASE_THRESHOLD 20
 
+// cache 一次处理的位图数量
+#define PRIME_CACHE_BLOCK_NUM 32
+// 一个位图中质数最多的数量（实际为31）
+#define PRIME_CACHE_BLOCK_SIZE 32
+
 #define MP_UCHAR_MAX (0xff)
 #define MP_USHORT_MAX (0xffff)
 #define MP_UINT_MAX (0xffffffff)

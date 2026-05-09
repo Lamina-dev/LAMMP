@@ -224,13 +224,13 @@ typedef size_t mp_bitcnt_t;          // 表示bit数量的无符号整数类型
 
 #if defined(_WIN32) && (defined(__GNUC__) || defined(__clang__))
     // MinGW on Windows: use native TLS section
-    #define THREAD_LOCAL __attribute__((section(".tls$")))
+    #define LAMMP_THREAD_LOCAL __attribute__((section(".tls$")))
 #elif defined(_MSC_VER)
-    #define THREAD_LOCAL __declspec(thread)
+    #define LAMMP_THREAD_LOCAL __declspec(thread)
 #elif defined(__GNUC__) // Linux/macOS
-    #define THREAD_LOCAL __thread
+    #define LAMMP_THREAD_LOCAL __thread
 #else
-    #define THREAD_LOCAL _Thread_local
+    #define LAMMP_THREAD_LOCAL _Thread_local
 #endif
 
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
@@ -256,7 +256,7 @@ void* lmmp_alloc(size_t size, const char* func, int line);
  * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
  * @param size 要分配的内存字节数
  * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
- * @return 返回指向分配内存的指针
+ * @return 返回指向分配内存的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
 void* lmmp_alloc(size_t size);
 #endif 
@@ -270,7 +270,7 @@ void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
  * @param ptr 已分配的内存指针
  * @param size 新的内存大小（字节）
  * @note 调用堆内存重新分配器，分配失败将触发 lmmp_abort
- * @return 成功返回指向新内存区域的指针
+ * @return 成功返回指向新内存区域的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
 void* lmmp_realloc(void* ptr, size_t size);
 #endif 
