@@ -8,12 +8,11 @@
 #include "../../include/lammp/lmmpn.h"
 #include "../../include/lammp/impl/mparam.h"
 
-void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_ptr scratch) {
     lmmp_param_assert(n > 0);
     mp_size_t hn = lmmp_fft_next_size_((n + n + 1) >> 1);
-    lmmp_assert(n + n >= hn);
-    mp_ptr tp = ALLOC_TYPE((hn << 1) + 1, mp_limb_t);
-    mp_ptr mp = tp + hn + 1;
+    lmmp_assert(n + n > hn);
+    mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
 
     mp_srcptr amodm = numa;
     mp_size_t nam = n;
@@ -22,12 +21,12 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
           Z = B^hb - 1
           amodm = a mod Z
          */
-        if (lmmp_add_(mp, numa, hn, numa + hn, n - hn))
-            lmmp_inc(mp);
-        amodm = mp;
+        if (lmmp_add_(scratch, numa, hn, numa + hn, n - hn))
+            lmmp_inc(scratch);
+        amodm = scratch;
         nam = hn;
     }
-    lmmp_mul_mersenne_(mp, hn, amodm, nam, numb, n);
+    lmmp_mul_mersenne_(scratch, hn, amodm, nam, numb, n);
 
     mp_srcptr amodp = numa;
     mp_size_t nap = n;
@@ -44,11 +43,26 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
     }
     lmmp_mul_fermat_(tp, hn, amodp, nap, numb, n);
 
-    mp_limb_t c = lmmp_shr1add_n_(mp, mp, tp, hn);
-    lmmp_copy(dst, mp, n);
-    if (c)
-        dst[n - 1] |= (mp_limb_t)1 << (LIMB_BITS - 1);
+    mp_limb_t cy = lmmp_shr1add_nc_(scratch, scratch, tp, hn, tp[hn]);
+    cy <<= LIMB_BITS - 1;
+    scratch[hn - 1] += cy;
+    if (scratch[hn - 1] < cy)
+        lmmp_inc(scratch);
+
+    if (n == hn) {
+        cy = tp[hn] + lmmp_sub_n_(scratch + hn, scratch, tp, hn);
+        // cy==1 means [tp,hn+1]!=0, then [dst,hn]!=0
+        // cy==2 is impossible since [tp,hn+1] is normalized.
+        // so the following dec won't overflow.
+        lmmp_dec_1(scratch, cy);
+    } else {
+        mp_size_t n2 = 2 * n;
+        cy = lmmp_sub_n_(scratch + hn, scratch, tp, n2 - hn);
+        cy = tp[hn] + lmmp_sub_nc_(tp + n2 - hn, scratch + n2 - hn, tp + n2 - hn, 2 * hn - n2, cy);
+        cy = lmmp_sub_1_(scratch, scratch, n2, cy);
+    }
     lmmp_free(tp);
+    lmmp_copy(dst, scratch, n);
 }
 
 /*
@@ -191,7 +205,10 @@ void lmmp_mullo_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_srcptr restric
         TEMP_FREE;
         return;
     } else {
-        lmmp_mullo_fft_(dst, numa, numb, n);
+        TEMP_DECL;
+        mp_ptr restrict tp = TALLOC_TYPE(2 * n, mp_limb_t);
+        lmmp_mullo_fft_(dst, numa, numb, n, tp);
+        TEMP_FREE;
         return;
     }
 }
