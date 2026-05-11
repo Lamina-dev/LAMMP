@@ -52,7 +52,7 @@ typedef int64_t* slongp;
 /**
  * @brief 计算 a 在2^32下的逆元
  * @param a 待求逆元
- * @param a%2==1
+ * @warning a%2==1
  * @return 逆元
  */
 uint lmmp_binvert_uint_(uint a);
@@ -60,7 +60,7 @@ uint lmmp_binvert_uint_(uint a);
 /**
  * @brief 计算 a 在2^64下的逆元
  * @param a 待求逆元
- * @param a%2==1
+ * @warning a%2==1
  * @return 逆元
  */
 ulong lmmp_binvert_ulong_(ulong a);
@@ -100,7 +100,7 @@ void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
  * @warning n>=na>0, numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
  * @return dst 的实际 limb 长度
  */
-mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
+//mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
 
 /**
  * @brief 计算两个无符号整数的最大公约数

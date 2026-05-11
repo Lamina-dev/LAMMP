@@ -22,7 +22,7 @@
 #ifdef _MSC_VER
 #include <intrin.h>
 #include <immintrin.h>
-#elif defined(__GNUC__) || defined(__clang__)
+#elif defined(USE_ASM) && (defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
 #include <x86intrin.h>
 #endif
 
@@ -58,7 +58,7 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
 }
 
 static inline void _umulx64to128_(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
-#if defined(USE_ASM)
+#if defined(USE_ASM) && (defined(__x86_64__))
     *low = _mulx_u64(a, b, high);
 #else
     _umul64to128_(a, b, low, high);
