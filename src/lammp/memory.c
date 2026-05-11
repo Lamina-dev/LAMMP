@@ -273,7 +273,7 @@ typedef struct {
 #define MAGIC_NUMBER 0xDEADBEEF
 #define MAGIC_SIZE sizeof(unsigned int)
 
-THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
+LAMMP_THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
 
 void* lmmp_stack_alloc(size_t size, const char* func, int line) {
     if (size == 0) {
