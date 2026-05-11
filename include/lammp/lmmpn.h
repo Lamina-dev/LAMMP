@@ -664,15 +664,14 @@ void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n);
 /**
  * @brief 低位FFT乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
  * @param dst 输出结果缓冲区，长度至少为 n
- * @param rn 模运算的阶数参数
  * @param numa 第一个输入操作数，长度为 n
- * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 n
- * @param nb 第二个操作数的 limb 长度
- * @warning ???<n, eqsep(dst,[numa|numb])
+ * @param scratch 临时缓冲区，长度至少为 2*n
+ * @param n 缓冲区 limb 长度
+ * @warning ???<n, sep(scratch,[numa|numb]), eqsep(dst,scratch)
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
-void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_ptr scratch);
 
 /**
  * @brief 1阶逆元计算 (inv1)
