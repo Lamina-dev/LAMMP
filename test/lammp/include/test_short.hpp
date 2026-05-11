@@ -35,5 +35,6 @@ void test_arith_seqprod();
 void test_bninv();
 void test_trialdiv();
 void test_remove();
+void test_binvert();
 
 #endif // __LAMMP_TEST_SHORT_H__
