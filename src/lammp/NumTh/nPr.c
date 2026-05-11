@@ -86,7 +86,7 @@ static mp_size_t lmmp_odd_nPr_product_(mp_ptr restrict dst, mp_size_t rn, uint n
     return rn;
 }
 
-mp_size_t lmmp_odd_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     lmmp_param_assert(n <= NPR_SHORT_LIMIT);
     if (n < ODD_FACTORIAL_SIZE) {
@@ -188,7 +188,7 @@ mp_size_t lmmp_odd_nPr_short_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
     }
 }
 
-mp_size_t lmmp_odd_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     lmmp_param_assert(n <= NPR_INT_LIMIT);
     if (r <= 10) {
@@ -229,7 +229,7 @@ mp_size_t lmmp_odd_nPr_int_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r)
     }
 }
 
-mp_size_t lmmp_odd_nPr_long_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
+mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
     TEMP_DECL;
     ulongp restrict limbs = TALLOC_TYPE(r + 1, ulong);
@@ -259,11 +259,11 @@ mp_size_t lmmp_nPr_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, ulong n
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
     if (n <= NPR_SHORT_LIMIT)
-        rn = lmmp_odd_nPr_short_(dst + shw, rn - shw, n, r);
+        rn = lmmp_odd_nPr_ushort_(dst + shw, rn - shw, n, r);
     else if (n <= NPR_INT_LIMIT)
-        rn = lmmp_odd_nPr_int_(dst + shw, rn - shw, n, r);
+        rn = lmmp_odd_nPr_uint_(dst + shw, rn - shw, n, r);
     else
-        rn = lmmp_odd_nPr_long_(dst + shw, rn - shw, n, r);
+        rn = lmmp_odd_nPr_ulong_(dst + shw, rn - shw, n, r);
 
     if (bits > 0) {
         dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, bits);

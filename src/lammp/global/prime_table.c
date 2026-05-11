@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 
 ulong lmmp_prime_size_(ulong n) {
@@ -23,7 +24,6 @@ ulong lmmp_prime_size_(ulong n) {
         double r = x / lnx * (1.0 + 1.0 / lnx + 2.51 / lnx2);
         return (ulong)r;
     }
-
     /*
          Dusart 2010 估计 - π(x)的严格上界
          from: Dusart (2010) "Estimates of some functions over primes without R.H."(https://arxiv.org/abs/1002.0442)
@@ -63,7 +63,7 @@ typedef struct prime_int {
     uint N;       // 位图记录的最大值 N
 } prime_int;
 
-THREAD_LOCAL static prime_int global_prime_int_table = { NULL, 0, 0 };
+LAMMP_THREAD_LOCAL static prime_int global_prime_int_table = { NULL, 0, 0 };
 
 #define G global_prime_int_table
 
@@ -152,11 +152,6 @@ bool lmmp_is_prime_table_(uint p) {
         return (G.m[idx / PRIME_BITSET_BITS] >> (idx % PRIME_BITSET_BITS) & 1);
     }
 }
-
-// cache 一次处理的位图数量
-#define PRIME_CACHE_BLOCK_NUM 32
-// 一个位图中质数最多的数量（实际为31）
-#define PRIME_CACHE_BLOCK_SIZE 32
 
 void lmmp_prime_cache_init_(prime_cache_t* cache, uint n) {
     cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);

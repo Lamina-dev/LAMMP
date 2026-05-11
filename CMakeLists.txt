@@ -67,6 +67,17 @@ function(set_common_compiler_options target)
         target_compile_definitions(${target} PRIVATE
             $<$<AND:$<COMPILE_LANGUAGE:ASM_NASM>,$<PLATFORM_ID:Windows>>:LAMMP_ASM_WIN>
         )
+        if(CMAKE_C_COMPILER_ID MATCHES "GNU")
+            target_compile_options(${target} PRIVATE 
+                $<$<COMPILE_LANGUAGE:C>: -mbmi2 >
+                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2 >
+            )
+        elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
+            target_compile_options(${target} PRIVATE 
+                $<$<COMPILE_LANGUAGE:C>: /arch:AVX2 >
+                $<$<COMPILE_LANGUAGE:CXX>: /arch:AVX2 > 
+            )
+        endif()
     endif()
     if(CMAKE_C_COMPILER_ID MATCHES "GNU")
         target_compile_options(${target} PRIVATE
@@ -84,7 +95,6 @@ function(set_common_compiler_options target)
                 $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
-            $<$<COMPILE_LANGUAGE:ASM_NASM>:-DWIN64>
         )
         target_link_options(${target} PRIVATE
             -m64 -Wl,--enable-auto-import -Wl,--no-undefined
@@ -109,7 +119,6 @@ function(set_common_compiler_options target)
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
-            $<$<COMPILE_LANGUAGE:ASM_NASM>:-DWIN64>
         )
         target_link_options(${target} PRIVATE
             /MACHINE:X64 /DYNAMICBASE /NXCOMPAT /SUBSYSTEM:CONSOLE

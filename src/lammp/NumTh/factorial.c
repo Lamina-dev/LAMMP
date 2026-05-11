@@ -172,7 +172,7 @@ static inline void count_factors(factors fac, uint nfactors, uint n, uint p) {
     fac[nfactors].j = e;
 }
 
-mp_size_t lmmp_odd_factorial_int_(mp_ptr restrict dst, mp_size_t rn, uint n) {
+mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
@@ -200,9 +200,9 @@ mp_size_t lmmp_factorial_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, u
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
     if (n <= NPR_SHORT_LIMIT)
-        rn = lmmp_odd_nPr_short_(dst + shw, rn - shw, n, n);
+        rn = lmmp_odd_nPr_ushort_(dst + shw, rn - shw, n, n);
     else
-        rn = lmmp_odd_factorial_int_(dst + shw, rn - shw, n);
+        rn = lmmp_odd_factorial_uint_(dst + shw, rn - shw, n);
     
     if (bits > 0) {
         dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, bits);

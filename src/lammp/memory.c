@@ -17,23 +17,23 @@
 #undef lmmp_leak_tracker
 #define HSIZE sizeof(void*)
 
-THREAD_LOCAL static lmmp_heap_alloctor_t global_heap = {
+LAMMP_THREAD_LOCAL static lmmp_heap_alloctor_t global_heap = {
     malloc,
     free,
     realloc,
 };
 
-THREAD_LOCAL static int heap_alloc_count = 0;
-
 #define heap_alloc_func global_heap.alloc
-#define heap_free_func global_heap.free
-#define realloc_func global_heap.realloc
+#define heap_free_func  global_heap.free
+#define realloc_func    global_heap.realloc
 
-THREAD_LOCAL void* lmmp_stack_begin = NULL;
-THREAD_LOCAL void* lmmp_stack_end = NULL;
-THREAD_LOCAL void* lmmp_stack_top = NULL;
+LAMMP_THREAD_LOCAL static int heap_alloc_count = 0;
 
-#define stack_get_top_func() (lmmp_stack_top)
+LAMMP_THREAD_LOCAL void*      lmmp_stack_begin = NULL;
+LAMMP_THREAD_LOCAL void*      lmmp_stack_end   = NULL;
+LAMMP_THREAD_LOCAL void*      lmmp_stack_top   = NULL;
+
+#define stack_get_top_func()    (lmmp_stack_top)
 #define stack_set_top_func(top) (lmmp_stack_top = top)
 
 void lmmp_stack_reset(size_t size) {
@@ -273,7 +273,7 @@ typedef struct {
 #define MAGIC_NUMBER 0xDEADBEEF
 #define MAGIC_SIZE sizeof(unsigned int)
 
-THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
+LAMMP_THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
 
 void* lmmp_stack_alloc(size_t size, const char* func, int line) {
     if (size == 0) {

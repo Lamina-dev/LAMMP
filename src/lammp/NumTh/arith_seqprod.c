@@ -32,9 +32,9 @@ static inline mp_size_t _odd_pow_(mp_ptr dst, mp_size_t rn, uint base, ulong exp
 
 static inline mp_size_t _odd_nPr_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     if (n <= NPR_SHORT_LIMIT) {
-        return lmmp_odd_nPr_short_(dst, rn, n, r);
+        return lmmp_odd_nPr_ushort_(dst, rn, n, r);
     } else {
-        return lmmp_odd_nPr_int_(dst, rn, n, r);
+        return lmmp_odd_nPr_uint_(dst, rn, n, r);
     }
 }
 

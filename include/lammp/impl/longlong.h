@@ -21,7 +21,11 @@
 
 #ifdef _MSC_VER
 #include <intrin.h>
+#include <immintrin.h>
+#elif defined(USE_ASM) && (defined(__x86_64__)) && (defined(__GNUC__) || defined(__clang__))
+#include <x86intrin.h>
 #endif
+
 #include <stdint.h>
 
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
@@ -51,6 +55,49 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
     *high = r3 + (r1 >> 32);
     *low = (r1 << 32) | (uint32_t)r0;
 #endif
+}
+
+static inline void _umulx64to128_(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
+#if defined(USE_ASM) && (defined(__x86_64__))
+    *low = _mulx_u64(a, b, high);
+#else
+    _umul64to128_(a, b, low, high);
+#endif
+}
+
+static inline void _umul128to256_(uint64_t a_high, uint64_t a_low, uint64_t b_high, uint64_t b_low, uint64_t rr[4]) {
+    uint64_t p1_low, p1_high;  // p1 = a_low × b_high
+    uint64_t p2_low, p2_high;  // p2 = a_high × b_low
+    _umulx64to128_(a_low, b_low, rr, rr + 1);
+    _umulx64to128_(a_low, b_high, &p1_low, &p1_high);
+    _umulx64to128_(a_high, b_low, &p2_low, &p2_high);
+    _umulx64to128_(a_high, b_high, rr + 2, rr + 3);
+    /*
+        | res0 | res1 | res2 | res3 |
+        |  p0l |  p0h |      |      |
+               |  p1l |  p1h |      |
+               |  p2l |  p2h |      |
+               |      |  p3l |  p3h |
+    */
+    rr[1] += p1_low;
+    uint64_t carry = (rr[1] < p1_low) ? 1 : 0;
+    rr[1] += p2_low;
+    carry += (rr[1] < p2_low) ? 1 : 0;
+
+    rr[2] += carry;
+    carry = (rr[2] < carry) ? 1 : 0;
+    rr[2] += p1_high;
+    carry += (rr[2] < p1_high) ? 1 : 0;
+    rr[2] += p2_high;
+    carry += (rr[2] < p2_high) ? 1 : 0;
+
+    rr[3] += carry;
+}
+
+static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_high, uint64_t b_low, uint64_t rr[2]) {
+    _umulx64to128_(a_low, b_low, rr, rr + 1);
+    rr[1] += a_low * b_high;
+    rr[1] += a_high * b_low;
 }
 
 #ifdef _MSC_VER
@@ -310,5 +357,7 @@ def montgomery_mul(a_mont, b_mont, p):
         _umul64to128_((n0), (dinv), &_lo_, &_hi_); \
         (q) = _hi_;                                \
     } while (0)
+
+
 
 #endif // __LAMMP_LONGLONG_H__
