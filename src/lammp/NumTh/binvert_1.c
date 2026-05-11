@@ -50,8 +50,7 @@ void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa) {
     mp_limb_t a1 = numa[1];
     mp_limb_t a0 = numa[0];
     mp_limb_t xn = lmmp_binvert_ulong_(a0);
-    mp_limb_t yn[2] = {xn, 0};
-    mp_limb_t z[2];
+    mp_limb_t z;
     /*
      xn * a0 == 1 + k * B
      yn := xn * (2 - a * xn) mod B^2
@@ -61,12 +60,10 @@ void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa) {
         := (xn - xn*k * B - a1 * xn^2 * B) mod B^2
     */
     _umul64to128_(a0, xn, &t, &k);
-    z[0] = 0;
-    z[1] = xn * k;
-    z[1] += a1 * xn * xn;
-    _u128sub(yn, yn, z);
-    dst[0] = yn[0];
-    dst[1] = yn[1];
+    z = xn * k;
+    z += a1 * xn * xn;
+    dst[0] = xn;
+    dst[1] = -z;
 }
 
 void lmmp_binvert_4_(mp_ptr restrict dst, mp_srcptr restrict numa) {
@@ -81,24 +78,23 @@ void lmmp_binvert_4_(mp_ptr restrict dst, mp_srcptr restrict numa) {
     */
     lmmp_binvert_2_(dst, numa);
     mp_limb_t k[4];
-    mp_limb_t z[4];
+    mp_limb_t z[2];
     mp_limb_t t[2];
     _umul128to256_(dst[1], dst[0], numa[1], numa[0], k);
     lmmp_debug_assert(k[1] == 0 && k[0] == 1);
-    dst[2] = 0;
-    dst[3] = 0;
+
 #define xn (dst)
 #define k (k + 2)
-    z[0] = 0;
-    z[1] = 0;
-    _umul128to128_(k[1], k[0], xn[1], xn[0], z + 2);
+    _umul128to128_(k[1], k[0], xn[1], xn[0], z);
     
     _umul64to128_(xn[0], xn[0], t, t + 1);
     t[1] += (xn[1] * xn[0]) << 1;
     _umul128to128_(t[1], t[0], numa[3], numa[2], t);
 
-    _u128add(z + 2, z + 2, t);
-    lmmp_sub_n_(dst, dst, z, 4);
+    _u128add(z, z, t);
+    dst[2] = 0;
+    dst[3] = 0;
+    _u128sub(dst + 2, dst + 2, z);
 
 #undef xn
 #undef k
