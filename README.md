@@ -5,7 +5,7 @@ Lamina的高精度计算库。
 
 ## 编译
 
-目前Lammp使用CMake构建，目前可支持MSVC，MinGW编译器，clang编译器暂无详细编译测试结果。在linux系统中暂无详细的编译测试。Lammp无标准库外的依赖，动态库LammpCore为纯c和汇编编写，无需其他依赖。
+目前Lammp使用CMake构建，目前可支持MSVC，MinGW/Gcc，和clang编译器。受限于测试平台，在linux系统中暂无详细的编译测试。Lammp无标准库外的依赖，动态库LammpCore为纯c和汇编编写，无需其他依赖。
 
 汇编使用nasm汇编器，设计目标可以跨系统（windows和linux）。对于非x64平台，未来仅会针对arm64架构再进行额外的汇编编写。同时目前已有generic实现，在``src/lammp/generic/``下。可以设置编译选项``--DUSE_ASM=ON``，请注意，对于非x64架构，开启此选项会导致编译失败。
 
