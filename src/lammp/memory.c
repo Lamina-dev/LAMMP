@@ -17,7 +17,7 @@
 #undef lmmp_leak_tracker
 #define HSIZE sizeof(void*)
 
-LAMMP_THREAD_LOCAL static lmmp_heap_alloctor_t global_heap = {
+static LAMMP_THREAD_LOCAL lmmp_heap_alloctor_t global_heap = {
     malloc,
     free,
     realloc,
@@ -27,7 +27,7 @@ LAMMP_THREAD_LOCAL static lmmp_heap_alloctor_t global_heap = {
 #define heap_free_func  global_heap.free
 #define realloc_func    global_heap.realloc
 
-LAMMP_THREAD_LOCAL static int heap_alloc_count = 0;
+static LAMMP_THREAD_LOCAL int heap_alloc_count = 0;
 
 LAMMP_THREAD_LOCAL void*      lmmp_stack_begin = NULL;
 LAMMP_THREAD_LOCAL void*      lmmp_stack_end   = NULL;
@@ -273,7 +273,7 @@ typedef struct {
 #define MAGIC_NUMBER 0xDEADBEEF
 #define MAGIC_SIZE sizeof(unsigned int)
 
-LAMMP_THREAD_LOCAL static void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
+static LAMMP_THREAD_LOCAL void* global_stack_last_ptr = NULL;  // 最后一次分配的指针
 
 void* lmmp_stack_alloc(size_t size, const char* func, int line) {
     if (size == 0) {
@@ -354,13 +354,13 @@ void lmmp_stack_free(void* ptr, const char* func, int line) {
         int offset = 0;
         const int buf_size = sizeof(error_buf);
 
-#define SAFE_APPEND(fmt, ...)                                                                      \
-    do {                                                                                           \
-        if (offset < buf_size) {                                                                   \
-            int n = snprintf(error_buf + offset, (size_t)(buf_size - offset), fmt, ##__VA_ARGS__); \
-            if (n > 0)                                                                             \
-                offset += n;                                                                       \
-        }                                                                                          \
+#define SAFE_APPEND(...)                                                                    \
+    do {                                                                                    \
+        if (offset < buf_size) {                                                            \
+            int n = snprintf(error_buf + offset, (size_t)(buf_size - offset), __VA_ARGS__); \
+            if (n > 0)                                                                      \
+                offset += n;                                                                \
+        }                                                                                   \
     } while (0)
 
         SAFE_APPEND("Stack buffer overflow detected! Magic number corrupted at %p (ptr: %p, size: %zu)\n", magic_addr,

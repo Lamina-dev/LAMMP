@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-LAMMP_THREAD_LOCAL static lmmp_abort_fn lmmp_abort_func = NULL;
+static LAMMP_THREAD_LOCAL lmmp_abort_fn lmmp_abort_func = NULL;
 
 lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
     lmmp_abort_fn old_func = lmmp_abort_func;
