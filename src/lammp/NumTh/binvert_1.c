@@ -66,6 +66,31 @@ void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa) {
     dst[1] = -z;
 }
 
+void lmmp_binvert_3_(mp_ptr restrict dst, mp_srcptr restrict numa) {
+    /*
+           a == a0 + a1 * B^2
+     xn * a0 == 1 + k * B^2
+     yn := xn * (2 - a * xn) mod B^4
+        := xn * (2 - a0 * xn - a1 * xn * B^2) mod B^4
+        := xn * (2 - 1 - k*B^2 - a1 * xn * B^2) mod B^4
+        := xn * (1 - k*B^2 - a1 * xn * B^2) mod B^4
+        := (xn - xn*k * B^2 - a1 * xn^2 * B^2) mod B^4
+    */
+    lmmp_binvert_2_(dst, numa);
+    mp_limb_t k[3];
+    mp_limb_t z;
+    mp_limb_t a2 = numa[2];
+    _umul128to256_(dst[1], dst[0], numa[1], numa[0], k);
+    lmmp_debug_assert(k[1] == 0 && k[0] == 1);
+#define xn (dst[0])
+#define k (k[2])
+    z = xn * k;
+    z += a2 * xn * xn;
+    dst[2] = -z;
+#undef xn
+#undef k
+}
+
 void lmmp_binvert_4_(mp_ptr restrict dst, mp_srcptr restrict numa) {
     /*
            a == a0 + a1 * B^2
