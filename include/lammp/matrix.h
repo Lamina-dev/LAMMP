@@ -93,7 +93,7 @@ typedef lmmp_svecn_t lmmp_vecn_t;
  * @note 当vec中存在语义0时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
  * @return 结果dst的实际长度（为负数表示此数为负数，绝对值表示实际长度）
  */
-mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec);
+LAMMP_API mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec);
 
 /**
  * @brief 计算limb向量的累乘
@@ -103,7 +103,7 @@ mp_ssize_t lmmp_vec_elem_mul_(mp_ptr* dst, const lmmp_vecn_t* vec);
  * @note 当limb数组存在0值时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
  * @return 结果dst的实际长度
  */
-mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n);
+LAMMP_API mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n);
 
 /**
  * @brief 计算slimb向量的累乘
@@ -113,7 +113,7 @@ mp_size_t lmmp_limb_elem_mul_(mp_ptr* dst, const mp_limb_t* limb, mp_size_t n);
  * @note 当slimb数组存在0值时，*dst将会被置为NULL，并返回0。其余情况，*dst会被置为结果指针，并返回实际长度。
  * @return 结果dst的实际长度（为负数表示此数为负数，绝对值表示实际长度）
  */
-mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t n);
+LAMMP_API mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t n);
 
 /**
  * @brief 计算2x2矩阵和2x2矩阵的乘积需要分配的内存
@@ -126,7 +126,11 @@ mp_ssize_t lmmp_slimb_elem_mul_(mp_ptr* dst, const mp_slimb_t* slimb, mp_size_t 
  * @note 如果你可以确认一定不使用STRASSEN算法，则不需要maxa参数，其可以为NULL。
  * @return 0表示选择basecase算法，1表示选择STRASSEN算法。
  */
-int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_size_t* tn, mp_size_t* maxa);
+LAMMP_API int lmmp_mat22_mul_size_(lmmp_mat22_t* dst,
+                                   const lmmp_mat22_t* matA,
+                                   const lmmp_mat22_t* matB,
+                                   mp_size_t* tn,
+                                   mp_size_t* maxa);
 
 /**
  * @brief 计算2x2矩阵和2x2矩阵的乘积
@@ -137,8 +141,11 @@ int lmmp_mat22_mul_size_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp
  * @param tn 缓冲区的limb长度
  * @warning dst!=NULL, nonull(dst), [matA|matB]!=NULL, nonull([matA|matB]), sep(dst,[matA|matB]), tn>0
  */
-void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_ptr tp,
-                              mp_size_t tn);
+LAMMP_API void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst,
+                                        const lmmp_mat22_t* matA,
+                                        const lmmp_mat22_t* matB,
+                                        mp_ptr tp,
+                                        mp_size_t tn);
 
 /**
  * @brief 计算2x2矩阵平方
@@ -149,7 +156,7 @@ void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
  * @param maxa matA中最大的元素的limb长度+1，建议由lmmp_mat22_mul_size_确定
  * @warning dst!=NULL, nonull(dst), matA!=NULL, nonull(matA), sep(dst,matA), tn>0
  */
-void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn);
+LAMMP_API void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn);
 
 /**
  * @brief 计算（稠密）2x2矩阵和（稠密）2x2矩阵的乘积（STRASSEN算法）
@@ -161,8 +168,8 @@ void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_pt
  * @param maxa matA中最大的元素的limb长度+1，建议由lmmp_mat22_mul_size_确定
  * @warning dst!=NULL, nonull(dst), [matA|matB]!=NULL, nonull([matA|matB]), sep(dst,[matA|matB]), tn>0
  */
-void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB, mp_ptr tp,
-                              mp_size_t tn, mp_size_t maxa);
+LAMMP_API void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const lmmp_mat22_t* matB,
+                                        mp_ptr tp, mp_size_t tn, mp_size_t maxa);
 
 /**
  * @brief 计算（稠密）2x2矩阵平方（STRASSEN算法）
@@ -172,7 +179,7 @@ void lmmp_mat22_mul_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
  * @param tn 缓冲区的limb长度
  * @warning dst!=NULL, nonull(dst), matA!=NULL, nonull(matA), sep(dst,matA), tn>0
  */
-void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn);
+LAMMP_API void lmmp_mat22_sqr_strassen_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn);
 
 /**
  * @brief 计算2x2矩阵和2x2矩阵的乘积

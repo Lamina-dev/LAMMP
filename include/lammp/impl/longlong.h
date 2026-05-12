@@ -104,11 +104,13 @@ static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_hi
 // cnt = ctz(x)
 // r = x >> cnt
 // assume x is non-zero
-#define ctz_shl(r, x, cnt)              \
-    do {                                \
-        unsigned long long _x_ = (x);   \
-        _BitScanForward64(&(cnt), _x_); \
-        (r) = _x_ >> (cnt);             \
+#define ctz_shl(r, x, cnt)               \
+    do {                                 \
+        unsigned long long _x_ = (x);    \
+        unsigned long _bits_ = 0;        \
+        _BitScanForward64(&_bits_, _x_); \
+        cnt = _bits_;                    \
+        (r) = _x_ >> (cnt);              \
     } while (0)
 #else
 // cnt = ctz(x)
