@@ -63,7 +63,7 @@ typedef struct prime_int {
     uint N;       // 位图记录的最大值 N
 } prime_int;
 
-LAMMP_THREAD_LOCAL static prime_int global_prime_int_table = { NULL, 0, 0 };
+static LAMMP_THREAD_LOCAL prime_int global_prime_int_table = {NULL, 0, 0};
 
 #define G global_prime_int_table
 

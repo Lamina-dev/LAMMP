@@ -7,6 +7,17 @@ bits 64
 default rel
 
 %ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_limb_bits_"
+    db " -export:lmmp_leading_zeros_"
+    db " -export:lmmp_tailing_zeros_"
+    db " -export:lmmp_limb_popcnt_"
+    db " -export:lmmp_mulh_"
+    db " -export:lmmp_mullh_"
+    db " -export:lmmp_mulmod_ulong_"
+%endif
+
+%ifdef LAMMP_ASM_WIN
   %define win
   %define lin ;
   %define rx0 rcx

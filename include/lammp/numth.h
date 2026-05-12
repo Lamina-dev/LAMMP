@@ -55,7 +55,7 @@ typedef int64_t* slongp;
  * @warning a%2==1
  * @return 逆元
  */
-uint lmmp_binvert_uint_(uint a);
+LAMMP_API uint lmmp_binvert_uint_(uint a);
 
 /**
  * @brief 计算 a 在2^64下的逆元
@@ -63,7 +63,7 @@ uint lmmp_binvert_uint_(uint a);
  * @warning a%2==1
  * @return 逆元
  */
-ulong lmmp_binvert_ulong_(ulong a);
+LAMMP_API ulong lmmp_binvert_ulong_(ulong a);
 
 /**
  * @brief 计算 [numa,2] 在B^2下的逆元
@@ -71,7 +71,15 @@ ulong lmmp_binvert_ulong_(ulong a);
  * @param dst 结果指针（长度为 2 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, eqsep(dst,numa)
  */
-void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
+LAMMP_API void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
+
+/**
+ * @brief 计算 [numa,3] 在B^3下的逆元
+ * @param numa 待求逆元指针（长度为 3 个limb）
+ * @param dst 结果指针（长度为 3 个limb）
+ * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
+ */
+LAMMP_API void lmmp_binvert_3_(mp_ptr dst, mp_srcptr numa);
 
 /**
  * @brief 计算 [numa,4] 在B^4下的逆元
@@ -79,7 +87,7 @@ void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
  * @param dst 结果指针（长度为 4 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
  */
-void lmmp_binvert_4_(mp_ptr dst, mp_srcptr numa);
+LAMMP_API void lmmp_binvert_4_(mp_ptr dst, mp_srcptr numa);
 
 /**
  * @brief 计算 [numa,n] 在B^n下的逆元
@@ -89,7 +97,7 @@ void lmmp_binvert_4_(mp_ptr dst, mp_srcptr numa);
  * @param tp 临时工作区指针（长度为 5*(n+1)/2 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa,tp)
  */
-void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
+LAMMP_API void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
 
 /**
  * @brief 计算 [numa,na] 在B^n 下的逆元
@@ -100,7 +108,7 @@ void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
  * @warning n>=na>0, numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
  * @return dst 的实际 limb 长度
  */
-//mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
+// LAMMP_API mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
 
 /**
  * @brief 计算两个无符号整数的最大公约数
@@ -109,7 +117,7 @@ void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
  * @return 最大公约数
  * @warning u!=0, v!=0
  */
-mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v);
+LAMMP_API mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v);
 
 /**
  * @brief 计算两个无符号整数的最大公约数
@@ -119,7 +127,7 @@ mp_limb_t lmmp_gcd_11_(mp_limb_t u, mp_limb_t v);
  * @warning v!=0, up!=NULL, un>0
  * @return 最大公约数
  */
-mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
+LAMMP_API mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
 
 /**
  * @brief 计算两个无符号整数的最大公约数
@@ -130,7 +138,7 @@ mp_limb_t lmmp_gcd_1_(mp_srcptr up, mp_size_t un, mp_limb_t vlimb);
  * @note 我们不要求 up 和 vp 的高位不为 0，但要求两个数均不可以高低位全为 0
  * @return dst 的实际 limb 长度
  */
-mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp);
+LAMMP_API mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp);
 
 /**
  * @brief 计算两个无符号整数的最大公约数
@@ -141,7 +149,7 @@ mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp);
  * @warning up!=NULL, un>2, vp!=NULL, vp[1]!=0, dst!=NULL, eqsep(dst,[up|vp])
  * @return dst 的实际 limb 长度
  */
-mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp);
+LAMMP_API mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp);
 
 /**
  * @brief 计算两个无符号整数的最大公约数（不建议使用此算法，更高版本可能被彻底弃用）
@@ -154,7 +162,7 @@ mp_size_t lmmp_gcd_2_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp);
  * @note 朴素的辗转相除法，与Lehmer算法具有相似的渐进时间复杂度，但Lehmer算法绝大多数场合更加优秀
  * @return dst 的实际 limb 长度
  */
-mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
+LAMMP_API mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
 
 /**
  * @brief 计算两个无符号整数的最大公约数（Lehmer算法）
@@ -166,7 +174,7 @@ mp_size_t lmmp_gcd_basecase_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr v
  * @warning up!=NULL, un>0, vp!=NULL, vn>0, eqsep(dst,[up|vp]), dst!=NULL
  * @return dst 的实际 limb 长度
  */
-mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
+LAMMP_API mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn);
 
 /**
  * @brief 计算两个无符号整数的乘积，对mod取模，商放入 q 中
@@ -177,7 +185,7 @@ mp_size_t lmmp_gcd_lehmer_(mp_ptr dst, mp_srcptr up, mp_size_t un, mp_srcptr vp,
  * @warning a < mod, b < mod, q!=NULL
  * @return 余数
  */
-ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
+LAMMP_API ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
 
 /**
  * @brief 计算 base^exp 对 mod 取模
@@ -187,7 +195,7 @@ ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @warning base < mod
  * @return base^exp 对 mod 取模的结果
  */
-ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
+LAMMP_API ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
 
 /**
  * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
@@ -227,7 +235,7 @@ INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
  * @warning n>0, base[n-1]!=0, sep(dst,base), [base,n]>1, exp>=3, exp%2==1
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
+LAMMP_API mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -238,7 +246,7 @@ mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t
  * @warning 1<=base<=0xf, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -249,7 +257,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning 0<base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -260,7 +268,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning 0<base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -271,7 +279,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning 0<base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -282,7 +290,7 @@ mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning 2^32<=base<=2^64-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -292,7 +300,7 @@ mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
  * @warning base>=1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
+LAMMP_API mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
 
 /**
  * @brief 计算幂次方2比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
@@ -304,7 +312,7 @@ mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong exp);
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
+LAMMP_API mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 计算大整数幂 [dst,rn] = [base,n] ^ exp
@@ -316,14 +324,14 @@ mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, 
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
+LAMMP_API mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 判断素数
  * @param n 待判断的数
  * @return 若 n 为素数，返回 true，否则返回 false
  */
-bool lmmp_is_prime_ulong_(ulong n);
+LAMMP_API bool lmmp_is_prime_ulong_(ulong n);
 
 /**
  * @brief 计算 nPr 排列数的 limb 缓冲区长度
@@ -332,7 +340,7 @@ bool lmmp_is_prime_ulong_(ulong n);
  * @param bits 被修改为 nPr 的2的因子数
  * @return nPr 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
+LAMMP_API mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
 
 /**
  * @brief 计算 nPr 排列数的奇数部分
@@ -343,7 +351,7 @@ mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
  * @warning 0xffff>=n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_ushort_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+LAMMP_API mp_size_t lmmp_odd_nPr_ushort_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数的奇数部分
@@ -354,7 +362,7 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @warning 0xffffffff>=n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_uint_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+LAMMP_API mp_size_t lmmp_odd_nPr_uint_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数的奇数部分
@@ -365,7 +373,7 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @warning n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_nPr_ulong_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
+LAMMP_API mp_size_t lmmp_odd_nPr_ulong_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 nPr 排列数 ( nPr = n! / (n-r)! )
@@ -377,7 +385,7 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr dst, mp_size_t rn, ulong n, ulong r);
  * @warning n>=r, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong n, ulong r);
+LAMMP_API mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong n, ulong r);
 
 /**
  * @brief 计算 n! 阶乘的 limb 缓冲区长度
@@ -385,7 +393,7 @@ mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong n, ulong r
  * @param bits 被修改为 n! 的2的因子数
  * @return n! 阶乘的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
+LAMMP_API mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
 
 /**
  * @brief 计算 n! 阶乘的奇数部分
@@ -395,7 +403,7 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
  * @warning n>0xffff, dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_odd_factorial_uint_(mp_ptr dst, mp_size_t rn, uint n);
+LAMMP_API mp_size_t lmmp_odd_factorial_uint_(mp_ptr dst, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 n! 阶乘
@@ -406,7 +414,7 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr dst, mp_size_t rn, uint n);
  * @warning dst!=NULL, rn>0
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
+LAMMP_API mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 nCr 组合数的 limb 缓冲区长度
@@ -415,7 +423,7 @@ mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
  * @param bits 被修改为 nCr 的2的因子数
  * @return nCr 组合数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
+LAMMP_API mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
 
 /**
  * @brief 计算 nCr 组合数的奇数部分
@@ -426,7 +434,7 @@ mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
  * @return 返回 dst 的实际 limb 长度
  * @warning r<=n/2, n<=0xffff, dst!=NULL, rn>0
  */
-mp_size_t lmmp_odd_nCr_ushort_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+LAMMP_API mp_size_t lmmp_odd_nCr_ushort_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数的奇数部分
@@ -437,7 +445,7 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  * @return 返回 dst 的实际 limb 长度
  * @warning r<=n/2, 0xffff<n, dst!=NULL, rn>0
  */
-mp_size_t lmmp_odd_nCr_uint_(mp_ptr dst, mp_size_t rn, uint n, uint r);
+LAMMP_API mp_size_t lmmp_odd_nCr_uint_(mp_ptr dst, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算 nCr 组合数 ( nCr = n! / (r!(n-r)!) )
@@ -449,7 +457,7 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr dst, mp_size_t rn, uint n, uint r);
  * @return 返回 dst 的实际 limb 长度
  * @warning r<=n/2, n<=0xffffffff, dst!=NULL, rn>0
  */
-mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r);
+LAMMP_API mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r);
 
 /**
  * @brief 计算多项式系数的 limb 缓冲区长度
@@ -463,7 +471,7 @@ mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r);
  *          同时也请调用者注意判断 n 是否超过了 0xffffffff
  *          这是 lmmp_multinomial_ 函数的限制。
  */
-mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
+LAMMP_API mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
 
 /**
  * @brief 计算多项式系数
@@ -476,7 +484,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* n);
  * @note 多项式系数为 ( r1+r2+...+rm )! / ( r1! * r2! * ... * rm!)
  * @return 返回 dst 的实际 limb 长度
  */
-mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
+LAMMP_API mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uint m);
 
 /**
  * @brief 计算等差数列乘积 x(x+m)...(x+n*m)的 limb 缓冲区长度
@@ -486,7 +494,7 @@ mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const uintp r, uin
  * @warning x>0, m>1, n>0
  * @return 等差数列乘积的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
-mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m);
+LAMMP_API mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m);
 
 /**
  * @brief 计算等差数列乘积 x(x+m)...(x+n*m)
@@ -498,7 +506,7 @@ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m);
  * @warning x>0, m>1, n>0, dst!=NULL, rn>0, x+n*m<=0xffffffff
  * @return 结果的实际的 limb 缓冲区长度
  */
-mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
+LAMMP_API mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
 
 /**
  * @brief 试除法
@@ -510,7 +518,7 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n, uint m);
  * @note 试除法尝试从 2-N 中所有质数进行试除，如果能整除则会插入到返回结果数组中，没有整除的则会返回 NULL。
  * @return 结果指针，返回不超过N，且能整除[np,nn]的素数（从小到大排列），若没有能够整除的素数，则返回NULL
  */
-ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
+LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
 
 /**
  * @brief 除去[np,nn]中的[dp,dn]的因子
@@ -523,8 +531,7 @@ ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
  *       如果不能被整除，则[np,nn]保持不变，并返回0。
  * @return [np,nn]中被[dp,dn]除去的因子的个数，如果不能被整除，则返回0
  */
-mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
-
+LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
 #ifdef INLINE_
 #undef INLINE_

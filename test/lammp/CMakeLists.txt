@@ -23,7 +23,7 @@ target_include_directories(LammpTest
 target_link_libraries(LammpTest PRIVATE LammpCore)
 
 # 设置编译器选项
-set_common_compiler_options(LammpTest)
+lammp_target_setup(LammpTest)
 
 # 设置输出名称和属性
 set_target_properties(LammpTest PROPERTIES

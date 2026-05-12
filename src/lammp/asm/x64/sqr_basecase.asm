@@ -9,6 +9,11 @@ bits 64
 default rel
 
 %ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_sqr_basecase_"
+%endif
+
+%ifdef LAMMP_ASM_WIN
     ; Windows x64 : RCX=dst, RDX=numa, R8=na
     %define rx0     rcx     ; dst
     %define rx1     rdx     ; numa

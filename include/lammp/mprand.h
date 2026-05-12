@@ -67,7 +67,7 @@ extern "C" {
  *          如果全局种子已经初始化，则会更新全局种子，或更新发生器类型
  * @note 由于使用int类型作为种子，我们将会维护一个全局种子随机序列，丰富种子的随机性。
  */
-void lmmp_global_rng_init_(int seed, int seed_type);
+LAMMP_API void lmmp_global_rng_init_(int seed, int seed_type);
 
 /**
  * @brief 生成随机大整数（0 - B^n-1 均匀分布）
@@ -79,7 +79,7 @@ void lmmp_global_rng_init_(int seed, int seed_type);
  * @return 随机数的 limb 长度（这是由于可能存在生成随机数为0的情况（虽然几乎不可能），
  *         所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_type);
+LAMMP_API mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_type);
 
 /**
  * @brief 生成随机大整数（0 - B^n-1 均匀分布）
@@ -93,7 +93,7 @@ mp_size_t lmmp_seed_random_(mp_ptr dst, mp_size_t n, mp_limb_t seed, int seed_ty
  *       和顺序相同，在同一个进程中，每次生成的随机数序列相同。
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_random_(mp_ptr dst, mp_size_t n);
+LAMMP_API mp_size_t lmmp_random_(mp_ptr dst, mp_size_t n);
 
 /**
  * @brief 强随机数生成器结构体
@@ -113,7 +113,7 @@ typedef struct lmmp_strong_rng_t lmmp_strong_rng_t;
  *       一个随机数的时间。
  * @return 强随机数生成器指针
  */
-lmmp_strong_rng_t* lmmp_strong_rng_init_(mp_size_t k, int seed);
+LAMMP_API lmmp_strong_rng_t* lmmp_strong_rng_init_(mp_size_t k, int seed);
 
 /**
  * @brief 将rng内部状态拓展至k维度
@@ -122,13 +122,13 @@ lmmp_strong_rng_t* lmmp_strong_rng_init_(mp_size_t k, int seed);
  * @warning rng!=NULL, k>0
  * @note 若k<=rng->stream.k，则不进行任何操作。否则，将rng内部状态拓展至k维度。
  */
-void lmmp_strong_rng_extern_(lmmp_strong_rng_t* rng, mp_size_t k);
+LAMMP_API void lmmp_strong_rng_extern_(lmmp_strong_rng_t* rng, mp_size_t k);
 
 /**
  * @brief 销毁强随机数生成器
  * @param rng 强随机数生成器指针
  */
-void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng);
+LAMMP_API void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng);
 
 /**
  * @brief 生成n维度强随机数（0 - B^n-1 均匀分布）
@@ -140,7 +140,7 @@ void lmmp_strong_rng_free_(lmmp_strong_rng_t* rng);
  *       此方法生成的随机数序列具有极好的k-维均匀性，单个随机大整数间的各个limb都是几乎完全独立的序列。
  * @return 随机数的 limb 长度（由于可能存在生成随机数为0的情况，所以返回值可能小于n，但不会大于n）
  */
-mp_size_t lmmp_strong_random_(mp_ptr dst, mp_size_t n, lmmp_strong_rng_t* rng);
+LAMMP_API mp_size_t lmmp_strong_random_(mp_ptr dst, mp_size_t n, lmmp_strong_rng_t* rng);
 
 #ifdef __cplusplus
 }

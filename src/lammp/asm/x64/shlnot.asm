@@ -7,6 +7,10 @@
 bits 64
 default rel
 
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_shlnot_"
+%endif
 
 %macro win64_args 0
 %ifdef LAMMP_ASM_WIN

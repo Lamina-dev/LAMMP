@@ -97,11 +97,7 @@ void lmmp_binvert_n_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t 
     } else if (n == 2) {
         lmmp_binvert_2_(dst, numa);
     } else if (n == 3) {
-        mp_limb_t tp_[8];
-        lmmp_copy(tp_, numa, 3);
-        tp_[4] = 0;
-        lmmp_binvert_4_(tp_ + 4, tp_);
-        lmmp_copy(dst, tp_ + 4, 3);
+        lmmp_binvert_3_(dst, numa);
     } else if (n == 4) {
         lmmp_binvert_4_(dst, numa);
     } else if (n % 2 == 0) {

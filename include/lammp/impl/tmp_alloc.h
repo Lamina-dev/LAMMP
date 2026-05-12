@@ -22,9 +22,9 @@
 #include "../lmmp.h"
 #include <stdio.h>
 
-LAMMP_THREAD_LOCAL extern void* lmmp_stack_begin;
-LAMMP_THREAD_LOCAL extern void* lmmp_stack_end;
-LAMMP_THREAD_LOCAL extern void* lmmp_stack_top;
+extern LAMMP_THREAD_LOCAL void* lmmp_stack_begin;
+extern LAMMP_THREAD_LOCAL void* lmmp_stack_end;
+extern LAMMP_THREAD_LOCAL void* lmmp_stack_top;
 
 /**
  * @brief 临时堆内存分配函数

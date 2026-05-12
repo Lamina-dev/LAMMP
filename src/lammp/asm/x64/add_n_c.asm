@@ -12,6 +12,12 @@ default rel
 
 %define ADCSBB adc
 
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_add_n_"
+    db " -export:lmmp_add_nc_"
+%endif
+
 section .text
 align 16
 
@@ -19,6 +25,7 @@ align 16
 ; lmmp_add_nc_
 ; ======================================
 global lmmp_add_nc_
+
 lmmp_add_nc_:
 %ifdef LAMMP_ASM_WIN
     mov     r10, [rsp+40]

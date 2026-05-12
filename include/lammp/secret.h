@@ -125,7 +125,7 @@ typedef uint64_t key256_t[4];
  * @warning 若 key 为 NULL，则使用全零秘钥
  * @return 64-bit hash 值
  */
-uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
+LAMMP_API uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
 
 /**
  * @brief xxhash 函数（非标准处理任意字节流的 xxhash）
@@ -135,7 +135,7 @@ uint64_t lmmp_siphash24_(mp_srcptr in, mp_size_t inlen, srckey128_t key);
  * @warning 若 key 为 NULL，则使用全零秘钥
  * @return 64-bit hash 值
  */
-uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key);
+LAMMP_API uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key);
 
 #ifdef __cplusplus
 }

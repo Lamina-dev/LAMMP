@@ -56,6 +56,18 @@ extern "C" {
 
 #endif
 
+#if defined(LAMMP_WINDOWS)
+    // Windows: MSVC / MinGW / Clang 都走这里
+    #ifdef LAMMP_CORE_EXPORTS
+    #define LAMMP_API __declspec(dllexport)
+    #else
+    #define LAMMP_API __declspec(dllimport)
+    #endif
+#else
+    // Linux/macOS: GCC / Clang
+    #define LAMMP_API __attribute__((visibility("default")))
+#endif
+
 #if defined(USE_ASM)
 #if defined(__x86_64__) || defined(_M_X64)
 #else
@@ -103,7 +115,7 @@ typedef struct {
  *          并输出相应的错误信息。
  * @note 自行保证分配器和释放器相匹配。
  */
-void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
+LAMMP_API void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
 
 /**
  * @brief LAMMP 全局栈重置函数
@@ -117,13 +129,13 @@ void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
  *          则会触发lmmp_abort函数。
  * @note 当 size 为 0 时，将会释放栈，如果此后再使用栈内存。
  */
-void lmmp_stack_reset(size_t size);
+LAMMP_API void lmmp_stack_reset(size_t size);
 
 /**
  * @brief LAMMP 全局栈初始化函数
  * @note 按照默认的栈大小，对栈进行初始化，若栈已经初始化，则不进行任何操作。
  */
-void lmmp_stack_init(void);
+LAMMP_API void lmmp_stack_init(void);
 
 typedef enum {
     LAMMP_ERROR_ASSERT_FAILURE = 1,
@@ -152,7 +164,7 @@ typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* fu
  * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
  *          本库的开发者不对 func 函数的调用产生的影响做任何保证。
  */
-lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
+LAMMP_API lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
 
 /**
  * @brief LAMMP 全局退出函数，内部错误或断言失败时调用，若设置了全局退出函数，则会调用该函数，否则会调用默认的退出函数。
@@ -200,8 +212,7 @@ lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *          abort 函数中断程序。自定义全局退出函数请通过 lmmp_set_abort_fn 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
-void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line);
-
+LAMMP_API void lmmp_abort(lmmp_error_t type, const char *msg, const char *func, int line);
 
 typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
 typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
@@ -222,9 +233,9 @@ typedef size_t mp_bitcnt_t;          // 表示bit数量的无符号整数类型
 #define LLIMB_BYTES 4
 #define LLIMB_MASK ((mp_limb_t)0xffffffff)
 
-#if defined(_WIN32) && (defined(__GNUC__) || defined(__clang__))
+#if defined(LAMMP_WINDOWS) && (defined(__GNUC__) || defined(__clang__))
     // MinGW on Windows: use native TLS section
-    #define LAMMP_THREAD_LOCAL __attribute__((section(".tls$")))
+    #define LAMMP_THREAD_LOCAL __thread
 #elif defined(_MSC_VER)
     #define LAMMP_THREAD_LOCAL __declspec(thread)
 #elif defined(__GNUC__) // Linux/macOS
@@ -249,7 +260,7 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
 // ============================内存管理相关函数=============================
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_alloc(size_t size, const char* func, int line);
+LAMMP_API void* lmmp_alloc(size_t size, const char* func, int line);
 #define lmmp_alloc(size) lmmp_alloc(size, __func__, __LINE__)
 #else
 /**
@@ -258,11 +269,11 @@ void* lmmp_alloc(size_t size, const char* func, int line);
  * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
  * @return 返回指向分配内存的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
-void* lmmp_alloc(size_t size);
+LAMMP_API void* lmmp_alloc(size_t size);
 #endif 
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
+LAMMP_API void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
 #define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __func__, __LINE__)
 #else
 /**
@@ -272,18 +283,18 @@ void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
  * @note 调用堆内存重新分配器，分配失败将触发 lmmp_abort
  * @return 成功返回指向新内存区域的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
-void* lmmp_realloc(void* ptr, size_t size);
+LAMMP_API void* lmmp_realloc(void* ptr, size_t size);
 #endif 
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void lmmp_free(void* ptr, const char* func, int line);
+LAMMP_API void lmmp_free(void* ptr, const char* func, int line);
 #define lmmp_free(ptr) lmmp_free(ptr, __func__, __LINE__)
 #else
 /**
  * @brief 内存释放函数（调用lmmp_heap_free_fn）
  * @param ptr 要释放的内存指针
  */
-void lmmp_free(void* ptr);
+LAMMP_API void lmmp_free(void* ptr);
 #endif
 
 /**
@@ -291,7 +302,7 @@ void lmmp_free(void* ptr);
  * @param cnt 若不为0，则将堆内存计数器置为cnt
  * @return 返回当前的heap分配计数（如果被设置，即返回旧的计数值），即目前未被释放的堆内存数量
  */
-int lmmp_alloc_count(int cnt);
+LAMMP_API int lmmp_alloc_count(int cnt);
 
 /**
  * @brief 内存泄漏检测器
@@ -301,7 +312,7 @@ int lmmp_alloc_count(int cnt);
  * @note 将会同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
  *       两者同时发生则将输出两者的信息。
  */
-void lmmp_leak_tracker(const char* func, int line);
+LAMMP_API void lmmp_leak_tracker(const char* func, int line);
 
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
 // 同时检验堆内存和栈内存，若堆内存计数器不为0，或栈内存的栈顶不在栈底，都会触发lmmp_abort
@@ -313,7 +324,7 @@ void lmmp_leak_tracker(const char* func, int line);
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void* lmmp_stack_alloc(size_t size, const char* func, int line);
+LAMMP_API void* lmmp_stack_alloc(size_t size, const char* func, int line);
 #define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __func__, __LINE__)
 #else
 /**
@@ -323,11 +334,11 @@ void* lmmp_stack_alloc(size_t size, const char* func, int line);
  *          且严禁用于分配持久内存，如全局变量等。
  * @return 成功返回指向分配内存的指针，栈溢出时，会触发lmmp_abort
  */
-void* lmmp_stack_alloc(size_t size);
+LAMMP_API void* lmmp_stack_alloc(size_t size);
 #endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-void lmmp_stack_free(void* ptr, const char* func, int line);
+LAMMP_API void lmmp_stack_free(void* ptr, const char* func, int line);
 #define lmmp_stack_free(ptr) lmmp_stack_free(ptr, __func__, __LINE__)
 #else
 /**
@@ -335,7 +346,7 @@ void lmmp_stack_free(void* ptr, const char* func, int line);
  * @param ptr 要释放的内存指针
  * @warning 请严格按照分配顺序的逆序释放内存（后分配者先释放）
  */
-void lmmp_stack_free(void* ptr);
+LAMMP_API void lmmp_stack_free(void* ptr);
 #endif
 
 // 计算整数的绝对值
@@ -402,7 +413,7 @@ void lmmp_stack_free(void* ptr);
  *       部分惰性初始化的资源将在首次使用时初始化。调用此函数不会进行初始化。
  * @warning 我们建议在进程或线程启动时调用此函数，以保证线程安全。
  */
-void lmmp_global_init(void);
+LAMMP_API void lmmp_global_init(void);
 
 /**
  * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
@@ -412,7 +423,7 @@ void lmmp_global_init(void);
  * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
  *          未调用此函数结束线程可能导致内存泄漏。
  */
-void lmmp_global_deinit(void);
+LAMMP_API void lmmp_global_deinit(void);
 
 #ifdef __cplusplus
 }  // extern "C"

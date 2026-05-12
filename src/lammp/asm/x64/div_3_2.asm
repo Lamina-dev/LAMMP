@@ -7,11 +7,15 @@
 bits 64
 default rel
 
-global lmmp_div_3_2_
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_div_3_2_"
+%endif
 
 section .text
 align 16
 
+global lmmp_div_3_2_
 lmmp_div_3_2_:
     ; Linux  : RDI=numa,  RSI=numb,  RDX=inv21
     ; Windows: RCX=numa,  RDX=numb,  R8=inv21

@@ -82,13 +82,13 @@ static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, co
         int offset = 0;
         const int buf_size = sizeof(error_buf);
 
-#define SAFE_APPEND(fmt, ...)                                                                      \
-    do {                                                                                           \
-        if (offset < buf_size) {                                                                   \
-            int n = snprintf(error_buf + offset, (size_t)(buf_size - offset), fmt, ##__VA_ARGS__); \
-            if (n > 0)                                                                             \
-                offset += n;                                                                       \
-        }                                                                                          \
+#define SAFE_APPEND(...)                                                                    \
+    do {                                                                                    \
+        if (offset < buf_size) {                                                            \
+            int n = snprintf(error_buf + offset, (size_t)(buf_size - offset), __VA_ARGS__); \
+            if (n > 0)                                                                      \
+                offset += n;                                                                \
+        }                                                                                   \
     } while (0)
 
         SAFE_APPEND("Memory overflow (extra memory corruption) detected!%s", "\n");
