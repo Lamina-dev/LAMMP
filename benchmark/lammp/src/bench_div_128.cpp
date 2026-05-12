@@ -8,7 +8,7 @@
 #include <vector>
 
 #include <intrin.h>
-
+#if 0
 #ifdef _MSC_VER
 static inline uint64_t div128by64to64(uint64_t dividend_hi64, uint64_t& dividend_lo64, uint64_t divisor) {
     uint64_t remainder;
@@ -89,3 +89,4 @@ void bench_div_128() {
     lmmp_free(d);
     lmmp_free(e);
 }
+#endif

@@ -25,7 +25,7 @@ foreach(EXAMPLE_FILE ${EXAMPLE_FILES})
     target_link_libraries(${TARGET_NAME} PRIVATE LammpCore)
     
     # 设置编译器选项
-    set_common_compiler_options(${TARGET_NAME})
+    lammp_target_setup(${TARGET_NAME})
     
     # 设置输出属性
     set_target_properties(${TARGET_NAME} PROPERTIES

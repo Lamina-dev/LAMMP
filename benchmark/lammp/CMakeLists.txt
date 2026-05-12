@@ -22,15 +22,10 @@ target_include_directories(LammpBenchmark
 target_link_libraries(LammpBenchmark PRIVATE LammpCore)
 
 # 设置编译器选项
-set_common_compiler_options(LammpBenchmark)
+lammp_target_setup(LammpBenchmark)
 
 # 设置输出属性
 set_target_properties(LammpBenchmark PROPERTIES
     OUTPUT_NAME "LammpBenchmark"
     PDB_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
 )
-
-# 设置可执行文件输出目录（若需单独存放，可覆盖根目录配置）
-# set_target_properties(LammpBenchmark PROPERTIES
-#     RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/dist/benchmark_bin
-# )
