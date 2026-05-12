@@ -74,6 +74,14 @@ LAMMP_API ulong lmmp_binvert_ulong_(ulong a);
 LAMMP_API void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
 
 /**
+ * @brief 计算 [numa,3] 在B^3下的逆元
+ * @param numa 待求逆元指针（长度为 3 个limb）
+ * @param dst 结果指针（长度为 3 个limb）
+ * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
+ */
+LAMMP_API void lmmp_binvert_3_(mp_ptr dst, mp_srcptr numa);
+
+/**
  * @brief 计算 [numa,4] 在B^4下的逆元
  * @param numa 待求逆元指针（长度为 4 个limb）
  * @param dst 结果指针（长度为 4 个limb）
