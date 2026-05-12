@@ -20,7 +20,7 @@ project(Lammp LANGUAGES C CXX)
 # ==============================================================================
 # 1. 可配置选项
 # ==============================================================================
-option(USE_ASM "Enable x64 assembly optimization (require NASM)" OFF)
+option(USE_ASM "Enable x64 assembly optimization (require NASM)" ON)
 
 # 目标系统：自动识别，也可手动指定 WIN | LIN
 set(TARGET_SYSTEM "AUTO" CACHE STRING "Target system: AUTO | WIN | LIN")
@@ -63,7 +63,13 @@ if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
 
     set(CMAKE_ASM_NASM_COMPILER ${NASM_EXECUTABLE} CACHE FILEPATH "" FORCE)
     enable_language(ASM_NASM)
-    set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
+    if(TARGET_SYSTEM STREQUAL "WIN")
+        set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
+    elseif(TARGET_SYSTEM STREQUAL "LIN")
+        set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+    else()
+        message(FATAL_ERROR "Unsupported TARGET_SYSTEM: ${TARGET_SYSTEM}")
+    endif()
     message(STATUS "ASM support: ENABLED (using NASM: ${NASM_EXECUTABLE})")
 else()
     set(USE_ASM OFF)
@@ -142,9 +148,15 @@ function(lammp_target_setup target)
                 $<$<CONFIG:MinSizeRel>:-s -Wl,--strip-all>
             )
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            target_link_options(${target} PRIVATE
-                $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,/RELEASE>
-            )
+            if(TARGET_SYSTEM STREQUAL "WIN")
+                target_link_options(${target} PRIVATE
+                    $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,/RELEASE>
+                )
+            else()
+                target_link_options(${target} PRIVATE
+                    $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
+                )
+            endif()
         endif()
 
     elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
