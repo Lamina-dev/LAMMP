@@ -32,7 +32,6 @@ long long bench_pow(int len1, int len2);
 long long bench_pow_win2(int len1, int len2);
 long long bench_factorial(unsigned len1);
 long long bench_powmod_ulong(int len);
-void bench_div_128();
 long long bench_hash(int len, int type);
 void bench_gcd2();
 
