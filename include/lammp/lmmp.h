@@ -260,7 +260,7 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
 // ============================内存管理相关函数=============================
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-LAMMP_API void *lmmp_alloc(size_t size, const char *func, int line);
+LAMMP_API void* lmmp_alloc(size_t size, const char* func, int line);
 #define lmmp_alloc(size) lmmp_alloc(size, __func__, __LINE__)
 #else
 /**
@@ -269,11 +269,11 @@ LAMMP_API void *lmmp_alloc(size_t size, const char *func, int line);
  * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
  * @return 返回指向分配内存的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
-LAMMP_API void *lmmp_alloc(size_t size);
+LAMMP_API void* lmmp_alloc(size_t size);
 #endif 
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
-LAMMP_API void *lmmp_realloc(void *ptr, size_t size, const char *func, int line);
+LAMMP_API void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
 #define lmmp_realloc(ptr, size) lmmp_realloc(ptr, size, __func__, __LINE__)
 #else
 /**
