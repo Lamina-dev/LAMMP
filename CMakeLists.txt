@@ -86,7 +86,7 @@ endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 # ==============================================================================
-# 5. 通用编译选项函数（标准、干净、跨平台）
+# 5. 通用编译选项函数
 # ==============================================================================
 function(lammp_target_setup target)
     set_target_properties(${target} PROPERTIES
@@ -184,7 +184,7 @@ function(lammp_target_setup target)
 endfunction()
 
 # ==============================================================================
-# 6. 输出目录（标准 dist 结构）
+# 6. 输出目录
 # ==============================================================================
 set(OUTPUT_ROOT ${CMAKE_SOURCE_DIR}/dist/lammp)
 foreach(TYPE RUNTIME ARCHIVE LIBRARY)
