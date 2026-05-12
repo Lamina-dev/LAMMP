@@ -9,6 +9,12 @@
 bits 64
 default rel
 
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_inv_1_"
+    db " -export:lmmp_inv_2_1_"
+%endif
+
 section .text
 global lmmp_inv_1_
 global lmmp_inv_2_1_

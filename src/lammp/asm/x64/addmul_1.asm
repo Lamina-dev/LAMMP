@@ -4,6 +4,11 @@
 ;
 ; lmmp_addmul_1_ : [numa, n] += [numb, n] * b
 
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_addmul_1_"
+%endif
+
 section .text
 global lmmp_addmul_1_
 

@@ -2,13 +2,18 @@
 ; This file is part of lammp, under the GNU LGPL v2 license.
 ; See LICENSE in the project root for the full license text.
 ;
-; mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
+; mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 ;
-; mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, mp_limb_t c);
+; mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, mp_limb_t c);
 
 bits 64
 default rel
 
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_shl_"
+    db " -export:lmmp_shl_c_"
+%endif
 
 section .text
 align 16

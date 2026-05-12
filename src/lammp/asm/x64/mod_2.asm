@@ -2,10 +2,16 @@
 ; This file is part of lammp, under the GNU LGPL v2 license.
 ; See LICENSE in the project root for the full license text.
 ;
-; void lmmp_mod_2_(mp_srcptr numa, mp_size_t na, mp_ptr numb)
+; void lmmp_mod_2_(mp_srcptr numa, mp_size_t na, mp_ptr numb);
 
 bits 64
 default rel
+
+
+%ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_mod_2_"
+%endif
 
 %ifdef LAMMP_ASM_WIN
   %define win

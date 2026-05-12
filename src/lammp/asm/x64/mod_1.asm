@@ -8,6 +8,11 @@ bits 64
 default rel
 
 %ifdef LAMMP_ASM_WIN
+    section .drectve
+    db " -export:lmmp_mod_1_"
+%endif
+
+%ifdef LAMMP_ASM_WIN
   %define win
   %define lin ;
   %define rx0 rcx
