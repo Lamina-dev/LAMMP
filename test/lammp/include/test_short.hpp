@@ -20,6 +20,7 @@ int test_pow();
 void test_powmod();
 void test_isprime_uint();
 void test_isprime_ulong();
+void test_next_prime();
 void test_factorial();
 void test_multinomial();
 void test_perm();

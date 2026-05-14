@@ -104,4 +104,19 @@ void lmmp_prime_cache_next_(prime_cache_t* cache);
  */
 void lmmp_prime_cache_free_(prime_cache_t* cache);
 
+// 3,5,7,11的余数掩码表
+extern const uint64_t rem_mask_map[19];
+
+/**
+ * @brief 校验是否能被3,5,7,11整除，能够整除则返回1，否则返回0
+ */
+static inline int trial_div35711(uint64_t n) {
+#define MOD 1155
+    uint32_t rem = n % MOD;
+    uint32_t idx = rem / 64;
+    uint32_t bit = rem % 64;
+    return (rem_mask_map[idx] >> bit) & 1ULL;
+#undef MOD
+}
+
 #endif  // __LAMMP_PRIME_TABLE_H__

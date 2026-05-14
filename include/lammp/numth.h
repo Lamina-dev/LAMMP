@@ -208,6 +208,14 @@ LAMMP_API uint lmmp_powmod_uint_(uint base, ulong exp, uint mod);
 LAMMP_API ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
 
 /**
+ * @brief 大于n的下一个素数
+ * @param n 起始点（不含）
+ * @warning 如果 n 大于等于ulong可表示最大的质数，则返回此最大质数
+ * @return 大于n的下一个素数
+ */
+LAMMP_API ulong lmmp_next_prime_ulong_(ulong n);
+
+/**
  * @brief 判断素数
  * @param n 待判断的数
  * @return 若 n 为素数，返回 true，否则返回 false
