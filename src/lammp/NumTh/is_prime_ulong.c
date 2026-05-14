@@ -435,7 +435,7 @@ ulong lmmp_next_prime_ulong_(ulong n) {
     if (n < prime_short_table[PRIME_SHORT_TABLE_SIZE - 1]) {
         uint idx = lmmp_prime_cnt16_(n);
         return prime_short_table[idx];
-    } else if (n > ULONG_PRIME_MAX) {
+    } else if (n >= ULONG_PRIME_MAX) {
         return ULONG_PRIME_MAX;
     } else {
         n += (n % 2 == 0) ? 1 : 2;

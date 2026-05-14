@@ -422,10 +422,9 @@ void test_next_prime() {
 
     start = std::chrono::high_resolution_clock::now();
     for (size_t i = 0; i < len; i++) {
-        if (lmmp_is_prime_ulong_(p1[i])) {
-            pass = true;
-        } else {
+        if (!lmmp_is_prime_ulong_(p1[i])) {
             pass = false;
+            break;
         }
     }
     end = std::chrono::high_resolution_clock::now();
