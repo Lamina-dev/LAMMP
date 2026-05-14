@@ -252,7 +252,7 @@ bool lmmp_is_prime_uint_(uint n) {
     }
     if (n % 2 == 0)
         return false;
-    if (fast_check(n))
+    if (trial_div35711(n))
         return false;
     ushort bases[2];
     bases[0] = 2;
@@ -275,14 +275,7 @@ bool lmmp_is_prime_uint_(uint n) {
         return false;
 }
 
-bool lmmp_is_prime_ulong_(ulong n) {
-    if (n < PRIME_SHORT_TABLE_N) {
-        return lmmp_is_prime_table_(n);
-    }
-    if (n % 2 == 0)
-        return false;
-    if (fast_check(n))
-        return false;
+static bool lmmp_is_prime_notrial_(ulong n) {
     if (n < 684630005672341) {
         ushort bases[2];
         bases[0] = 2;
@@ -365,6 +358,105 @@ bool lmmp_is_prime_ulong_(ulong n) {
                     return false;
             else
                 return false;
+        }
+    }
+}
+
+bool lmmp_is_prime_ulong_(ulong n) {
+    if (n < PRIME_SHORT_TABLE_N) {
+        return lmmp_is_prime_table_(n);
+    }
+    if (n % 2 == 0)
+        return false;
+    if (trial_div35711(n))
+        return false;
+    return lmmp_is_prime_notrial_(n);
+}
+
+static inline bool trial_div13(ulong n) {
+    const _udiv64_t div13 = {.magic = 4256940940086819604ull, .more = 3};
+    ulong q = _udiv64by64_q_preinv(n, &div13);
+    n -= q * 13;
+    return n == 0;
+}
+
+static inline bool trial_div17(ulong n) {
+    const _udiv64_t div17 = {.magic = 16276538888567251426ull, .more = 4};
+    ulong q = _udiv64by64_q_preinv(n, &div17);
+    n -= q * 17;
+    return n == 0;
+}
+
+static inline bool trial_div19(ulong n) {
+    const _udiv64_t div19 = {.magic = 12621456471485482685ull, .more = 4};
+    ulong q = _udiv64by64_q_preinv(n, &div19);
+    n -= q * 19;
+    return n == 0;
+}
+
+static inline bool trial_div23(ulong n) {
+    const _udiv64_t div23 = {.magic = 7218291159277650633ull, .more = 4};
+    ulong q = _udiv64by64_q_preinv(n, &div23);
+    n -= q * 23;
+    return n == 0;
+}
+
+static inline bool trial_div29(ulong n) {
+    const _udiv64_t div29 = {.magic = 1908283869694091547ull, .more = 4};
+    ulong q = _udiv64by64_q_preinv(n, &div29);
+    n -= q * 29;
+    return n == 0;
+}
+
+static inline bool trial_div31(ulong n) {
+    const _udiv64_t div31 = {.magic = 595056260442243601ull, .more = 4};
+    ulong q = _udiv64by64_q_preinv(n, &div31);
+    n -= q * 31;
+    return n == 0;
+}
+static inline bool trial_div37(ulong n) {
+    const _udiv64_t div37 = {.magic = 13461137567301564693ull, .more = 5};
+    ulong q = _udiv64by64_q_preinv(n, &div37);
+    n -= q * 37;
+    return n == 0;
+}
+
+static inline bool trial_div41(ulong n) {
+    const _udiv64_t div41 = {.magic = 10348173504763894809ull, .more = 5};
+    ulong q = _udiv64by64_q_preinv(n, &div41);
+    n -= q * 41;
+    return n == 0;
+}
+
+// 64位内最大的质数
+#define ULONG_PRIME_MAX 0xFFFFFFFFFFFFFFC5ull
+
+ulong lmmp_next_prime_ulong_(ulong n) {
+    if (n < prime_short_table[PRIME_SHORT_TABLE_SIZE - 1]) {
+        uint idx = lmmp_prime_cnt16_(n);
+        return prime_short_table[idx];
+    } else if (n >= ULONG_PRIME_MAX) {
+        return ULONG_PRIME_MAX;
+    } else {
+        n += (n % 2 == 0) ? 1 : 2;
+        while(1) {
+            if (trial_div35711(n)
+             || trial_div13(n)
+             || trial_div17(n)
+             || trial_div19(n)
+             || trial_div23(n)
+             || trial_div29(n)
+             || trial_div31(n)
+             || trial_div37(n)
+             || trial_div41(n)) {
+                n += 2; 
+            } else {
+                if (lmmp_is_prime_notrial_(n)) {
+                    return n;
+                } else {
+                    n += 2;
+                }
+            }
         }
     }
 }
