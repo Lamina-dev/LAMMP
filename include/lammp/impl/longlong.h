@@ -57,6 +57,24 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
 #endif
 }
 
+static inline uint64_t _umul64to64hi_(uint64_t a, uint64_t b) {
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
+    __uint128_t t = (__uint128_t)a * (__uint128_t)b;
+    return (uint64_t)(t >> 64);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    return __umulh(a, b);
+#else
+    uint64_t ah = a >> 32, bh = b >> 32;
+    a = (uint32_t)a, b = (uint32_t)b;
+    uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
+    r3 += (r1 >> 32) + (r2 >> 32);
+    r1 = (uint32_t)r1, r2 = (uint32_t)r2;
+    r1 += r2;
+    r1 += (r0 >> 32);
+    return r3 + (r1 >> 32);
+#endif
+}
+
 static inline void _umulx64to128_(uint64_t a, uint64_t b, uint64_t* low, uint64_t* high) {
 #if defined(USE_ASM) && (defined(__x86_64__))
     *low = _mulx_u64(a, b, high);
@@ -98,6 +116,98 @@ static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_hi
     _umulx64to128_(a_low, b_low, rr, rr + 1);
     rr[1] += a_low * b_high;
     rr[1] += a_high * b_low;
+}
+
+static inline int32_t _clz_u64_(uint64_t val) {
+#if defined(__GNUC__) || defined(__clang__)
+    // Fast way to count leading zeros
+    return __builtin_clzll(val);
+#else
+    unsigned long cnt;
+    _BitScanReverse64(&cnt, val);
+    return 63 - cnt;
+#endif
+}
+
+static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_t den, uint64_t* r) {
+#if defined(__GNUC__) || defined(__clang__)
+#ifdef USE_ASM
+    uint64_t result;
+    __asm__("div %[v]" : "=a"(result), "=d"(*r) : [v] "r"(den), "a"(numlo), "d"(numhi));
+    return result;
+#else
+    __uint128_t num = (__uint128_t)numhi << 64 | numlo;
+    uint64_t result = num / den;
+    *r = num % den;
+    return result;
+#endif
+#else
+    const uint64_t b = ((uint64_t)1 << 32);
+
+    uint32_t q1;
+    uint32_t q0;
+
+    uint64_t q;
+
+    int shift;
+
+    uint64_t den10 = den;
+    uint64_t num10 = numlo;
+
+    uint32_t den1;
+    uint32_t den0;
+    uint32_t num1;
+    uint32_t num0;
+
+    uint64_t rem;
+
+    uint64_t qhat;
+    uint64_t rhat;
+
+    uint64_t c1;
+    uint64_t c2;
+
+    if (numhi >= den) {
+        if (r)
+            *r = ~0ull;
+        return ~0ull;
+    }
+
+    shift = _clz_u64_(den);
+    den <<= shift;
+    numhi <<= shift;
+    numhi |= (numlo >> (-shift & 63)) & (uint64_t)(-(int64_t)shift >> 63);
+    numlo <<= shift;
+
+    num1 = (uint32_t)(numlo >> 32);
+    num0 = (uint32_t)(numlo & 0xFFFFFFFFu);
+    den1 = (uint32_t)(den >> 32);
+    den0 = (uint32_t)(den & 0xFFFFFFFFu);
+
+    qhat = numhi / den1;
+    rhat = numhi % den1;
+    c1 = qhat * den0;
+    c2 = rhat * b + num1;
+    if (c1 > c2)
+        qhat -= (c1 - c2 > den) ? 2 : 1;
+    q1 = (uint32_t)qhat;
+
+    rem = numhi * b + num1 - q1 * den;
+
+    qhat = rem / den1;
+    rhat = rem % den1;
+    c1 = qhat * den0;
+    c2 = rhat * b + num0;
+    if (c1 > c2)
+        qhat -= (c1 - c2 > den) ? 2 : 1;
+    q0 = (uint32_t)qhat;
+
+    q = ((uint64_t)q1 << 32) | q0;
+
+    if (r)
+        *r = num10 - q * den10;
+    return q;
+#endif
 }
 
 #ifdef _MSC_VER
@@ -351,7 +461,7 @@ def montgomery_mul(a_mont, b_mont, p):
         }                                                                  \
     } while (0)
 
-// q = n0 / d0, assuming d0 is a 32-bit number
+// q = n0 / d0, assuming d0 is a 32-bit number, d0 > 1
 // dinv = (B-1)//d0 + 1
 #define _udiv32by32_q_preinv(q, n0, dinv)          \
     do {                                           \
@@ -360,6 +470,78 @@ def montgomery_mul(a_mont, b_mont, p):
         (q) = _hi_;                                \
     } while (0)
 
+/******************************
+from https://libdivide.com/
+******************************/
 
+#define _U64_SHIFT_MASK 0x3F
+#define _ADD_MARKER 0x40
+
+typedef struct _udiv64_t {
+    uint64_t magic;
+    uint8_t more;
+} _udiv64_t;
+
+// assert d != 0
+static inline _udiv64_t _udiv64_gen_internal_(uint64_t d, int branchfree) {
+    _udiv64_t result;
+    uint32_t floor_log_2_d = 63 - _clz_u64_(d);
+
+    // Power of 2
+    if ((d & (d - 1)) == 0) {
+        // We need to subtract 1 from the shift value in case of an unsigned
+        // branchfree divider because there is a hardcoded right shift by 1
+        // in its division algorithm. Because of this we also need to add back
+        // 1 in its recovery algorithm.
+        result.magic = 0;
+        result.more = (uint8_t)(floor_log_2_d - (branchfree != 0));
+    } else {
+        uint64_t proposed_m, rem;
+        uint8_t more;
+        // (1 << (64 + floor_log_2_d)) / d
+        proposed_m = _udiv128by64to64_((uint64_t)1 << floor_log_2_d, 0, d, &rem);
+
+        const uint64_t e = d - rem;
+
+        // This power works if e < 2**floor_log_2_d.
+        if (!branchfree && e < ((uint64_t)1 << floor_log_2_d)) {
+            // This power works
+            more = (uint8_t)floor_log_2_d;
+        } else {
+            // We have to use the general 65-bit algorithm.  We need to compute
+            // (2**power) / d. However, we already have (2**(power-1))/d and
+            // its remainder. By doubling both, and then correcting the
+            // remainder, we can compute the larger division.
+            // don't care about overflow here - in fact, we expect it
+            proposed_m += proposed_m;
+            const uint64_t twice_rem = rem + rem;
+            if (twice_rem >= d || twice_rem < rem)
+                proposed_m += 1;
+            more = (uint8_t)(floor_log_2_d | _ADD_MARKER);
+        }
+        result.magic = 1 + proposed_m;
+        result.more = more;
+        // result.more's shift should in general be ceil_log_2_d. But if we
+        // used the smaller power, we subtract one from the shift because we're
+        // using the smaller power. If we're using the larger power, we
+        // subtract one from the shift because it's taken care of by the add
+        // indicator. So floor_log_2_d happens to be correct in both cases,
+        // which is why we do it outside of the if statement.
+    }
+    return result;
+}
+
+// d > 1
+static inline _udiv64_t _udiv64_gen(uint64_t d) {
+    _udiv64_t tmp = _udiv64_gen_internal_(d, 1);
+    _udiv64_t ret = {tmp.magic, (uint8_t)(tmp.more & _U64_SHIFT_MASK)};
+    return ret;
+}
+
+static inline uint64_t _udiv64by64_q_preinv(uint64_t numer, const _udiv64_t* denom) {
+    uint64_t q = _umul64to64hi_(numer, denom->magic);
+    uint64_t t = ((numer - q) >> 1) + q;
+    return t >> denom->more;
+}
 
 #endif // __LAMMP_LONGLONG_H__
