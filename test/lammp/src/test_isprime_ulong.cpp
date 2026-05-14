@@ -466,11 +466,11 @@ static const ulong prime_numbers_ulong[300] = {1290000000901,
                                                288230497383834541};
 
 void test_isprime_uint() {
-    int mix = rand() * rand();
+    uint mix = (uint)rand() * (uint)rand();
     bool pass1 = true;
     auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000; i++) {
-        uint p = mix + i * 1000000007;
+    for (size_t i = 0; i < 10000; i++) {
+        uint p = mix + i * 1000000007ul;
         p %= 300;
         if (lmmp_is_prime_uint_(strong_pseudoprimes_uint[p])) {
             std::cout << "prime: " << strong_pseudoprimes_uint[p] << std::endl;
@@ -487,11 +487,11 @@ void test_isprime_uint() {
     }
     std::cout << "\n";
 
-    mix = rand() * rand();
+    mix = (uint)rand() * (uint)rand();
     bool pass2 = true;
     start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000; i++) {
-        uint p = mix + i * 1000000007;
+    for (size_t i = 0; i < 10000; i++) {
+        uint p = mix + i * 1000000007ul;
         p %= 300;
         if (!lmmp_is_prime_uint_(prime_numbers_uint[p])) {
             std::cout << "not prime: " << prime_numbers_uint[p] << std::endl;
@@ -510,10 +510,10 @@ void test_isprime_uint() {
 }
 
 void test_isprime_ulong() {
-    int mix = rand() * rand();
+    uint mix = (uint)rand() * (uint)rand();
     bool pass1 = true;
     auto start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000; i++) {
+    for (size_t i = 0; i < 10000; i++) {
         uint p = mix + i * 1000000007;
         p %= 300;
         if (lmmp_is_prime_ulong_(strong_pseudoprimes_ulong[p])) {
@@ -531,10 +531,10 @@ void test_isprime_ulong() {
     }
     std::cout << "\n";
 
-    mix = rand() * rand();
+    mix = (uint)rand() * (uint)rand();
     bool pass2 = true;
     start = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 10000; i++) {
+    for (size_t i = 0; i < 10000; i++) {
         uint p = mix + i * 1000000007;
         p %= 300;
         if (!lmmp_is_prime_ulong_(prime_numbers_ulong[p])) {

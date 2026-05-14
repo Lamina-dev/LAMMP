@@ -95,23 +95,25 @@ static inline ulong mont63_mul(ulong a, ulong b, ulong m, ulong m_inv) {
     return mont63_reduce(t, m, m_inv);
 }
 
-uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod) {
+uint lmmp_powmod_uint_(uint base, ulong exp, uint mod) {
+    lmmp_param_assert(mod > base);
     lmmp_param_assert(mod > 1);
     ulong dst = 1;
+    ulong b = base;
     _udiv64_t binv = _udiv64_gen(mod);
     ulong q;
     while (1) {
         if (exp & 1) {
-            dst *= base;
+            dst *= b;
             q = _udiv64by64_q_preinv(dst, &binv);
             dst -= q * mod;
         }
         exp >>= 1;
         if (exp == 0)
             break;
-        base *= base;
-        q = _udiv64by64_q_preinv(base, &binv);
-        base -= q * mod;
+        b *= b;
+        q = _udiv64by64_q_preinv(b, &binv);
+        b -= q * mod;
     }
     return dst;
 }

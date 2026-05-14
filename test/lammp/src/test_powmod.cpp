@@ -15,8 +15,9 @@ void test_powmod() {
     uintp c = (uintp)lmmp_alloc(len * sizeof(uint));
 
     for (mp_size_t i = 0; i < len; i++) {
-        c[i] = 2 * rand() * rand();
-        a[i] = (rand() * c[i]) % c[i];
+        c[i] = 2ull * rand() * rand();
+        c[i] |= 1;
+        a[i] = (1237893246ull * c[i]) % c[i];
         b[i] = (uint64_t)rand() * rand() * 7686812736ull;
     }
     auto start = std::chrono::high_resolution_clock::now();

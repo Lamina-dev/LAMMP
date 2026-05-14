@@ -34,7 +34,7 @@ static const uint64_t rem_mask_map[19] = {
 /**
  * @brief 校验是否能被3,5,7,11整除，能够整除则返回1，否则返回0
  */
-int fast_check(uint64_t n) {
+static inline int fast_check(uint64_t n) {
 #define MOD 1155
     uint32_t rem = n % MOD;
     uint32_t idx = rem / 64;

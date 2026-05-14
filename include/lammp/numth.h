@@ -195,7 +195,7 @@ LAMMP_API ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @warning base < mod, mod > 1
  * @return base^exp 对 mod 取模的结果
  */
-LAMMP_API uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod);
+LAMMP_API uint lmmp_powmod_uint_(uint base, ulong exp, uint mod);
 
 /**
  * @brief 计算 base^exp 对 mod 取模

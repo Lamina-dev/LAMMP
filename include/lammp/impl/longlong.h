@@ -58,7 +58,7 @@ static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t
 }
 
 static inline uint64_t _umul64to64hi_(uint64_t a, uint64_t b) {
-#if defined(__GNUC__) || defined(__clang__) && defined(__SIZEOF_INT128__)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
     __uint128_t t = (__uint128_t)a * (__uint128_t)b;
     return (uint64_t)(t >> 64);
 #elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
