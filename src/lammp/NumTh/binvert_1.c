@@ -77,7 +77,7 @@ void lmmp_binvert_3_(mp_ptr restrict dst, mp_srcptr restrict numa) {
         := (xn - xn*k * B^2 - a1 * xn^2 * B^2) mod B^4
     */
     lmmp_binvert_2_(dst, numa);
-    mp_limb_t k[3];
+    mp_limb_t k[4];
     mp_limb_t z;
     mp_limb_t a2 = numa[2];
     _umul128to256_(dst[1], dst[0], numa[1], numa[0], k);

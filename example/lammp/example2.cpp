@@ -12,7 +12,6 @@
 
 #include "../../include/lammp/numth.h"
 
-
 void print_help(void) {
     printf("=============================================\n");
     printf("           LAMMP Factorial Calculator\n");
@@ -57,47 +56,53 @@ void calculate_factorial(uint n) {
     lmmp_free(dst);
 }
 
-int main(int argc, char* argv[]) {
-    lmmp_global_init();
-
-    // --------------------------
-    // 模式1：命令行带参数
-    // --------------------------
-    if (argc >= 2) {
-        if (!is_number(argv[1])) {
-            printf("Error: Invalid input!\n");
-            print_help();
-            goto exit;
-        }
-
-        uint n = (uint)atol(argv[1]);
-        calculate_factorial(n);
-        goto exit;
-    }
-
-    // --------------------------
-    // 模式2：无参数 → 交互式输入
-    // --------------------------
+// 交互式输入模式处理函数
+void interactive_mode(void) {
     print_help();
     printf("\nPlease enter number: ");
 
     char buf[64];
     if (!fgets(buf, sizeof(buf), stdin)) {
         printf("Input error.\n");
-        goto exit;
+        return;
     }
 
+    // 去除换行符
     buf[strcspn(buf, "\n\r")] = 0;
 
     if (!is_number(buf)) {
         printf("Error: Only non-negative integers are allowed!\n");
-        goto exit;
+        return;
     }
 
     uint n = (uint)atol(buf);
     calculate_factorial(n);
+}
 
-exit:
+// 命令行参数模式处理函数
+void cli_mode(const char* arg) {
+    if (!is_number(arg)) {
+        printf("Error: Invalid input!\n");
+        print_help();
+        return;
+    }
+
+    uint n = (uint)atol(arg);
+    calculate_factorial(n);
+}
+
+int main(int argc, char* argv[]) {
+    // 线程或进程资源初始化
+    lmmp_global_init();
+
+    // 分支判断：命令行参数模式 / 交互式模式
+    if (argc >= 2) {
+        cli_mode(argv[1]);
+    } else {
+        interactive_mode();
+    }
+
+    // 线程或进程资源释放
     lmmp_global_deinit();
     return 0;
 }
