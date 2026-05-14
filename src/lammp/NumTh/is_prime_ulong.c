@@ -95,15 +95,23 @@ static inline ulong mont63_mul(ulong a, ulong b, ulong m, ulong m_inv) {
     return mont63_reduce(t, m, m_inv);
 }
 
-static inline uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod) {
+uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod) {
+    lmmp_param_assert(mod > 1);
     ulong dst = 1;
+    _udiv64_t binv = _udiv64_gen(mod);
+    ulong q;
     while (1) {
-        if (exp & 1)
-            dst = dst * base % mod;
+        if (exp & 1) {
+            dst *= base;
+            q = _udiv64by64_q_preinv(dst, &binv);
+            dst -= q * mod;
+        }
         exp >>= 1;
         if (exp == 0)
             break;
-        base = base * base % mod;
+        base *= base;
+        q = _udiv64by64_q_preinv(base, &binv);
+        base -= q * mod;
     }
     return dst;
 }
@@ -144,13 +152,30 @@ ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod) {
     }
 }
 
-static inline int miller_rabin_32(ulong a, ulong t, ulong u, uint m) {
-    ulong v;
-    v = lmmp_powmod_uint_(a, u, m);
+static inline int miller_rabin_32(ulong a, ulong t, ulong u, uint m, _udiv64_t* binv) {
+    ulong v = 1;
+    ulong base = a;
+    ulong q;
+    while (1) {
+        if (u & 1) {
+            v *= base;
+            q = _udiv64by64_q_preinv(v, binv);
+            v -= q * m;
+        }
+        u >>= 1;
+        if (u == 0)
+            break;
+        base *= base;
+        q = _udiv64by64_q_preinv(base, binv);
+        base -= q * m;
+    }
+    
     if (v == 1 || v == m - 1)
         return 1;
     for (ulong j = 1; j < t; ++j) {
-        v = v * v % m;
+        v *= v;
+        q = _udiv64by64_q_preinv(v, binv);
+        v -= q * m;
         if (v == m - 1)
             return 1;
         if (v == 1)
@@ -219,11 +244,42 @@ static inline int miller_rabin_64(ulong a, ulong t, ulong u, ulong m, ulong m_in
  * Copyright 2014, Dana Jacobsen <dana@acm.org>
  *******************************************************************************/
 
+bool lmmp_is_prime_uint_(uint n) {
+    if (n < PRIME_SHORT_TABLE_N) {
+        return lmmp_is_prime_table_(n);
+    }
+    if (n % 2 == 0)
+        return false;
+    if (fast_check(n))
+        return false;
+    ushort bases[2];
+    bases[0] = 2;
+    bases[1] = dj_base49[((0x3AC69A35UL * n) & 0xFFFFFFFFUL) >> 21] + 3;
+    if (n % bases[0] == 0)
+        return false;
+    if (n % bases[1] == 0)
+        return false;
+
+    ulong u = n - 1, t = 0;
+    while (u % 2 == 0) u /= 2, ++t;
+
+    _udiv64_t binv = _udiv64_gen(n);
+    if (miller_rabin_32(bases[0], t, u, n, &binv))
+        if (miller_rabin_32(bases[1], t, u, n, &binv))
+            return true;
+        else
+            return false;
+    else
+        return false;
+}
+
 bool lmmp_is_prime_ulong_(ulong n) {
     if (n < PRIME_SHORT_TABLE_N) {
         return lmmp_is_prime_table_(n);
     }
-    if (n % 2 == 0 || n % 3 == 0 || n % 5 == 0 || n % 7 == 0) 
+    if (n % 2 == 0)
+        return false;
+    if (fast_check(n))
         return false;
     if (n < 684630005672341) {
         ushort bases[2];

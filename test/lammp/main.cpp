@@ -13,7 +13,8 @@
 
 int main() {
     lmmp_global_init();
-    test_binvert();
+    test_isprime_ulong();
+    //test_isprime_uint();
     lmmp_global_deinit();
     return 0;
 }

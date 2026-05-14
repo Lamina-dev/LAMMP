@@ -22,6 +22,27 @@
 #include <stdint.h>
 #include <stddef.h>
 
+static const uint64_t rem_mask_map[19] = {
+    (uint64_t)(0x93cf359a5b74dee9), (uint64_t)(0x6badd25dadb36966), (uint64_t)(0x6ed3cd279e4bb4b6),
+    (uint64_t)(0xb66d6cd35ba6bb59), (uint64_t)(0xc976b2cde59a4f3c), (uint64_t)(0x34de792dd2f9a6b7),
+    (uint64_t)(0xb34d6e96ede59b4b), (uint64_t)(0xcf3696793ef259ad), (uint64_t)(0xf4b34b669add25fa),
+    (uint64_t)(0xfa4bb5966d2cd2f9), (uint64_t)(0x59a4f7c9e696cf35), (uint64_t)(0x2d9a7b76976b2cdb),
+    (uint64_t)(0xd659f4bb49e7b2cd), (uint64_t)(0xcf259a7b34d6e93e), (uint64_t)(0xadd65dacb36b66d3),
+    (uint64_t)(0xd2dd279e4b3cb769), (uint64_t)(0x696cdb5ba4bb5d66), (uint64_t)(0x77b2eda59acf3c96),
+    (uint64_t)(0x0000000000000001)};
+
+/**
+ * @brief 校验是否能被3,5,7,11整除，能够整除则返回1，否则返回0
+ */
+int fast_check(uint64_t n) {
+#define MOD 1155
+    uint32_t rem = n % MOD;
+    uint32_t idx = rem / 64;
+    uint32_t bit = rem % 64;
+    return (rem_mask_map[idx] >> bit) & 1ULL;
+#undef MOD
+}
+
 /*
 4kb hash table
 */

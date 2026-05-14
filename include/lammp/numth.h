@@ -192,10 +192,36 @@ LAMMP_API ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @param base 底数
  * @param exp 指数
  * @param mod 模数
- * @warning base < mod
+ * @warning base < mod, mod > 1
+ * @return base^exp 对 mod 取模的结果
+ */
+LAMMP_API uint lmmp_powmod_uint_(ulong base, ulong exp, uint mod);
+
+/**
+ * @brief 计算 base^exp 对 mod 取模
+ * @param base 底数
+ * @param exp 指数
+ * @param mod 模数
+ * @warning base < mod, mod > 1
  * @return base^exp 对 mod 取模的结果
  */
 LAMMP_API ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
+
+/**
+ * @brief 判断素数
+ * @param n 待判断的数
+ * @return 若 n 为素数，返回 true，否则返回 false
+ */
+LAMMP_API bool lmmp_is_prime_uint_(uint n);
+
+/**
+ * @brief 判断素数
+ * @param n 待判断的数
+ * @note 如果 n 的实际值小于2^32，此函数不会调用 lmmp_is_prime_uint_，
+ *       如果你可以保证 n 的实际值小于2^32，使用 lmmp_is_prime_uint_ 将会更快
+ * @return 若 n 为素数，返回 true，否则返回 false
+ */
+LAMMP_API bool lmmp_is_prime_ulong_(ulong n);
 
 /**
  * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
@@ -325,13 +351,6 @@ LAMMP_API mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_
  * @return 返回 dst 的实际 limb 长度
  */
 LAMMP_API mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_t n, ulong exp);
-
-/**
- * @brief 判断素数
- * @param n 待判断的数
- * @return 若 n 为素数，返回 true，否则返回 false
- */
-LAMMP_API bool lmmp_is_prime_ulong_(ulong n);
 
 /**
  * @brief 计算 nPr 排列数的 limb 缓冲区长度
