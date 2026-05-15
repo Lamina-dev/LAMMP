@@ -430,13 +430,14 @@ static inline bool trial_div41(ulong n) {
 
 // 64位内最大的质数
 #define ULONG_PRIME_MAX 0xFFFFFFFFFFFFFFC5ull
+#define ULONG_PRIME_MIN 2
 
 ulong lmmp_next_prime_ulong_(ulong n) {
     if (n < prime_short_table[PRIME_SHORT_TABLE_SIZE - 1]) {
-        uint idx = lmmp_prime_cnt16_(n);
+        ushort idx = lmmp_prime_cnt16_(n);
         return prime_short_table[idx];
     } else if (n >= ULONG_PRIME_MAX) {
-        return ULONG_PRIME_MAX;
+        return MP_ULONG_MAX;
     } else {
         n += (n % 2 == 0) ? 1 : 2;
         while(1) {
@@ -455,6 +456,36 @@ ulong lmmp_next_prime_ulong_(ulong n) {
                     return n;
                 } else {
                     n += 2;
+                }
+            }
+        }
+    }
+}
+
+ulong lmmp_prev_prime_ulong_(ulong n) {
+    if (n < ULONG_PRIME_MIN) {
+        return 0;
+    } else if (n < PRIME_SHORT_TABLE_N) {
+        ushort idx = lmmp_prime_cnt16_(n);
+        return prime_short_table[idx - 1];
+    } else {
+        n -= (n % 2 == 0) ? 1 : 0;
+        while (1) {
+            if (trial_div35711(n)
+             || trial_div13(n)
+             || trial_div17(n)
+             || trial_div19(n)
+             || trial_div23(n)
+             || trial_div29(n)
+             || trial_div31(n)
+             || trial_div37(n)
+             || trial_div41(n)) {
+                n -= 2;
+            } else {
+                if (lmmp_is_prime_notrial_(n)) {
+                    return n;
+                } else {
+                    n -= 2;
                 }
             }
         }

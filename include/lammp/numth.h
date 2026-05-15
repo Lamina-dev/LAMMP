@@ -210,10 +210,18 @@ LAMMP_API ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
 /**
  * @brief 大于n的下一个素数
  * @param n 起始点（不含）
- * @warning 如果 n 大于等于ulong可表示最大的质数，则返回此最大质数
+ * @warning 如果 n 大于等于ulong可表示最大的质数，则返回ulong_max
  * @return 大于n的下一个素数
  */
 LAMMP_API ulong lmmp_next_prime_ulong_(ulong n);
+
+/**
+ * @brief 小于等于n的上一个素数
+ * @param n 起始点（含）
+ * @warning 如果 n 小于2，则返回 0
+ * @return 小于等于n的上一个素数，如果n恰好为素数，则返回 n
+ */
+LAMMP_API ulong lmmp_prev_prime_ulong_(ulong n);
 
 /**
  * @brief 判断素数
