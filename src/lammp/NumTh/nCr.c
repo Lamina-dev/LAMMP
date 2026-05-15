@@ -4,7 +4,6 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
@@ -43,7 +42,7 @@ static inline uint factor_size_short(mp_size_t rn) {
     return rn * 10;
 }
 
-static inline uint count_factors(factors fac, uint nfactors, uint n, uint r, uint nr, uint p) {
+static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, uint r, uint nr, uint p) {
     uint pn = n;
     uint e = 0;
     ulong inv = MP_ULONG_MAX / p + 1;
@@ -141,7 +140,7 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
         uint primen = lmmp_prime_cnt16_(n);
         uint nfactors = factor_size_short(rn);
         nfactors = primen < nfactors ? primen : nfactors;
-        factors restrict fac = TALLOC_TYPE(nfactors, factor);
+        fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
         uint nr = n - r;
         nfactors = 0;
         for (uint i = 1; i < primen; ++i) {
@@ -206,7 +205,7 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         lmmp_prime_int_table_init_(n);
         TEMP_B_DECL;
         uint nfactors = factor_size_int(rn, n);
-        factors restrict fac = BALLOC_TYPE(nfactors, factor);
+        fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
         uint nr = n - r;
 
         nfactors = 0;

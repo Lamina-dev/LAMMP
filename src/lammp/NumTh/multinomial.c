@@ -6,7 +6,6 @@
 
 #include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
 
@@ -26,7 +25,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
     return rn;
 }
 
-static inline uint count_factors(factors fac, uint nfactors, uint n, const uintp r, uint m, uint p) {
+static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, const uintp r, uint m, uint p) {
     uint pn = n;
     uint e = 0;
     ulong inv = MP_ULONG_MAX / p + 1;
@@ -81,7 +80,7 @@ static mp_size_t lmmp_odd_multinomial_ushort_(
         uint primen = lmmp_prime_cnt16_(n);
         uint nfactors = factor_size_short(rn);
         nfactors = primen < nfactors ? primen : nfactors;
-        factors restrict fac = TALLOC_TYPE(nfactors, factor);
+        fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
         nfactors = 0;
         for (uint i = 1; i < primen; ++i) {
             uint p = prime_short_table[i];
@@ -99,7 +98,7 @@ static mp_size_t lmmp_odd_multinomial_uint_(mp_ptr restrict dst, mp_size_t rn, u
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = factor_size_int(rn, n);
-    factors restrict fac = BALLOC_TYPE(nfactors, factor);
+    fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
 
     nfactors = 0;
     prime_cache_t cache;

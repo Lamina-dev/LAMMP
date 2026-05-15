@@ -5,7 +5,6 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
-#include "../../../include/lammp/impl/factors_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
@@ -40,7 +39,7 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
     i=0                    i=0                              i=0
 */
 
-mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors restrict fac, uint nfactors, uint N) {
+mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_srcptr restrict fac, uint nfactors, uint N) {
     lmmp_param_assert(dst != NULL && fac != NULL);
     lmmp_param_assert(rn > 0 && nfactors > 0 && N > 0);
     if (N <= 0xff || nfactors <= 20) {
@@ -100,7 +99,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
         // 而考虑到new_nfactors上限一定是nfactors，所以这里比较一次，以尽可能减少分配的空间。
         mp_size_t new_nfactors = lmmp_prime_size_(N / 2);
         new_nfactors = (new_nfactors > nfactors) ? nfactors : new_nfactors;
-        factors restrict new_fac = TALLOC_TYPE(new_nfactors, factor);
+        fac_ptr restrict new_fac = TALLOC_TYPE(new_nfactors, fac_t);
         new_nfactors = 0;
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
         mp_limb_t t = 1;
@@ -161,7 +160,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, const factors res
     }
 }
 
-static inline void count_factors(factors fac, uint nfactors, uint n, uint p) {
+static inline void count_factors(fac_ptr fac, uint nfactors, uint n, uint p) {
     uint pn = n;
     uint e = 0;
     while (pn > 0) {
@@ -176,7 +175,7 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
-    factors restrict fac = BALLOC_TYPE(nfactors, factor);
+    fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
     nfactors = 0;
     
     prime_cache_t cache;

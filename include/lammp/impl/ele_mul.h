@@ -27,6 +27,16 @@
 #define INLINE_ static inline
 #endif
 
+/*
+FIXME: 这里的优先队列乘法可以进一步优化，目前的实现，每次合并
+都需要调用一次lmmp_alloc，我们可以通过预先构建哈夫曼树，使用
+两块内存交替来使得计算乘法时，每个节点内存恰好不重叠，并刚好把
+结果写入到我们需要的内存块。
+同时另一个优化时，在初始化入队时，将所有元素的低位0全部移除，即
+保证奇数相乘，最后一次性移位完成。
+*/
+
+
 typedef struct num_node {
     mp_ptr num;
     mp_size_t n;
@@ -103,6 +113,29 @@ mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn);
  * @return 结果指针的 limb 长度
  */
 mp_size_t lmmp_elem_mul_ulong_(mp_ptr dst, const ulongp limbs, mp_size_t n, mp_ptr tp);
+
+typedef struct fac_t {
+    uint f; // factor
+    uint j; // exp
+} fac_t;
+
+typedef fac_t* fac_ptr;
+typedef const fac_t* fac_srcptr;
+
+/**
+ * @brief 计算因子的累乘，并将结果放入dst中
+ * @param dst 结果数组
+ * @param rn 结果数组的长度
+ * @param fac 因子数组
+ * @param nfactors 因子数组的长度
+ * @param N 因子的最大值（或最大范围）
+ * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
+ *          因子数组必须为小因子大指数形式，可以存在大的因子有较大的指数，但整体的趋势必须是小因子大指数。
+ *          暂不清楚其最差可以接受至何种形式的因子数组。在组合数以及由阶乘和幂次构成的有理数中，未见不满足
+ *          此条件的例子。且需要注意的是，因子数组中，指数最大的底数不可超过0xffff。
+ * @return 结果数组的长度
+ */
+mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, fac_srcptr fac, uint nfactors, uint N);
 
 #undef INLINE_
 
