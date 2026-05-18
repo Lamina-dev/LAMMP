@@ -66,6 +66,30 @@ void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa) {
     dst[1] = -z;
 }
 
+static inline void _umul128to192_(uint64_t a_high, uint64_t a_low, uint64_t b_high, uint64_t b_low, uint64_t rr[3]) {
+    uint64_t p1_low, p1_high;  // p1 = a_low × b_high
+    uint64_t p2_low, p2_high;  // p2 = a_high × b_low
+    _umulx64to128_(a_low, b_low, rr, rr + 1);
+    _umulx64to128_(a_low, b_high, &p1_low, &p1_high);
+    _umulx64to128_(a_high, b_low, &p2_low, &p2_high);
+    /*
+        | res0 | res1 | res2 |
+        |  p0l |  p0h |      |
+               |  p1l |  p1h |
+               |  p2l |  p2h |
+               |      |  p3l |
+    */
+    rr[1] += p1_low;
+    uint64_t carry = (rr[1] < p1_low) ? 1 : 0;
+    rr[1] += p2_low;
+    carry += (rr[1] < p2_low) ? 1 : 0;
+
+    rr[2] = a_high * b_high;
+    rr[2] += carry;
+    rr[2] += p1_high;
+    rr[2] += p2_high;
+}
+
 void lmmp_binvert_3_(mp_ptr restrict dst, mp_srcptr restrict numa) {
     /*
            a == a0 + a1 * B^2
@@ -77,10 +101,10 @@ void lmmp_binvert_3_(mp_ptr restrict dst, mp_srcptr restrict numa) {
         := (xn - xn*k * B^2 - a1 * xn^2 * B^2) mod B^4
     */
     lmmp_binvert_2_(dst, numa);
-    mp_limb_t k[4];
+    mp_limb_t k[3];
     mp_limb_t z;
     mp_limb_t a2 = numa[2];
-    _umul128to256_(dst[1], dst[0], numa[1], numa[0], k);
+    _umul128to192_(dst[1], dst[0], numa[1], numa[0], k);
     lmmp_debug_assert(k[1] == 0 && k[0] == 1);
 #define xn (dst[0])
 #define k (k[2])
