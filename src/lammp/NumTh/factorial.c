@@ -39,11 +39,10 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
     i=0                    i=0                              i=0
 */
 
-mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_srcptr restrict fac, uint nfactors, uint N) {
+mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict fac, uint nfactors) {
     lmmp_param_assert(dst != NULL && fac != NULL);
-    lmmp_param_assert(rn > 0 && nfactors > 0 && N > 0);
-    if (N <= 0xff || nfactors <= 20) {
-        // 对于组合数与多项式系数，某些很不平衡的情况下，N可能很大，所以使用nfactors来进行额外判断。
+    lmmp_param_assert(rn > 0 && nfactors > 0);
+    if (nfactors <= 20) {
         // 绝大多数情况下，大的质因数的指数都很小，所以这里只需要考虑小的质因数。
         // 且随着递归的进行，进入这一步的质因数通常都很小。几乎不可能触发debug_assert
         dst[0] = 1;
@@ -94,24 +93,19 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_srcptr restri
         return rn;
     } else {
         TEMP_DECL;
-        // 只有小于 N/2 的质数，其因子的指数才可能大于1，所以新的因子数目不超过 N/2 的素数计数。
-        // 同时，由于此估计其实可能严重高估（因为在用于组合数以及多项式系数计算时，此函数的N的衰减远远慢于实际递归缩减），
-        // 而考虑到new_nfactors上限一定是nfactors，所以这里比较一次，以尽可能减少分配的空间。
-        mp_size_t new_nfactors = lmmp_prime_size_(N / 2);
-        new_nfactors = (new_nfactors > nfactors) ? nfactors : new_nfactors;
-        fac_ptr restrict new_fac = TALLOC_TYPE(new_nfactors, fac_t);
-        new_nfactors = 0;
+        mp_size_t new_nfactors = 0;
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
         mp_limb_t t = 1;
         mp_size_t limbn = 0;
         for (mp_size_t i = 0; i < nfactors; ++i) {
-            lmmp_debug_assert(fac[i].j != 0);
-            if (fac[i].j > 1) {
-                new_fac[new_nfactors].f = fac[i].f;
-                new_fac[new_nfactors++].j = fac[i].j >> 1;
+            uint f = fac[i].f;
+            uint j = fac[i].j;
+            if (j > 1) {
+                fac[new_nfactors].f = f;
+                fac[new_nfactors++].j = j >> 1;
             }
-            if (fac[i].j & 1) {
-                t *= fac[i].f;
+            if (j & 1) {
+                t *= f;
                 if (t > MP_UINT_MAX) {
                     limbs[limbn++] = t;
                     t = 1;
@@ -132,7 +126,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_srcptr restri
                 mp_size_t tn = ((rn - mpn) >> 1) + 1;
                 // 这里根据mpn的大小估计剩余因子乘积的长度，额外分配两倍的tn，以进行平方。
                 mp_ptr restrict tp = BALLOC_TYPE(3 * tn + 3, mp_limb_t);
-                tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
+                tn = lmmp_factors_mul_(tp, tn, fac, new_nfactors);
 
                 mp_ptr restrict tp2 = tp + tn + 1;
                 lmmp_sqr_(tp2, tp, tn);
@@ -144,7 +138,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_srcptr restri
             } else {
                 mp_size_t tn = (rn >> 1) + 1;
                 mp_ptr restrict tp = TALLOC_TYPE(tn, mp_limb_t);
-                tn = lmmp_factors_mul_(tp, tn, new_fac, new_nfactors, N / 2);
+                tn = lmmp_factors_mul_(tp, tn, fac, new_nfactors);
                 lmmp_sqr_(dst, tp, tn);
                 rn = tn << 1;
                 rn -= dst[rn - 1] == 0;
@@ -188,7 +182,7 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     }
     lmmp_prime_cache_free_(&cache);
 
-    rn = lmmp_factors_mul_(dst, rn, fac, nfactors, n);
+    rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
 
     TEMP_B_FREE;
     return rn;

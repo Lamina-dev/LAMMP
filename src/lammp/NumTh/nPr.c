@@ -180,7 +180,7 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
             nfactors = count_factors(fac, nfactors, n, r, p);
         }
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors, n);
+        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
 
         TEMP_FREE;
         return rn;
@@ -221,7 +221,7 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r
         }
         lmmp_prime_cache_free_(&cache);
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors, n);
+        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
 
         TEMP_B_FREE;
         return rn;
