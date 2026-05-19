@@ -81,7 +81,7 @@
 // 1Mb 字节是一个相对保守的数值
 #define L2_CACHE_SIZE (1ull << 20)
 
-#ifndef LIMB_BYTYS
+#ifndef LIMB_BYTES
 #define LIMB_BYTES 8
 #endif
 

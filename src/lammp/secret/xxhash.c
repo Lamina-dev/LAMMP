@@ -18,7 +18,7 @@ static inline uint64_t rotl64(uint64_t x, int b) {
 }
 
 uint64_t lmmp_xxhash_(mp_srcptr in, mp_size_t inlen, srckey64_t key) {
-    uint64_t seed = *key;
+    uint64_t seed = key == NULL ? 0 : key[0];
     if (in == NULL || inlen == 0) {
         seed += PRIME64_5;
         seed += 0;  // len = 0
