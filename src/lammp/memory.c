@@ -131,7 +131,7 @@ int lmmp_alloc_count(int cnt) {
 }
 
 void lmmp_leak_tracker(const char* func, int line) {
-    char msg[256] = {0};
+    char msg[192] = {0};
     int offset = 0;
     const int max_len = sizeof(msg) - 1;
     int t = 0;
@@ -141,9 +141,9 @@ void lmmp_leak_tracker(const char* func, int line) {
         t = 1;
     }
     if (lmmp_stack_top != lmmp_stack_begin) {
-        offset +=
-            snprintf(msg + offset, max_len - offset, "Default stack allocator is not empty. top: %p, begin: %p, end: %p\n",
-                     lmmp_stack_top, lmmp_stack_begin, lmmp_stack_end);
+        offset += snprintf(msg + offset, max_len - offset,
+                           "Default stack allocator is not empty. top: %p, begin: %p, end: %p\n", 
+                           lmmp_stack_top, lmmp_stack_begin, lmmp_stack_end);
         t = 1;
     }
     if (t) {
