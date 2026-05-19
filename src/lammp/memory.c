@@ -73,7 +73,7 @@ void lmmp_stack_init(void) {
     }
 }
 
-void lmmp_set_heap_alloctor(const lmmp_heap_allocator_t* heap) {
+void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap) {
     if (heap == NULL)
         return;
     lmmp_global_deinit();
