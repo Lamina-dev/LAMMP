@@ -57,7 +57,7 @@ extern "C" {
 #endif
 
 #if defined(LAMMP_WINDOWS)
-    // Windows: MSVC / MinGW / Clang 都走这里
+    // Windows: MSVC / MinGW / Clang
     #ifdef LAMMP_CORE_EXPORTS
     #define LAMMP_API __declspec(dllexport)
     #else
@@ -80,7 +80,7 @@ extern "C" {
  1. heap_alloc : 堆内存分配器
  2. heap_free : 堆内存释放器
  3. realloc : 堆内存重新分配器
- 4. set_stack_alloctor : 设置自定义栈分配器
+ 4. set_stack_allocator : 设置自定义栈分配器
 
  前三个函数默认使用 malloc、free、realloc 实现，
  而默认栈实现为：
@@ -102,7 +102,7 @@ typedef struct {
     lmmp_heap_alloc_fn alloc;
     lmmp_heap_free_fn free;
     lmmp_realloc_fn realloc;
-} lmmp_heap_alloctor_t;
+} lmmp_heap_allocator_t;
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
@@ -115,7 +115,7 @@ typedef struct {
  *          并输出相应的错误信息。
  * @note 自行保证分配器和释放器相匹配。
  */
-LAMMP_API void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
+LAMMP_API void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap);
 
 /**
  * @brief LAMMP 全局栈重置函数
@@ -123,7 +123,7 @@ LAMMP_API void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap);
  * @warning 请注意调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
  *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
  *          若默认栈不为空，则会触发lmmp_abort函数。栈为空时，或者无法确定栈是否初始化，
- *          均可以调用此函数，如果设置的大小比此前的大小小，则会直接返回，否则，会重新分
+ *          均可以调用此函数，如果设置的大小比此前的大小小，则会直接重置栈顶，否则，会重新分
  *          配一块新的栈内存。同时，为保证内存不泄露，请自行确保调用此函数时，栈为空。
  *          在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对栈进行检查。若此时栈不为空，
  *          则会触发lmmp_abort函数。
@@ -371,8 +371,6 @@ LAMMP_API void lmmp_stack_free(void* ptr);
 #define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)
 // 内存置零宏：将n个limb置零（每个8字节）
 #define lmmp_zero(dst, n) memset(dst, 0, (n) << 3)
-// 内存设置宏：将n个limb的值设置为val（每个8字节）
-#define lmmp_set(dst, val, n) memset(dst, val, (n) << 3)
 
 // 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
 // RELEASE 版本也会检查

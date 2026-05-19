@@ -17,7 +17,7 @@
 #undef lmmp_leak_tracker
 #define HSIZE sizeof(void*)
 
-static LAMMP_THREAD_LOCAL lmmp_heap_alloctor_t global_heap = {
+static LAMMP_THREAD_LOCAL lmmp_heap_allocator_t global_heap = {
     malloc,
     free,
     realloc,
@@ -73,7 +73,7 @@ void lmmp_stack_init(void) {
     }
 }
 
-void lmmp_set_heap_alloctor(const lmmp_heap_alloctor_t* heap) {
+void lmmp_set_heap_alloctor(const lmmp_heap_allocator_t* heap) {
     if (heap == NULL)
         return;
     lmmp_global_deinit();
@@ -131,13 +131,19 @@ int lmmp_alloc_count(int cnt) {
 }
 
 void lmmp_leak_tracker(const char* func, int line) {
-    char msg[192] = {0};
+    char msg[256] = {0};
     int offset = 0;
     const int max_len = sizeof(msg) - 1;
     int t = 0;
     if (heap_alloc_count != 0) {
         offset +=
             snprintf(msg + offset, max_len - offset, "Heap allocations not freed: %d block(s)\n", heap_alloc_count);
+        t = 1;
+    }
+    if (lmmp_stack_top != lmmp_stack_begin) {
+        offset +=
+            snprintf(msg + offset, max_len - offset, "Default stack allocator is not empty. top: %p, begin: %p, end: %p\n",
+                     lmmp_stack_top, lmmp_stack_begin, lmmp_stack_end);
         t = 1;
     }
     if (t) {
@@ -217,10 +223,10 @@ void* lmmp_stack_alloc(size_t size) {
     void* old_top = stack_get_top_func();
     void* new_top = (mp_byte_t*)old_top + total_size;
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
-    if (new_top > global_stack.end) {
+    if (new_top > lmmp_stack_end) {
         char msg[128];
         snprintf(msg, sizeof(msg), "Stack overflow (trying to allocate: %zu bytes, stack remaining: %zu bytes)",
-                 total_size, (size_t)((mp_byte_t*)global_stack.end - (mp_byte_t*)old_top));
+                 total_size, (size_t)((mp_byte_t*)lmmp_stack_end - (mp_byte_t*)old_top));
         lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, __func__, __LINE__);
     }
 #endif  // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
@@ -234,10 +240,10 @@ void lmmp_stack_free(void* ptr) {
         return;
     }
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
-    if (ptr < global_stack.begin || ptr >= global_stack.end) {
+    if (ptr < lmmp_stack_begin || ptr >= lmmp_stack_end) {
         char msg[128];
         snprintf(msg, sizeof(msg), "Invalid stack pointer (trying to free: %p ; stack start: %p , stack end: %p )", ptr,
-                 global_stack.begin, global_stack.end);
+                 lmmp_stack_begin, lmmp_stack_end);
         lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, msg, __func__, __LINE__);
     }
 #endif  // LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
@@ -245,11 +251,11 @@ void lmmp_stack_free(void* ptr) {
     size_t total_size = *(size_t*)((mp_byte_t*)ptr - SIZE_SIZE);
     void* new_top = (mp_byte_t*)old_top - total_size;
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
-    if (new_top < global_stack.begin || new_top > global_stack.end) {
+    if (new_top < lmmp_stack_begin || new_top > lmmp_stack_end) {
         char msg[256];
         snprintf(msg, sizeof(msg),
                  "Stack underflow (trying to free: %p , size: %zu bytes ; stack start: %p , stack end: %p ) \n%s", ptr,
-                 total_size - SIZE_SIZE, global_stack.begin, global_stack.end,
+                 total_size - SIZE_SIZE, lmmp_stack_begin, lmmp_stack_end,
                  "Likely cause: Previous stack buffer overflow corrupted the memory header.");
         lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, msg, __func__, __LINE__);
     }

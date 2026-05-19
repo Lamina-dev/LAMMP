@@ -1141,7 +1141,7 @@ LAMMP_API mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base);
  * @param base 字符串的基数（2~256）
  * @return 存储该字符串数值所需的 limb 缓冲区长度
  * @warning len>=0, 2<=base<=256
- * @note 将会忽略非零字符，
+ * @note 将会忽略前导零，
  *       1. if (src!=NULL) 返回的长度可能会多分配一个 limb 空间
  *       2. if (src==NULL) 返回len位base进制数的最大可能 limb 长度（最坏情况）
  */
