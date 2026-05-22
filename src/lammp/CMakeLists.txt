@@ -8,7 +8,14 @@ file(GLOB_RECURSE LAMMP_CORE_SRCS
 )
 
 if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
-
+    
+    # 启用汇编时，需要使用.def文件导出汇编实现的函数
+    # 未启用时，纯c实现的函数会自动导出 
+    set(DEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/asm/lammp_asm.def)
+    if(TARGET_SYSTEM STREQUAL "WIN")
+        list(APPEND LAMMP_CORE_SRCS ${DEF_FILE})
+    endif()
+    # 过滤掉 generic 目录下的源文件
     list(FILTER LAMMP_CORE_SRCS EXCLUDE REGEX ".*/generic/.*")
 
     # 收集汇编文件

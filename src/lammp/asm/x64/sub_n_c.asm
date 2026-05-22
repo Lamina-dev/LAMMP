@@ -13,12 +13,6 @@ default rel
 %define ADCSBB sbb
 
 
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_sub_n_"
-    db " -export:lmmp_sub_nc_"
-%endif
-
 section .text
 align 16
 

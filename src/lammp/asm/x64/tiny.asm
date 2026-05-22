@@ -2,20 +2,8 @@
 ; This file is part of lammp, under the GNU LGPL v2 license.
 ; See LICENSE in the project root for the full license text.
 
-
 bits 64
 default rel
-
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_limb_bits_"
-    db " -export:lmmp_leading_zeros_"
-    db " -export:lmmp_tailing_zeros_"
-    db " -export:lmmp_limb_popcnt_"
-    db " -export:lmmp_mulh_"
-    db " -export:lmmp_mullh_"
-    db " -export:lmmp_mulmod_ulong_"
-%endif
 
 %ifdef LAMMP_ASM_WIN
   %define win

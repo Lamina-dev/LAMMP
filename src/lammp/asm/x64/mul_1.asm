@@ -8,10 +8,6 @@
 bits 64
 default rel
 
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_mul_1_"
-%endif
 
 section .text
 global lmmp_mul_1_

@@ -7,10 +7,6 @@
 bits 64
 default rel
 
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_not_"
-%endif
 
 %ifdef LAMMP_ASM_WIN
  %macro PROLOG 0
