@@ -4,14 +4,12 @@
 ;
 ; lmmp_submul_1_ : [numa, n] -= [numb, n] * b
 
-
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_submul_1_"
-%endif
+bits 64
+default rel
 
 section .text
 global lmmp_submul_1_
+
 lmmp_submul_1_:
 %ifdef LAMMP_ASM_WIN
     push    rsi

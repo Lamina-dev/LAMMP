@@ -28,7 +28,7 @@ int main() {
     mp_ptr c = (mp_ptr)lmmp_alloc(len * sizeof(mp_limb_t));
     auto start = std::chrono::high_resolution_clock::now();
     // 调用不平衡乘法算子
-    lmmp_mul_(c, a, len1, b, len2);
+    lmmp_mul_(c, b, len2, a, len1);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "multiplication time: " << duration.count() << " microseconds" << std::endl;

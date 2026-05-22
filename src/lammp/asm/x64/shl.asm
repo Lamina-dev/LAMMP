@@ -9,11 +9,6 @@
 bits 64
 default rel
 
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_shl_"
-    db " -export:lmmp_shl_c_"
-%endif
 
 section .text
 align 16

@@ -80,36 +80,26 @@ extern "C" {
  1. heap_alloc : 堆内存分配器
  2. heap_free : 堆内存释放器
  3. realloc : 堆内存重新分配器
- 4. set_stack_allocator : 设置自定义栈分配器
 
- 前三个函数默认使用 malloc、free、realloc 实现，
- 而默认栈实现为：
-  首次调用时分配一块大小为LAMMP_DEFAULT_STACK_SIZE的堆内存
-  （通过调用 heap_alloc 函数），通过维护此堆内存来模拟栈。
-  同时请注意，我们默认栈是向上增长的，即从低地址到高地址。
- 
- 如果使用自定义栈，请进行手动内存管理和处理溢出。默认栈是全局的，
- 同时默认栈的大小是可调的，可以通过函数 lmmp_default_stack_reset 来调整
+ 默认使用 malloc、free、realloc 实现。
  */
 
 typedef void* (*lmmp_heap_alloc_fn)(size_t size);
-typedef void (*lmmp_heap_free_fn)(void* ptr);
-typedef void* (*lmmp_realloc_fn)(void* ptr, size_t size);
-typedef void* (*lmmp_stack_get_top_fn)(void);
-typedef void (*lmmp_stack_set_top_fn)(void* top);
+typedef void  (*lmmp_heap_free_fn )(void*  ptr);
+typedef void* (*lmmp_realloc_fn   )(void*  ptr, size_t size);
 
 typedef struct {
-    lmmp_heap_alloc_fn alloc;
-    lmmp_heap_free_fn free;
-    lmmp_realloc_fn realloc;
+    lmmp_heap_alloc_fn   alloc;
+    lmmp_heap_free_fn     free;
+    lmmp_realloc_fn    realloc;
 } lmmp_heap_allocator_t;
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
- * @param heap 新的堆内存分配器，可以为NULL，表示使用默认的 malloc
+ * @param heap 新的堆内存分配器，可以为NULL，表示使用默认的 malloc, free, realloc
  * @warning 由于所有共享内存都采用堆内存分配。因此，传入新的堆分配器将会首先调用
  *          lmmp_global_deinit 函数，释放所有共享内存，以保证老旧的堆资源被释放。
- *          然后将会自动调用 lmmp_global_init 函数。
+ *          然后将会自动调用 lmmp_global_init 函数，重新分配所有线程局部内存。
  *          同时，为保证内存不泄露，在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对堆
  *          栈分配器进行检查。若此时堆栈分配计数器不为 0，则会触发lmmp_abort函数，
  *          并输出相应的错误信息。
@@ -118,9 +108,9 @@ typedef struct {
 LAMMP_API void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap);
 
 /**
- * @brief LAMMP 全局栈重置函数
- * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈）
- * @warning 请注意调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了 
+ * @brief LAMMP 全局栈重置函数（通常不需要手动调用）
+ * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈，少于此值可能导致栈溢出）
+ * @warning 请注意调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了
  *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
  *          若默认栈不为空，则会触发lmmp_abort函数。栈为空时，或者无法确定栈是否初始化，
  *          均可以调用此函数，如果设置的大小比此前的大小小，则会直接重置栈顶，否则，会重新分
@@ -132,8 +122,9 @@ LAMMP_API void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap);
 LAMMP_API void lmmp_stack_reset(size_t size);
 
 /**
- * @brief LAMMP 全局栈初始化函数
- * @note 按照默认的栈大小，对栈进行初始化，若栈已经初始化，则不进行任何操作。
+ * @brief LAMMP 全局栈初始化函数（通常不需要手动调用）
+ * @note 按照默认的栈大小（320kb），对栈进行初始化，可多次重入。
+ *       lmmp_global_init 函数会自动调用此函数，无需手动调用。
  */
 LAMMP_API void lmmp_stack_init(void);
 
@@ -409,6 +400,7 @@ LAMMP_API void lmmp_stack_free(void* ptr);
  * @brief 全局初始化函数（线程局部的）
  * @note 调用此函数将初始化全局范围内的所有线程局部资源，如栈式分配器等。
  *       部分惰性初始化的资源将在首次使用时初始化。调用此函数不会进行初始化。
+ *       此函数可重入，多次调用不会导致重复初始化。
  * @warning 我们建议在进程或线程启动时调用此函数，以保证线程安全。
  */
 LAMMP_API void lmmp_global_init(void);
@@ -416,8 +408,7 @@ LAMMP_API void lmmp_global_init(void);
 /**
  * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
  * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
- *       释放后，部分资源采用惰性初始化，如再次调用，则将会在后
- *       续调用中重新分配堆内存并初始化。
+ *       此函数可重入，多次调用不会导致重复释放。如需要再次使用，请重新调用 lmmp_global_init 初始化。
  * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
  *          未调用此函数结束线程可能导致内存泄漏。
  */

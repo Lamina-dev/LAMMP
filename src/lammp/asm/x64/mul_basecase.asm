@@ -6,10 +6,6 @@
 ; void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 
-%ifdef LAMMP_ASM_WIN
-    section .drectve
-    db " -export:lmmp_mul_basecase_"
-%endif
 
 %ifdef LAMMP_ASM_WIN
     ; Windows: dst=rcx, numa=rdx, na=r8, numb=r9, nb=[rsp+48h]
