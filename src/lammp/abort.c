@@ -5,15 +5,15 @@
  */
 
 #include "../../include/lammp/lmmp.h"
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static LAMMP_THREAD_LOCAL lmmp_abort_fn lmmp_abort_func = NULL;
+static atomic_uintptr_t lmmp_abort_func;
 
 lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
-    lmmp_abort_fn old_func = lmmp_abort_func;
-    lmmp_abort_func = func;
-    return old_func;
+    uintptr_t old = atomic_exchange(&lmmp_abort_func, (uintptr_t)func);
+    return (lmmp_abort_fn)old;
 }
 
 static const char* type_to_str(lmmp_error_t type) {
@@ -40,8 +40,10 @@ static const char* type_to_str(lmmp_error_t type) {
 }
 
 void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line) {
-    if (lmmp_abort_func != NULL) {
-        lmmp_abort_func(type, msg, func, line);
+    uintptr_t curr = atomic_load(&lmmp_abort_func);
+    lmmp_abort_fn fn = (lmmp_abort_fn)curr;
+    if (fn != NULL) {
+        fn(type, msg, func, line);
     } else {
         fprintf(stderr, "LAMMP abort at [%s]:%d\n", func, line);
         fprintf(stderr, "Abort type: %s, abort msg: \n%s\n", type_to_str(type), msg);
