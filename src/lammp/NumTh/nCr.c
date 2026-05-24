@@ -30,6 +30,7 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
      但是经过大量的校验，我们未发现任何低估的反例。
      为了同时处理不平衡与不平衡的情况，我们这里对两个估计进行比较，取较小的一个作为最终结果。不平衡时，approx1要更紧一些。
     */
+    // 此处假定了LIMB_BITS为64
     uint approx1 = rn * 8;
     uint approx2 = lmmp_prime_size_(n);
     return approx1 < approx2? approx1 : approx2;
@@ -39,6 +40,7 @@ static inline uint factor_size_short(mp_size_t rn) {
     /*
      经过大量的校验，*8即使是在ushort输入下，也极少低估，但是为了留有冗余，我们还是选择*10，大致相当于质数83。
     */
+    // 此处假定了LIMB_BITS为64
     return rn * 10;
 }
 
