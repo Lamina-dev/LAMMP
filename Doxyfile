@@ -1,80 +1,149 @@
-# Doxyfile for LAMMP
-# Generated for Doxygen 1.9+
 
-#---------------------------------------------------------------------------
-# Project related configuration options
-#---------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 DOXYFILE_ENCODING      = UTF-8
 PROJECT_NAME           = "LAMMP"
 PROJECT_NUMBER         = "4.1.0"
 PROJECT_BRIEF          = "Lamina High-Precision Arithmetic Library"
 PROJECT_LOGO           =
-OUTPUT_DIRECTORY       = doc/doxygen
-CREATE_SUBDIRS         = NO
+PROJECT_ICON           =
+OUTPUT_DIRECTORY       = docs
+CREATE_SUBDIRS         = YES
+CREATE_SUBDIRS_LEVEL   = 8
 ALLOW_UNICODE_NAMES    = YES
 OUTPUT_LANGUAGE        = Chinese
 BRIEF_MEMBER_DESC      = YES
 REPEAT_BRIEF           = YES
-ALWAYS_DETAILED_SEC    = NO
-INLINE_INHERITED_MEMB  = NO
+ABBREVIATE_BRIEF       = "The $name class" \
+                         "The $name widget" \
+                         "The $name file" \
+                         is \
+                         provides \
+                         specifies \
+                         contains \
+                         represents \
+                         a \
+                         an \
+                         the
+ALWAYS_DETAILED_SEC    = YES
+INLINE_INHERITED_MEMB  = YES
 FULL_PATH_NAMES        = YES
 STRIP_FROM_PATH        = .
+STRIP_FROM_INC_PATH    = include
 SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
-MULTILINE_CPP_IS_BRIEF = NO
+JAVADOC_BANNER         = YES
+QT_AUTOBRIEF           = YES
+MULTILINE_CPP_IS_BRIEF = YES
+PYTHON_DOCSTRING       = YES
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 4
+ALIASES                =
 OPTIMIZE_OUTPUT_FOR_C  = YES
+OPTIMIZE_OUTPUT_JAVA   = NO
+OPTIMIZE_FOR_FORTRAN   = NO
+OPTIMIZE_OUTPUT_VHDL   = NO
+OPTIMIZE_OUTPUT_SLICE  = NO
+EXTENSION_MAPPING      =
 MARKDOWN_SUPPORT       = YES
+MARKDOWN_STRICT        = NO
+TOC_INCLUDE_HEADINGS   = 6
+MARKDOWN_ID_STYLE      = DOXYGEN
 AUTOLINK_SUPPORT       = YES
-BUILTIN_STL_SUPPORT    = NO
+AUTOLINK_IGNORE_WORDS  =
+BUILTIN_STL_SUPPORT    = YES
+CPP_CLI_SUPPORT        = NO
+SIP_SUPPORT            = NO
+IDL_PROPERTY_SUPPORT   = YES
+DISTRIBUTE_GROUP_DOC   = YES
+GROUP_NESTED_COMPOUNDS = YES
+SUBGROUPING            = YES
+INLINE_GROUPED_CLASSES = YES
+INLINE_SIMPLE_STRUCTS  = YES
+TYPEDEF_HIDES_STRUCT   = NO
+LOOKUP_CACHE_SIZE      = 2
 NUM_PROC_THREADS       = 0
+TIMESTAMP              = YES
 
-#---------------------------------------------------------------------------
-# Build related configuration options
-#---------------------------------------------------------------------------
+
+
+
 EXTRACT_ALL            = YES
-EXTRACT_PRIVATE        = NO
+EXTRACT_PRIVATE        = YES
+EXTRACT_PRIV_VIRTUAL   = YES
+EXTRACT_PACKAGE        = YES
 EXTRACT_STATIC         = YES
 EXTRACT_LOCAL_CLASSES  = YES
-EXTRACT_ANON_NSPACES   = NO
+EXTRACT_LOCAL_METHODS  = YES
+EXTRACT_ANON_NSPACES   = YES
 RESOLVE_UNNAMED_PARAMS = YES
 HIDE_UNDOC_MEMBERS     = NO
 HIDE_UNDOC_CLASSES     = NO
+HIDE_UNDOC_NAMESPACES  = NO
+HIDE_FRIEND_COMPOUNDS  = NO
 HIDE_IN_BODY_DOCS      = NO
+INTERNAL_DOCS          = YES
 CASE_SENSE_NAMES       = YES
 HIDE_SCOPE_NAMES       = NO
+HIDE_COMPOUND_REFERENCE= NO
+SHOW_HEADERFILE        = YES
 SHOW_INCLUDE_FILES     = YES
+SHOW_GROUPED_MEMB_INC  = YES
+FORCE_LOCAL_INCLUDES   = NO
+INLINE_INFO            = YES
 SORT_MEMBER_DOCS       = YES
-SORT_BRIEF_DOCS        = NO
-SORT_GROUP_NAMES       = NO
+SORT_BRIEF_DOCS        = YES
+SORT_MEMBERS_CTORS_1ST = YES
+SORT_GROUP_NAMES       = YES
+SORT_BY_SCOPE_NAME     = YES
+STRICT_PROTO_MATCHING  = NO
 GENERATE_TODOLIST      = YES
 GENERATE_TESTLIST      = YES
 GENERATE_BUGLIST       = YES
 GENERATE_DEPRECATEDLIST= YES
+GENERATE_REQUIREMENTS  = YES
+REQ_TRACEABILITY_INFO  = YES
+ENABLED_SECTIONS       =
 MAX_INITIALIZER_LINES  = 30
 SHOW_USED_FILES        = YES
 SHOW_FILES             = YES
 SHOW_NAMESPACES        = YES
+FILE_VERSION_FILTER    =
+LAYOUT_FILE            =
+CITE_BIB_FILES         =
+EXTERNAL_TOOL_PATH     =
 
-#---------------------------------------------------------------------------
-# Configuration options related to warning and progress messages
-#---------------------------------------------------------------------------
+
+
+
 QUIET                  = NO
 WARNINGS               = YES
 WARN_IF_UNDOCUMENTED   = YES
 WARN_IF_DOC_ERROR      = YES
-WARN_NO_PARAMDOC       = NO
+WARN_IF_INCOMPLETE_DOC = YES
+WARN_NO_PARAMDOC       = YES
+WARN_IF_UNDOC_ENUM_VAL = YES
+WARN_LAYOUT_FILE       = YES
+WARN_AS_ERROR          = NO
 WARN_FORMAT            = "$file:$line: $text"
+WARN_LINE_FORMAT       = "at line $line of file $file"
+WARN_LOGFILE           =
 
-#---------------------------------------------------------------------------
-# Configuration options related to the input files
-#---------------------------------------------------------------------------
+
+
+
 INPUT                  = include/lammp \
                          src/lammp \
                          README.md
 INPUT_ENCODING         = UTF-8
+INPUT_FILE_ENCODING    =
 FILE_PATTERNS          = *.c \
                          *.h \
                          *.cpp \
@@ -84,85 +153,217 @@ RECURSIVE              = YES
 EXCLUDE                = build \
                          dist \
                          .git
+EXCLUDE_SYMLINKS       = NO
 EXCLUDE_PATTERNS       = */asm/* \
                          */build/* \
                          */dist/*
-EXCLUDE_SYMLINKS       = NO
+EXCLUDE_SYMBOLS        =
+EXAMPLE_PATH           = example/lammp
+EXAMPLE_PATTERNS       = *.cpp *.c
+EXAMPLE_RECURSIVE      = YES
+IMAGE_PATH             = doc/lammp/dev/image
+INPUT_FILTER           =
+FILTER_PATTERNS        =
+FILTER_SOURCE_FILES    = NO
+FILTER_SOURCE_PATTERNS =
 USE_MDFILE_AS_MAINPAGE = README.md
+IMPLICIT_DIR_DOCS      = YES
+FORTRAN_COMMENT_AFTER  = 72
 
-#---------------------------------------------------------------------------
-# Configuration options related to source browsing
-#---------------------------------------------------------------------------
+
+
+
 SOURCE_BROWSER         = YES
-INLINE_SOURCES         = NO
-STRIP_CODE_COMMENTS    = YES
+INLINE_SOURCES         = YES
+STRIP_CODE_COMMENTS    = NO
 REFERENCED_BY_RELATION = YES
 REFERENCES_RELATION    = YES
+REFERENCES_LINK_SOURCE = YES
+SOURCE_TOOLTIPS        = YES
+USE_HTAGS              = NO
 VERBATIM_HEADERS       = YES
+CLANG_ASSISTED_PARSING = NO
+CLANG_ADD_INC_PATHS    = YES
+CLANG_OPTIONS          =
+CLANG_DATABASE_PATH    =
 
-#---------------------------------------------------------------------------
-# Configuration options related to the alphabetical class index
-#---------------------------------------------------------------------------
+
+
+
 ALPHABETICAL_INDEX     = YES
+IGNORE_PREFIX          =
 
-#---------------------------------------------------------------------------
-# Configuration options related to the HTML output
-#---------------------------------------------------------------------------
+
+
+
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
+HTML_HEADER            =
+HTML_FOOTER            =
+HTML_STYLESHEET        =
+HTML_EXTRA_STYLESHEET  =
+HTML_EXTRA_FILES       =
 HTML_COLORSTYLE        = AUTO_LIGHT
-HTML_TIMESTAMP         = YES
+HTML_COLORSTYLE_HUE    = 220
+HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_GAMMA  = 80
 HTML_DYNAMIC_MENUS     = YES
-HTML_DYNAMIC_SECTIONS  = NO
+HTML_DYNAMIC_SECTIONS  = YES
+HTML_CODE_FOLDING      = YES
+HTML_COPY_CLIPBOARD    = YES
+HTML_PROJECT_COOKIE    =
+HTML_INDEX_NUM_ENTRIES = 100
+GENERATE_DOCSET        = NO
+DOCSET_FEEDNAME        = "LAMMP Documentation"
+DOCSET_FEEDURL         =
+DOCSET_BUNDLE_ID       = org.lammp.Project
+DOCSET_PUBLISHER_ID    = org.lammp.Publisher
+DOCSET_PUBLISHER_NAME  = HJimmyK
+GENERATE_HTMLHELP      = NO
+CHM_FILE               =
+HHC_LOCATION           =
+GENERATE_CHI           = NO
+CHM_INDEX_ENCODING     =
+BINARY_TOC             = NO
+TOC_EXPAND             = YES
+SITEMAP_URL            =
+GENERATE_QHP           = NO
+QCH_FILE               =
+QHP_NAMESPACE          = org.lammp.Project
+QHP_VIRTUAL_FOLDER     = doc
+QHP_CUST_FILTER_NAME   =
+QHP_CUST_FILTER_ATTRS  =
+QHP_SECT_FILTER_ATTRS  =
+QHG_LOCATION           =
+GENERATE_ECLIPSEHELP   = NO
+ECLIPSE_DOC_ID         = org.lammp.Project
+DISABLE_INDEX          = NO
 GENERATE_TREEVIEW      = YES
-TREEVIEW_WIDTH         = 250
+PAGE_OUTLINE_PANEL     = YES
+FULL_SIDEBAR           = NO
+ENUM_VALUES_PER_LINE   = 4
+SHOW_ENUM_VALUES       = YES
+TREEVIEW_WIDTH         = 280
+EXT_LINKS_IN_WINDOW    = YES
+OBFUSCATE_EMAILS       = YES
+HTML_FORMULA_FORMAT    = svg
+FORMULA_FONTSIZE       = 10
+FORMULA_MACROFILE      =
+USE_MATHJAX            = YES
+MATHJAX_VERSION        = MathJax_3
+MATHJAX_FORMAT         = HTML-CSS
+MATHJAX_RELPATH        =
+MATHJAX_EXTENSIONS     =
+MATHJAX_CODEFILE       =
 SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO
+EXTERNAL_SEARCH        = NO
+SEARCHENGINE_URL       =
+SEARCHDATA_FILE        = searchdata.xml
+EXTERNAL_SEARCH_ID     =
+EXTRA_SEARCH_MAPPINGS  =
 
-#---------------------------------------------------------------------------
-# Configuration options related to the LaTeX output
-#---------------------------------------------------------------------------
+
+
+
 GENERATE_LATEX         = NO
 
-#---------------------------------------------------------------------------
-# Configuration options related to the RTF output
-#---------------------------------------------------------------------------
+
+
+
 GENERATE_RTF           = NO
 
-#---------------------------------------------------------------------------
-# Configuration options related to the man page output
-#---------------------------------------------------------------------------
+
+
+
 GENERATE_MAN           = NO
 
-#---------------------------------------------------------------------------
-# Configuration options related to the XML output
-#---------------------------------------------------------------------------
+
+
+
 GENERATE_XML           = NO
 
-#---------------------------------------------------------------------------
-# Configuration options related to the preprocessor
-#---------------------------------------------------------------------------
+
+
+
+GENERATE_DOCBOOK       = NO
+
+
+
+
+GENERATE_SQLITE3       = NO
+
+
+
+
+GENERATE_PERLMOD       = NO
+
+
+
+
 ENABLE_PREPROCESSING   = YES
 MACRO_EXPANSION        = YES
 EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES
 INCLUDE_PATH           = include
+INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = USE_ASM \
                          LAMMP_WINDOWS \
-                         LAMMP_ASM_WIN
+                         LAMMP_ASM_WIN \
+                         __declspec(x)=
 EXPAND_AS_DEFINED      =
+SKIP_FUNCTION_MACROS   = NO
 
-#---------------------------------------------------------------------------
-# Configuration options related to the dot tool
-#---------------------------------------------------------------------------
+
+
+
+TAGFILES               =
+GENERATE_TAGFILE       = doc/doxygen/lammp.tag
+ALLEXTERNALS           = NO
+EXTERNAL_GROUPS        = YES
+EXTERNAL_PAGES         = YES
+
+
+
+
+HIDE_UNDOC_RELATIONS   = NO
 HAVE_DOT               = YES
-DOT_PATH               = "C:/Program Files/Graphviz/bin"
 DOT_NUM_THREADS        = 0
+DOT_COMMON_ATTR        = "fontname=Helvetica,fontsize=10"
+DOT_EDGE_ATTR          = "labelfontname=Helvetica,labelfontsize=10"
+DOT_NODE_ATTR          = "shape=box,height=0.2,width=0.4"
+DOT_FONTPATH           =
+DOT_PATH               = "C:/Program Files/Graphviz/bin"
 CLASS_GRAPH            = YES
 COLLABORATION_GRAPH    = YES
 GROUP_GRAPHS           = YES
+UML_LOOK               = YES
+UML_LIMIT_NUM_FIELDS   = 50
+UML_MAX_EDGE_LABELS    = 20
+DOT_UML_DETAILS        = YES
+DOT_WRAP_THRESHOLD     = 17
+TEMPLATE_RELATIONS     = YES
 INCLUDE_GRAPH          = YES
 INCLUDED_BY_GRAPH      = YES
-CALL_GRAPH             = NO
-CALLER_GRAPH           = NO
+CALL_GRAPH             = YES
+CALLER_GRAPH           = YES
+GRAPHICAL_HIERARCHY    = YES
 DIRECTORY_GRAPH        = YES
+DIR_GRAPH_MAX_DEPTH    = 25
+DOT_IMAGE_FORMAT       = svg
+INTERACTIVE_SVG        = YES
+DOTFILE_DIRS           =
+DIA_PATH               =
+DIAFILE_DIRS           =
+PLANTUML_JAR_PATH      =
+PLANTUML_CFG_FILE      =
+PLANTUML_INCLUDE_PATH  =
+PLANTUMLFILE_DIRS      =
+DOT_GRAPH_MAX_NODES    = 200
+MAX_DOT_GRAPH_DEPTH    = 0
+DOT_MULTI_TARGETS      = YES
+GENERATE_LEGEND        = YES
+DOT_CLEANUP            = YES
+MSCGEN_TOOL            =
+MSCFILE_DIRS           =
