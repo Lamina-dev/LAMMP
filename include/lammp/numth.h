@@ -288,7 +288,7 @@ LAMMP_API mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base,
  * @warning 1<=base<=0xf, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-LAMMP_API mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_u4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -299,7 +299,7 @@ LAMMP_API mp_size_t lmmp_1_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong ex
  * @warning 0<base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-LAMMP_API mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_u8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -310,7 +310,7 @@ LAMMP_API mp_size_t lmmp_2_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong ex
  * @warning 0<base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-LAMMP_API mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_u16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -321,7 +321,7 @@ LAMMP_API mp_size_t lmmp_4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong ex
  * @warning 0<base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-LAMMP_API mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_u32_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
@@ -332,7 +332,7 @@ LAMMP_API mp_size_t lmmp_8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong ex
  * @warning 2^32<=base<=2^64-1, exp>0
  * @return 返回 dst 的实际 limb 长度
  */
-LAMMP_API mp_size_t lmmp_16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
+LAMMP_API mp_size_t lmmp_u64_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong exp);
 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
