@@ -50,15 +50,8 @@ ulong lmmp_prime_size_(ulong n) {
     return (ulong)ceil(n / denom);
 }
 
-typedef uint64_t prime_bitset_t;
-typedef uint64_t* prime_bitset_p;
-
-#define PRIME_BITSET_BITS (64)
-#define PRIME_BITSET_MASK (0xffffffffffffffffull)
-#define PRIME_BITSET_BYTES (8)
-
 typedef struct prime_int {
-    prime_bitset_p restrict m;     // prime 位图指针（1为质数，0为合数）
+    lmmp_bitset_p restrict m;     // prime 位图指针（1为质数，0为合数）
     uint m_size;  // prime 位图容量
     uint N;       // 位图记录的最大值 N
 } prime_int;
@@ -70,7 +63,7 @@ static LAMMP_THREAD_LOCAL prime_int global_prime_int_table = {NULL, 0, 0};
 // prime_table的大小
 static inline uint prime_table_size(uint n) {
     uint bits = n / 2 + 1;
-    bits /= PRIME_BITSET_BITS;
+    bits /= LMMP_BITSET_BITS;
     return bits + 1;
 }
 
@@ -82,15 +75,15 @@ void lmmp_prime_int_table_init_(uint n) {
 #define set_not_prime(_i_)                                          \
     do {                                                            \
         uint idx = IDX(_i_);                                        \
-        G.m[idx / PRIME_BITSET_BITS] &= ~(1ULL << (idx % PRIME_BITSET_BITS)); \
+        G.m[idx / LMMP_BITSET_BITS] &= ~(1ULL << (idx % LMMP_BITSET_BITS)); \
     } while (0)
 
     if (G.m == NULL) {
         G.N = n;
         G.m_size = prime_table_size(n);
-        G.m = ALLOC_TYPE(G.m_size, prime_bitset_t);
+        G.m = ALLOC_TYPE(G.m_size, lmmp_bitset_t);
         for (uint i = 0; i < G.m_size; ++i) {
-            G.m[i] = PRIME_BITSET_MASK; 
+            G.m[i] = LMMP_BITSET_MASK; 
         }
         set_not_prime(1);
         for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
@@ -108,9 +101,9 @@ void lmmp_prime_int_table_init_(uint n) {
         }
     } else {
         uint new_size = prime_table_size(n);
-        G.m = REALLOC_TYPE(G.m, new_size, prime_bitset_t);
+        G.m = REALLOC_TYPE(G.m, new_size, lmmp_bitset_t);
         for (uint i = G.m_size; i < new_size; ++i) {
-            G.m[i] = PRIME_BITSET_MASK; 
+            G.m[i] = LMMP_BITSET_MASK; 
         }
         G.m_size = new_size;
         set_not_prime(1);
@@ -149,7 +142,7 @@ bool lmmp_is_prime_table_(uint p) {
         lmmp_param_assert(p > 1);
         lmmp_param_assert((p & 1) == 1);
         uint idx = IDX(p);
-        return (G.m[idx / PRIME_BITSET_BITS] >> (idx % PRIME_BITSET_BITS) & 1);
+        return (G.m[idx / LMMP_BITSET_BITS] >> (idx % LMMP_BITSET_BITS) & 1);
     }
 }
 
@@ -167,7 +160,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
 
     if (idx + PRIME_CACHE_BLOCK_NUM < G.m_size) {
         uint buf[PRIME_CACHE_BLOCK_SIZE * 4];
-        prime_bitset_t m0, m1, m2, m3;
+        lmmp_bitset_t m0, m1, m2, m3;
         uintp p0, p1, p2, p3;
         uintp begin = cache->pp, end;
         for (uint i = 0; i < PRIME_CACHE_BLOCK_NUM / 4; ++i) {
@@ -179,11 +172,11 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             p1 = buf + 1 * PRIME_CACHE_BLOCK_SIZE;
             p2 = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
             p3 = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
-            for (uint j = 0; j < PRIME_BITSET_BITS; ++j) {
-                if (m0 & 1) *p0++ = ((idx + 0) * PRIME_BITSET_BITS + j) * 2 + 1;
-                if (m1 & 1) *p1++ = ((idx + 1) * PRIME_BITSET_BITS + j) * 2 + 1;
-                if (m2 & 1) *p2++ = ((idx + 2) * PRIME_BITSET_BITS + j) * 2 + 1;
-                if (m3 & 1) *p3++ = ((idx + 3) * PRIME_BITSET_BITS + j) * 2 + 1;
+            for (uint j = 0; j < LMMP_BITSET_BITS; ++j) {
+                if (m0 & 1) *p0++ = ((idx + 0) * LMMP_BITSET_BITS + j) * 2 + 1;
+                if (m1 & 1) *p1++ = ((idx + 1) * LMMP_BITSET_BITS + j) * 2 + 1;
+                if (m2 & 1) *p2++ = ((idx + 2) * LMMP_BITSET_BITS + j) * 2 + 1;
+                if (m3 & 1) *p3++ = ((idx + 3) * LMMP_BITSET_BITS + j) * 2 + 1;
 
                 m0 >>= 1;
                 m1 >>= 1;
@@ -234,12 +227,12 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
         cache->size = size;
         return;
     } else {
-        prime_bitset_t m;
+        lmmp_bitset_t m;
         for (uint i = idx; i < G.m_size; ++i) {
             m = G.m[i];
-            for (uint j = 0; j < PRIME_BITSET_BITS; ++j) {
+            for (uint j = 0; j < LMMP_BITSET_BITS; ++j) {
                 if (m & 1) {
-                    uint t = (i * PRIME_BITSET_BITS + j) * 2 + 1;
+                    uint t = (i * LMMP_BITSET_BITS + j) * 2 + 1;
                     if (t > G.N || t > cache->end_num) {
                         goto end2;
                     } else {
@@ -297,15 +290,14 @@ void lmmp_prime_int_table_free_(void) {
     G.m_size = 0;
 }
 
-const uint64_t rem_mask_map[19] = {
-    (uint64_t)(0x93cf359a5b74dee9), (uint64_t)(0x6badd25dadb36966), (uint64_t)(0x6ed3cd279e4bb4b6),
-    (uint64_t)(0xb66d6cd35ba6bb59), (uint64_t)(0xc976b2cde59a4f3c), (uint64_t)(0x34de792dd2f9a6b7),
-    (uint64_t)(0xb34d6e96ede59b4b), (uint64_t)(0xcf3696793ef259ad), (uint64_t)(0xf4b34b669add25fa),
-    (uint64_t)(0xfa4bb5966d2cd2f9), (uint64_t)(0x59a4f7c9e696cf35), (uint64_t)(0x2d9a7b76976b2cdb),
-    (uint64_t)(0xd659f4bb49e7b2cd), (uint64_t)(0xcf259a7b34d6e93e), (uint64_t)(0xadd65dacb36b66d3),
-    (uint64_t)(0xd2dd279e4b3cb769), (uint64_t)(0x696cdb5ba4bb5d66), (uint64_t)(0x77b2eda59acf3c96),
-    (uint64_t)(0x0000000000000001)};
-
+const lmmp_bitset_t r35711_mask_map[19] = {
+    (lmmp_bitset_t)(0x93cf359a5b74dee9), (lmmp_bitset_t)(0x6badd25dadb36966), (lmmp_bitset_t)(0x6ed3cd279e4bb4b6),
+    (lmmp_bitset_t)(0xb66d6cd35ba6bb59), (lmmp_bitset_t)(0xc976b2cde59a4f3c), (lmmp_bitset_t)(0x34de792dd2f9a6b7),
+    (lmmp_bitset_t)(0xb34d6e96ede59b4b), (lmmp_bitset_t)(0xcf3696793ef259ad), (lmmp_bitset_t)(0xf4b34b669add25fa),
+    (lmmp_bitset_t)(0xfa4bb5966d2cd2f9), (lmmp_bitset_t)(0x59a4f7c9e696cf35), (lmmp_bitset_t)(0x2d9a7b76976b2cdb),
+    (lmmp_bitset_t)(0xd659f4bb49e7b2cd), (lmmp_bitset_t)(0xcf259a7b34d6e93e), (lmmp_bitset_t)(0xadd65dacb36b66d3),
+    (lmmp_bitset_t)(0xd2dd279e4b3cb769), (lmmp_bitset_t)(0x696cdb5ba4bb5d66), (lmmp_bitset_t)(0x77b2eda59acf3c96),
+    (lmmp_bitset_t)(0x0000000000000001)};
 
 /*
  12.7 kb data in prime_short_table

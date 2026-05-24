@@ -20,6 +20,13 @@
 #define __LAMMP_PRIME_TABLE_H__
 #include "../numth.h"
 
+typedef uint64_t lmmp_bitset_t;
+typedef uint64_t* lmmp_bitset_p;
+
+#define LMMP_BITSET_BITS (64)
+#define LMMP_BITSET_MASK (0xffffffffffffffffull)
+#define LMMP_BITSET_BYTES (8)
+
 #define PRIME_SHORT_TABLE_SIZE 6542
 
 #define PRIME_SHORT_TABLE_N 0x10000
@@ -105,17 +112,17 @@ void lmmp_prime_cache_next_(prime_cache_t* cache);
 void lmmp_prime_cache_free_(prime_cache_t* cache);
 
 // 3,5,7,11的余数掩码表
-extern const uint64_t rem_mask_map[19];
+extern const lmmp_bitset_t r35711_mask_map[19];
 
 /**
  * @brief 校验是否能被3,5,7,11整除，能够整除则返回1，否则返回0
  */
-static inline int trial_div35711(uint64_t n) {
+static inline int trial_div35711(ulong n) {
 #define MOD 1155
-    uint32_t rem = n % MOD;
-    uint32_t idx = rem / 64;
-    uint32_t bit = rem % 64;
-    return (rem_mask_map[idx] >> bit) & 1ULL;
+    uint rem = n % MOD;
+    uint idx = rem / LMMP_BITSET_BITS;
+    uint bit = rem % LMMP_BITSET_BITS;
+    return (r35711_mask_map[idx] >> bit) & 1ULL;
 #undef MOD
 }
 
