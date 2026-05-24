@@ -103,7 +103,8 @@ typedef struct {
  *          同时，为保证内存不泄露，在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对堆
  *          栈分配器进行检查。若此时堆栈分配计数器不为 0，则会触发lmmp_abort函数，
  *          并输出相应的错误信息。
- * @note 自行保证分配器和释放器相匹配。
+ * @note 堆分配器是线程局部的，因此，创建新线程时，如有需要，请自行设置新的堆分配器。
+ *       同时也请自行保证分配器和释放器相匹配。
  */
 LAMMP_API void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap);
 
@@ -149,11 +150,12 @@ typedef enum {
 typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* func, int line);
 
 /**
- * @brief 设置 LAMMP 全局退出函数
+ * @brief 设置 LAMMP 全局退出函数（所有线程均生效）
  * @param func 退出函数指针，可以为NULL
- * @return 返回之前的退出函数指针，若原指针为NULL，则返回NULL。
  * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
  *          本库的开发者不对 func 函数的调用产生的影响做任何保证。
+ * @note 若 func 为 NULL，则代表使用默认的退出机制。同时，此函数指针是全局的，所有线程共享。
+ * @return 返回之前的退出函数指针，若原指针为NULL，则返回NULL。
  */
 LAMMP_API lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
 
@@ -409,6 +411,7 @@ LAMMP_API void lmmp_global_init(void);
  * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
  * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
  *       此函数可重入，多次调用不会导致重复释放。如需要再次使用，请重新调用 lmmp_global_init 初始化。
+ *       部分惰性初始化的资源将在再次首次使用时再次初始化，调用此函数可能导致部分缓存失效，导致性能下降。
  * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
  *          未调用此函数结束线程可能导致内存泄漏。
  */

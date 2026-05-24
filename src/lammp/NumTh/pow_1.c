@@ -194,7 +194,7 @@ static mp_size_t lmmp_14pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong exp) {
     return rn;
 }
 
-mp_size_t lmmp_1_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
+mp_size_t lmmp_u4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     switch (base) {
         case 1:
             return lmmp_1pow_1_(dst);
@@ -241,7 +241,7 @@ mp_size_t lmmp_1_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
     tab[i + 5] = tab[i + 4] * base; \
     tab[i + 6] = tab[i + 5] * base
 
-mp_size_t lmmp_2_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
+mp_size_t lmmp_u8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
     lmmp_param_assert(base <= MP_UCHAR_MAX);
     TEMP_DECL;
@@ -275,7 +275,7 @@ mp_size_t lmmp_2_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
     return rn;
 }
 
-mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
+mp_size_t lmmp_u16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
     lmmp_param_assert(base <= MP_USHORT_MAX);
     TEMP_DECL;
@@ -334,7 +334,7 @@ mp_size_t lmmp_4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
     rn += b##i##n;                                      \
     rn -= (dst[rn - 1] == 0) ? 1 : 0;
 
-mp_size_t lmmp_8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
+mp_size_t lmmp_u32_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
     lmmp_param_assert(base <= MP_UINT_MAX);
     TEMP_DECL;
@@ -417,7 +417,7 @@ mp_size_t lmmp_8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp
 #undef b4n
 }
 
-mp_size_t lmmp_16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
+mp_size_t lmmp_u64_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base > MP_UINT_MAX);
     TEMP_DECL;
 
@@ -505,18 +505,18 @@ mp_size_t lmmp_16_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong ex
 /*
  * base ^ exp
  *
- * - base ≤ 15      → 4-bit   lmmp_1_pow_1_
- * - base ≤ 255     → 8-bit   lmmp_2_pow_1_
- * - base ≤ 65535   → 16-bit  lmmp_4_pow_1_
- * - base ≤ 2^32-1  → 32-bit  lmmp_8_pow_1_
- * - base > 2^32    → 64-bit  lmmp_16_pow_1_
+ * - base <= 15      : 4-bit   lmmp_u4_pow_1_
+ * - base <= 255     : 8-bit   lmmp_u8_pow_1_
+ * - base <= 65535   : 16-bit  lmmp_u16_pow_1_
+ * - base <= 2^32-1  : 32-bit  lmmp_u32_pow_1_
+ * - base <= 2^64-1  : 64-bit  lmmp_u64_pow_1_
  */
 
 mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong exp) {
     lmmp_param_assert(base > 1);
     lmmp_param_assert(exp > 0);
     if (base <= (mp_limb_t)0xf) {
-        return lmmp_1_pow_1_(dst, rn, base, exp);
+        return lmmp_u4_pow_1_(dst, rn, base, exp);
     } else {
         int tz = lmmp_tailing_zeros_(base);
         base >>= tz;
@@ -525,15 +525,15 @@ mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong e
 
         lmmp_zero(dst, shw);
         if (base <= (mp_limb_t)0xf)
-            rn = lmmp_1_pow_1_(dst + shw, rn - shw, base, exp);
+            rn = lmmp_u4_pow_1_(dst + shw, rn - shw, base, exp);
         else if (base <= (mp_limb_t)MP_UCHAR_MAX)
-            rn = lmmp_2_pow_1_(dst + shw, rn - shw, base, exp);
+            rn = lmmp_u8_pow_1_(dst + shw, rn - shw, base, exp);
         else if (base <= (mp_limb_t)MP_USHORT_MAX)
-            rn = lmmp_4_pow_1_(dst + shw, rn - shw, base, exp);
+            rn = lmmp_u16_pow_1_(dst + shw, rn - shw, base, exp);
         else if (base <= (mp_limb_t)MP_UINT_MAX)
-            rn = lmmp_8_pow_1_(dst + shw, rn - shw, base, exp);
+            rn = lmmp_u32_pow_1_(dst + shw, rn - shw, base, exp);
         else
-            rn = lmmp_16_pow_1_(dst + shw, rn - shw, base, exp);
+            rn = lmmp_u64_pow_1_(dst + shw, rn - shw, base, exp);
         if (shl) {
             dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
             rn += shw + 1;
