@@ -544,12 +544,12 @@ LAMMP_API mp_size_t lmmp_fft_next_size_(mp_size_t n);
 /**
  * @brief 费马数模乘法 [dst,rn+1]=[numa,na]*[numb,nb] mod B^rn+1
  * @param dst 输出结果缓冲区，长度至少为 rn+1
- * @param rn 模运算的阶数参数
+ * @param rn 模运算的阶数参数，rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn
+ * @warning 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn, rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -557,12 +557,12 @@ LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_siz
 /**
  * @brief 梅森数模乘法 [dst,rn] = [numa,na]*[numb,nb] mod B^rn-1
  * @param dst 输出结果缓冲区，长度至少为 rn
- * @param rn 模运算的阶数参数
+ * @param rn 模运算的阶数参数，rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn
+ * @warning 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn, rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
  * @return 无返回值，结果存储在dst中，
  */
 LAMMP_API void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
