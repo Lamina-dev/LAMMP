@@ -155,17 +155,29 @@ void lmmp_mul_toom42_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
 #undef a13
 }
 
+typedef struct {
+    mp_srcptr restrict numb;
+    mp_size_t n;
+    mp_size_t s;
+    mp_size_t t;
+    mp_ptr restrict _bp1;
+    mp_ptr restrict _bm1;
+    mp_ptr restrict tp;
+} toom42_cache_t;
+
 static int lmmp_mul_toom42_cache_init_(
     mp_ptr    restrict  dst,
     mp_srcptr restrict numa,
-    mp_srcptr restrict numb,
-    mp_size_t             n,
-    mp_size_t             s,
-    mp_size_t             t,
-    mp_ptr    restrict _bp1,
-    mp_ptr    restrict _bm1,
-    mp_ptr    restrict   tp
+    toom42_cache_t*   cache
 ) {
+#define numb (cache->numb)
+#define n (cache->n)
+#define s (cache->s)
+#define t (cache->t)
+#define _bp1 (cache->_bp1)
+#define _bm1 (cache->_bm1)
+#define tp (cache->tp)
+
     int vm1_neg, flag = 0;
     mp_limb_t cy, vinf0, am1h;
 
@@ -279,20 +291,30 @@ static int lmmp_mul_toom42_cache_init_(
 #undef ap2
 #undef bp2
 #undef a13
+
+#undef numb
+#undef n
+#undef s
+#undef t
+#undef _bp1
+#undef _bm1
+#undef tp
 }
 
 static void lmmp_mul_toom42_cache_(
-    mp_ptr    restrict  dst,
-    mp_srcptr restrict numa,
-    mp_srcptr restrict numb,
-    mp_size_t             n,
-    mp_size_t             s,
-    mp_size_t             t,
-    mp_srcptr restrict _bp1,
-    mp_srcptr restrict _bm1,
-    mp_ptr    restrict   tp,
-    int                flag
+    mp_ptr    restrict      dst,
+    mp_srcptr restrict     numa,
+    const toom42_cache_t* cache,
+    int                    flag
 ) {
+#define numb (cache->numb)
+#define n (cache->n)
+#define s (cache->s)
+#define t (cache->t)
+#define _bp1 (cache->_bp1)
+#define _bm1 (cache->_bm1)
+#define tp (cache->tp)
+
     int vm1_neg;
     mp_limb_t cy, vinf0, am1h;
 
@@ -367,25 +389,38 @@ static void lmmp_mul_toom42_cache_(
     lmmp_mul_n_(v0, a0, b0, n);
 
     lmmp_toom_interp5_(dst, v2, vm1, n, s + t, vm1_neg, vinf0);
+
+#undef numb
+#undef n
+#undef s
+#undef t
+#undef _bp1
+#undef _bm1
+#undef tp
 }
 
 void lmmp_mul_toom42_unbalance_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_srcptr restrict numb, mp_size_t nb) {
     lmmp_param_assert(na >= 3 * nb);
     lmmp_param_assert(nb > 20);
-
     TEMP_S_DECL;
     mp_limb_t* restrict ws = SALLOC_TYPE(nb, mp_limb_t);
-    mp_size_t n = (2 * nb + 3) >> 2, s = 2 * nb - 3 * n, t = nb - n;
-    mp_ptr restrict tp = SALLOC_TYPE(4 * n + 4, mp_limb_t);
-    mp_ptr restrict _bp1 = SALLOC_TYPE(2 * n + 1, mp_limb_t);
-    mp_ptr restrict _bm1 = _bp1 + n + 1;
-    int flag = lmmp_mul_toom42_cache_init_(dst, numa, numb, n, s, t, _bp1, _bm1, tp);
+
+    toom42_cache_t cache;
+    cache.numb = numb;
+    cache.n = (2 * nb + 3) >> 2;
+    cache.s = 2 * nb - 3 * cache.n;
+    cache.t = nb - cache.n;
+    cache.tp = SALLOC_TYPE(4 * cache.n + 4, mp_limb_t);
+    cache._bp1 = SALLOC_TYPE(2 * cache.n + 1, mp_limb_t);
+    cache._bm1 = cache._bp1 + cache.n + 1;
+    
+    int flag = lmmp_mul_toom42_cache_init_(dst, numa, &cache);
     dst += 2 * nb;
     numa += 2 * nb;
     na -= 2 * nb;
     lmmp_copy(ws, dst, nb);
     while (2 * na >= 5 * nb) {
-        lmmp_mul_toom42_cache_(dst, numa, numb, n, s, t, _bp1, _bm1, tp, flag);
+        lmmp_mul_toom42_cache_(dst, numa, &cache, flag);
         if (lmmp_add_n_(dst, dst, ws, nb))
             lmmp_inc(dst + nb);
         dst += 2 * nb;
