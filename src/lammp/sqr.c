@@ -7,7 +7,7 @@
 #include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/lmmpn.h"
 
-void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+void lmmp_sqr_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     if (na < MUL_TOOM22_THRESHOLD)
         lmmp_sqr_basecase_(dst, numa, na);
     else if (na < MUL_TOOM33_THRESHOLD)

@@ -88,7 +88,7 @@ static inline int __lmmp_tailing_zeros_(mp_limb_t x) {
 #endif
 }
 
-static inline void __lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+static inline void __lmmp_mul_n_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_srcptr restrict numb, mp_size_t n) {
     if (n < MUL_TOOM22_THRESHOLD)
         lmmp_mul_basecase_(dst, numa, n, numb, n);
     else if (n < MUL_TOOM33_THRESHOLD)
@@ -101,7 +101,7 @@ static inline void __lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_
         lmmp_mul_fft_(dst, numa, n, numb, n);
 }
 
-static inline void __lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+static inline void __lmmp_sqr_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     if (na < MUL_TOOM22_THRESHOLD)
         lmmp_sqr_basecase_(dst, numa, na);
     else if (na < MUL_TOOM33_THRESHOLD)
