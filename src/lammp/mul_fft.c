@@ -4,9 +4,11 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/inlines.h"
 #include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
+
 
 // ((mp_size_t)3 << (2 * (n) - 5)) + 1 是预计算的阈值，n是对应的k值
 #define _FFT_TABLE_ENTRY(n) {((mp_size_t)3 << (2 * (n) - 5)) + 1, (n)}
