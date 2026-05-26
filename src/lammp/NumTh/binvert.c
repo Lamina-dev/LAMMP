@@ -4,10 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/numth.h"
-#include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
 
 
 static inline void binvert_mulhi_(mp_ptr dst, mp_srcptr xp, mp_srcptr ap, mp_size_t n, mp_ptr tp) {

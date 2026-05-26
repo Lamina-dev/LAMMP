@@ -109,6 +109,9 @@
 // 幂运算中，底数长度大于此值可能使用win2算法
 #define POW_WIN2_N_THRESHOLD 400
 
+// 因子累乘中，因子数量低于此阈值则使用朴素连乘
+#define FACTORS_MUL_N_THRESHOLD 30
+
 // 排列数计算中，结果长度小于此阈值的将使用累乘
 #define PERMUTATION_USHORT_MUL_THRESHOLD 1120
 
@@ -124,7 +127,7 @@
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 30
 // 元素累乘中，低于此长度的累乘将使用朴素算法
-#define ELEM_MUL_BASECASE_THRESHOLD 20
+#define ELEM_MUL_BASECASE_THRESHOLD 25
 
 // binvert计算中，使用梅森乘法计算高位的阈值
 #define BINVERT_MULHI_MERSENNE_THRESHOLD 477

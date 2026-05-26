@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
@@ -42,7 +43,7 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
 mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict fac, uint nfactors) {
     lmmp_param_assert(dst != NULL && fac != NULL);
     lmmp_param_assert(rn > 0 && nfactors > 0);
-    if (nfactors <= 20) {
+    if (nfactors <= FACTORS_MUL_N_THRESHOLD) {
         // 绝大多数情况下，大的质因数的指数都很小，所以这里只需要考虑小的质因数。
         // 且随着递归的进行，进入这一步的质因数通常都很小。几乎不可能触发debug_assert
         dst[0] = 1;
