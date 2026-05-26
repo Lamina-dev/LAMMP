@@ -9,6 +9,7 @@
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/longlong.h"
 
+
 #define mul_1(dst, rn, v)                   \
     dst[rn] = lmmp_mul_1_(dst, dst, rn, v); \
     ++rn;                                   \
@@ -230,19 +231,24 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r
 
 mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r) {
     lmmp_param_assert(n >= r);
+    if (r < 10) {
+        dst[0] = 1;
+        rn = 1;
+        for (ulong i = n - r + 1; i <= n; ++i) {
+            mul_1(dst, rn, i);
+        }
+        return rn;
+    }
     TEMP_DECL;
-    ulongp restrict limbs = TALLOC_TYPE(r + 1, ulong);
+    ulongp restrict limbs = TALLOC_TYPE(r, ulong);
     mp_size_t limbn = 0;
-    ulong t, v, m = 1;
+    ulong v;
     mp_bitcnt_t cnt;
-    for (ulong i = 1; i <= r; ++i) {
-        t = n - r + i;
+    for (ulong t = n - r + 1; t <= n; ++t) {
         ctz_shl(v, t, cnt);
         if (v != 1)
             limbs[limbn++] = v;
     }
-    if (m != 1)
-        limbs[limbn++] = m;
 
     mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
     // 这里不能直接乘入dst，因为dst的大小可能小于limbn，导致溢出
