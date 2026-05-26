@@ -234,8 +234,13 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
     if (r < 10) {
         dst[0] = 1;
         rn = 1;
+        ulong v;
+        mp_bitcnt_t cnt;
         for (ulong i = n - r + 1; i <= n; ++i) {
-            mul_1(dst, rn, i);
+            ctz_shl(v, i, cnt);
+            if (v != 1) {
+                mul_1(dst, rn, v);
+            }
         }
         return rn;
     }

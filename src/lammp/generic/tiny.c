@@ -18,10 +18,18 @@ int lmmp_limb_bits_(mp_limb_t x) {
 }
 
 int lmmp_limb_popcnt_(mp_limb_t x) {
-#ifdef __GNUC__
-  return __builtin_popcountll(x);
-#elif _MSC_VER
-  return (int)__popcnt64(x);
+#if defined(__GNUC__) || defined(__clang__)
+    mp_limb_t count;
+#if defined(__aarch64__)
+    __asm__ volatile("cnt %0, %1" : "=r"(count) : "r"(x));
+#elif defined(__x86_64__)
+    __asm__ volatile("popcnt %1, %0" : "=r"(count) : "r"(x) : "cc");
+#else
+    count = __builtin_popcountll(x);
+#endif
+    return count;
+#elif defined(_MSC_VER)
+    return (int)__popcnt64(x);
 #else
     int k = 0;
     while (x) {
@@ -36,7 +44,7 @@ int lmmp_leading_zeros_(mp_limb_t x) {
     if (x == 0) return 64;
 #ifdef __GNUC__
     return __builtin_clzll(x);
-#elif _MSC_VER
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
     unsigned long index;
     _BitScanReverse64(&index, x);  
     return 63 - (int)index;
@@ -48,6 +56,7 @@ int lmmp_leading_zeros_(mp_limb_t x) {
     if (x <= 0x0FFFFFFFFFFFFFFF) { n += 4;  x <<= 4; }
     if (x <= 0x3FFFFFFFFFFFFFFF) { n += 2;  x <<= 2; }
     if (x <= 0x7FFFFFFFFFFFFFFF) { n += 1;  x <<= 1; }
+    return n;
 #endif
 }
 
@@ -55,7 +64,7 @@ int lmmp_tailing_zeros_(mp_limb_t x) {
     if (x == 0) return 64;
 #ifdef __GNUC__
     return __builtin_ctzll(x);
-#elif _MSC_VER
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
     unsigned long index;
     _BitScanForward64(&index, x);
     return (int)index;
@@ -67,6 +76,7 @@ int lmmp_tailing_zeros_(mp_limb_t x) {
     if ((x & 0x000000000000000F) == 0) { n += 4;  x >>= 4; }
     if ((x & 0x0000000000000003) == 0) { n += 2;  x >>= 2; }
     if ((x & 0x0000000000000001) == 0) { n += 1;  x >>= 1; }
+    return n;
 #endif
 }
 
