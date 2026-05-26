@@ -88,6 +88,44 @@ static inline int __lmmp_tailing_zeros_(mp_limb_t x) {
 #endif
 }
 
+static inline void __lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr restrict dst) {
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
+    __uint128_t prod = (__uint128_t)a * b;
+    dst[0] = (mp_limb_t)prod;
+    dst[1] = (mp_limb_t)(prod >> 64);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    dst[0] = _umul128(a, b, dst + 1);
+#else
+    uint64_t ah = a >> 32, bh = b >> 32;
+    a = (uint32_t)a, b = (uint32_t)b;
+    uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
+    r3 += (r1 >> 32) + (r2 >> 32);
+    r1 = (uint32_t)r1, r2 = (uint32_t)r2;
+    r1 += r2;
+    r1 += (r0 >> 32);
+    dst[1] = r3 + (r1 >> 32);
+    dst[0] = (r1 << 32) | (uint32_t)r0;
+#endif
+}
+
+static inline mp_limb_t __lmmp_mulh_(mp_limb_t a, mp_limb_t b) {
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__SIZEOF_INT128__)
+    __uint128_t t = (__uint128_t)a * (__uint128_t)b;
+    return (mp_limb_t)(t >> 64);
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+    return __umulh(a, b);
+#else
+    uint64_t ah = a >> 32, bh = b >> 32;
+    a = (uint32_t)a, b = (uint32_t)b;
+    uint64_t r0 = a * b, r1 = a * bh, r2 = ah * b, r3 = ah * bh;
+    r3 += (r1 >> 32) + (r2 >> 32);
+    r1 = (uint32_t)r1, r2 = (uint32_t)r2;
+    r1 += r2;
+    r1 += (r0 >> 32);
+    return r3 + (r1 >> 32);
+#endif
+}
+
 static inline void __lmmp_mul_n_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_srcptr restrict numb, mp_size_t n) {
     if (n < MUL_TOOM22_THRESHOLD)
         lmmp_mul_basecase_(dst, numa, n, numb, n);
@@ -118,6 +156,8 @@ static inline void __lmmp_sqr_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_
 #define lmmp_tailing_zeros_ __lmmp_tailing_zeros_
 #define lmmp_limb_bits_ __lmmp_limb_bits_
 #define lmmp_limb_popcnt_ __lmmp_limb_popcnt_
+#define lmmp_mullh_ __lmmp_mullh_
+#define lmmp_mulh_ __lmmp_mulh_
 #define lmmp_sqr_ __lmmp_sqr_
 #define lmmp_mul_n_ __lmmp_mul_n_
 
