@@ -20,15 +20,13 @@ int lmmp_limb_bits_(mp_limb_t x) {
 int lmmp_limb_popcnt_(mp_limb_t x) {
 #if defined(__GNUC__) || defined(__clang__)
     mp_limb_t count;
-#if defined(__aarch64__)
-    __asm__ volatile("cnt %0, %1" : "=r"(count) : "r"(x));
-#elif defined(__x86_64__)
+#if defined(__x86_64__) && defined(USE_ASM)
     __asm__ volatile("popcnt %1, %0" : "=r"(count) : "r"(x) : "cc");
 #else
     count = __builtin_popcountll(x);
 #endif
     return count;
-#elif defined(_MSC_VER)
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
     return (int)__popcnt64(x);
 #else
     int k = 0;
