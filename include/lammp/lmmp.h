@@ -96,12 +96,12 @@ typedef struct {
 
 /**
  * @brief 设置 LAMMP 全局堆内存分配函数
- * @param heap 新的堆内存分配器，可以为NULL，表示使用默认的 malloc, free, realloc
+ * @param heap 新的堆内存分配器，可以为NULL，此时会直接返回，而不进行任何操作。
  * @warning 由于所有共享内存都采用堆内存分配。因此，传入新的堆分配器将会首先调用
  *          lmmp_global_deinit 函数，释放所有共享内存，以保证老旧的堆资源被释放。
  *          然后将会自动调用 lmmp_global_init 函数，重新分配所有线程局部内存。
- *          同时，为保证内存不泄露，在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对堆
- *          栈分配器进行检查。若此时堆栈分配计数器不为 0，则会触发lmmp_abort函数，
+ *          同时，为保证内存不泄露，将会对堆计数器和栈顶以及缓冲池顶进行检查。
+ *          若此时堆栈分配计数器不为 0，或当前栈帧不在栈底，都会触发lmmp_abort函数，
  *          并输出相应的错误信息。
  * @note 堆分配器是线程局部的，因此，创建新线程时，如有需要，请自行设置新的堆分配器。
  *       同时也请自行保证分配器和释放器相匹配。
@@ -109,25 +109,26 @@ typedef struct {
 LAMMP_API void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap);
 
 /**
- * @brief LAMMP 全局栈重置函数（通常不需要手动调用）
- * @param size 新的默认栈大小，单位为字节（不建议设置少于 256KB 的栈，少于此值可能导致栈溢出）
+ * @brief LAMMP 全局栈释放函数（通常不需要手动调用）
  * @warning 请注意调用此函数后，访问之前的分配的栈空间将会导致未定义行为。在定义了
- *          LAMMP_DEBUG_MEMORY_LEAK 宏时，释放默认栈时，会检查默认栈是否为空，
- *          若默认栈不为空，则会触发lmmp_abort函数。栈为空时，或者无法确定栈是否初始化，
- *          均可以调用此函数，如果设置的大小比此前的大小小，则会直接重置栈顶，否则，会重新分
- *          配一块新的栈内存。同时，为保证内存不泄露，请自行确保调用此函数时，栈为空。
- *          在开启 LAMMP_DEBUG_MEMORY_LEAK 宏时，将会对栈进行检查。若此时栈不为空，
+ *          LAMMP_DEBUG_MEMORY_LEAK 宏时，会检查默认栈是否为空，
  *          则会触发lmmp_abort函数。
- * @note 当 size 为 0 时，将会释放栈，如果此后再使用栈内存。
+ * @note 如果此后再使用栈内存，请调用 lmmp_stack_init 函数，以重置栈空间。
+ * @return 返回0表示成功释放，返回-1表示已经释放（并非错误）。
  */
-LAMMP_API void lmmp_stack_reset(size_t size);
+LAMMP_API int lmmp_stack_deinit(void);
 
 /**
  * @brief LAMMP 全局栈初始化函数（通常不需要手动调用）
- * @note 按照默认的栈大小（320kb），对栈进行初始化，可多次重入。
- *       lmmp_global_init 函数会自动调用此函数，无需手动调用。
+ * @note 初始化默认栈，并分配大小为size的额外内存池。如果已经初始化，
+ *       则会直接返回-1，表示已经初始化（并非错误），且不进行任何其他操作。
+ *       lmmp_global_init 函数会自动调用此函数，分配的额外缓冲池大小为 LAMMP_POOL_SIZE 的大小
+ *       （默认为512kb），无需手动调用。
+ *       如果你想手动设置缓冲池的大小，可以先调用 lmmp_stack_deinit 函数，再调用此函数，将 POOL_SIZE 
+ *       设置为你想要的值。同时你也可以禁用缓冲池（即size为0），此时不会分配额外缓冲池。
+ * @return 返回0表示成功初始化，返回-1表示已经初始化（并非错误）。
  */
-LAMMP_API void lmmp_stack_init(void);
+LAMMP_API int lmmp_stack_init(size_t size);
 
 typedef enum {
     LAMMP_ERROR_ASSERT_FAILURE = 1,
@@ -170,34 +171,28 @@ LAMMP_API lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *             其通常代表不可能发生的计算错误，可能表明程序执行此处时必须正确的输入错误。比如预期无进位的加法产生了进位。
  *             此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。
  *
- *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出，其通常表明预期之外的错误，
+ *        2. DEBUG_ASSERT_FAILURE （枚举值为2）为lmmp_debug_assert触发的退出。其通常表明预期之外的错误，
  *             这通常是调用者的UB，如无UB的情况下触发此错误；也可能是LAMMP内部的逻辑错误，开发者期待的输入错误，
  *             在该逻辑处仅简单考虑了某些情况。如有此类错误，可以报告给开发者。此类型只会在定义了 
  *             LAMMP_DEBUG_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *
- *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出，其通常表明调用者传入了无效的参数，
+ *        3. PARAM_ASSERT_FAILURE （枚举值为3）为参数检查失败导致的退出。其通常表明调用者传入了无效的参数，
  *             导致函数的行为不符合预期。此类错误不可接受，会导致计算无法继续进行，导致程序崩溃。此类型的错误只有在
  *             定义了 LAMMP_DEBUG_PARAM_ASSERT_CHECK 宏为 1 的情况下才会触发。
  *
- *        4. MEMORY_ALLOC_FAILURE （枚举值为4）为内存分配失败退出，这可能有两种情况：一种情况为分配了堆内存不足，
- *             导致程序崩溃；另一种情况为栈分配器的栈溢出（栈空间不足或其他UB），其中，情况一是会永远进行的，而情况二
- *             只有在定义了 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 的情况下才会触发。
+ *        4. MEMORY_ALLOC_FAILURE （枚举值为4）为内存分配失败退出。在使用堆分配器时，申请内存失败，导致触发此错误。
+ *             此类型错误不受明确的宏调控，Realse模式下，会保留必要的触发场景，部分场景下，在一些检查宏定义时，可能会额外触发此错误。
  *
- *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误，此错误有两种触发可能，一种为堆内存分配释放时，头部信息被损坏
- *             可能源于传入错误的指针，或缓冲区溢出导致此头部损坏。另一种情况为类似的，由栈分配器分配的内存释放时，头部信息损坏
- *             或指针不在栈的范围内，导致释放错误，如不是传入错误指针，则可能为栈分配的前一次内存缓冲区溢出，导致此内存释放时，
- *             头部信息损坏，导致释放无法进行。此类错误错误触发情况较为复杂，LAMMP_DEBUG_MEMORY_CHECK 宏为 1 时，两种情况都
- *             有可能发生，仅定义 LAMMP_DEBUG_STACK_OVERFLOW_CHECK 宏为 1 时，此错误仅可能由栈分配器触发。
+ *        5. MEMORY_FREE_FAILURE （枚举值为5）为内存释放错误。当释放堆内存时可能触发，原因通常为头部信息被损坏，极有可能
+ *             源于传入错误的指针，又或者缓冲区溢出导致此头部损坏。LAMMP_DEBUG_MEMORY_CHECK 宏为 1 时，才可能触发。
  *
- *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出，通常表明未按规定使用空间。此类型的错误在堆栈分配器中，
- *             均可能触发，但由于栈分配器的特殊性，可能部分越界访问可能被判定为栈溢出，或内存释放错误。具体可尝试查看错误信息。
- *             此类型只会在定义了 LAMMP_DEBUG_MEMORY_CHECK 宏为 1 的情况下才会触发，Release 模式下通常为 0 。
+ *        6. OUT_OF_BOUNDS （枚举值为6）为数组越界访问导致的退出。通常表明未按规定使用空间。此类型的错误在堆分配器中，当释放
+ *             堆内存时，检测到数组尾部魔数不匹配，导致此错误。LAMMP_DEBUG_MEMORY_CHECK 宏为 1 时，才可能触发。
  *
- *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出，有两种情况，一种情况为堆内存计数器不为0，另一种情况为当前栈帧
- *             不在栈底。此类型的错误需定义 LAMMP_DEBUG_MEMORY_MEMORY_LEAK 宏为 1，才会触发。通常情况下，此错误需要手动调用
- *             lmmp_leak_tracker宏进行检查。但在调用堆分配器重置时，将会显式检查此时的堆计数器是否为0；在进行栈重置时，会显式检
- *             查栈是否为空，若不满足，触发此错误。特别注意，当手动调用检查宏时，在某些情况下，可能会进行一些全局堆资源的初始化，
- *             但未释放，如想正确计数，请先调用 lmmp_global_deinit 进行全局共享的堆资源的安全释放。
+ *        7. MEMORY_LEAK （枚举值为7）为内存泄漏导致的退出。在检查点处，堆内存计数器不为0，或者当前栈帧不在栈底，又或者缓冲池
+ *             定不在缓冲池底，都会触发此错误。触发原因可能为，在调用堆分配器重置函数时，显式检查到此时的堆计数器不为0或者栈帧
+ *             以及缓冲池不为底部。又或者手动调用 lmmp_leak_tracker 宏来进行检查，检查到了相同的情况。需注意，手动调用此宏时，
+ *             请先调用 lmmp_global_deinit 进行全局共享的堆资源的安全释放（因为部分全局共享资源也会被计数）。
  *
  *        8. UNEXPECTED_ERROR （枚举值为8）为其他未知错误导致的退出。
  *
@@ -216,7 +211,7 @@ typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
 typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
 typedef size_t mp_bitcnt_t;          // 表示bit数量的无符号整数类型
 
-#define LAMMP_MAX_ALIGN 16  // 最大对齐单位
+#define LAMMP_MAX_ALIGN 16  // 最大对齐单位（字节）
 
 #define LIMB_BITS 64
 #define LIMB_BYTES 8
@@ -314,32 +309,6 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
 #define lmmp_leak_tracker lmmp_leak_tracker(__func__, __LINE__)
 #else
 #define lmmp_leak_tracker ((void)0)
-#endif
-
-#if LAMMP_DEBUG_MEMORY_CHECK == 1
-LAMMP_API void* lmmp_stack_alloc(size_t size, const char* func, int line);
-#define lmmp_stack_alloc(size) lmmp_stack_alloc(size, __func__, __LINE__)
-#else
-/**
- * @brief 栈内存分配函数（使用stack_get_top和stack_set_top）
- * @param size 要分配的内存字节数
- * @warning 请严格按照分配顺序的逆序释放内存，否则会导致未定义行为或导致栈溢出触发lmmp_abort
- *          且严禁用于分配持久内存，如全局变量等。
- * @return 成功返回指向分配内存的指针，栈溢出时，会触发lmmp_abort
- */
-LAMMP_API void* lmmp_stack_alloc(size_t size);
-#endif
-
-#if LAMMP_DEBUG_MEMORY_CHECK == 1
-LAMMP_API void lmmp_stack_free(void* ptr, const char* func, int line);
-#define lmmp_stack_free(ptr) lmmp_stack_free(ptr, __func__, __LINE__)
-#else
-/**
- * @brief 栈内存释放函数（使用stack_get_top和stack_set_top）
- * @param ptr 要释放的内存指针
- * @warning 请严格按照分配顺序的逆序释放内存（后分配者先释放）
- */
-LAMMP_API void lmmp_stack_free(void* ptr);
 #endif
 
 // 计算整数的绝对值
