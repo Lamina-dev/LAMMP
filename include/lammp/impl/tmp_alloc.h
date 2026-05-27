@@ -43,7 +43,7 @@ typedef struct {
 
 static inline void* lmmp_temp_heap_alloc_(lmmp_alloc_marker* pmarker, size_t size) {
     /*
-     * pmarker is a head pointer to a linked list of allocated memory blocks.
+     * pmarker->heap_marker is a head pointer to a linked list of allocated memory blocks.
      * Each allocated block has a header of size HSIZE, which is used to store the
      * next pointer of the block. The actual data starts at (mp_byte_t*)p + offset.
      */
@@ -67,7 +67,7 @@ static inline void* lmmp_temp_heap_alloc_(lmmp_alloc_marker* pmarker, size_t siz
 
 static inline void lmmp_temp_heap_free_(lmmp_alloc_marker* pmarker) {
     /*
-     *  Free all allocated memory blocks in the linked list pointed to by pmarker.
+     *  Free all allocated memory blocks in the linked list pointed to by pmarker->heap_marker.
      */
     while (pmarker->heap_marker) {
         void* next = *(void**)(pmarker->heap_marker);
@@ -78,11 +78,11 @@ static inline void lmmp_temp_heap_free_(lmmp_alloc_marker* pmarker) {
 
 static inline void* lmmp_temp_stack_alloc_(lmmp_alloc_marker* pmarker, size_t size) {
     /*
-     * On the first call, *pmarker is a null pointer.
-     * We will use *pmarker to record the stack frame at this time.
-     * When allocating memory subsequently, we will not modify *pmarker.
+     * On the first call, pmarker->stack_marker is a null pointer.
+     * We will use pmarker->stack_marker to record the stack frame at this time.
+     * When allocating memory subsequently, we will not modify pmarker->stack_marker.
      * Until all stack memory is finally released, we will move to the initial stack position at once,
-     * which is the position recorded by *pmarker.
+     * which is the position recorded by pmarker->stack_marker.
      */
     mp_byte_t* p = lmmp_tmpmem_ctx.stack_top;
     size_t offset = LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
@@ -125,7 +125,7 @@ static inline void* lmmp_temp_pool_alloc_(lmmp_alloc_marker* pmarker, size_t siz
 
 static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
     // pmarker->pool_marker is not NULL
-    size_t freed = (mp_byte_t*)lmmp_tmpmem_ctx.pool_top - (mp_byte_t*)pmarker->pool_marker;
+    size_t freed = (mp_byte_t*)(lmmp_tmpmem_ctx.pool_top) - (mp_byte_t*)(pmarker->pool_marker);
     lmmp_tmpmem_ctx.remain += freed;
     lmmp_tmpmem_ctx.pool_top = pmarker->pool_marker;
 }
