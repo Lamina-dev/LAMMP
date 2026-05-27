@@ -4,10 +4,12 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
 
 mp_size_t lmmp_pow_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict base, mp_size_t n, ulong exp) {
     lmmp_param_assert(n > 0);

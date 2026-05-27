@@ -4,7 +4,21 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/toom_interp.h"
+
+
+#if MUL_TOOM44_THRESHOLD < MUL_FFT_THRESHOLD
+#define lmmp_mul_n_(dst, numa, numb, n)                      \
+    if ((n) < MUL_TOOM22_THRESHOLD)                          \
+        lmmp_mul_basecase_((dst), (numa), (n), (numb), (n)); \
+    else if ((n) < MUL_TOOM33_THRESHOLD)                     \
+        lmmp_mul_toom22_((dst), (numa), (n), (numb), (n));   \
+    else if ((n) < MUL_TOOM44_THRESHOLD)                     \
+        lmmp_mul_toom33_((dst), (numa), (n), (numb), (n));   \
+    else                                                     \
+        lmmp_mul_toom44_((dst), (numa), (n), (numb), (n))
+#endif
 
 /* 
 Evaluate in:
@@ -205,21 +219,36 @@ void lmmp_mul_toom62_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
     TEMP_S_FREE;
 }
 
+typedef struct {
+    mp_srcptr restrict numb;
+    mp_size_t n;
+    mp_size_t s;
+    mp_size_t t;
+    mp_ptr restrict scratch;
+    mp_ptr restrict tmp;
+    mp_ptr restrict bs1;
+    mp_ptr restrict bsm1;
+    mp_ptr restrict bs2;
+    mp_ptr restrict bsm2;
+    mp_ptr restrict bsh;
+} toom62_cache_t;
+
 static enum toom7_flags lmmp_mul_toom62_cache_init_(
-    mp_ptr    restrict     dst,
-    mp_srcptr restrict    numa,
-    mp_srcptr restrict    numb,
-    mp_size_t                n,
-    mp_size_t                s,
-    mp_size_t                t,
-    mp_ptr    restrict scratch,
-    mp_ptr    restrict     tmp,
-    mp_ptr    restrict     bs1,
-    mp_ptr    restrict    bsm1,
-    mp_ptr    restrict     bs2,
-    mp_ptr    restrict    bsm2,
-    mp_ptr    restrict     bsh
+    mp_ptr    restrict       dst,
+    mp_srcptr restrict      numa,
+    toom62_cache_t*        cache
 ) {
+#define numb (cache->numb)
+#define n (cache->n)
+#define s (cache->s)
+#define t (cache->t)
+#define scratch (cache->scratch)
+#define tmp (cache->tmp)
+#define bs1 (cache->bs1)
+#define bsm1 (cache->bsm1)
+#define bs2 (cache->bs2)
+#define bsm2 (cache->bsm2)
+#define bsh (cache->bsh)
 
     mp_limb_t cy;
     mp_ptr restrict as1, asm1, as2, asm2, ash;
@@ -376,24 +405,37 @@ static enum toom7_flags lmmp_mul_toom62_cache_init_(
     lmmp_toom_interp7_(dst, n, (enum toom7_flags)(aflags ^ bflags), vm2, vm1, v2, vh, s + t, scratch_out);
 
     return bflags;
+#undef numb
+#undef n
+#undef s
+#undef t
+#undef scratch
+#undef tmp
+#undef bs1
+#undef bsm1
+#undef bs2
+#undef bsm2
+#undef bsh
 }
 
 static void lmmp_mul_toom62_cache_(
-    mp_ptr    restrict     dst,
-    mp_srcptr restrict    numa,
-    mp_srcptr restrict    numb,
-    mp_size_t                n,
-    mp_size_t                s,
-    mp_size_t                t,
-    mp_ptr    restrict scratch,
-    mp_ptr    restrict     tmp,
-    mp_srcptr restrict     bs1,
-    mp_srcptr restrict    bsm1,
-    mp_srcptr restrict     bs2,
-    mp_srcptr restrict    bsm2,
-    mp_srcptr restrict     bsh,
-    enum toom7_flags bflags
+    mp_ptr    restrict      dst,
+    mp_srcptr restrict     numa,
+    const toom62_cache_t* cache,
+    enum toom7_flags     bflags
 ) {
+#define numb (cache->numb)
+#define n (cache->n)
+#define s (cache->s)
+#define t (cache->t)
+#define scratch (cache->scratch)
+#define tmp (cache->tmp)
+#define bs1 (cache->bs1)
+#define bsm1 (cache->bsm1)
+#define bs2 (cache->bs2)
+#define bsm2 (cache->bsm2)
+#define bsh (cache->bsh)
+
     mp_limb_t cy;
     mp_ptr as1, asm1, as2, asm2, ash;
     enum toom7_flags aflags;
@@ -490,6 +532,18 @@ static void lmmp_mul_toom62_cache_(
         lmmp_mul_(vinf, b1, t, a5, s);
 
     lmmp_toom_interp7_(dst, n, (enum toom7_flags)(aflags ^ bflags), vm2, vm1, v2, vh, s + t, scratch_out);
+
+#undef numb
+#undef n
+#undef s
+#undef t
+#undef scratch
+#undef tmp
+#undef bs1
+#undef bsm1
+#undef bs2
+#undef bsm2
+#undef bsh
 }
 
 void lmmp_mul_toom62_unbalance_(
@@ -501,23 +555,28 @@ void lmmp_mul_toom62_unbalance_(
 ) {
     lmmp_param_assert(na >= 5 * nb);
     TEMP_DECL;
-    mp_size_t n = 1 +  (3 * nb - 1) / (mp_size_t)6, s = 3 * nb - 5 * n, t = nb - n;
     mp_limb_t* restrict ws = SALLOC_TYPE(nb, mp_limb_t);
-    mp_ptr restrict scratch = BALLOC_TYPE(20 * n + 20, mp_limb_t);
-    mp_ptr restrict tmp = scratch + 10 * n + 10;
-    mp_ptr restrict bs1, bsm1, bs2, bsm2, bsh;
-    bs1 = tmp + 5 * n + 5;
-    bsm1 = bs1 + n + 1;
-    bs2 = bsm1 + n;
-    bsm2 = bs2 + n + 1;
-    bsh = bsm2 + n + 1;
-    enum toom7_flags bflags = lmmp_mul_toom62_cache_init_(dst, numa, numb, n, s, t, scratch, tmp, bs1, bsm1, bs2, bsm2, bsh);
+
+    toom62_cache_t cache;
+    cache.numb = numb;
+    cache.n = 1 + (3 * nb - 1) / (mp_size_t)6;
+    cache.s = 3 * nb - 5 * cache.n;
+    cache.t = nb - cache.n;
+    cache.scratch = BALLOC_TYPE(20 * cache.n + 20, mp_limb_t);
+    cache.tmp = cache.scratch + 10 * cache.n + 10;
+    cache.bs1 = cache.tmp + 5 * cache.n + 5;
+    cache.bsm1 = cache.bs1 + cache.n + 1;
+    cache.bs2 = cache.bsm1 + cache.n;
+    cache.bsm2 = cache.bs2 + cache.n + 1;
+    cache.bsh = cache.bsm2 + cache.n + 1;
+    
+    enum toom7_flags bflags = lmmp_mul_toom62_cache_init_(dst, numa, &cache);
     dst += 3 * nb;
     numa += 3 * nb;
     na -= 3 * nb;
     lmmp_copy(ws, dst, nb);
     while (na >= 5 * nb) {
-        lmmp_mul_toom62_cache_(dst, numa, numb, n, s, t, scratch, tmp, bs1, bsm1, bs2, bsm2, bsh, bflags);
+        lmmp_mul_toom62_cache_(dst, numa, &cache, bflags);
         if (lmmp_add_n_(dst, dst, ws, nb))
             lmmp_inc(dst + nb);
         dst += 3 * nb;

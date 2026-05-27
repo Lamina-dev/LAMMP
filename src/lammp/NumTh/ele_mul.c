@@ -7,6 +7,7 @@
 #include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/mparam.h"
 
+
 static inline void swap_num_node(num_node_ptr restrict a, num_node_ptr restrict b) {
     num_node temp = *a;
     *a = *b;

@@ -4,8 +4,18 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
+
+
+#if MUL_TOOM22_THRESHOLD < MUL_TOOM33_THRESHOLD
+#define lmmp_sqr_(dst, numa, n)               \
+    if ((n) < MUL_TOOM22_THRESHOLD)           \
+        lmmp_sqr_basecase_((dst), numa, (n)); \
+    else                                      \
+        lmmp_sqr_toom2_((dst), numa, (n))
+#endif
 
 /*
 Evaluate in: -1, 0, +inf

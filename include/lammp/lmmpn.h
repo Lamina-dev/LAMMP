@@ -100,7 +100,7 @@ LAMMP_API int lmmp_leading_zeros_(mp_limb_t x);
 LAMMP_API int lmmp_tailing_zeros_(mp_limb_t x);
 
 /**
- * @brief 计算两个64位无符号整数相乘的高位结果 (a*b)/2^64
+ * @brief 计算两个64位无符号整数相乘的高位结果 (a*b)/B
  * @param a 第一个64位无符号整数
  * @param b 第二个64位无符号整数
  * @return 乘积的高64位结果
@@ -223,7 +223,7 @@ LAMMP_API mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, 
 LAMMP_API mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * @brief 大数右移操作 [dst,na] = [numa,na] >> shr，dst的高shr位填充0
+ * @brief 大数右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充0
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
@@ -604,8 +604,6 @@ LAMMP_API void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 /**
  * @brief 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
  * @warning n>0, sep(dst,[numa|numb])
- *       特殊情况: n==1时dst<=numa+1是允许的
- *                 n==2时dst<=numa是允许的
  * @param dst 乘积结果输出指针（需要 2*n 的 limb 长度）
  * @param numa 第一个乘数指针
  * @param numb 第二个乘数指针
@@ -616,8 +614,6 @@ LAMMP_API void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t
 /**
  * @brief 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
  * @warning 0<nb<=na, sep(dst,[numa|numb])
- *      特殊情况:  nb==1时dst<=numa+1是允许的
- *                nb==2时dst<=numa是允许的
  * @param dst 乘积结果输出指针（需要 na+nb 的 limb 长度）
  * @param numa 第一个乘数指针（较长的操作数）
  * @param na 第一个操作数的 limb 长度

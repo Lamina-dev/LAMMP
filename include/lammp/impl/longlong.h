@@ -210,7 +210,7 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
 #endif
 }
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
 // cnt = ctz(x)
 // r = x >> cnt
 // assume x is non-zero
@@ -222,7 +222,7 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
         cnt = _bits_;                    \
         (r) = _x_ >> (cnt);              \
     } while (0)
-#else
+#elif defined(__GNUC__) || defined(__clang__)
 // cnt = ctz(x)
 // r = x >> cnt
 // assume x is non-zero
@@ -231,6 +231,21 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
         unsigned long long _x_ = (x); \
         (cnt) = __builtin_ctzll(_x_); \
         (r) = _x_ >> (cnt);           \
+    } while (0)
+#else
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shl(r, x, cnt)       \
+    do {                         \
+        uint64_t _x_ = (x);      \
+        int _i_ = 0;             \
+        while ((_x_ & 1) == 0) { \
+            _i_++;               \
+            _x_ >>= 1;           \
+        }                        \
+        cnt = _i_;               \
+        (r) = _x_;               \
     } while (0)
 #endif
 

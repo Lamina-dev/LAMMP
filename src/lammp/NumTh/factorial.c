@@ -5,6 +5,7 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
@@ -42,7 +43,7 @@ mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
 mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict fac, uint nfactors) {
     lmmp_param_assert(dst != NULL && fac != NULL);
     lmmp_param_assert(rn > 0 && nfactors > 0);
-    if (nfactors <= 20) {
+    if (nfactors <= FACTORS_MUL_N_THRESHOLD) {
         // 绝大多数情况下，大的质因数的指数都很小，所以这里只需要考虑小的质因数。
         // 且随着递归的进行，进入这一步的质因数通常都很小。几乎不可能触发debug_assert
         dst[0] = 1;
@@ -95,7 +96,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict 
         TEMP_DECL;
         mp_size_t new_nfactors = 0;
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
-        mp_limb_t t = 1;
+        ulong t = 1;
         mp_size_t limbn = 0;
         for (mp_size_t i = 0; i < nfactors; ++i) {
             uint f = fac[i].f;
@@ -146,8 +147,12 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict 
         } else {
             lmmp_debug_assert(limbn > 0);
             // 这里不能直接乘入dst，因为dst的大小可能小于limbn，导致溢出
-            rn = lmmp_elem_mul_ulong_(mp + limbn, limbs, limbn, mp + limbn);
-            lmmp_copy(dst, mp, rn);
+            if (rn >= limbn) {
+                rn = lmmp_elem_mul_ulong_(dst, limbs, limbn, mp);
+            } else {
+                rn = lmmp_elem_mul_ulong_(mp, limbs, limbn, mp + limbn);
+                lmmp_copy(dst, mp, rn);
+            }
         }
         TEMP_FREE;
         return rn;
@@ -177,6 +182,7 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     while(cache.is_end == 0) {
         lmmp_prime_cache_next_(&cache);
         for (uint i = 0; i < cache.size; i++) {
+            // 对于阶乘n!，对于所有小于等于n的质数，贡献都至少为1
             count_factors(fac, nfactors++, n, cache.pp[i]);
         }
     }

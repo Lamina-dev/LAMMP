@@ -4,9 +4,11 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
 
 #define mul_b(_i_)                                     \
     if (rsq) {                                         \

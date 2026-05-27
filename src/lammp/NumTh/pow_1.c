@@ -4,10 +4,12 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
 
 static mp_size_t lmmp_1pow_1_(mp_ptr restrict dst) {
     dst[0] = 1;
@@ -200,46 +202,37 @@ mp_size_t lmmp_u4_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong ex
             return lmmp_1pow_1_(dst);
         case 2:
             return lmmp_2pow_1_(dst, rn, exp);
-        case 4:
-            return lmmp_4pow_1_(dst, rn, exp);
-        case 8:
-            return lmmp_8pow_1_(dst, rn, exp);
         case 3:
             return lmmp_3pow_1_(dst, rn, exp);
+        case 4:
+            return lmmp_4pow_1_(dst, rn, exp);
         case 5:
             return lmmp_5pow_1_(dst, rn, exp);
-        case 7:
-            return lmmp_7pow_1_(dst, rn, exp);
-        case 11:
-            return lmmp_11pow_1_(dst, rn, exp);
-        case 13:
-            return lmmp_13pow_1_(dst, rn, exp);
-        case 15:
-            return lmmp_15pow_1_(dst, rn, exp);
         case 6:
             return lmmp_6pow_1_(dst, rn, exp);
+        case 7:
+            return lmmp_7pow_1_(dst, rn, exp);
+        case 8:
+            return lmmp_8pow_1_(dst, rn, exp);
         case 9:
             return lmmp_9pow_1_(dst, rn, exp);
         case 10:
             return lmmp_10pow_1_(dst, rn, exp);
+        case 11:
+            return lmmp_11pow_1_(dst, rn, exp);
         case 12:
             return lmmp_12pow_1_(dst, rn, exp);
+        case 13:
+            return lmmp_13pow_1_(dst, rn, exp);
         case 14:
             return lmmp_14pow_1_(dst, rn, exp);
+        case 15:
+            return lmmp_15pow_1_(dst, rn, exp);
         default:
             lmmp_param_assert(base <= 15 && base >= 1);
             return 0;
     }
 }
-
-#define cal_tab(i)                  \
-    tab[i] = tab[i - 1] * base;     \
-    tab[i + 1] = tab[i] * base;     \
-    tab[i + 2] = tab[i + 1] * base; \
-    tab[i + 3] = tab[i + 2] * base; \
-    tab[i + 4] = tab[i + 3] * base; \
-    tab[i + 5] = tab[i + 4] * base; \
-    tab[i + 6] = tab[i + 5] * base
 
 mp_size_t lmmp_u8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong exp) {
     lmmp_param_assert(base >= 2);
@@ -247,7 +240,13 @@ mp_size_t lmmp_u8_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong ex
     TEMP_DECL;
     mp_limb_t tab[8];
     tab[0] = 1;
-    cal_tab(1);
+    tab[1] = tab[0] * base;
+    tab[2] = tab[1] * base;
+    tab[3] = tab[2] * base;
+    tab[4] = tab[3] * base;
+    tab[5] = tab[4] * base;
+    tab[6] = tab[5] * base;
+    tab[7] = tab[6] * base;
 
     mp_ptr restrict sq = TALLOC_TYPE(rn, mp_limb_t);
     sq[0] = 1;
