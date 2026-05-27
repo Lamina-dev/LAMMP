@@ -275,7 +275,7 @@ mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
             // ASSERT: powers[0] will be never used in lmmp_to_str_divide_
             // i.e. TO_STR_DIVIDE_THRESHOLD >= 3
             int cnt = lmmp_leading_zeros_(p[np - 1]);
-            if (powers[i].norm_cnt = cnt)
+            if ((powers[i].norm_cnt = cnt))
                 lmmp_shl_(p, p, np, cnt);
 
             if (np < DIV_MULINV_L_THRESHOLD) {

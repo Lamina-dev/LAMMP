@@ -96,7 +96,7 @@ void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         if (xp[na] < 2) {  // rem>=0
 
             // rem-=cy*an s.t. rem[na]=0
-            if (cy = xp[na]) {
+            if ((cy = xp[na])) {
                 if (!lmmp_sub_n_(xp, xp, numa - na, na)) {
                     ++cy;
                     lmmp_sub_n_(xp, xp, numa - na, na);

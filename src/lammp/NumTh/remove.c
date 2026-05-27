@@ -77,7 +77,7 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
 
     for (i = 1; i < MAX_EXP; i++) {
         // if qn == 0, means cannot be divided by pd_pow[i - 1]
-        if (qn = try_div_(qp, rp, divp, divn, pd_pow[i - 1], pn_pow[i - 1])) {
+        if ((qn = try_div_(qp, rp, divp, divn, pd_pow[i - 1], pn_pow[i - 1]))) {
             divn = qn;
             LMMP_SWAP(qp, divp, mp_ptr);
 
@@ -96,7 +96,7 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
         }
     }
     for (j = i - 1; j > 0; --j) {
-        if (qn = try_div_(qp, rp, divp, divn, pd_pow[j - 1], pn_pow[j - 1])) {
+        if ((qn = try_div_(qp, rp, divp, divn, pd_pow[j - 1], pn_pow[j - 1]))) {
             divn = qn;
             LMMP_SWAP(qp, divp, mp_ptr);
 

@@ -17,6 +17,7 @@ long long bench_hash(int len, int type) {
         uint64_t h = lmmp_siphash24_(a, len, key);
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        (void(h));
         lmmp_free(a);
         return duration.count();
     } else {
@@ -25,6 +26,7 @@ long long bench_hash(int len, int type) {
         uint64_t h = lmmp_xxhash_(a, len, key);
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
+        (void(h));
         lmmp_free(a);
         return duration.count();
     }
