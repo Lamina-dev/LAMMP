@@ -19,8 +19,11 @@
 #ifndef __LAMMP_MPARAM_H__
 #define __LAMMP_MPARAM_H__
 
-// 默认全局栈大小，单位为字节
-#define LAMMP_DEFAULT_STACK_SIZE 320 * 1024
+// 默认线程局部栈大小（不可变更），单位为字节
+#define LAMMP_DEFAULT_STACK_SIZE (320 * 1024)
+
+// 线程局部内存池大小（可以为0，表示不使用线程局部内存池），单位为字节
+#define LAMMP_POOL_SIZE (512 * 1024)
 
 // 除法阈值：当操作数规模超过此值时，使用分治除法算法
 #define DIV_DIVIDE_THRESHOLD 50
