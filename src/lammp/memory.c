@@ -40,9 +40,10 @@ LAMMP_THREAD_LOCAL lmmp_memory_ctx lmmp_tmpmem_ctx = {
 };
 
 int lmmp_stack_deinit(void) {
-    if (lmmp_tmpmem_ctx.capacity != 0) {
+    if (lmmp_tmpmem_ctx.stack_begin != NULL) {
         heap_free_func(lmmp_tmpmem_ctx.stack_begin);
-        heap_free_func(lmmp_tmpmem_ctx.pool_begin);
+        if (lmmp_tmpmem_ctx.pool_begin != NULL)
+            heap_free_func(lmmp_tmpmem_ctx.pool_begin);
         lmmp_tmpmem_ctx.stack_begin = NULL;
         lmmp_tmpmem_ctx.stack_end = NULL;
         lmmp_tmpmem_ctx.stack_top = NULL;
@@ -57,7 +58,7 @@ int lmmp_stack_deinit(void) {
 }
 
 int lmmp_stack_init(size_t size) {
-    if (lmmp_tmpmem_ctx.capacity != 0) {
+    if (lmmp_tmpmem_ctx.stack_begin != NULL) {
         return -1;
     } else {
         lmmp_tmpmem_ctx.stack_begin = heap_alloc_func(LAMMP_DEFAULT_STACK_SIZE);
@@ -201,7 +202,7 @@ void lmmp_free(void* ptr) {
 #endif
 
 void lmmp_global_init(void) {
-    lmmp_stack_init(0);
+    lmmp_stack_init(LAMMP_POOL_SIZE);
 }
 
 void lmmp_global_deinit(void) {

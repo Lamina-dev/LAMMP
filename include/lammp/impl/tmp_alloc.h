@@ -102,6 +102,7 @@ static inline void* lmmp_temp_stack_alloc_(lmmp_alloc_marker* pmarker, size_t si
 }
 
 static inline void lmmp_temp_stack_free_(lmmp_alloc_marker* pmarker) {
+    // pmarker->stack_marker is not NULL
     lmmp_tmpmem_ctx.stack_top = pmarker->stack_marker;
 }
 
@@ -123,6 +124,9 @@ static inline void* lmmp_temp_pool_alloc_(lmmp_alloc_marker* pmarker, size_t siz
 }
 
 static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
+    // pmarker->pool_marker is not NULL
+    size_t freed = (mp_byte_t*)lmmp_tmpmem_ctx.pool_top - (mp_byte_t*)pmarker->pool_marker;
+    lmmp_tmpmem_ctx.remain += freed;
     lmmp_tmpmem_ctx.pool_top = pmarker->pool_marker;
 }
 
@@ -135,7 +139,7 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
 
 // 栈内存分配：使用lmmp_temp_stack_alloc_在栈上分配n字节内存（小内存）
 #define TEMP_SALLOC(n) lmmp_temp_stack_alloc_(&__lmmp_marker_, (n))
-// 堆内存分配：使用lmmp_temp_heap_alloc_在堆上分配n字节内存（大内存）
+// 缓冲池分配：使用lmmp_temp_pool_alloc_优先在pool上分配n字节内存（大内存）
 #define TEMP_BALLOC(n) lmmp_temp_pool_alloc_(&__lmmp_marker_, (n))
 // 临时内存分配：小内存用栈，大内存用堆
 #define TEMP_TALLOC(n) ((n) <= TEMP_SALLOC_THRESHOLD ? TEMP_SALLOC(n) : TEMP_BALLOC(n))
@@ -157,10 +161,10 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
     } while (0)
 #define TEMP_B_FREE                                 \
     do {                                            \
-        if (__lmmp_marker_.stack_marker != NULL)    \
-            lmmp_temp_stack_free_(&__lmmp_marker_); \
         if (__lmmp_marker_.pool_marker != NULL)     \
             lmmp_temp_pool_free_(&__lmmp_marker_);  \
+        if (__lmmp_marker_.heap_marker != NULL)     \
+            lmmp_temp_heap_free_(&__lmmp_marker_);  \
     } while (0)
 #define TEMP_S_FREE                                 \
     do {                                            \
