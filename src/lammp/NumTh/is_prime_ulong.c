@@ -275,7 +275,7 @@ bool lmmp_is_prime_uint_(uint n) {
         return false;
 }
 
-static bool lmmp_is_prime_notrial_(ulong n) {
+bool lmmp_is_prime_notrial_(ulong n) {
     if (n < 684630005672341) {
         ushort bases[2];
         bases[0] = 2;
@@ -414,6 +414,7 @@ static inline bool trial_div31(ulong n) {
     n -= q * 31;
     return n == 0;
 }
+
 static inline bool trial_div37(ulong n) {
     const _udiv64_t div37 = {.magic = 13461137567301564693ull, .more = 5};
     ulong q = _udiv64by64_q_preinv(n, &div37);

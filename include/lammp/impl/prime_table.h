@@ -18,7 +18,9 @@
 
 #ifndef __LAMMP_PRIME_TABLE_H__
 #define __LAMMP_PRIME_TABLE_H__
+
 #include "../numth.h"
+#include <math.h>
 
 typedef uint64_t lmmp_bitset_t;
 typedef uint64_t* lmmp_bitset_p;
@@ -55,7 +57,47 @@ ushort lmmp_prime_cnt16_(ushort n);
  * @note 不会低估素数数量，可能恰好超过 pi(n)，用以估计素数数组需要的空间
  * @return 素数数量
  */
-ulong lmmp_prime_size_(ulong n);
+static inline ulong lmmp_prime_size_(ulong n) {
+    if (n < PRIME_SHORT_TABLE_N) {
+        return lmmp_prime_cnt16_(n);
+    } else if (n < 95000) {
+        return (ulong)ceil((double)n / (log(n) - 1.095)) + 1;
+    } else if (n < 355991) {
+        return (ulong)ceil((double)n / (log(n) - 1.0975)) + 1;
+    } else if (n < 1332479531) {
+        // Dusart 2000 估计 - π(x)的上界
+        // lmmp_debug_assert(n >= 355991);
+        double x = (double)n;
+        double lnx = log(x);
+        double lnx2 = lnx * lnx;
+        double r = x / lnx * (1.0 + 1.0 / lnx + 2.51 / lnx2);
+        return (ulong)r;
+    }
+    /*
+         Dusart 2010 估计 - π(x)的严格上界
+         from: Dusart (2010) "Estimates of some functions over primes without R.H."(https://arxiv.org/abs/1002.0442)
+         U(x) = x / [lnx
+                     - 1
+                     - 1/lnx
+                     - 3.35/(lnx)^2
+                     - 12.65/(lnx)^3
+                     - 71.7/(lnx)^4
+                     - 466.1275/(lnx)^5
+                     - 3489.8225/(lnx)^6]
+    */
+    // lmmp_debug_assert(n >= 1332479531);
+    double lnx = log(n);
+    double lnx2 = lnx * lnx;
+    double lnx3 = lnx2 * lnx;
+    double lnx4 = lnx3 * lnx;
+    double lnx5 = lnx4 * lnx;
+    double lnx6 = lnx5 * lnx;
+
+    double denom =
+        lnx - 1.0 - 1.0 / lnx - 3.35 / lnx2 - 12.65 / lnx3 - 71.7 / lnx4 - 466.1275 / lnx5 - 3489.8225 / lnx6;
+
+    return (ulong)ceil(n / denom);
+}
 
 /**
  * @brief 初始化全局素数表

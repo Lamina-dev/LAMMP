@@ -240,6 +240,14 @@ LAMMP_API bool lmmp_is_prime_uint_(uint n);
 LAMMP_API bool lmmp_is_prime_ulong_(ulong n);
 
 /**
+ * @brief 判断素数（无试除法）
+ * @param n 待判断的数
+ * @note 不进行试除法过滤，适用于判断已被小素数试除法过滤的数或强伪素数
+ * @return 若 n 为素数，返回 true，否则返回 false
+ */
+LAMMP_API bool lmmp_is_prime_notrial_(ulong n);
+
+/**
  * @brief 计算幂次方需要的limb缓冲区长度 [base,n] ^ exp
  * @param base 底数指针
  * @param n 底数 limb 长度
