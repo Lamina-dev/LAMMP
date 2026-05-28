@@ -8,47 +8,6 @@
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 
-ulong lmmp_prime_size_(ulong n) {
-    if (n < PRIME_SHORT_TABLE_N) {
-        return lmmp_prime_cnt16_(n);
-    } else if (n < 95000) {
-        return (ulong)ceil((double)n / (log(n) - 1.095)) + 1;
-    } else if (n < 355991) {
-        return (ulong)ceil((double)n / (log(n) - 1.0975)) + 1;
-    } else if (n < 1332479531) {
-        // Dusart 2000 估计 - π(x)的上界
-        // lmmp_debug_assert(n >= 355991);
-        double x = (double)n;
-        double lnx = log(x);
-        double lnx2 = lnx * lnx;
-        double r = x / lnx * (1.0 + 1.0 / lnx + 2.51 / lnx2);
-        return (ulong)r;
-    }
-    /*
-         Dusart 2010 估计 - π(x)的严格上界
-         from: Dusart (2010) "Estimates of some functions over primes without R.H."(https://arxiv.org/abs/1002.0442)
-         U(x) = x / [lnx
-                     - 1
-                     - 1/lnx
-                     - 3.35/(lnx²)
-                     - 12.65/(lnx³)
-                     - 71.7/(lnx⁴)
-                     - 466.1275/(lnx⁵)
-                     - 3489.8225/(lnx⁶)]
-    */
-    // lmmp_debug_assert(n >= 1332479531);
-    double lnx = log(n);
-    double lnx2 = lnx * lnx;
-    double lnx3 = lnx2 * lnx;
-    double lnx4 = lnx3 * lnx;
-    double lnx5 = lnx4 * lnx;
-    double lnx6 = lnx5 * lnx;
-
-    double denom =
-        lnx - 1.0 - 1.0 / lnx - 3.35 / lnx2 - 12.65 / lnx3 - 71.7 / lnx4 - 466.1275 / lnx5 - 3489.8225 / lnx6;
-
-    return (ulong)ceil(n / denom);
-}
 
 typedef struct prime_int {
     lmmp_bitset_p restrict m;     // prime 位图指针（1为质数，0为合数）
@@ -72,9 +31,9 @@ void lmmp_prime_int_table_init_(uint n) {
         return;
 
 #define IDX(x) ((x) / 2)
-#define set_not_prime(_i_)                                          \
-    do {                                                            \
-        uint idx = IDX(_i_);                                        \
+#define set_not_prime(_i_)                                                  \
+    do {                                                                    \
+        uint idx = IDX(_i_);                                                \
         G.m[idx / LMMP_BITSET_BITS] &= ~(1ULL << (idx % LMMP_BITSET_BITS)); \
     } while (0)
 
