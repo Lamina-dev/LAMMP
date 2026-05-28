@@ -241,8 +241,9 @@ LAMMP_API bool lmmp_is_prime_ulong_(ulong n);
 
 /**
  * @brief 判断素数（无试除法）
- * @param n 待判断的数
+ * @param n 待判断的数（建议为极有可能为素数的数）
  * @note 不进行试除法过滤，适用于判断已被小素数试除法过滤的数或强伪素数
+ * @warning n>=2
  * @return 若 n 为素数，返回 true，否则返回 false
  */
 LAMMP_API bool lmmp_is_prime_notrial_(ulong n);

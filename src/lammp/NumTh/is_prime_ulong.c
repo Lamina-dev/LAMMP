@@ -276,6 +276,7 @@ bool lmmp_is_prime_uint_(uint n) {
 }
 
 bool lmmp_is_prime_notrial_(ulong n) {
+    lmmp_param_assert(n > 1);
     if (n < 684630005672341) {
         ushort bases[2];
         bases[0] = 2;
