@@ -96,11 +96,11 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
             mp_bitcnt_t cnt;
             for (ulong i = 1; i <= r; ++i) {
                 t = n - i + 1;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, i, cnt);
+                ctz_shr_u64(v, i, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
@@ -117,21 +117,21 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
                 d /= 3;
                 t = (n - i + 1) * (n - i) * (n - i - 1) * (n - i - 2);
                 t /= 3;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, d, cnt);
+                ctz_shr_u64(v, d, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
             for (; i <= r; ++i) {
                 t = n - i + 1;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, i, cnt);
+                ctz_shr_u64(v, i, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
@@ -166,11 +166,11 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         mp_bitcnt_t cnt;
         for (ulong i = 1; i <= r; ++i) {
             t = n - i + 1;
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }
@@ -184,21 +184,21 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         for (; i <= (ulong)r - 2; i += 2) {
             d = i * (i + 1);
             t = (n - i + 1) * (n - i);
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, d, cnt);
+            ctz_shr_u64(v, d, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }
         for (; i <= r; ++i) {
             t = n - i + 1;
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }

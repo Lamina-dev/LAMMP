@@ -68,7 +68,7 @@ static mp_size_t lmmp_odd_nPr_product_(mp_ptr restrict dst, mp_size_t rn, uint n
     ulong t = 1, v;
     mp_bitcnt_t cnt = 0;
     for (ulong i = n - r + 1; i <= n; ++i) {
-        ctz_shl(v, i, cnt);
+        ctz_shr_u64(v, i, cnt);
         t *= v;
         if (t > MP_UINT_MAX) {
             limbs[limbn++] = t;
@@ -107,14 +107,14 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         lmmp_debug_assert(n >= 3);
         for (; i <= (ulong)n - 3; i += 3) {
             t = i * (i + 1) * (i + 2);
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             mul_1(dst, rn, v);
         }
         t = 1;
         for (; i <= n; ++i) {
             t *= i;
         }
-        ctz_shl(v, t, cnt);
+        ctz_shr_u64(v, t, cnt);
         if (v != 1) {
             mul_1(dst, rn, v);
         }
@@ -129,14 +129,14 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         mp_bitcnt_t cnt;
         for (; i <= (ulong)n - 7; i += 7) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4) * (i + 5) * (i + 6);
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             mul_1(dst, rn, v);
         }
         t = 1;
         for (; i <= n; ++i) {
             t *= i;
         }
-        ctz_shl(v, t, cnt);
+        ctz_shr_u64(v, t, cnt);
         if (v != 1) {
             mul_1(dst, rn, v);
         }
@@ -151,14 +151,14 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         lmmp_debug_assert(n >= 5);
         for (; i <= (ulong)n - 5; i += 5) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4);
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             limbs[limbn++] = v;
         }
         t = 1;
         for (; i <= n; ++i) {
             t *= i;
         }
-        ctz_shl(v, t, cnt);
+        ctz_shr_u64(v, t, cnt);
         if (v != 1)
             limbs[limbn++] = v;
         mp_ptr restrict tp = SALLOC_TYPE(limbn * 2, mp_limb_t);
@@ -197,7 +197,7 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r
         ulong v;
         mp_bitcnt_t cnt;
         for (ulong i = n - r + 1; i <= n; ++i) {
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             mul_1(dst, rn, v);
         }
         return rn;
@@ -237,7 +237,7 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
         ulong v;
         mp_bitcnt_t cnt;
         for (ulong i = n - r + 1; i <= n; ++i) {
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             if (v != 1) {
                 mul_1(dst, rn, v);
             }
@@ -250,7 +250,7 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
     ulong v;
     mp_bitcnt_t cnt;
     for (ulong t = n - r + 1; t <= n; ++t) {
-        ctz_shl(v, t, cnt);
+        ctz_shr_u64(v, t, cnt);
         if (v != 1)
             limbs[limbn++] = v;
     }

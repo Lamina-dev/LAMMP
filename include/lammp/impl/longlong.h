@@ -28,6 +28,152 @@
 
 #include <stdint.h>
 
+#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u64(r, x, cnt)           \
+    do {                                 \
+        unsigned long long _x_ = (x);    \
+        unsigned long _bits_ = 0;        \
+        _BitScanForward64(&_bits_, _x_); \
+        cnt = _bits_;                    \
+        (r) = _x_ >> (cnt);              \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u64(r, x, cnt)                    \
+    do {                                          \
+        unsigned long long _x_ = (x);             \
+        unsigned long _idx_;                      \
+        _BitScanReverse64(&_idx_, _x_);           \
+        (cnt) = 63 - (int)_idx_;                  \
+        (r) = (unsigned long long)(_x_ << (cnt)); \
+    } while (0)
+#elif defined(__GNUC__) || defined(__clang__)
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u64(r, x, cnt)        \
+    do {                              \
+        unsigned long long _x_ = (x); \
+        (cnt) = __builtin_ctzll(_x_); \
+        (r) = _x_ >> (cnt);           \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u64(r, x, cnt)                    \
+    do {                                          \
+        unsigned long long _x_ = (x);             \
+        (cnt) = __builtin_clzll(_x_);             \
+        (r) = (unsigned long long)(_x_ << (cnt)); \
+    } while (0)
+#else
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u64(r, x, cnt)   \
+    do {                         \
+        uint64_t _x_ = (x);      \
+        int _i_ = 0;             \
+        while ((_x_ & 1) == 0) { \
+            _i_++;               \
+            _x_ >>= 1;           \
+        }                        \
+        cnt = _i_;               \
+        (r) = _x_;               \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u64(r, x, cnt)                       \
+    do {                                             \
+        uint64_t _x_ = (x);                          \
+        int _c_ = 0;                                 \
+        while ((_x_ & 0x8000000000000000ULL) == 0) { \
+            _c_++;                                   \
+            _x_ <<= 1;                               \
+        }                                            \
+        (cnt) = _c_;                                 \
+        (r) = _x_;                                   \
+    } while (0)
+#endif
+
+#if defined(_MSC_VER)
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u32(r, x, cnt)         \
+    do {                               \
+        unsigned long _x_ = (x);       \
+        unsigned long _bits_ = 0;      \
+        _BitScanForward(&_bits_, _x_); \
+        cnt = _bits_;                  \
+        (r) = _x_ >> (cnt);            \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u32(r, x, cnt)        \
+    do {                              \
+        unsigned long _x_ = (x);      \
+        unsigned long _idx_;          \
+        _BitScanReverse(&_idx_, _x_); \
+        (cnt) = 31 - (int)_idx_;      \
+        (r) = _x_ << (cnt);           \
+    } while (0)
+#elif defined(__GNUC__) || defined(__clang__)
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u32(r, x, cnt)      \
+    do {                            \
+        unsigned int _x_ = (x);     \
+        (cnt) = __builtin_ctz(_x_); \
+        (r) = _x_ >> (cnt);         \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u32(r, x, cnt)      \
+    do {                            \
+        unsigned int _x_ = (x);     \
+        (cnt) = __builtin_clz(_x_); \
+        (r) = _x_ << (cnt);         \
+    } while (0)
+#else
+// cnt = ctz(x)
+// r = x >> cnt
+// assume x is non-zero
+#define ctz_shr_u32(r, x, cnt)    \
+    do {                          \
+        uint32_t _x_ = (x);       \
+        int _i_ = 0;              \
+        while ((_x_ & 1U) == 0) { \
+            _i_++;                \
+            _x_ >>= 1;            \
+        }                         \
+        cnt = _i_;                \
+        (r) = _x_;                \
+    } while (0)
+// cnt = clz(x)
+// r = x << cnt
+// assume x is non-zero
+#define clz_shl_u32(r, x, cnt)             \
+    do {                                   \
+        uint32_t _x_ = (x);                \
+        int _c_ = 0;                       \
+        while ((_x_ & 0x80000000U) == 0) { \
+            _c_++;                         \
+            _x_ <<= 1;                     \
+        }                                  \
+        (cnt) = _c_;                       \
+        (r) = _x_;                         \
+    } while (0)
+#endif
+
 static inline void _umul64to128_(uint64_t a, uint64_t b, uint64_t *low, uint64_t *high) {
 #if (defined(__GNUC__) || defined(__clang__))
 #if defined(USE_ASM) && (defined(__x86_64__))
@@ -118,17 +264,6 @@ static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_hi
     rr[1] += a_high * b_low;
 }
 
-static inline int32_t _clz_u64_(uint64_t val) {
-#if defined(__GNUC__) || defined(__clang__)
-    // Fast way to count leading zeros
-    return __builtin_clzll(val);
-#else
-    unsigned long cnt;
-    _BitScanReverse64(&cnt, val);
-    return 63 - cnt;
-#endif
-}
-
 static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_t den, uint64_t* r) {
 #if defined(__GNUC__) || defined(__clang__)
 #ifdef USE_ASM
@@ -173,8 +308,7 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
         return ~0ull;
     }
 
-    shift = _clz_u64_(den);
-    den <<= shift;
+    clz_shl_u64(den, den, shift);
     numhi <<= shift;
     numhi |= (numlo >> (-shift & 63)) & (uint64_t)(-(int64_t)shift >> 63);
     numlo <<= shift;
@@ -209,45 +343,6 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
     return q;
 #endif
 }
-
-#if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_ARM64))
-// cnt = ctz(x)
-// r = x >> cnt
-// assume x is non-zero
-#define ctz_shl(r, x, cnt)               \
-    do {                                 \
-        unsigned long long _x_ = (x);    \
-        unsigned long _bits_ = 0;        \
-        _BitScanForward64(&_bits_, _x_); \
-        cnt = _bits_;                    \
-        (r) = _x_ >> (cnt);              \
-    } while (0)
-#elif defined(__GNUC__) || defined(__clang__)
-// cnt = ctz(x)
-// r = x >> cnt
-// assume x is non-zero
-#define ctz_shl(r, x, cnt)            \
-    do {                              \
-        unsigned long long _x_ = (x); \
-        (cnt) = __builtin_ctzll(_x_); \
-        (r) = _x_ >> (cnt);           \
-    } while (0)
-#else
-// cnt = ctz(x)
-// r = x >> cnt
-// assume x is non-zero
-#define ctz_shl(r, x, cnt)       \
-    do {                         \
-        uint64_t _x_ = (x);      \
-        int _i_ = 0;             \
-        while ((_x_ & 1) == 0) { \
-            _i_++;               \
-            _x_ >>= 1;           \
-        }                        \
-        cnt = _i_;               \
-        (r) = _x_;               \
-    } while (0)
-#endif
 
 /**
  * 请注意，此处的蒙哥马利域的R为2^64，p不可超过2^63-1
@@ -500,7 +595,10 @@ typedef struct _udiv64_t {
 // assert d != 0
 static inline _udiv64_t _udiv64_gen_internal_(uint64_t d, int branchfree) {
     _udiv64_t result;
-    uint32_t floor_log_2_d = 63 - _clz_u64_(d);
+    int shift;
+    uint64_t t;
+    clz_shl_u64(t, d, shift);
+    uint32_t floor_log_2_d = 63 - shift;
 
     // Power of 2
     if ((d & (d - 1)) == 0) {

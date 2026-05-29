@@ -109,7 +109,7 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
     mp_bitcnt_t cnt;
     for (uint i = 0; i <= n; i++) {
         s = x + i * m;
-        ctz_shl(v, s, cnt);
+        ctz_shr_u64(v, s, cnt);
         t *= v;
         bits += cnt;
         if (t > MP_UINT_MAX) {
@@ -117,7 +117,7 @@ mp_size_t lmmp_arith_seqprod_(mp_ptr restrict dst, mp_size_t rn, uint x, uint n,
             t = 1;
         }
     }
-    ctz_shl(v, t, cnt);
+    ctz_shr_u64(v, t, cnt);
     bits += cnt;
     if (v != 1) {
         limbs[limbn++] = v;
