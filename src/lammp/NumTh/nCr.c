@@ -14,19 +14,26 @@
 
 
 mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* restrict bits) {
+    lmmp_param_assert(r <= n / 2);
+    lmmp_param_assert(bits != NULL);
     mp_size_t rn;
-    if (r < 4) {
+    if (r < 4 || n < ODD_FACTORIAL_SIZE) {
         rn = 3;
     } else if (n == MP_UINT_MAX) {
         uint mean = n - r / 2 + 1;
-        uint64_t l1 = lmmp_pow_1_size_(mean, r);
-        uint64_t l2 = log2_gamma_floor(r + 1);
+        uint64_t l1, l2;
+        l1 = lmmp_pow_1_size_(mean, r);
+        l2 = log2_gamma_floor(r + 1);
         l2 /= LIMB_BITS;
         rn = l1 - l2;
     } else {
-        uint64_t l1 = log2_gamma_ceil(n + 1);
-        uint64_t l2 = log2_gamma_floor(r + 1);
-        uint64_t l3 = log2_gamma_floor(n - r + 1);
+        uint64_t l1, l2, l3;
+        l1 = log2_gamma_ceil(n + 1);
+        l2 = log2_gamma_floor(r + 1);
+        if (n - r < ODD_FACTORIAL_SIZE)
+            l3 = 0;
+        else
+            l3 = log2_gamma_floor(n - r + 1);
         rn = l1 - l2 - l3;
         rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
     }

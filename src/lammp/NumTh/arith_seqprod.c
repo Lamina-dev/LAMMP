@@ -12,10 +12,13 @@
 #include "../../../include/lammp/numth.h"
 
 
-
 mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
+    lmmp_param_assert(x > 0);
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(m > 1);
     // x(x+m)(x+2m)...(x+nm) <= (x+m*n/2)^(n+1)
-    mp_size_t rn1 = lmmp_pow_1_size_(x + m * n / 2 + 1, n + 1);
+    ulong t = (x + ((ulong)m * n + 1) / 2);
+    mp_size_t rn1 = lmmp_pow_1_size_(t, n + 1);
     // 共有n+1个数，每个数的位数最多为uint，一个limb最多可以容纳两个uint乘积
     mp_size_t rn2 = (n + 1) / 2 + 1;
     return LMMP_MIN(rn1, rn2);

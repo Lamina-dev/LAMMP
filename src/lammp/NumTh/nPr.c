@@ -30,14 +30,20 @@ static const ulong odd_factorial[25] = {1, 1, 3, 3, 15, 45, 315, 315,
                                         147926426347074375ull, 3698160658676859375ull};
 
 mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* restrict bits) {
+    lmmp_param_assert(n >= r);
+    lmmp_param_assert(bits != NULL);
     mp_size_t shl = n - lmmp_limb_popcnt_(n);
     shl -= (n - r) - lmmp_limb_popcnt_(n - r);
     *bits = shl;
     if (n < ODD_FACTORIAL_SIZE || r <= 2) {
         return 3;
     } else if (n < MP_UINT_MAX) {
-        uint64_t l1 = log2_gamma_ceil(n + 1);
-        uint64_t l2 = log2_gamma_floor(n - r + 1);
+        uint64_t l1, l2;
+        l1 = log2_gamma_ceil(n + 1);
+        if (n - r < ODD_FACTORIAL_SIZE)
+            l2 = 0;
+        else
+            l2 = log2_gamma_floor(n - r + 1);
         mp_size_t rn = l1 - l2;
         return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; // more 2 limb
     } else {
