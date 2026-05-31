@@ -19,7 +19,6 @@
 #ifndef LAMMP_NUMTH_H
 #define LAMMP_NUMTH_H
 
-#include <math.h>
 #include <stdbool.h>
 
 #include "lmmp.h"
@@ -256,12 +255,7 @@ LAMMP_API bool lmmp_is_prime_notrial_(ulong n);
  * @warning n>0, base[n-1]!=0, [base,n]>1
  * @return 返回值为 [base,n]^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
-INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
-    lmmp_param_assert(n > 0);
-    lmmp_param_assert(base[n - 1] != 0);
-    mp_size_t rn = exp * (n - 1) * LIMB_BITS + ceil((double)exp * log2(base[n - 1]));
-    return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
-}
+LAMMP_API mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp);
 
 /**
  * @brief 计算幂次方需要的limb缓冲区长度 base ^ exp
@@ -270,11 +264,7 @@ INLINE_ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
  * @warning exp>0, base>=1
  * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
  */
-INLINE_ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
-    lmmp_param_assert(base >= 1);
-    lmmp_param_assert(exp > 0);
-    return (ceil((double)(exp)*log2((double)base)) + LIMB_BITS - 1) / LIMB_BITS + 2; /* more two limbs */
-}
+LAMMP_API mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp);
 
 /**
  * @brief 计算奇数次幂算法 [dst,rn] = [base,n] ^ exp
