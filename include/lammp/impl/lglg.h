@@ -23,14 +23,10 @@
 #include "../lmmp.h"
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 // 索引i处对应的数值为：round(log2(1+(i+1)/512) * 2^32) 
 // 除了最后一个元素（最后一个即log2(2)*2^32，受限于32位整数，取为2^32-1）
-LAMMP_API extern const uint32_t log2_fix32_q9[512];
+extern const uint32_t log2_fix32_q9[512];
 
 #define tab(i) log2_fix32_q9[i - 1]
 #define H 0x400000 // 插值点距离
@@ -270,9 +266,5 @@ static inline uint64_t log2_gamma_floor(uint32_t n) {
     r >>= 26;
     return r / 2;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // __LAMMP_LGLG_H__
