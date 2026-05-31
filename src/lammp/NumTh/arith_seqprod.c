@@ -11,12 +11,14 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
+
+
 mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
-    double x_m = (double)x / m;
-    double log_l = (n + 1) * log(m) + lgamma(x_m + n + 1) - lgamma(x_m);
-    double log2_l = log_l / LOG2_;
-    mp_size_t rn = ceil(log2_l / LIMB_BITS) + 2; /* more two limbs */
-    return rn;
+    // x(x+m)(x+2m)...(x+nm) <= (x+m*n/2)^(n+1)
+    mp_size_t rn1 = lmmp_pow_1_size_(x + m * n / 2 + 1, n + 1);
+    // 共有n+1个数，每个数的位数最多为uint，一个limb最多可以容纳两个uint乘积
+    mp_size_t rn2 = (n + 1) / 2 + 1;
+    return LMMP_MIN(rn1, rn2);
 }
 
 static inline mp_size_t _odd_pow_(mp_ptr dst, mp_size_t rn, uint base, ulong exp) {

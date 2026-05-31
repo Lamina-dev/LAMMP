@@ -5,20 +5,50 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
+#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/numth.h"
 
+
 mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* restrict bits) {
-    double ln_comb = lgamma(n + 1.0) - lgamma(r + 1.0) - lgamma(n - r + 1.0);
-    double log2_comb = ln_comb / LOG2_;
-    mp_size_t rn = ceil(log2_comb / LIMB_BITS) + 2; /* more two limbs */
+    mp_size_t rn;
+    if (r < 4) {
+        rn = 3;
+    } else if (n == MP_UINT_MAX) {
+        uint mean = n - r / 2 + 1;
+        uint64_t l1 = lmmp_pow_1_size_(mean, r);
+        uint64_t l2 = log2_gamma_floor(r + 1);
+        l2 /= LIMB_BITS;
+        rn = l1 - l2;
+    } else {
+        uint64_t l1 = log2_gamma_ceil(n + 1);
+        uint64_t l2 = log2_gamma_floor(r + 1);
+        uint64_t l3 = log2_gamma_floor(n - r + 1);
+        rn = l1 - l2 - l3;
+        rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+    }
     (*bits) = n - lmmp_limb_popcnt_(n);
     (*bits) -= r - lmmp_limb_popcnt_(r);
     (*bits) -= n - r - lmmp_limb_popcnt_(n - r);
-    return rn;
+    return rn + 2; // more 2 limb
 }
+
+/*
+FIXME:
+  使用此宏来进行单精度乘法
+*/
+
+#define mul_1(dst, rn, v)                             \
+    do {                                              \
+        mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
+        if (_c_ != 0) {                               \
+            ++rn;                                     \
+            dst[rn - 1] = _c_;                        \
+        }                                             \
+    } while (0)
 
 static inline uint factor_size_int(mp_size_t rn, uint n) {
     /*

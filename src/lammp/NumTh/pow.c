@@ -5,10 +5,119 @@
  */
 
 #include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
+#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
+
+
+mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
+    lmmp_param_assert(base >= 1);
+    lmmp_param_assert(exp > 0);
+    if (exp <= 2) {
+        return 3;
+    } else if (exp <= MP_UINT_MAX) {
+        mp_bitcnt_t msb;
+        clz_shl_u32(base, base, msb);
+        mp_size_t rn = xlog2n_ceil(exp, base);
+        rn -= exp * msb;
+        rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+        return rn + 2;
+    } else {
+        /*
+        base = b * 2^base_tz
+        */
+        slong base_tz = lmmp_limb_bits_(base);
+        uint32_t b;
+        if (base_tz < 32) {
+            b = base << (32 - base_tz);
+        } else {
+            b = base >> (base_tz - 32);
+            b++;
+        }
+        base_tz = base_tz - 32;
+        base_tz *= exp;
+
+        mp_size_t rn;
+        if (exp <= MP_UINT_MAX) {
+            rn = xlog2n_ceil(exp, b);
+            rn += base_tz;
+        } else {
+            /*
+            exp = exp' * 2^bits
+            exp*log2(base) = exp*log2(b*2^base_tz)
+                           = exp*log2(b) + exp*base_tz
+                           = exp'*log2(b)*2^bits + exp*base_tz
+            */
+            mp_bitcnt_t bits = lmmp_limb_bits_(exp);
+            ulong mask = (1ull << bits) - 1;
+            exp &= mask;
+            bits -= 32;
+            exp >>= bits;
+            exp++;
+            rn = xlog2n_ceil(exp, b) << bits;
+            rn += base_tz;
+        }
+        rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+        return rn + 2;
+    }
+}
+
+mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
+    lmmp_param_assert(n > 0);
+    lmmp_param_assert(base[n - 1] != 0);
+    if (n == 1) {
+        return lmmp_pow_1_size_(base[0], exp);
+    }
+    if (exp == 1) {
+        return n;
+    } else if (exp == 2) {
+        return n * 2;
+    } else {
+        /*
+        base = b * 2^base_tz
+        */
+        mp_bitcnt_t base_tz = lmmp_limb_bits_(base[n - 1]);
+        uint32_t b;
+        if (base_tz < 32) {
+            b = base[n - 1] << (32 - base_tz);
+            b |= (base[n - 2] >> (LIMB_BITS - 32 + base_tz));
+            base_tz = (n - 2) * LIMB_BITS + LIMB_BITS - 32 + base_tz;
+        } else if (base_tz == 32) {
+            b = base[n - 1];
+            base_tz = (n - 1) * LIMB_BITS;
+        } else {
+            b = base[n - 1] >> (base_tz - 32);
+            base_tz = (n - 1) * LIMB_BITS + base_tz - 32;
+        }
+        b++;
+
+        mp_size_t rn;
+        if (exp <= MP_UINT_MAX) {
+            rn = exp * base_tz;
+            rn += xlog2n_ceil(exp, b);
+        } else {
+            /*
+            exp = exp' * 2^bits
+            exp*log2(base) = exp*log2(b*2^base_tz)
+                           = exp*log2(b) + exp*base_tz
+                           = exp'*log2(b)*2^bits + exp*base_tz
+            */
+            mp_bitcnt_t bits = lmmp_limb_bits_(exp);
+            rn = exp * base_tz;
+            ulong mask = (1ull << bits) - 1;
+            exp &= mask;
+            bits -= 32;
+            exp >>= bits;
+            exp++;
+            rn += xlog2n_ceil(exp, b) << bits;
+        }
+        rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+        return rn + 2;
+    }
+}
 
 
 mp_size_t lmmp_pow_(mp_ptr restrict dst, mp_size_t rn, mp_srcptr restrict base, mp_size_t n, ulong exp) {

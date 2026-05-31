@@ -5,15 +5,21 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
+#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/longlong.h"
 
 
-#define mul_1(dst, rn, v)                   \
-    dst[rn] = lmmp_mul_1_(dst, dst, rn, v); \
-    ++rn;                                   \
-    rn -= dst[rn - 1] == 0 ? 1 : 0
+#define mul_1(dst, rn, v)                             \
+    do {                                              \
+        mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
+        if (_c_ != 0) {                               \
+            ++rn;                                     \
+            dst[rn - 1] = _c_;                        \
+        }                                             \
+    } while (0)
 
 static const ulong odd_factorial[25] = {1, 1, 3, 3, 15, 45, 315, 315,
                                         2835, 14175, 155925,
@@ -27,14 +33,17 @@ mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* restrict bits) {
     mp_size_t shl = n - lmmp_limb_popcnt_(n);
     shl -= (n - r) - lmmp_limb_popcnt_(n - r);
     *bits = shl;
-    if (n < DBL_2POW_MANT_DIG_) {
-        double ln_perm = lgamma(n + 1.0) - lgamma(n - r + 1.0);
-        double log2_perm = ln_perm / LOG2_;
-        mp_size_t rn = ceil(log2_perm / LIMB_BITS) + 2; /* more two limbs */
-        return rn;
+    if (n < ODD_FACTORIAL_SIZE || r <= 2) {
+        return 3;
+    } else if (n < MP_UINT_MAX) {
+        uint64_t l1 = log2_gamma_ceil(n + 1);
+        uint64_t l2 = log2_gamma_floor(n - r + 1);
+        mp_size_t rn = l1 - l2;
+        return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; // more 2 limb
     } else {
-        // nPr = n! / (n-r)! < n^r
-        return lmmp_pow_1_size_(n, r);
+        // nPr < (n - r/2 + 1)^r
+        ulong mean = n - r / 2 + 1;
+        return lmmp_pow_1_size_(mean, r);
     }
 }
 
