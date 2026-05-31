@@ -118,6 +118,7 @@ static inline uint64_t xlog2n_ceil(uint32_t x, uint32_t n) {
 /**
  * @brief 计算(2n+1)*log2(n)的ceil值
  * @param n 底数
+ * @warning n>1
  * @return (2n+1)*log2(n)的定点数格式，低位26位为小数
  */
 static inline uint64_t log2n_2n1_ceil(uint32_t n) {
@@ -172,6 +173,7 @@ static inline uint64_t log2n_2n1_ceil(uint32_t n) {
 /**
  * @brief 计算(2n+1)*log2(n)的floor值
  * @param n 底数
+ * @warning n>1
  * @return (2n+1)*log2(n)的定点数格式，低位26位为小数
  */
 static inline uint64_t log2n_2n1_floor(uint32_t n) {
@@ -235,6 +237,7 @@ static inline uint64_t mul_log2e_1_floor(uint32_t n) {
 /**
  * @brief 计算 log2(gamma(n))的ceil值
  * @param n 底数
+ * @warning n > 2
  * @return log2(gamma(n))的ceil值
  */
 static inline uint64_t log2_gamma_ceil(uint32_t n) {
@@ -253,6 +256,7 @@ static inline uint64_t log2_gamma_ceil(uint32_t n) {
 /**
  * @brief 计算 log2(gamma(n))的floor值
  * @param n 底数
+ * @warning n > 2
  * @return log2(gamma(n))的floor值
  */
 static inline uint64_t log2_gamma_floor(uint32_t n) {

@@ -44,9 +44,6 @@ typedef int32_t* sintp;
 typedef uint64_t* ulongp;
 typedef int64_t* slongp;
 
-#ifndef INLINE_
-#define INLINE_ static inline
-#endif // INLINE_
 
 /**
  * @brief 计算 a 在2^32下的逆元
@@ -372,6 +369,7 @@ LAMMP_API mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_
  * @param n 排列数的总数
  * @param r 排列数的选择数
  * @param bits 被修改为 nPr 的2的因子数
+ * @warning r<=n, bits!=NULL
  * @return nPr 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 LAMMP_API mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
@@ -425,6 +423,7 @@ LAMMP_API mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong 
  * @brief 计算 n! 阶乘的 limb 缓冲区长度
  * @param n 阶乘的阶数
  * @param bits 被修改为 n! 的2的因子数
+ * @warning bits!=NULL
  * @return n! 阶乘的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 LAMMP_API mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
@@ -455,6 +454,7 @@ LAMMP_API mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, 
  * @param n 组合数的总数
  * @param r 组合数的选择数
  * @param bits 被修改为 nCr 的2的因子数
+ * @warning r<=n/2, bits!=NULL
  * @return nCr 组合数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 LAMMP_API mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* bits);
@@ -525,7 +525,7 @@ LAMMP_API mp_size_t lmmp_multinomial_(mp_ptr dst, mp_size_t rn, uint n, const ui
  * @param x 首项
  * @param n 等差数列共n+1项
  * @param m 公差
- * @warning x>0, m>1, n>0
+ * @warning x>0, m>1, n>0, x+n*m<=0xffffffff
  * @return 等差数列乘积的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
  */
 LAMMP_API mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m);
@@ -566,10 +566,6 @@ LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* r
  * @return [np,nn]中被[dp,dn]除去的因子的个数，如果不能被整除，则返回0
  */
 LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
-
-#ifdef INLINE_
-#undef INLINE_
-#endif // INLINE_
 
 #ifdef __cplusplus
 }
