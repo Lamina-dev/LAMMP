@@ -5,24 +5,47 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
-#include "../../../include/lammp/impl/prime_table.h"
+#include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
 #include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
+#include "../../../include/lammp/impl/prime_table.h"
+
+
+/*
+FIXME:
+  多项式系数在极不平衡时，先进行质数预处理将耗费大多数时间，需要进行优化。
+  一个优化思路是这样的，同样分成分子和分母两个部分，我们先预选出r[i]中最大的
+  和次大的，如果这两个数相差非常大，则意味着此时极不平衡。我们可以用排列数来
+  计算这不平衡的部分，剩下的r[i]元素，我们可以采用一次性分解并累乘完毕。
+  最后只需要使用精确除法，将不平衡的组合数除以余下的r[i]的结果即可。
+*/
+
+static inline mp_size_t fac_size_lower(uint n) {
+    if (n < 20) {
+        return 0;
+    } else if (n == MP_UINT_MAX) {
+        return 131242625438; // floor(log2(gamma(2^32)))
+    } else {
+        return log2_gamma_ceil(n + 1);
+    }
+}
 
 mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
-    *n = 0;
+    ulong n_ret = 0;
     uint i = 0;
-    for (; i < m; ++i) *n += r[i];
+    for (; i < m; ++i) n_ret += r[i];
 
-    double logr = lgamma(*n + 1.0);
+    lmmp_param_assert(n_ret <= MP_UINT_MAX);
+    lmmp_param_assert(n_ret > 0);
+    *n = n_ret;
+    mp_size_t rn = fac_size_lower(n_ret);
     
-    for (i = 0; i < m; ++i) 
-        logr -= lgamma(r[i] + 1.0);
-
-    logr /= LOG2_;
-
-    mp_size_t rn = ceil(logr / LIMB_BITS) + 2;
-    return rn;
+    for (i = 0; i < m; ++i) {
+        rn -= fac_size_lower(r[i]);
+    }
+    rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+    return rn + 2;
 }
 
 static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, const uintp r, uint m, uint p) {

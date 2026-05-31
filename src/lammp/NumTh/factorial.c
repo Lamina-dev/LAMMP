@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/impl/ele_mul.h"
 #include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
@@ -19,15 +20,25 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
-#define mul_1(dst, rn, value)                   \
-    dst[rn] = lmmp_mul_1_(dst, dst, rn, value); \
-    ++rn;                                       \
-    rn -= dst[rn - 1] == 0
+#define mul_1(dst, rn, v)                             \
+    do {                                              \
+        mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
+        if (_c_ != 0) {                               \
+            ++rn;                                     \
+            dst[rn - 1] = _c_;                        \
+        }                                             \
+    } while (0)
 
 mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
-    double ln_fact = lgamma(n + 1.0);
-    double log2_fact = ln_fact / LOG2_;
-    mp_size_t rn = ceil(log2_fact / LIMB_BITS) + 2; /* more two limbs */
+    mp_size_t rn;
+    if (n == MP_UINT_MAX) {
+        rn = 131242625439;  // log2(gamma(2^32))
+    } else if (n < 20) {
+        rn = 64;
+    } else {
+        rn = log2_gamma_ceil(n + 1);
+    }
+    rn = (rn + LIMB_BITS - 1) / LIMB_BITS + 2;  // more two limbs
     *bits = n - lmmp_limb_popcnt_(n);
     return rn;
 }

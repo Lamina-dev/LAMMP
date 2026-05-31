@@ -5,20 +5,57 @@
  */
 
 #include "../../../include/lammp/impl/ele_mul.h"
+#include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/lglg.h"
+#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/prime_table.h"
-#include "../../../include/lammp/impl/longlong.h"
 #include "../../../include/lammp/numth.h"
 
+
 mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* restrict bits) {
-    double ln_comb = lgamma(n + 1.0) - lgamma(r + 1.0) - lgamma(n - r + 1.0);
-    double log2_comb = ln_comb / LOG2_;
-    mp_size_t rn = ceil(log2_comb / LIMB_BITS) + 2; /* more two limbs */
+    lmmp_param_assert(r <= n / 2);
+    lmmp_param_assert(bits != NULL);
+    mp_size_t rn;
+    if (r < 4 || n < ODD_FACTORIAL_SIZE) {
+        rn = 3;
+    } else if (n == MP_UINT_MAX) {
+        uint mean = n - r / 2 + 1;
+        uint64_t l1, l2;
+        l1 = lmmp_pow_1_size_(mean, r);
+        l2 = log2_gamma_floor(r + 1);
+        l2 /= LIMB_BITS;
+        rn = l1 - l2;
+    } else {
+        uint64_t l1, l2, l3;
+        l1 = log2_gamma_ceil(n + 1);
+        l2 = log2_gamma_floor(r + 1);
+        if (n - r < ODD_FACTORIAL_SIZE)
+            l3 = 0;
+        else
+            l3 = log2_gamma_floor(n - r + 1);
+        rn = l1 - l2 - l3;
+        rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
+    }
     (*bits) = n - lmmp_limb_popcnt_(n);
     (*bits) -= r - lmmp_limb_popcnt_(r);
     (*bits) -= n - r - lmmp_limb_popcnt_(n - r);
-    return rn;
+    return rn + 2; // more 2 limb
 }
+
+/*
+FIXME:
+  使用此宏来进行单精度乘法
+*/
+
+#define mul_1(dst, rn, v)                             \
+    do {                                              \
+        mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
+        if (_c_ != 0) {                               \
+            ++rn;                                     \
+            dst[rn - 1] = _c_;                        \
+        }                                             \
+    } while (0)
 
 static inline uint factor_size_int(mp_size_t rn, uint n) {
     /*
@@ -96,11 +133,11 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
             mp_bitcnt_t cnt;
             for (ulong i = 1; i <= r; ++i) {
                 t = n - i + 1;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, i, cnt);
+                ctz_shr_u64(v, i, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
@@ -117,21 +154,21 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
                 d /= 3;
                 t = (n - i + 1) * (n - i) * (n - i - 1) * (n - i - 2);
                 t /= 3;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, d, cnt);
+                ctz_shr_u64(v, d, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
             for (; i <= r; ++i) {
                 t = n - i + 1;
-                ctz_shl(v, t, cnt);
+                ctz_shr_u64(v, t, cnt);
                 dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
                 ++rn;
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
-                ctz_shl(v, i, cnt);
+                ctz_shr_u64(v, i, cnt);
                 lmmp_div_1_(dst, dst, rn, v);
                 rn -= dst[rn - 1] == 0 ? 1 : 0;
             }
@@ -166,11 +203,11 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         mp_bitcnt_t cnt;
         for (ulong i = 1; i <= r; ++i) {
             t = n - i + 1;
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }
@@ -184,21 +221,21 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         for (; i <= (ulong)r - 2; i += 2) {
             d = i * (i + 1);
             t = (n - i + 1) * (n - i);
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, d, cnt);
+            ctz_shr_u64(v, d, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }
         for (; i <= r; ++i) {
             t = n - i + 1;
-            ctz_shl(v, t, cnt);
+            ctz_shr_u64(v, t, cnt);
             dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
             ++rn;
             rn -= dst[rn - 1] == 0 ? 1 : 0;
-            ctz_shl(v, i, cnt);
+            ctz_shr_u64(v, i, cnt);
             lmmp_div_1_(dst, dst, rn, v);
             rn -= dst[rn - 1] == 0 ? 1 : 0;
         }
