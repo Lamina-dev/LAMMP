@@ -69,7 +69,6 @@ void lmmp_mat22_mul_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, const
  * @param matA 矩阵A
  * @param tp 临时缓冲区，用于存储中间结果，需要分配2*tn个limb，若为NULL，则会自动分配。
  * @param tn 缓冲区的limb长度
- * @param maxa matA中最大的元素的limb长度+1，建议由lmmp_mat22_mul_size_确定
  * @warning dst!=NULL, nonull(dst), matA!=NULL, nonull(matA), sep(dst,matA), tn>0
  */
 void lmmp_mat22_sqr_basecase_(lmmp_mat22_t* dst, const lmmp_mat22_t* matA, mp_ptr tp, mp_size_t tn);
@@ -133,6 +132,7 @@ INLINE_ void
 lmmp_mat22_sqr_(lmmp_mat22_t* dst, const lmmp_mat22_t* mat, int choose, mp_size_t tn) {
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(mat != NULL);
+    lmmp_param_assert(tn > 0);
     lmmp_param_assert(choose == 0 || choose == 1);
     if (choose == 0) {
         lmmp_mat22_sqr_basecase_(dst, mat, NULL, tn);
