@@ -1,7 +1,7 @@
 #include "include/lammp/version.h"
 #include <stdio.h>
 
-int main() {
+int main(void) {
     printf("Hello, LAMMP! \n");
     printf("LAMMP version: %s\n", LAMMP_VERSION);
     printf("LAMMP alpha year: %s\n", LAMMP_ALPHA_YEAR);

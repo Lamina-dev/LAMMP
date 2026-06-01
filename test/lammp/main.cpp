@@ -9,7 +9,6 @@
 #include "include/test_short.hpp"
 #include <vector>
 
-#include "../../include/lammp/impl/prime_table.h"
 
 int main() {
     lmmp_global_init();
