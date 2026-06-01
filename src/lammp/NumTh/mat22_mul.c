@@ -8,7 +8,8 @@
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/impl/mparam.h"
-#include "../../../include/lammp/matrix.h"
+#include "../../../include/lammp/impl/mat22_mul.h"
+
 
 int lmmp_mat22_mul_size_(
           lmmp_mat22_t*  dst, 
