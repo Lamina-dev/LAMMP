@@ -234,9 +234,9 @@ typedef struct {
 } toom62_cache_t;
 
 static enum toom7_flags lmmp_mul_toom62_cache_init_(
-    mp_ptr    restrict       dst,
-    mp_srcptr restrict      numa,
-    toom62_cache_t*        cache
+    mp_ptr    restrict   dst,
+    mp_srcptr restrict  numa,
+    toom62_cache_t*    cache
 ) {
 #define numb (cache->numb)
 #define n (cache->n)
