@@ -36,7 +36,6 @@ typedef struct {
     mp_ssize_t n10;
     mp_ssize_t n11;
 } lmmp_mat22_t;
-typedef lmmp_mat22_t;
 
 /**
  * @brief 计算2x2矩阵和2x2矩阵的乘积需要分配的内存
