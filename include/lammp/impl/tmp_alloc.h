@@ -84,7 +84,7 @@ static inline void* lmmp_temp_stack_alloc_(lmmp_alloc_marker* pmarker, size_t si
      * Until all stack memory is finally released, we will move to the initial stack position at once,
      * which is the position recorded by pmarker->stack_marker.
      */
-    mp_byte_t* p = lmmp_tmpmem_ctx.stack_top;
+    mp_byte_t* p = (mp_byte_t*)(lmmp_tmpmem_ctx.stack_top);
     size_t offset = LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
     mp_byte_t* new_top = p + offset;
 #if LAMMP_DEBUG_STACK_OVERFLOW_CHECK == 1
@@ -107,7 +107,7 @@ static inline void lmmp_temp_stack_free_(lmmp_alloc_marker* pmarker) {
 }
 
 static inline void* lmmp_temp_pool_alloc_(lmmp_alloc_marker* pmarker, size_t size) {
-    mp_byte_t* p = lmmp_tmpmem_ctx.pool_top;
+    mp_byte_t* p = (mp_byte_t*)(lmmp_tmpmem_ctx.pool_top);
     size_t offset = LMMP_ROUND_UP_MULTIPLE(size, LAMMP_MAX_ALIGN);
     size_t remaining = lmmp_tmpmem_ctx.remain;
     if (remaining < 2 * offset) {
