@@ -23,87 +23,87 @@
 #include "../numth.h"
 #include "tmp_alloc.h"
 
-#ifndef INLINE_
-#define INLINE_ static inline
-#endif
 
-/*
-FIXME: 这里的优先队列乘法可以进一步优化，目前的实现，每次合并
-都需要调用一次lmmp_alloc，我们可以通过预先构建哈夫曼树，使用
-两块内存交替来使得计算乘法时，每个节点内存恰好不重叠，并刚好把
-结果写入到我们需要的内存块。
-同时另一个优化时，在初始化入队时，将所有元素的低位0全部移除，即
-保证奇数相乘，最后一次性移位完成。
+typedef struct {
+    mp_srcptr np;
+    mp_size_t nn;
+    sint left;    // 左节点索引
+    sint right;   // 右节点索引
+} huff_node;
 
-TODO: 需要新增一个计算多个mp_ptr累乘的函数 
-*/
+typedef struct {
+    huff_node* root;
+    sint cap;
+    sint size;
+} huff_tree;
 
-
-typedef struct num_node {
-    mp_ptr num;
-    mp_size_t n;
-} num_node;
-
-typedef num_node* num_node_ptr;
-
-typedef struct num_heap {
-    num_node_ptr restrict head;
-    size_t size;
-    size_t cap;
-} num_heap;
 
 /**
- * @brief 初始化优先队列
- * @param pq 优先队列指针
- * @param capa 优先队列容量
+ * @brief 初始化哈夫曼乘法树
+ * @param ht 哈夫曼乘法树指针
+ * @param cap 需要插入的元素的最大数量
+ * @warning 0<cap<2^30, ht!=NULL
  */
-INLINE_ void lmmp_num_heap_init_(num_heap* restrict pq, size_t capa) {
-    pq->head = ALLOC_TYPE(capa, num_node);
-    for (size_t i = 0; i < capa; ++i) {
-        pq->head[i].num = NULL;
-        pq->head[i].n = 0;
-    }
-    pq->cap = capa;
-    pq->size = 0;
+static inline void lmmp_huff_tree_init_(huff_tree* ht, sint cap) {
+    lmmp_param_assert(cap > 0);
+    lmmp_param_assert(cap < (1 << 30));
+    lmmp_param_assert(ht != NULL);
+    ht->root = ALLOC_TYPE(2 * cap - 1, huff_node);
+    ht->cap = cap;
+    ht->size = 0;
 }
 
 /**
- * @brief 释放优先队列
- * @param pq 优先队列指针
+ * @brief 释放哈夫曼树
+ * @param ht 哈夫曼树指针
+ * @warning ht->size==0, ht!=NULL
  */
-INLINE_ void lmmp_num_heap_free_(num_heap* restrict pq) {
-    lmmp_debug_assert(pq->size == 0);
-    lmmp_free(pq->head);
-    pq->cap = 0;
-    pq->size = 0;
-    pq->head = NULL;
+static inline void lmmp_huff_tree_free_(huff_tree* ht) {
+    lmmp_param_assert(ht != NULL);
+    lmmp_free(ht->root);
+    ht->cap = 0;
+    ht->size = 0;
+    ht->root = NULL;
 }
 
 /**
- * @brief 入队
- * @param pq 优先队列指针
- * @param elem 待入队的元素指针
- * @param n 元素的 limb 长度
+ * @brief 入队哈夫曼树
+ * @param ht 哈夫曼树指针
+ * @param np 待入队的元素指针
+ * @param nn 元素的 limb 长度
+ * @warning ht!=NULL, ht->size<ht->cap, np!=NULL, nn>0
+ * @note 传入乘法元素必须为非空元素，可以和其他乘法元素指向完全相同
  */
-void lmmp_num_heap_push_(num_heap* pq, mp_ptr elem, mp_size_t n);
+static inline void lmmp_huff_tree_push_(huff_tree* ht, mp_srcptr np, mp_size_t nn) {
+    lmmp_param_assert(ht != NULL);
+    lmmp_param_assert(ht->size < ht->cap);
+    lmmp_param_assert(np != NULL);
+    lmmp_param_assert(nn > 0);
+    ht->root[ht->size].np = np;
+    ht->root[ht->size].nn = nn;
+    ht->root[ht->size].left = -1;
+    ht->root[ht->size].right = -1;
+    ht->size++;
+}
 
 /**
- * @brief 出队
- * @param pq 优先队列指针
- * @param elem 出队的元素指针
- * @return 若队列为空，返回 false，否则返回 true
+ * @brief 构建哈夫曼乘法树
+ * @param ht 哈夫曼乘法树指针
+ * @warning ht!=NULL
+ * @return 构建后的根节点索引
  */
-bool lmmp_num_heap_pop_(num_heap* pq, num_node_ptr elem);
+sint lmmp_huff_tree_build_(huff_tree* ht);
 
 /**
- * @brief 将队列中所有元素相乘
- * @param pq 优先队列指针
- * @param rn 结果指针的 limb 长度
- * @warning 队列非空，pq!=NULL
- * @note 返回的指针必须手动释放，原队列中的元素指针都将被释放
- * @return 结果指针
+ * @brief 将哈夫曼树中所有元素相乘
+ * @param ht 哈夫曼乘法树指针
+ * @param ridx 哈夫曼乘法树根节点索引
+ * @param dst 结果指针（缓冲区长度为根节点的nn值）
+ * @param tp 临时指针（缓冲区长度为根节点的nn值）
+ * @warning pq!=NULL, dst!=NULL, tp!=NULL, sep(dst,tp)
+ * @return 结果指针的 limb 长度
  */
-mp_ptr lmmp_num_heap_mul_(num_heap* pq, mp_size_t* rn);
+mp_size_t lmmp_huff_tree_mul_(huff_tree* ht, sint ridx, mp_ptr dst, mp_ptr tp);
 
 /**
  * @brief 计算limbs数组的累乘积
@@ -122,7 +122,6 @@ typedef struct fac_t {
 } fac_t;
 
 typedef fac_t* fac_ptr;
-typedef const fac_t* fac_srcptr;
 
 /**
  * @brief 计算因子的累乘，并将结果放入dst中
@@ -138,6 +137,5 @@ typedef const fac_t* fac_srcptr;
  */
 mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, fac_ptr fac, uint nfactors);
 
-#undef INLINE_
 
 #endif // __LAMMP_ELE_MUL_H__
