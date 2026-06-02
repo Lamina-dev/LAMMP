@@ -39,7 +39,7 @@ static void insertion_sort(huff_node arr[], sint low, sint high) {
 /** 
  * @brief 返回 arr[a]、arr[b]、arr[c] 三个索引中对应值的中位数的索引
  */
-static inline int median_of_three(const huff_node arr[], sint a, sint b, sint c) {
+static inline sint median_of_three(const huff_node arr[], sint a, sint b, sint c) {
     mp_size_t va = arr[a].nn, vb = arr[b].nn, vc = arr[c].nn;
     if (va < vb) {
         if (vb < vc)
