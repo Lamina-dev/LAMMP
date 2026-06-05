@@ -399,7 +399,13 @@ static void lmmp_mul_toom42_cache_(
 #undef tp
 }
 
-void lmmp_mul_toom42_unbalance_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_srcptr restrict numb, mp_size_t nb) {
+void lmmp_mul_toom42_unbalance_(
+    mp_ptr    restrict  dst,
+    mp_srcptr restrict numa,
+    mp_size_t            na,
+    mp_srcptr restrict numb,
+    mp_size_t            nb
+) {
     lmmp_param_assert(na >= 3 * nb);
     lmmp_param_assert(nb > 20);
     TEMP_S_DECL;
