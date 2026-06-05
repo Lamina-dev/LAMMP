@@ -72,7 +72,7 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
                 lmmp_mul_toom32_(dst, numa, na, numb, nb);
             else
                 lmmp_mul_toom42_(dst, numa, na, numb, nb);
-        } else 
+        } else
             lmmp_mul_toom42_unbalance_(dst, numa, na, numb, nb);
     } else if (((na + nb) >> 1) < MUL_FFT_THRESHOLD || 3 * nb < MUL_FFT_THRESHOLD) {
         if (na < 5 * nb) {
@@ -91,7 +91,7 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
     } else {
         if (na < 6 * nb)
             lmmp_mul_fft_(dst, numa, na, numb, nb);
-        else 
+        else
             lmmp_mul_fft_unbalance_(dst, numa, na, numb, nb);
     }
 }

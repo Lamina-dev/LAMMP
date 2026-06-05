@@ -547,10 +547,10 @@ static void lmmp_mul_toom62_cache_(
 }
 
 void lmmp_mul_toom62_unbalance_(
-    mp_ptr    restrict  dst, 
-    mp_srcptr restrict numa, 
-    mp_size_t            na, 
-    mp_srcptr restrict numb, 
+    mp_ptr    restrict  dst,
+    mp_srcptr restrict numa,
+    mp_size_t            na,
+    mp_srcptr restrict numb,
     mp_size_t            nb
 ) {
     lmmp_param_assert(na >= 5 * nb);
