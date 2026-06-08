@@ -56,52 +56,26 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict 
     lmmp_param_assert(rn > 0 && nfactors > 0);
     if (nfactors <= FACTORS_MUL_N_THRESHOLD) {
         // 绝大多数情况下，大的质因数的指数都很小，所以这里只需要考虑小的质因数。
-        // 且随着递归的进行，进入这一步的质因数通常都很小。几乎不可能触发debug_assert
         dst[0] = 1;
         rn = 1;
+        mp_limb_t t = 1;
         for (uint i = 0; i < nfactors; i++) {
-            ulong f = fac[i].f;
+            uint f = fac[i].f;
             uint j = fac[i].j;
-            lmmp_debug_assert(j != 0);
-            switch (j) {
-                case 1:
-                    mul_1(dst, rn, f);
-                    break;
-                case 2:
-                    lmmp_debug_assert(f <= MP_UINT_MAX);
-                    mul_1(dst, rn, f * f);
-                    break;
-                case 3:
-                    lmmp_debug_assert(f <= 2642245);  // 2642245 = floor(B^(1/3))
-                    mul_1(dst, rn, f * f * f);
-                    break;
-                case 4:
-                    lmmp_debug_assert(f <= MP_USHORT_MAX);
-                    mul_1(dst, rn, f * f * f * f);
-                    break;
-                default:
-                    lmmp_debug_assert(f <= MP_USHORT_MAX);
-                    ulong p2 = f * f;
-                    ulong p4 = p2 * p2;
-                    for (uint i = 0; i < j - 3; i += 4) {
-                        mul_1(dst, rn, p4);
-                    }
-                    switch (j % 4) {
-                        case 1:
-                            mul_1(dst, rn, f);
-                            break;
-                        case 2:
-                            mul_1(dst, rn, p2);
-                            break;
-                        case 3:
-                            mul_1(dst, rn, p2 * f);
-                            break;
-                        default:
-                            break;
-                    }
-                    break;
+            lmmp_debug_assert(j != 0 && f <= MP_USHORT_MAX);
+#define MAX_T 0xffffffffffff
+            for (uint e = 0; e < j; e++) {
+                t *= f;
+                if (t > MAX_T) {
+                    mul_1(dst, rn, t);
+                    t = 1;
+                }
             }
         }
+        if (t != 1) {
+            mul_1(dst, rn, t);
+        }
+#undef MAX_T
         return rn;
     } else {
         TEMP_DECL;
@@ -109,7 +83,7 @@ mp_size_t lmmp_factors_mul_(mp_ptr restrict dst, mp_size_t rn, fac_ptr restrict 
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 2 + 1, ulong);
         ulong t = 1;
         mp_size_t limbn = 0;
-        for (mp_size_t i = 0; i < nfactors; ++i) {
+        for (uint i = 0; i < nfactors; ++i) {
             uint f = fac[i].f;
             uint j = fac[i].j;
             if (j > 1) {
