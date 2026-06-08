@@ -27,6 +27,16 @@ static inline mp_size_t fac_size_lower(uint n) {
     } else if (n == MP_UINT_MAX) {
         return 131242625438; // floor(log2(gamma(2^32)))
     } else {
+        return log2_gamma_floor(n + 1);
+    }
+}
+
+static inline mp_size_t fac_size_bigger(uint n) {
+    if (n < 20) {
+        return 64;
+    } else if (n == MP_UINT_MAX) {
+        return 131242625439;  // ceil(log2(gamma(2^32)))
+    } else {
         return log2_gamma_ceil(n + 1);
     }
 }
@@ -39,7 +49,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
     lmmp_param_assert(n_ret <= MP_UINT_MAX);
     lmmp_param_assert(n_ret > 0);
     *n = n_ret;
-    mp_size_t rn = fac_size_lower(n_ret);
+    mp_size_t rn = fac_size_bigger(n_ret);
     
     for (i = 0; i < m; ++i) {
         rn -= fac_size_lower(r[i]);
