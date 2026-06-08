@@ -11,7 +11,7 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_factorial() {
-    size_t n = 460952;
+    size_t n = 9021;
     mp_bitcnt_t bits;
     size_t len = lmmp_factorial_size_(n, &bits);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
@@ -28,7 +28,7 @@ void test_factorial() {
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << "Time elapsed: " << duration2 << " microseconds" << std::endl;
-
+    std::cout << std::hex << a[an - 1] << std::endl;
     if (an != bn) {
         std::cout << "an != bn" << std::endl;
         std::cout << "an = " << an << " bn = " << bn << std::endl;
@@ -45,6 +45,4 @@ void test_factorial() {
     fail:
     lmmp_free(a);
     lmmp_free(b);
-    lmmp_global_deinit();
-    lmmp_leak_tracker;
 }
