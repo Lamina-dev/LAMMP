@@ -129,7 +129,7 @@ typedef fac_t* fac_ptr;
  * @param rn 结果数组的长度
  * @param fac 因子数组（将会被递归覆盖）
  * @param nfactors 因子数组的长度
- * @warning 因子必须要小于N，且因子必须要单调递增，且不重复，因子的贡献必须要大于0。
+ * @warning 因子必须要单调递增，可以接受重复因子（但不推荐这样做），因子的贡献必须要大于0。
  *          因子数组必须为小因子大指数形式，可以存在大的因子有较大的指数，但整体的趋势必须是小因子大指数。
  *          暂不清楚其最差可以接受至何种形式的因子数组。在组合数以及由阶乘和幂次构成的有理数中，未见不满足
  *          此条件的例子。
@@ -137,5 +137,18 @@ typedef fac_t* fac_ptr;
  */
 mp_size_t lmmp_factors_mul_(mp_ptr dst, mp_size_t rn, fac_ptr fac, uint nfactors);
 
+/**
+ * @brief 计算因子的累乘，并将结果放入dst中
+ * @param dst 结果数组
+ * @param rn 结果数组的长度
+ * @param fac 因子数组（将会被递归覆盖），且因子数组元素都不可超过ushort范围
+ * @param nfactors 因子数组的长度
+ * @warning 因子必须要单调递增，且因子数组元素都不可超过ushort范围，可以接受重复因子（但不推荐这样做），
+ *          因子的贡献必须要大于0。因子数组必须为小因子大指数形式，可以存在大的因子有较大的指数，但整体的
+ *          趋势必须是小因子大指数。暂不清楚其最差可以接受至何种形式的因子数组。在组合数以及由阶乘和幂次构
+ *          成的有理数中，未见不满足此条件的例子。
+ * @return 结果数组的长度
+ */
+mp_size_t lmmp_factors_mul_ushort_(mp_ptr dst, mp_size_t rn, fac_ptr fac, ushort nfactors);
 
 #endif // __LAMMP_ELE_MUL_H__
