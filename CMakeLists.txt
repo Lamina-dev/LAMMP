@@ -149,9 +149,6 @@ function(lammp_target_setup target)
             )
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             if(TARGET_SYSTEM STREQUAL "WIN")
-                target_link_options(${target} PRIVATE
-                    $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,/RELEASE>
-                )
             else()
                 target_link_options(${target} PRIVATE
                     $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
