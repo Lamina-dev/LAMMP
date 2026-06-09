@@ -85,12 +85,15 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
      使用类似组合数的思路来估计缓冲区大小。
     */
     uint approx1 = rn * 8;
+    lmmp_debug_assert(approx1 <= MP_UINT_MAX);
     uint approx2 = lmmp_prime_size_(n);
     return approx1 < approx2 ? approx1 : approx2;
 }
 
-static inline uint factor_size_short(mp_size_t rn) {
-    return rn * 10;
+static inline ushort factor_size_short(mp_size_t rn) {
+    ushort approx1 = rn * 8;
+    lmmp_debug_assert(approx1 <= MP_USHORT_MAX);
+    return approx1;
 }
 
 static mp_size_t lmmp_odd_multinomial_ushort_(
