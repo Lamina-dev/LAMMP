@@ -518,7 +518,7 @@ LAMMP_API mp_size_t lmmp_superfac_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, u
 LAMMP_API mp_size_t lmmp_primefac_size_(uint n);
 
 /**
-* @brief 计算质数阶乘（不超过n的指数累乘）
+* @brief 计算质数阶乘（不超过n的质数累乘）
 * @param dst 结果指针
 * @param rn 结果指针的 limb 长度
 * @param n 质数阶乘的阶数
