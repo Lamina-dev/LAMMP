@@ -110,17 +110,17 @@ static mp_size_t lmmp_odd_multinomial_ushort_(
         return 1;
     } else {
         TEMP_DECL;
-        uint primen = lmmp_prime_cnt16_(n);
-        uint nfactors = factor_size_short(rn);
+        ushort primen = lmmp_prime_cnt16_(n);
+        ushort nfactors = factor_size_short(rn);
         nfactors = primen < nfactors ? primen : nfactors;
         fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
         nfactors = 0;
-        for (uint i = 1; i < primen; ++i) {
-            uint p = prime_short_table[i];
+        for (ushort i = 1; i < primen; ++i) {
+            ushort p = prime_short_table[i];
             nfactors = count_factors(fac, nfactors, n, r, m, p);
         }
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
+        rn = lmmp_factors_mul_ushort_(dst, rn, fac, nfactors);
 
         TEMP_FREE;
         return rn;

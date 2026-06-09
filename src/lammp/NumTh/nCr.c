@@ -69,16 +69,19 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
     */
     // 此处假定了LIMB_BITS为64
     uint approx1 = rn * 8;
+    lmmp_debug_assert(approx1 <= MP_UINT_MAX);
     uint approx2 = lmmp_prime_size_(n);
     return approx1 < approx2? approx1 : approx2;
 }
 
-static inline uint factor_size_short(mp_size_t rn) {
+static inline ushort factor_size_short(mp_size_t rn) {
     /*
      经过大量的校验，*8即使是在ushort输入下，也极少低估，但是为了留有冗余，我们还是选择*10，大致相当于质数83。
     */
     // 此处假定了LIMB_BITS为64
-    return rn * 10;
+    uint approx1 = rn * 10;
+    lmmp_debug_assert(approx1 <= MP_USHORT_MAX);
+    return (ushort)approx1;
 }
 
 static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, uint r, uint nr, uint p) {
@@ -176,18 +179,18 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
         }
     } else {
         TEMP_DECL;
-        uint primen = lmmp_prime_cnt16_(n);
-        uint nfactors = factor_size_short(rn);
+        ushort primen = lmmp_prime_cnt16_(n);
+        ushort nfactors = factor_size_short(rn);
         nfactors = primen < nfactors ? primen : nfactors;
         fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
-        uint nr = n - r;
+        ushort nr = n - r;
         nfactors = 0;
-        for (uint i = 1; i < primen; ++i) {
-            uint p = prime_short_table[i];
+        for (ushort i = 1; i < primen; ++i) {
+            ushort p = prime_short_table[i];
             nfactors = count_factors(fac, nfactors, n, r, nr, p);
         }
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
+        rn = lmmp_factors_mul_ushort_(dst, rn, fac, nfactors);
 
         TEMP_FREE;
         return rn;

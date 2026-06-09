@@ -93,10 +93,14 @@ static mp_size_t lmmp_odd_nPr_product_(mp_ptr restrict dst, mp_size_t rn, uint n
     if (t != 1)
         limbs[limbn++] = t;
 
-    mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
-    // 这里不能直接乘入dst，因为dst的大小可能小于limbn，导致溢出
-    rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
-    lmmp_copy(dst, tp, rn);
+    if (rn >= limbn) {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(dst, limbs, limbn, tp);
+    } else {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+    }
     TEMP_FREE;
     return rn;
 }
@@ -186,17 +190,17 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         return lmmp_odd_nPr_product_(dst, rn, n, r);
     } else {
         TEMP_DECL;
-        uint primen = lmmp_prime_cnt16_(n);
-        uint nfactors = primen;
+        ushort primen = lmmp_prime_cnt16_(n);
+        ushort nfactors = primen;
         fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
         r = n - r;
         nfactors = 0;
-        for (uint i = 1; i < primen; ++i) {
-            uint p = prime_short_table[i];
+        for (ushort i = 1; i < primen; ++i) {
+            ushort p = prime_short_table[i];
             nfactors = count_factors(fac, nfactors, n, r, p);
         }
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
+        rn = lmmp_factors_mul_ushort_(dst, rn, fac, nfactors);
 
         TEMP_FREE;
         return rn;
@@ -270,10 +274,14 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
             limbs[limbn++] = v;
     }
 
-    mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
-    // 这里不能直接乘入dst，因为dst的大小可能小于limbn，导致溢出
-    rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
-    lmmp_copy(dst, tp, rn);
+    if (rn >= limbn) {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(dst, limbs, limbn, tp);
+    } else {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+    }
     TEMP_FREE;
     return rn;
 }
