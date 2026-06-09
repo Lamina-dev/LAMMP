@@ -495,7 +495,7 @@ LAMMP_API mp_size_t lmmp_hyperfac_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, u
  * @param n super阶乘的阶数
  * @param bits 被修改为 super阶乘的2的因子数
  * @warning bits!=NULL
- * @return hyper阶乘的 limb 缓冲区长度
+ * @return super阶乘的 limb 缓冲区长度
  */
 LAMMP_API mp_size_t lmmp_superfac_size_(ushort n, mp_bitcnt_t* bits);
 
