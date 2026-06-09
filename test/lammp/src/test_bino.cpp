@@ -32,7 +32,7 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_bino() {
-    size_t n = 0x10000, r = 3321;
+    size_t n = 0x302000, r = 33211;
 
     mp_bitcnt_t bits = 0;
     size_t len = lmmp_nCr_size_(n, r, &bits);

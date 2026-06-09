@@ -27,6 +27,16 @@ static inline mp_size_t fac_size_lower(uint n) {
     } else if (n == MP_UINT_MAX) {
         return 131242625438; // floor(log2(gamma(2^32)))
     } else {
+        return log2_gamma_floor(n + 1);
+    }
+}
+
+static inline mp_size_t fac_size_bigger(uint n) {
+    if (n < 20) {
+        return 64;
+    } else if (n == MP_UINT_MAX) {
+        return 131242625439;  // ceil(log2(gamma(2^32)))
+    } else {
         return log2_gamma_ceil(n + 1);
     }
 }
@@ -39,7 +49,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
     lmmp_param_assert(n_ret <= MP_UINT_MAX);
     lmmp_param_assert(n_ret > 0);
     *n = n_ret;
-    mp_size_t rn = fac_size_lower(n_ret);
+    mp_size_t rn = fac_size_bigger(n_ret);
     
     for (i = 0; i < m; ++i) {
         rn -= fac_size_lower(r[i]);
@@ -75,12 +85,15 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
      使用类似组合数的思路来估计缓冲区大小。
     */
     uint approx1 = rn * 8;
+    lmmp_debug_assert(approx1 <= MP_UINT_MAX);
     uint approx2 = lmmp_prime_size_(n);
     return approx1 < approx2 ? approx1 : approx2;
 }
 
-static inline uint factor_size_short(mp_size_t rn) {
-    return rn * 10;
+static inline ushort factor_size_short(mp_size_t rn) {
+    ushort approx1 = rn * 8;
+    lmmp_debug_assert(approx1 <= MP_USHORT_MAX);
+    return approx1;
 }
 
 static mp_size_t lmmp_odd_multinomial_ushort_(
@@ -100,17 +113,17 @@ static mp_size_t lmmp_odd_multinomial_ushort_(
         return 1;
     } else {
         TEMP_DECL;
-        uint primen = lmmp_prime_cnt16_(n);
-        uint nfactors = factor_size_short(rn);
+        ushort primen = lmmp_prime_cnt16_(n);
+        ushort nfactors = factor_size_short(rn);
         nfactors = primen < nfactors ? primen : nfactors;
         fac_ptr restrict fac = TALLOC_TYPE(nfactors, fac_t);
         nfactors = 0;
-        for (uint i = 1; i < primen; ++i) {
-            uint p = prime_short_table[i];
+        for (ushort i = 1; i < primen; ++i) {
+            ushort p = prime_short_table[i];
             nfactors = count_factors(fac, nfactors, n, r, m, p);
         }
 
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
+        rn = lmmp_factors_mul_ushort_(dst, rn, fac, nfactors);
 
         TEMP_FREE;
         return rn;

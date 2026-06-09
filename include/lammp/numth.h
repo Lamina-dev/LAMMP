@@ -250,7 +250,7 @@ LAMMP_API bool lmmp_is_prime_notrial_(ulong n);
  * @param n 底数 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, [base,n]>1
- * @return 返回值为 [base,n]^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
+ * @return 返回值为 [base,n]^exp 需要的 limb 缓冲区长度（比实际长度多）
  */
 LAMMP_API mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp);
 
@@ -259,7 +259,7 @@ LAMMP_API mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp);
  * @param base 底数
  * @param exp 指数
  * @warning exp>0, base>=1
- * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多 1-2 个limb）
+ * @return 返回值为 base^exp 需要的 limb 缓冲区长度（比实际长度多）
  */
 LAMMP_API mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp);
 
@@ -370,7 +370,7 @@ LAMMP_API mp_size_t lmmp_pow_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_size_
  * @param r 排列数的选择数
  * @param bits 被修改为 nPr 的2的因子数
  * @warning r<=n, bits!=NULL
- * @return nPr 排列数的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ * @return nPr 排列数的 limb 缓冲区长度（比实际长度多）
  */
 LAMMP_API mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* bits);
 
@@ -424,7 +424,7 @@ LAMMP_API mp_size_t lmmp_nPr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ulong 
  * @param n 阶乘的阶数
  * @param bits 被修改为 n! 的2的因子数
  * @warning bits!=NULL
- * @return n! 阶乘的 limb 缓冲区长度（比实际长度多 1-2 个 limb）
+ * @return n! 阶乘的 limb 缓冲区长度（比实际长度多）
  */
 LAMMP_API mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* bits);
 
@@ -448,6 +448,84 @@ LAMMP_API mp_size_t lmmp_odd_factorial_uint_(mp_ptr dst, mp_size_t rn, uint n);
  * @return 返回 dst 的实际 limb 长度
  */
 LAMMP_API mp_size_t lmmp_factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
+
+/**
+ * @brief 计算 n!! 双阶乘的 limb 缓冲区长度
+ * @param n 双阶乘的阶数
+ * @param bits 被修改为 n!! 的2的因子数
+ * @warning bits!=NULL
+ * @return n!! 双阶乘的 limb 缓冲区长度
+ */
+LAMMP_API mp_size_t lmmp_2factorial_size_(uint n, mp_bitcnt_t* bits);
+
+/**
+ * @brief 计算 n!! 双阶乘
+ * @param dst 结果指针
+ * @param bits n!! 的2的因子数
+ * @param rn 结果指针的 limb 长度
+ * @param n 双阶乘的阶数
+ * @warning dst!=NULL, rn>0
+ * @note 0的双阶乘为1，n为偶数时，n!!=2*4*...*n，n为奇数时，n!!=1*3*...*n
+ * @return 返回 dst 的实际 limb 长度
+ */
+LAMMP_API mp_size_t lmmp_2factorial_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n);
+
+/**
+ * @brief 计算hyper阶乘的 limb 缓冲区长度
+ * @param n hyper阶乘的阶数
+ * @param bits 被修改为 hyper阶乘的2的因子数
+ * @warning bits!=NULL
+ * @return hyper阶乘的 limb 缓冲区长度
+ */
+LAMMP_API mp_size_t lmmp_hyperfac_size_(ushort n, mp_bitcnt_t* bits);
+
+/**
+ * @brief 计算hyper阶乘（k^k累乘至n）
+ * @param dst 结果指针
+ * @param bits hyper阶乘的2的因子数
+ * @param rn 结果指针的 limb 长度
+ * @param n hyper阶乘的阶数
+ * @warning dst!=NULL, rn>0
+ * @return dst 的实际 limb 长度
+ */
+LAMMP_API mp_size_t lmmp_hyperfac_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ushort n);
+
+/**
+ * @brief 计算super阶乘的 limb 缓冲区长度
+ * @param n super阶乘的阶数
+ * @param bits 被修改为 super阶乘的2的因子数
+ * @warning bits!=NULL
+ * @return super阶乘的 limb 缓冲区长度
+ */
+LAMMP_API mp_size_t lmmp_superfac_size_(ushort n, mp_bitcnt_t* bits);
+
+/**
+ * @brief 计算super阶乘（k!累乘至n）
+ * @param dst 结果指针
+ * @param bits super阶乘的2的因子数
+ * @param rn 结果指针的 limb 长度
+ * @param n super阶乘的阶数
+ * @warning dst!=NULL, rn>0
+ * @return dst 的实际 limb 长度
+ */
+LAMMP_API mp_size_t lmmp_superfac_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ushort n);
+
+/**
+ * @brief 计算质数阶乘的 limb 缓冲区长度
+ * @param n 质数阶乘的阶数
+ * @return 质数阶乘的 limb 缓冲区长度
+ */
+LAMMP_API mp_size_t lmmp_primefac_size_(uint n);
+
+/**
+* @brief 计算质数阶乘（不超过n的质数累乘）
+* @param dst 结果指针
+* @param rn 结果指针的 limb 长度
+* @param n 质数阶乘的阶数
+* @warning dst!=NULL, rn>0
+* @return dst 的实际 limb 长度
+*/
+LAMMP_API mp_size_t lmmp_primefac_(mp_ptr dst, mp_size_t rn, uint n);
 
 /**
  * @brief 计算 nCr 组合数的 limb 缓冲区长度
@@ -550,6 +628,7 @@ LAMMP_API mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n
  * @param rn 结果指针的 limb 长度
  * @warning num!=NULL, nn>0, N>2, rn!=NULL
  * @note 试除法尝试从 2-N 中所有质数进行试除，如果能整除则会插入到返回结果数组中，没有整除的则会返回 NULL。
+ *       结果指针请使用 lmmp_free() 函数进行释放。
  * @return 结果指针，返回不超过N，且能整除[np,nn]的素数（从小到大排列），若没有能够整除的素数，则返回NULL
  */
 LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);

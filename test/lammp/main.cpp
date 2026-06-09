@@ -12,7 +12,7 @@
 
 int main() {
     lmmp_global_init();
-    test_isprime_ulong();
+    test_hyperfac();
     lmmp_global_deinit();
     return 0;
 }
