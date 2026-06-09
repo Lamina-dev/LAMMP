@@ -79,8 +79,8 @@ mp_size_t lmmp_factors_mul_ushort_(mp_ptr restrict dst, mp_size_t rn, fac_ptr re
         for (ushort i = 0; i < nfactors; i++) {
             ushort f = fac[i].f;
             uint j = fac[i].j;
-            lmmp_debug_assert(j != 0 && f <= MP_UCHAR_MAX);
-#define MAX_T 0xffffffffffffff
+            lmmp_debug_assert(j != 0 && f <= 0xfff);
+#define MAX_T 0xfffffffffffff
             for (uint e = 0; e < j; e++) {
                 t *= f;
                 if (t > MAX_T) {
@@ -304,10 +304,13 @@ static inline uint count_superfac_factors(ushort n, ushort p) {
 }
 
 mp_size_t lmmp_hyperfac_size_(ushort n, mp_bitcnt_t* restrict bits) {
-    // A = 1.2824271291006226   Glaisher–Kinkelin constant
-    // logA = log(A)
-    double log2 = 0.693147180559945; // log(2)
-    double logA = 0.248754477033784;
+    if (n == 0 || n == 1) {
+        *bits = 0;
+        return 1;
+    }
+    // A = 1.2824271291006226369   Glaisher–Kinkelin constant
+    const double logA = 0.24875447703378426;
+    const double log2 = 0.69314718055994531;  // log(2)
     double n_sqr = (uint)n * n;
     double log_n = log(n);
     double r = 0.5 * n_sqr * log_n - 0.25 * n_sqr + 0.5 * log_n * (double)n + 1.0 / 12.0 * log_n + logA;
@@ -318,11 +321,15 @@ mp_size_t lmmp_hyperfac_size_(ushort n, mp_bitcnt_t* restrict bits) {
 }
 
 mp_size_t lmmp_superfac_size_(ushort n, mp_bitcnt_t* restrict bits) {
+    if (n == 0 || n == 1) {
+        *bits = 0;
+        return 1;
+    }
     // zeta函数在-1处的导数
     // zeta(-1) = 1/12 - log(A) // A 即 Glaisher–Kinkelin constant
-    double zeta_diff_neg1 = -0.165421143700451;
-    double log2 = 0.693147180559945;     // log(2)
-    double log_2pi = 1.837877066409345;  // log(2*pi)
+    const double zeta_diff_neg1 = -0.16542114370045093;
+    const double log2 = 0.69314718055994531;     // log(2)
+    const double log_2pi = 1.83787706640934548;  // log(2*pi)
     double z = (double)n + 1;
     double z_sqr = z * z;
     double log_z = log(z);
@@ -408,4 +415,90 @@ mp_size_t lmmp_superfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, us
         rn += shw;
     }
     return rn;
+}
+
+mp_size_t lmmp_primefac_size_(uint n) {
+    // Chebyshev's estimate
+    // pn# < exp(1.000028*n)
+    const double log2 = 0.69314718055994531;  // log(2)
+    double l = 1.000028 * (double)n;
+    l /= log2;
+    mp_size_t rn = (mp_size_t)ceil(l);
+    rn = (rn + LIMB_BITS - 1) / LIMB_BITS + 2;  // more two limbs
+    return rn;
+}
+
+mp_size_t lmmp_primefac_(mp_ptr dst, mp_size_t rn, uint n) {
+    if (n < 2) {
+        dst[0] = 1;
+        return 1;
+    } else if (n <= MP_USHORT_MAX) {
+        TEMP_S_DECL;
+        ushort primen = lmmp_prime_cnt16_(n);
+        ulongp restrict pp = SALLOC_TYPE(primen / 4 + 1, ulong);
+        ulong t = 1;
+        mp_size_t pn = 0;
+        for (ushort i = 0; i < primen; i++) {
+            t *= prime_short_table[i];
+#define MAX_T 0xffffffffffff
+            if (t > MAX_T) {
+                pp[pn++] = t;
+                t = 1;
+            }
+#undef MAX_T
+        }
+        if (t > 1) {
+            pp[pn++] = t;
+        }
+
+        if (rn >= pn) {
+            mp_ptr restrict tp = SALLOC_TYPE(pn, mp_limb_t);
+            pn = lmmp_elem_mul_ulong_(dst, pp, pn, tp);
+        } else {
+            mp_ptr restrict prod = SALLOC_TYPE(pn * 2, mp_limb_t);
+            pn = lmmp_elem_mul_ulong_(prod, pp, pn, prod + pn);
+            lmmp_debug_assert(rn >= pn);
+            lmmp_copy(dst, prod, pn);
+        }
+        TEMP_S_FREE;
+        return pn;
+    } else {
+        TEMP_B_DECL;
+        lmmp_prime_int_table_init_(n);
+        uint pn = lmmp_prime_size_(n);
+        ulongp restrict pp = BALLOC_TYPE(pn / 2 + 1, ulong);
+        pn = 0;
+        ulong t = 2;  // 2 is the smallest prime number
+
+        prime_cache_t cache;
+        lmmp_prime_cache_init_(&cache, n);
+        while(cache.is_end == 0) {
+            lmmp_prime_cache_next_(&cache);
+            for (uint i = 0; i < cache.size; i++) {
+                t *= cache.pp[i];
+                if (t > MP_UINT_MAX) {
+                    pp[pn++] = t;
+                    t = 1;
+                }
+            }
+        }
+        lmmp_prime_cache_free_(&cache);
+
+        if (t > 1) {
+            pp[pn++] = t;
+        }
+
+        if (rn >= pn) {
+            mp_ptr restrict tp = BALLOC_TYPE(pn, mp_limb_t);
+            pn = lmmp_elem_mul_ulong_(dst, pp, pn, tp);
+        } else {
+            mp_ptr restrict prod = BALLOC_TYPE(pn * 2, mp_limb_t);
+            pn = lmmp_elem_mul_ulong_(prod, pp, pn, prod + pn);
+            lmmp_debug_assert(rn >= pn);
+            lmmp_copy(dst, prod, pn);
+        }
+
+        TEMP_B_FREE;
+        return pn;
+    }
 }

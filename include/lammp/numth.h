@@ -511,6 +511,23 @@ LAMMP_API mp_size_t lmmp_superfac_size_(ushort n, mp_bitcnt_t* bits);
 LAMMP_API mp_size_t lmmp_superfac_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, ushort n);
 
 /**
+ * @brief 计算质数阶乘的 limb 缓冲区长度
+ * @param n 质数阶乘的阶数
+ * @return 质数阶乘的 limb 缓冲区长度
+ */
+LAMMP_API mp_size_t lmmp_primefac_size_(uint n);
+
+/**
+* @brief 计算质数阶乘（不超过n的指数累乘）
+* @param dst 结果指针
+* @param rn 结果指针的 limb 长度
+* @param n 质数阶乘的阶数
+* @warning dst!=NULL, rn>0
+* @return dst 的实际 limb 长度
+*/
+LAMMP_API mp_size_t lmmp_primefac_(mp_ptr dst, mp_size_t rn, uint n);
+
+/**
  * @brief 计算 nCr 组合数的 limb 缓冲区长度
  * @param n 组合数的总数
  * @param r 组合数的选择数
@@ -611,6 +628,7 @@ LAMMP_API mp_size_t lmmp_arith_seqprod_(mp_ptr dst, mp_size_t rn, uint x, uint n
  * @param rn 结果指针的 limb 长度
  * @warning num!=NULL, nn>0, N>2, rn!=NULL
  * @note 试除法尝试从 2-N 中所有质数进行试除，如果能整除则会插入到返回结果数组中，没有整除的则会返回 NULL。
+ *       结果指针请使用 lmmp_free() 函数进行释放。
  * @return 结果指针，返回不超过N，且能整除[np,nn]的素数（从小到大排列），若没有能够整除的素数，则返回NULL
  */
 LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* rn);
