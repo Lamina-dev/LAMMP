@@ -87,7 +87,7 @@ void test_superfac() {
 }
 
 void test_primefac() {
-    size_t n = 0xfff0000;
+    size_t n = 0xff0000;
     size_t len1 = lmmp_primefac_size_(n);
     std::cout << "len1 = " << len1 << std::endl;
     mp_ptr a = ALLOC_TYPE(len1, mp_limb_t);
@@ -98,8 +98,7 @@ void test_primefac() {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
     std::cout << "Time elapsed: " << duration << " microseconds" << std::endl;
     std::cout << "an = " << an << std::endl;
-    std::cout << a[1002] << " " << a[1021] << std::endl;
+    std::cout << a[an - 1] << std::endl;
 
-    
     lmmp_free(a);
 }
