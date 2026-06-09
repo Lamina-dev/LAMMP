@@ -167,10 +167,4 @@
 // B / 4
 #define LIMB_B_4 (0x4000000000000000ull)
 
-// log(2) 的数值
-#define LOG2_ 0.693147180559945
-
-// 2^53，为避免浮点数精度问题，大于此值某些浮点数缓冲区计算可能产生错误
-#define DBL_2POW_MANT_DIG_ 0x20000000000000ull
-
 #endif // __LAMMP_MPARAM_H__
