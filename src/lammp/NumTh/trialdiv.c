@@ -78,10 +78,9 @@ ushortp lmmp_trialdiv_(mp_srcptr restrict np, mp_size_t nn, ushort N, ushort* rn
     and divide [np,nn] by the product to get remainder.
     */
         TEMP_S_DECL;
-        ulongp restrict pp = SALLOC_TYPE(primen / 4, ulong);
+        ulongp restrict pp = SALLOC_TYPE(primen / 4 + 1, ulong);
         ulong t = 1;
-        pp[0] = 1;
-        mp_size_t pn = 1;
+        mp_size_t pn = 0;
         for (ushort i = 0; i < primen; i++) {
             t *= prime_short_table[i];
             if (t > MAX_T) {
