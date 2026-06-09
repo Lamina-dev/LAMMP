@@ -50,7 +50,7 @@ fail:
 }
 
 void test_hyperfac() {
-    size_t n = 12117;
+    size_t n = 2;
     mp_bitcnt_t bits;
     size_t len1 = lmmp_hyperfac_size_(n, &bits);
 
@@ -83,5 +83,23 @@ void test_superfac() {
 
     std::cout << std::hex << a[an - 1] << " " << a[an - 2] << std::endl;
 
+    lmmp_free(a);
+}
+
+void test_primefac() {
+    size_t n = 0xfff0000;
+    size_t len1 = lmmp_primefac_size_(n);
+    std::cout << "len1 = " << len1 << std::endl;
+    mp_ptr a = ALLOC_TYPE(len1, mp_limb_t);
+
+    auto start = std::chrono::high_resolution_clock::now();
+    mp_size_t an = lmmp_primefac_(a, len1, n);
+    auto end = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    std::cout << "Time elapsed: " << duration << " microseconds" << std::endl;
+    std::cout << "an = " << an << std::endl;
+    std::cout << a[1002] << " " << a[1021] << std::endl;
+
+    
     lmmp_free(a);
 }

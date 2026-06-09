@@ -24,6 +24,7 @@ void test_factorial();
 void test_2factorial();
 void test_hyperfac();
 void test_superfac();
+void test_primefac();
 void test_multinomial();
 void test_perm();
 void test_bino();
