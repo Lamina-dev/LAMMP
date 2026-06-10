@@ -148,3 +148,101 @@ void lmmp_binvert_4_(mp_ptr restrict dst, mp_srcptr restrict numa) {
 #undef xn
 #undef k
 }
+
+/*
+unbalanced:
+    a := [numa,na]
+    a^-1 = a^-1 mod B^na
+
+    p = -k * a^-1 mod B^na
+    k = (k + a*p) / B^na
+*/
+
+void lmmp_binvert_unbalanced_1_(mp_ptr restrict dst, mp_limb_t a, mp_size_t n) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(a % 2 == 1);
+    lmmp_param_assert(n > 1);
+    ulong a_binvert = lmmp_binvert_ulong_(a);
+    dst[0] = a_binvert;
+    mp_size_t i = 0;
+    ulong k, p, lo, hi, carry;
+    _umul64to128_(a_binvert, a, &lo, &k);
+    a_binvert = -a_binvert;
+    for (; i < n - 2; i++) {
+        p = a_binvert * k;
+        dst[i + 1] = p;
+        _umul64to128_(p, a, &lo, &hi);
+        carry = (k + lo) < lo ? 1 : 0;
+        k = hi + carry;
+    }
+    p = a_binvert * k;
+    dst[n - 1] = p;
+}
+
+void lmmp_binvert_unbalanced_2_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t n) {
+    lmmp_param_assert(dst != NULL && numa != NULL);
+    lmmp_param_assert(numa[0] % 2 == 1);
+    lmmp_param_assert(n > 2);
+    mp_limb_t a_binvert[2];
+    lmmp_binvert_2_(a_binvert, numa);
+    dst[0] = a_binvert[0];
+    dst[1] = a_binvert[1];
+
+    mp_limb_t carry;
+    mp_limb_t k[4];
+    mp_limb_t t[4];
+    mp_limb_t p[2];
+    _umul128to256_(a_binvert[1], a_binvert[0], numa[1], numa[0], k);
+
+    // 此处本应按位取反再加一，得到相反数，但是a_binvert[0]不可能为0，所以进位必定为0
+    lmmp_debug_assert(a_binvert[0] != 0);
+    a_binvert[0] = ~a_binvert[0];
+    a_binvert[1] = ~a_binvert[1];
+    a_binvert[0]++;
+
+    mp_size_t i = 0;
+    if (n % 2 == 0) {
+        for (; i < n - 4; i += 2) {
+            _umul128to128_(a_binvert[1], a_binvert[0], k[3], k[2], p);
+            dst[i + 2] = p[0];
+            dst[i + 3] = p[1];
+            _umul128to256_(p[1], p[0], numa[1], numa[0], t);
+            // t = a*p
+            // k的结果在 k[2] 和 k[3] 中
+            t[0] += k[2];
+            carry = (t[0] < k[2]) ? 1 : 0;
+            t[1] += carry;
+            carry = (t[1] < carry) ? 1 : 0;
+            t[1] += k[3];
+            carry += (t[1] < k[3]) ? 1 : 0;
+
+            k[2] = t[2] + carry;
+            carry = (k[2] < carry) ? 1 : 0;
+            k[3] = t[3] + carry;
+        }
+        _umul128to128_(a_binvert[1], a_binvert[0], k[3], k[2], p);
+        dst[i + 2] = p[0];
+        dst[i + 3] = p[1];
+    } else {
+        for (; i < n - 3; i += 2) {
+            _umul128to128_(a_binvert[1], a_binvert[0], k[3], k[2], p);
+            dst[i + 2] = p[0];
+            dst[i + 3] = p[1];
+            _umul128to256_(p[1], p[0], numa[1], numa[0], t);
+            // t = a*p
+            // k的结果在 k[2] 和 k[3] 中
+            t[0] += k[2];
+            carry = (t[0] < k[2]) ? 1 : 0;
+            t[1] += carry;
+            carry = (t[1] < carry) ? 1 : 0;
+            t[1] += k[3];
+            carry += (t[1] < k[3]) ? 1 : 0;
+
+            k[2] = t[2] + carry;
+            carry = (k[2] < carry) ? 1 : 0;
+            k[3] = t[3] + carry;
+        }
+        _umul128to128_(a_binvert[1], a_binvert[0], k[3], k[2], p);
+        dst[i + 2] = p[0];
+    }
+}

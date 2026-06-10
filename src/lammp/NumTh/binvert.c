@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
@@ -150,7 +151,6 @@ void lmmp_binvert_n_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t 
         lmmp_not_(xhi, xhi, ahin);
         lmmp_inc(xhi);
     }
-}
 #undef k
 #undef alo
 #undef ahi
@@ -159,3 +159,37 @@ void lmmp_binvert_n_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t 
 #undef xlo_sqr
 #undef xlo_sqr_mul_ahi
 #undef scratch
+}
+
+void lmmp_binvert_unbalanced_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_size_t n, mp_ptr restrict tp) {
+    lmmp_param_assert(dst != NULL && numa != NULL && tp != NULL);
+    lmmp_param_assert(numa[0] % 2 == 1);
+    lmmp_param_assert(n > na && na > 0);
+#define a_binvert (tp)             // [tp,              na]
+#define lo        (tp + na)        // [tp+na,           na]
+#define k         (tp + 2 * na)    // [tp+2*na,         na]
+#define scratch   (tp + 3 * na)    // [tp+3*na, 5*(na+1)/2]
+    lmmp_binvert_n_dc_(a_binvert, numa, na, scratch);
+    lmmp_copy(dst, a_binvert, na);
+    // 这里lo刚好在k的低位
+    lmmp_mul_n_(lo, a_binvert, numa, na);
+
+    // a_binvert 低位不可能为0，故加一不会进位
+    lmmp_debug_assert(a_binvert[0] != 0);
+    lmmp_not_(a_binvert, a_binvert, na);
+    a_binvert[0] += 1;
+
+    mp_size_t i = na;
+    for (; i < n - na; i += na) {
+        lmmp_mullo_n_(dst + i, a_binvert, k, na, scratch);
+        lmmp_mul_n_(scratch, dst + i, numa, na);
+        // now [scratch,2*na] = a * p
+        if (lmmp_add_n_(scratch, scratch, k, na)) {
+            lmmp_inc(scratch + na);
+        }
+        lmmp_copy(k, scratch + na, na);
+    }
+
+    lmmp_mullo_n_(dst + i, a_binvert, k, n - i, scratch);
+}
+
