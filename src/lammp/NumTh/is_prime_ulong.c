@@ -71,6 +71,7 @@ static inline ulong mont63_reduce(u128 t, ulong m, ulong m_inv) {
 }
 
 static inline ulong mont63_R2(ulong m) {
+    // FIXME: 内联lmmp_leading_zeros_
     int shift = lmmp_leading_zeros_(m);
     u192 r = {0, 0, 1ull << shift};
     u128 q;
