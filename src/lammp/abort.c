@@ -5,15 +5,28 @@
  */
 
 #include "../../include/lammp/lmmp.h"
-#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <threads.h>
 
-static atomic_uintptr_t lmmp_abort_func;
+
+static lmmp_abort_fn lmmp_abort_func = NULL;
+static mtx_t abort_func_mtx;
+static once_flag abort_func_init_flag = ONCE_FLAG_INIT;
+
+static void init_abort_lock(void) { 
+    mtx_init(&abort_func_mtx, mtx_plain); 
+}
 
 lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
-    uintptr_t old = atomic_exchange(&lmmp_abort_func, (uintptr_t)func);
-    return (lmmp_abort_fn)old;
+    call_once(&abort_func_init_flag, init_abort_lock);
+
+    mtx_lock(&abort_func_mtx);
+    lmmp_abort_fn old = lmmp_abort_func;
+    lmmp_abort_func = func;
+    mtx_unlock(&abort_func_mtx);
+
+    return old;
 }
 
 static const char* type_to_str(lmmp_error_t type) {
@@ -40,8 +53,12 @@ static const char* type_to_str(lmmp_error_t type) {
 }
 
 void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line) {
-    uintptr_t curr = atomic_load(&lmmp_abort_func);
-    lmmp_abort_fn fn = (lmmp_abort_fn)curr;
+    call_once(&abort_func_init_flag, init_abort_lock);
+
+    mtx_lock(&abort_func_mtx);
+    lmmp_abort_fn fn = lmmp_abort_func;
+    mtx_unlock(&abort_func_mtx);
+
     if (fn != NULL) {
         fn(type, msg, func, line);
     } else {
