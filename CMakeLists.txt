@@ -140,22 +140,6 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
         )
-
-        if(CMAKE_C_COMPILER_ID MATCHES "GNU")
-            target_link_options(${target} PRIVATE
-                -m64 -Wl,--no-undefined
-                $<$<CONFIG:Release>:-s -Wl,--strip-all>
-                $<$<CONFIG:MinSizeRel>:-s -Wl,--strip-all>
-            )
-        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            if(TARGET_SYSTEM STREQUAL "WIN")
-            else()
-                target_link_options(${target} PRIVATE
-                    $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
-                )
-            endif()
-        endif()
-
     elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
@@ -173,10 +157,25 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
         )
+    endif()
 
+    if(CMAKE_LINKER_ID STREQUAL "MSVC")
+        # MSVC 链接器 (link.exe / lld-link in MSVC mode)
         target_link_options(${target} PRIVATE
-            /MACHINE:X64 /DYNAMICBASE /NXCOMPAT /SUBSYSTEM:CONSOLE
+            /DYNAMICBASE
+            /NXCOMPAT
+            /SUBSYSTEM:CONSOLE
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:REF /OPT:ICF>
         )
+    elseif(CMAKE_LINKER_ID MATCHES "^(GNU|GOLD|LLD)$")
+        # GNU ld, gold, lld
+        if(NOT (CMAKE_LINKER_ID STREQUAL "LLD" AND TARGET_SYSTEM STREQUAL "WIN"))
+            target_link_options(${target} PRIVATE
+                -m64
+                -Wl,--no-undefined
+                $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
+            )
+        endif()
     endif()
 endfunction()
 
