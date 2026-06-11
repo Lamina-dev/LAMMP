@@ -52,8 +52,7 @@ void test_binvert() {
     lmmp_leak_tracker;
 }
 
-void test_binvert_unbalanced() {
-    mp_size_t na = 0x72f3, n = na * (17 / 9);
+static void test_bench_binvert(mp_size_t na, mp_size_t n) {
 
     mp_ptr numa = ALLOC_TYPE(n, mp_limb_t);
     mp_ptr tp1 = ALLOC_TYPE((5 * n + 5) / 2, mp_limb_t);
@@ -68,13 +67,13 @@ void test_binvert_unbalanced() {
     lmmp_binvert_n_dc_(dst1, numa, n, tp1);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Time elapsed: " << duration.count() << " microseconds" << std::endl;
+    std::cout << duration.count() << ",";
 
     auto start2 = std::chrono::high_resolution_clock::now();
     lmmp_binvert_unbalanced_(dst2, numa, na, n, tp2);
     auto end2 = std::chrono::high_resolution_clock::now();
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2);
-    std::cout << "Time elapsed: " << duration2.count() << " microseconds" << std::endl;
+    std::cout << duration2.count() << ";";
 
     for (size_t i = 0; i < n; i++) {
         if (dst1[i] != dst2[i]) {
@@ -91,4 +90,14 @@ end:
     lmmp_free(tp1);
     lmmp_free(tp2);
     lmmp_leak_tracker;
+}
+
+void test_binvert_unbalanced() {
+    for (mp_size_t na = 1000; na <= 100000; na += 1000) {
+        for (mp_size_t k = 31; k < 60; k++) {
+            mp_size_t n = na * k / 30;
+            std::cout << na << "," << n << ",";
+            test_bench_binvert(na, n);
+        }
+    }
 }

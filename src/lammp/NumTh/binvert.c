@@ -197,7 +197,6 @@ void lmmp_binvert_unbalanced_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_s
 
     lmmp_mullo_n_(dst + i, a_binvert, k, n - i, scratch);
 #undef a_binvert
-#undef lo
 #undef k
 #undef scratch
 }
@@ -214,7 +213,8 @@ void lmmp_binvert_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, m
         lmmp_binvert_unbalanced_1_(dst, numa[0], n);
     } else if (na == 2) {
         lmmp_binvert_unbalanced_2_(dst, numa, n);
-    } else if (n >= 2 * na) {
+    } else if (4 * n >= 5 * na) {
+        // n/na >= 5/4 这是一个比较简单的调优结果
         mp_ptr restrict tp = ALLOC_TYPE((9 * n + 5) / 2, mp_limb_t);
         lmmp_binvert_unbalanced_(dst, numa, na, n, tp);
     } else {
