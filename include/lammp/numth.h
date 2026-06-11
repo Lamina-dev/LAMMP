@@ -101,7 +101,6 @@ LAMMP_API void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_pt
  * @param a 待求逆元
  * @param n 结果的 limb 长度
  * @warning a%2==1, n>1, dst!=NULL
- * @return dst 的实际 limb 长度
  */
 LAMMP_API void lmmp_binvert_unbalanced_1_(mp_ptr dst, mp_limb_t a, mp_size_t n);
 
@@ -111,7 +110,6 @@ LAMMP_API void lmmp_binvert_unbalanced_1_(mp_ptr dst, mp_limb_t a, mp_size_t n);
  * @param numa 待求逆元指针（长度为 2 个limb）
  * @param n 结果的 limb 长度
  * @warning numa[0]%2==1, n>2, dst!=NULL, numa!=NULL, sep(dst,numa)
- * @return dst 的实际 limb 长度
  */
 LAMMP_API void lmmp_binvert_unbalanced_2_(mp_ptr dst, mp_srcptr numa, mp_size_t n);
 
@@ -121,9 +119,8 @@ LAMMP_API void lmmp_binvert_unbalanced_2_(mp_ptr dst, mp_srcptr numa, mp_size_t 
  * @param numa 待求逆元指针（长度为 na 个limb）
  * @param na 待求逆元的 limb 长度
  * @param n 结果的 limb 长度
- * @param tp 临时工作区指针（长度为 (11*na+5)/2 个limb）
+ * @param tp 临时工作区指针（长度为 (9*na+5)/2 个limb）
  * @warning numa[0]%2==1, n>na, dst!=NULL, numa!=NULL, tp!=NULL, sep(dst,numa,tp)
- * @return dst 的实际 limb 长度
  */
 LAMMP_API void lmmp_binvert_unbalanced_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n, mp_ptr tp);
 
@@ -134,9 +131,8 @@ LAMMP_API void lmmp_binvert_unbalanced_(mp_ptr dst, mp_srcptr numa, mp_size_t na
  * @param na 待求逆元的 limb 长度
  * @param n 结果的 limb 长度
  * @warning n>=na>0, numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
- * @return dst 的实际 limb 长度
  */
-// LAMMP_API mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
+LAMMP_API void lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
 
 /**
  * @brief 计算两个无符号整数的最大公约数

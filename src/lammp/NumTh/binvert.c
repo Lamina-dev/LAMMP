@@ -10,7 +10,12 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
-
+/**
+ * @brief 计算 [dst,n] = [xp,n]*[ap,n] div B^n
+ * @param dst 结果指针
+ * @param tp scratch space, need 2*n limbs
+ * @warning [xp,n] * [ap,n] mod B^n == 1
+ */
 static inline void binvert_mulhi_(mp_ptr dst, mp_srcptr xp, mp_srcptr ap, mp_size_t n, mp_ptr tp) {
     if (n < BINVERT_MULHI_MERSENNE_THRESHOLD) {
         lmmp_mul_n_(tp, xp, ap, n);
@@ -41,10 +46,10 @@ static inline void lmmp_sqrlo_n_(
 }
 
 static inline void lmmp_mullo_n_(
-    mp_ptr    restrict  dst, 
-    mp_srcptr restrict numa, 
-    mp_srcptr restrict numb, 
-    mp_size_t             n, 
+    mp_ptr    restrict  dst,
+    mp_srcptr restrict numa,
+    mp_srcptr restrict numb,
+    mp_size_t             n,
     mp_ptr    restrict   tp
 ) {
     if (n < MULLO_DC_THRESHOLD) {
@@ -165,14 +170,14 @@ void lmmp_binvert_unbalanced_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_s
     lmmp_param_assert(dst != NULL && numa != NULL && tp != NULL);
     lmmp_param_assert(numa[0] % 2 == 1);
     lmmp_param_assert(n > na && na > 0);
+
 #define a_binvert (tp)             // [tp,              na]
-#define lo        (tp + na)        // [tp+na,           na]
-#define k         (tp + 2 * na)    // [tp+2*na,         na]
-#define scratch   (tp + 3 * na)    // [tp+3*na, 5*(na+1)/2]
+#define k         (tp + 1 * na)    // [tp+na,           na]
+#define scratch   (tp + 2 * na)    // [tp+2*na, 5*(na+1)/2]
+
     lmmp_binvert_n_dc_(a_binvert, numa, na, scratch);
     lmmp_copy(dst, a_binvert, na);
-    // 这里lo刚好在k的低位
-    lmmp_mul_n_(lo, a_binvert, numa, na);
+    binvert_mulhi_(k, a_binvert, numa, na, scratch);
 
     // a_binvert 低位不可能为0，故加一不会进位
     lmmp_debug_assert(a_binvert[0] != 0);
@@ -191,5 +196,33 @@ void lmmp_binvert_unbalanced_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_s
     }
 
     lmmp_mullo_n_(dst + i, a_binvert, k, n - i, scratch);
+#undef a_binvert
+#undef lo
+#undef k
+#undef scratch
 }
 
+void lmmp_binvert_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_size_t n) {
+    lmmp_param_assert(dst != NULL && numa != NULL);
+    lmmp_param_assert(na > 0 && n > 0);
+    lmmp_param_assert(numa[0] % 2 == 1);
+    TEMP_DECL;
+    if (n == na) {
+        mp_ptr restrict tp = ALLOC_TYPE(5 * (n + 1) / 2, mp_limb_t);
+        lmmp_binvert_n_dc_(dst, numa, na, tp);
+    } else if (na == 1) {
+        lmmp_binvert_unbalanced_1_(dst, numa[0], n);
+    } else if (na == 2) {
+        lmmp_binvert_unbalanced_2_(dst, numa, n);
+    } else if (n >= 2 * na) {
+        mp_ptr restrict tp = ALLOC_TYPE((9 * n + 5) / 2, mp_limb_t);
+        lmmp_binvert_unbalanced_(dst, numa, na, n, tp);
+    } else {
+        mp_ptr restrict ap = ALLOC_TYPE(n, mp_limb_t);
+        mp_ptr restrict tp = ALLOC_TYPE((5 * n + 5) / 2, mp_limb_t);
+        lmmp_copy(ap, numa, n);
+        lmmp_zero(ap + na, n - na);
+        lmmp_binvert_n_dc_(dst, ap, n, tp);
+    }
+    TEMP_FREE;
+}
