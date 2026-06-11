@@ -7,7 +7,11 @@
 #include "../../include/lammp/lmmp.h"
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef __STDC_NO_THREADS__
+#error "Threads support is required for setting abort function"
+#else
 #include <threads.h>
+#endif
 
 
 static lmmp_abort_fn lmmp_abort_func = NULL;

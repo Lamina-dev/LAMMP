@@ -214,6 +214,7 @@ static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* f
         return lmmp_alloc_debug(new_size, func, line);
     if (new_size == 0) {
         lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Reallocating zero bytes is not allowed.", func, line);
+        return NULL;
     }
 
     size_t header_size = align_up(sizeof(mem_header));

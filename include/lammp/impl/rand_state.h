@@ -40,7 +40,7 @@ typedef struct {
 
 INLINE_ mp_limb_t rotl(const mp_limb_t x, int k) {
     const int shift = k & 63;
-    return (x << shift) | (x >> (64 - shift));
+    return (x << shift) | (x >> ((-shift) & 63));
 }
 
 /**
