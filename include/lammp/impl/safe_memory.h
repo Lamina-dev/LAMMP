@@ -26,23 +26,30 @@
 #include <stdlib.h>
 #include <string.h>
 
-// === 内存块头部结构 ===
+
 typedef struct {
+    uint64_t magic;     // 魔数，用于验证有效性
     size_t user_size;   // 用户请求的大小
     size_t total_size;  // 总分配大小（含头部、用户内存、额外内存）
     size_t extra_size;  // 额外分配的内存大小
-    uint32_t magic;     // 魔数，用于验证有效性
     const char* func;   // 分配发生的函数名
     int line;           // 分配发生的行号
-} MemHeader;
+    uint32_t guard;     // 尾哨兵
+} mem_header;
 
-#define MEM_MAGIC 0xDEADBEEF
-#define EXTRA_MEM_PATTERN 0xAA  // 额外内存填充模式（-86的补码即0xAA）
+#define MEM_MAGIC 0xDEADBEEFDEADBEEFULL    // deadbeef
+#define MEM_GUARD 0xDEADBEEFUL             // deadbeef
+#define EXTRA_MEM_PATTERN 0xAA  // 额外内存填充模式
 
 #define ALIGNMENT LAMMP_MAX_ALIGN
-static inline size_t align_up(size_t size) { return (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1); }
 
-// === 辅助函数：查找连续修改的范围 ===
+static inline size_t align_up(size_t size) { 
+    return (size + ALIGNMENT - 1) & ~(ALIGNMENT - 1); 
+}
+
+/**
+ * @brief 找到指定模式的连续内存区域，并记录起始和结束位置。
+ */
 static inline void find_corruption_range(
     const char*   data,
     unsigned char pattern,
@@ -65,15 +72,16 @@ static inline void find_corruption_range(
     }
 }
 
-// === 检查额外内存区域（上溢检测）===
-static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, const char* check_func, int check_line) {
+/**
+ * @brief 检查额外内存区域是否被修改。
+ */
+static inline int check_extra_memory_overflow(mem_header* hdr, void* user_ptr, const char* check_func, int check_line) {
     if (!hdr || !user_ptr || hdr->extra_size == 0)
         return 0;
 
     size_t aligned_user_size = align_up(hdr->user_size);
     char* extra_start = (char*)user_ptr + aligned_user_size;
 
-    // 检查整个额外内存区域是否被修改
     int first, last, count;
     find_corruption_range(extra_start, EXTRA_MEM_PATTERN, hdr->extra_size, &first, &last, &count);
 
@@ -110,38 +118,44 @@ static inline int check_extra_memory_overflow(MemHeader* hdr, void* user_ptr, co
     return 0;
 }
 
-// === 全面检查内存块（头部魔数 + 额外内存）===
-static inline int check_memory_block_integrity(MemHeader* hdr, void* user_ptr, const char* check_func, int check_line) {
+/**
+ * @brief 检查内存块的完整性（包括头尾和额外内存区域）。
+ */
+static inline int check_memory_block_integrity(mem_header* hdr, void* user_ptr, const char* check_func, int check_line) {
     if (!hdr || !user_ptr)
         return 0;
 
-    // 检查头部魔数是否被破坏（可能由下溢或野指针导致）
-    if (hdr->magic != MEM_MAGIC) {
-        char error_buf[128];
+    if (hdr->magic != MEM_MAGIC || hdr->guard != MEM_GUARD) {
+        char error_buf[240];
         snprintf(error_buf, sizeof(error_buf),
-                 "Memory header corruption detected! Magic: 0x%08x (expected 0x%08x)\n"
-                 "Possible underflow or invalid pointer.",
-                 hdr->magic, MEM_MAGIC);
+                 "Memory header corruption detected!\n"
+                 "  Magic: 0x%016llx (expected 0x%016llx)\n"
+                 "  Guard: 0x%08lx (expected 0x%08lx)\n"
+                 "Possible overflow or underflow or invalid pointer.",
+                 hdr->magic, MEM_MAGIC, (unsigned long)hdr->guard, MEM_GUARD);
         lmmp_abort(LAMMP_ERROR_MEMORY_FREE_FAILURE, error_buf, check_func, check_line);
         return 1;
     }
 
-    // 检查额外内存是否被溢出破坏
     return check_extra_memory_overflow(hdr, user_ptr, check_func, check_line);
 }
 
-// === 调试版 malloc ===
+/**
+ * @brief 调试版 malloc
+ * @param size 要分配的内存大小
+ * @param func 分配内存的函数名
+ * @param line 分配内存的行号
+ * @return 分配的内存块的指针
+ */
 static inline void* lmmp_alloc_debug(size_t size, const char* func, int line) {
     if (size == 0)
         return NULL;
 
-    // 计算额外分配的内存大小
     size_t extra_size = (size * LAMMP_MEMORY_MORE_ALLOC_TIMES) / 10;
     extra_size = align_up(extra_size);
 
-    size_t header_size = align_up(sizeof(MemHeader));
+    size_t header_size = align_up(sizeof(mem_header));
     size_t aligned_user_size = align_up(size);
-    // 总大小 = 头部 + 用户内存（对齐后） + 额外内存
     size_t total_size = header_size + aligned_user_size + extra_size;
 
     void* base = heap_alloc_func(total_size);
@@ -152,56 +166,60 @@ static inline void* lmmp_alloc_debug(size_t size, const char* func, int line) {
         return NULL;
     }
 
-    memset(base, 0, total_size);
-
-    MemHeader* hdr = (MemHeader*)base;
+    mem_header* hdr = (mem_header*)base;
     void* user_ptr = (char*)base + header_size;
     void* extra_mem = (char*)user_ptr + aligned_user_size;
 
+    hdr->magic = MEM_MAGIC;
     hdr->user_size = size;
     hdr->total_size = total_size;
     hdr->extra_size = extra_size;
     hdr->func = func;
     hdr->line = line;
-    hdr->magic = MEM_MAGIC;
+    hdr->guard = MEM_GUARD;
 
-    // 用户内存填充未初始化标记 (0xCD)
-    memset(user_ptr, 0xCD, aligned_user_size);
-    // 额外内存填充检测模式 (0xAA)
     memset(extra_mem, EXTRA_MEM_PATTERN, extra_size);
 
     return user_ptr;
 }
 
-// === 调试版 free ===
+/**
+ * @brief 调试版 free
+ * @param ptr 指向要释放的内存块的指针
+ * @param func 分配内存的函数名
+ * @param line 分配内存的行号
+ */
 static inline void lmmp_free_debug(void* ptr, const char* func, int line) {
     if (!ptr)
         return;
 
-    size_t header_size = align_up(sizeof(MemHeader));
-    MemHeader* hdr = (MemHeader*)((char*)ptr - header_size);
+    size_t header_size = align_up(sizeof(mem_header));
+    mem_header* hdr = (mem_header*)((char*)ptr - header_size);
 
-    // 检查内存完整性（触发 lmmp_abort 若溢出或头部损坏）
     check_memory_block_integrity(hdr, ptr, func, line);
 
-    // 标记已释放 (0xDD)
-    memset(hdr, 0xDD, hdr->total_size);
     heap_free_func(hdr);
 }
 
-// === 调试版 realloc ===
+/**
+ * @brief 调试版 realloc
+ * @param ptr 指向要重新分配的内存块的指针
+ * @param new_size 新的内存大小
+ * @param func 分配内存的函数名
+ * @param line 分配内存的行号
+ * @return 新分配的内存块的指针
+ */
 static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* func, int line) {
     if (!ptr)
         return lmmp_alloc_debug(new_size, func, line);
     if (new_size == 0) {
-        lmmp_free_debug(ptr, func, line);
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Reallocating zero bytes is not allowed.", func, line);
         return NULL;
     }
 
-    size_t header_size = align_up(sizeof(MemHeader));
-    MemHeader* old_hdr = (MemHeader*)((char*)ptr - header_size);
+    size_t header_size = align_up(sizeof(mem_header));
+    mem_header* old_hdr = (mem_header*)((char*)ptr - header_size);
 
-    // 检查原内存块完整性
     check_memory_block_integrity(old_hdr, ptr, func, line);
 
     void* new_ptr = lmmp_alloc_debug(new_size, func, line);
@@ -215,19 +233,9 @@ static inline void* lmmp_realloc_debug(void* ptr, size_t new_size, const char* f
     return new_ptr;
 }
 
-// === 显式检查宏 ===
-static inline int check_memory_overflow(void* ptr, const char* func, int line) {
-    if (!ptr)
-        return 0;
-    size_t header_size = align_up(sizeof(MemHeader));
-    MemHeader* hdr = (MemHeader*)((char*)ptr - header_size);
-    return check_memory_block_integrity(hdr, ptr, func, line);
-}
-
-#define CHECK_OVERFLOW(ptr) check_memory_overflow(ptr, __func__, __LINE__)
-
 #undef SAFE_APPEND
 #undef MEM_MAGIC
+#undef MEM_GUARD
 #undef ALIGNMENT
 #undef EXTRA_MEM_PATTERN
 

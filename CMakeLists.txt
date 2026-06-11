@@ -14,8 +14,8 @@
 # You should have received a copy of the GNU Lesser General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-cmake_minimum_required(VERSION 3.15)
-project(Lammp LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.29)
+project(LAMMP LANGUAGES C CXX)
 
 # ==============================================================================
 # 1. 可配置选项
@@ -140,22 +140,6 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
         )
-
-        if(CMAKE_C_COMPILER_ID MATCHES "GNU")
-            target_link_options(${target} PRIVATE
-                -m64 -Wl,--no-undefined
-                $<$<CONFIG:Release>:-s -Wl,--strip-all>
-                $<$<CONFIG:MinSizeRel>:-s -Wl,--strip-all>
-            )
-        elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-            if(TARGET_SYSTEM STREQUAL "WIN")
-            else()
-                target_link_options(${target} PRIVATE
-                    $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
-                )
-            endif()
-        endif()
-
     elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
@@ -173,10 +157,24 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
         )
+    endif()
 
+    if(CMAKE_C_COMPILER_LINKER_ID STREQUAL "MSVC")
+        # MSVC 链接器 (link.exe / lld-link in MSVC mode)
         target_link_options(${target} PRIVATE
-            /MACHINE:X64 /DYNAMICBASE /NXCOMPAT /SUBSYSTEM:CONSOLE
+            /DYNAMICBASE
+            /NXCOMPAT
+            /SUBSYSTEM:CONSOLE
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:REF /OPT:ICF>
         )
+    elseif(CMAKE_C_COMPILER_LINKER_ID MATCHES "^(GNU|GOLD|LLD)$")
+        # GNU ld, gold, lld
+        if(NOT (CMAKE_C_COMPILER_LINKER_ID STREQUAL "LLD" AND TARGET_SYSTEM STREQUAL "WIN"))
+            target_link_options(${target} PRIVATE
+                -Wl,--no-undefined
+                $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
+            )
+        endif()
     endif()
 endfunction()
 
@@ -214,6 +212,7 @@ message(STATUS "=====================================")
 message(STATUS "Lammp configure summary")
 message(STATUS "=====================================")
 message(STATUS "Compiler:      ${CMAKE_C_COMPILER_ID}")
+message(STATUS "Linker:        ${CMAKE_C_COMPILER_LINKER_ID}")
 message(STATUS "Target system: ${TARGET_SYSTEM}")
 message(STATUS "Build type:    ${CMAKE_BUILD_TYPE}")
 message(STATUS "ASM support:   ${USE_ASM}")

@@ -38,6 +38,11 @@ typedef struct {
 #define INLINE_ static inline
 #endif
 
+INLINE_ mp_limb_t rotl(const mp_limb_t x, int k) {
+    const int shift = k & 63;
+    return (x << shift) | (x >> ((-shift) & 63));
+}
+
 /**
  * @brief 种子生成器
  * @param seed 低熵种子
@@ -62,11 +67,11 @@ INLINE_ void pcg64_128_action(mp_limb_t state[2], const mp_limb_t inc[2]) {
 INLINE_ void lmmp_pcg64_128_srandom(pcg64_128_state* rng, mp_limb_t seed) {
     lmmp_param_assert(rng != NULL);
 
-    rng->state[0] = lmmp_seed_generator(seed);
-    rng->state[1] = lmmp_seed_generator(seed << 17);
-    rng->inc[0] = lmmp_seed_generator(seed << 7); 
-    rng->inc[0] |= 1ull;               
-    rng->inc[1] = lmmp_seed_generator(seed << 21);
+    rng->state[0] = seed * 0x24069528d54bbaa4ULL;
+    rng->state[1] = (seed << 17) + 0xf98bc019ecd71a28ULL;
+    rng->inc[0] = rotl(seed, 31) * 0xb5b2943a321cdf10ULL;
+    rng->inc[0] |= 1ull;
+    rng->inc[1] = (seed << 21) ^ seed;
 
     // warm up
     pcg64_128_action(rng->state, rng->inc);
@@ -81,14 +86,9 @@ INLINE_ mp_limb_t lmmp_pcg64_128_random(pcg64_128_state* rng) {
 
     // XSL-RR
     mp_limb_t xsl = ((oldstate[1]) ^ oldstate[0]);
-    
+
     mp_byte_t rot = (mp_byte_t)(oldstate[1] >> 58); 
     return (xsl >> rot) | (xsl << ((-rot) & 63));
-}
-
-INLINE_ mp_limb_t rotl(const mp_limb_t x, int k) {
-    const int shift = k & 63;
-    return (x << shift) | (x >> (64 - shift));
 }
 
 INLINE_ mp_limb_t lmmp_xoshiro256pp_random(xoshiro256pp_state* rng) {
@@ -109,26 +109,19 @@ INLINE_ mp_limb_t lmmp_xoshiro256pp_random(xoshiro256pp_state* rng) {
 INLINE_ void lmmp_xoshiro256pp_srandom(xoshiro256pp_state* rng, mp_limb_t seed) {
     lmmp_param_assert(rng != NULL);
 
-    rng->s[0] = lmmp_seed_generator(seed);
-    rng->s[1] = lmmp_seed_generator(seed << 17);
-    rng->s[2] = lmmp_seed_generator(0x9e37b97f8a5a7c19ULL ^ seed);
-    rng->s[3] = lmmp_seed_generator(0x8a07e6c7f6b9c92eULL ^ seed);
+    // 不可能为全零状态
+    rng->s[0] = seed ^ 0x9e37b91f8a5d7c19ULL;
+    rng->s[1] = (seed << 17) + 0xf98bc01ecdc71a28ULL;
+    rng->s[2] = rotl(seed, 37) ^ (seed << 21);
+    rng->s[3] = 0x1b30964ec95c4069ULL * seed;
 
-    // assert that the initial state is non-zero
-    if (rng->s[0] == 0 && rng->s[1] == 0 && rng->s[2] == 0 && rng->s[3] == 0) {
-        rng->s[0] = 0xa12ef3383a3d2eefULL + seed;
-        rng->s[1] = 0xcdfabe82ecd412ceULL + seed;
-        rng->s[2] = 0x90b5ec55c9235815ULL + seed;
-        rng->s[3] = 0xcfb28093ca79a3a7ULL + seed;
-    }
     // warm up
-    lmmp_xoshiro256pp_random(rng);
     lmmp_xoshiro256pp_random(rng);
     lmmp_xoshiro256pp_random(rng);
 }
 
-#define PCG64_LE_MULTIPLIER 6364136223846793005ULL 
-#define PCG64_LE_INCREMENT 1442695040888963407ULL 
+#define PCG64_LE_MULTIPLIER 6364136223846793005ULL
+#define PCG64_LE_INCREMENT 1442695040888963407ULL
 
 typedef struct {
     mp_size_t k;

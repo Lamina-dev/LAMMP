@@ -62,7 +62,7 @@ LAMMP_API uint lmmp_binvert_uint_(uint a);
 LAMMP_API ulong lmmp_binvert_ulong_(ulong a);
 
 /**
- * @brief 计算 [numa,2] 在B^2下的逆元
+ * @brief 计算 [numa,2] 在 B^2 下的逆元
  * @param numa 待求逆元指针（长度为 2 个limb）
  * @param dst 结果指针（长度为 2 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, eqsep(dst,numa)
@@ -70,7 +70,7 @@ LAMMP_API ulong lmmp_binvert_ulong_(ulong a);
 LAMMP_API void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
 
 /**
- * @brief 计算 [numa,3] 在B^3下的逆元
+ * @brief 计算 [numa,3] 在 B^3 下的逆元
  * @param numa 待求逆元指针（长度为 3 个limb）
  * @param dst 结果指针（长度为 3 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
@@ -78,7 +78,7 @@ LAMMP_API void lmmp_binvert_2_(mp_ptr dst, mp_srcptr numa);
 LAMMP_API void lmmp_binvert_3_(mp_ptr dst, mp_srcptr numa);
 
 /**
- * @brief 计算 [numa,4] 在B^4下的逆元
+ * @brief 计算 [numa,4] 在 B^4 下的逆元
  * @param numa 待求逆元指针（长度为 4 个limb）
  * @param dst 结果指针（长度为 4 个limb）
  * @warning numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
@@ -86,7 +86,7 @@ LAMMP_API void lmmp_binvert_3_(mp_ptr dst, mp_srcptr numa);
 LAMMP_API void lmmp_binvert_4_(mp_ptr dst, mp_srcptr numa);
 
 /**
- * @brief 计算 [numa,n] 在B^n下的逆元
+ * @brief 计算 [numa,n] 在 B^n 下的逆元
  * @param numa 待求逆元指针（长度为 n 个limb）
  * @param dst 结果指针（长度为 n 个limb）
  * @param n 结果的 limb 长度
@@ -96,15 +96,43 @@ LAMMP_API void lmmp_binvert_4_(mp_ptr dst, mp_srcptr numa);
 LAMMP_API void lmmp_binvert_n_dc_(mp_ptr dst, mp_srcptr numa, mp_size_t n, mp_ptr tp);
 
 /**
- * @brief 计算 [numa,na] 在B^n 下的逆元
+ * @brief 计算 a 在 B^n 下的逆元
+ * @param dst 结果指针（长度为 n 个limb）
+ * @param a 待求逆元
+ * @param n 结果的 limb 长度
+ * @warning a%2==1, n>1, dst!=NULL
+ */
+LAMMP_API void lmmp_binvert_unbalanced_1_(mp_ptr dst, mp_limb_t a, mp_size_t n);
+
+/**
+ * @brief 计算 [numa,2] 在 B^n 下的逆元
+ * @param dst 结果指针（长度为 n 个limb）
+ * @param numa 待求逆元指针（长度为 2 个limb）
+ * @param n 结果的 limb 长度
+ * @warning numa[0]%2==1, n>2, dst!=NULL, numa!=NULL, sep(dst,numa)
+ */
+LAMMP_API void lmmp_binvert_unbalanced_2_(mp_ptr dst, mp_srcptr numa, mp_size_t n);
+
+/**
+ * @brief 计算 [numa,na] 在 B^n 下的逆元
+ * @param dst 结果指针（长度为 n 个limb）
+ * @param numa 待求逆元指针（长度为 na 个limb）
+ * @param na 待求逆元的 limb 长度
+ * @param n 结果的 limb 长度
+ * @param tp 临时工作区指针（长度为 (9*na+5)/2 个limb）
+ * @warning numa[0]%2==1, n>na, dst!=NULL, numa!=NULL, tp!=NULL, sep(dst,numa,tp)
+ */
+LAMMP_API void lmmp_binvert_unbalanced_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n, mp_ptr tp);
+
+/**
+ * @brief 计算 [numa,na] 在 B^n 下的逆元
  * @param dst 结果指针（长度为 n 个limb）
  * @param numa 待求逆元指针（长度为 na 个limb）
  * @param na 待求逆元的 limb 长度
  * @param n 结果的 limb 长度
  * @warning n>=na>0, numa!=NULL, dst!=NULL, numa[0]%2==1, sep(dst,numa)
- * @return dst 的实际 limb 长度
  */
-// LAMMP_API mp_size_t lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
+LAMMP_API void lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
 
 /**
  * @brief 计算两个无符号整数的最大公约数

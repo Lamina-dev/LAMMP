@@ -12,7 +12,7 @@
 
 int main() {
     lmmp_global_init();
-    test_hyperfac();
+    test_binvert_unbalanced();
     lmmp_global_deinit();
     return 0;
 }
