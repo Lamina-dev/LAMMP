@@ -38,6 +38,11 @@ typedef struct {
 #define INLINE_ static inline
 #endif
 
+INLINE_ mp_limb_t rotl(const mp_limb_t x, int k) {
+    const int shift = k & 63;
+    return (x << shift) | (x >> (64 - shift));
+}
+
 /**
  * @brief 种子生成器
  * @param seed 低熵种子
@@ -84,11 +89,6 @@ INLINE_ mp_limb_t lmmp_pcg64_128_random(pcg64_128_state* rng) {
 
     mp_byte_t rot = (mp_byte_t)(oldstate[1] >> 58); 
     return (xsl >> rot) | (xsl << ((-rot) & 63));
-}
-
-INLINE_ mp_limb_t rotl(const mp_limb_t x, int k) {
-    const int shift = k & 63;
-    return (x << shift) | (x >> (64 - shift));
 }
 
 INLINE_ mp_limb_t lmmp_xoshiro256pp_random(xoshiro256pp_state* rng) {
