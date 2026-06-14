@@ -20,13 +20,12 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
+// 无分支，尽管可能导致溢出
 #define mul_1(dst, rn, v)                             \
     do {                                              \
         mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
-        if (_c_ != 0) {                               \
-            ++rn;                                     \
-            dst[rn - 1] = _c_;                        \
-        }                                             \
+        dst[rn] = _c_;                                \
+        rn += _c_ > 0;                                \
     } while (0)
 
 mp_size_t lmmp_2factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
