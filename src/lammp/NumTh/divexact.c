@@ -37,14 +37,14 @@ void lmmp_divexact_1_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_limb_t d, mp_li
     lmmp_debug_assert(c == 0);
 }
 
-void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr restrict d, mp_srcptr restrict dinv) {
-    lmmp_param_assert(d[0] % 2 == 1);
+void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr restrict dp, mp_srcptr restrict dinv) {
+    lmmp_param_assert(dp[0] % 2 == 1);
     lmmp_param_assert(nn > 1);
     lmmp_debug_assert(dst != NULL && np != NULL);
     mp_limb_t c[2] = {0, 0};
     mp_limb_t l[2], s[2], q[2], t[4];
     mp_size_t i;
-    mp_limb_t d0 = d[0], d1 = d[1];
+    mp_limb_t d0 = dp[0], d1 = dp[1];
     mp_limb_t ddinv0 = dinv[0], ddinv1 = dinv[1];
 
     if (nn % 2 == 0) {
