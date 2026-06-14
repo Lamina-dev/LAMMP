@@ -8,6 +8,13 @@
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
 
+
+
+/*
+ FIXME: 内联lmmp_tailing_zeros_()函数，使用编译器内置函数，可以显著提升性能。
+ 尝试优化控制流，减少分支与跳转。
+ */
+
 mp_size_t lmmp_gcd_22_(mp_ptr dst, mp_srcptr up, mp_srcptr vp) {
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(up != NULL);
