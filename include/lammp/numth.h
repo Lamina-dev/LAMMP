@@ -152,7 +152,7 @@ LAMMP_API void lmmp_divexact_1_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_limb_
  * @param nn 被除数的 limb 长度
  * @param dp 除数指针（长度为 2 个limb）
  * @param dinv 除数的逆元指针（长度为 2 个limb）
- * @warning dp[0]%2==1, dp*dinv==1 mod 2^128, nn>1, dst!=NULL, np!=NULL, eqsep(dst,np,dp,dinv)
+ * @warning dp[0]%2==1, dp*dinv==1 mod 2^128, nn>1, dst!=NULL, np!=NULL, eqsep(dst,np), sep(dp,dinv,[dst|np])
  */
 LAMMP_API void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_srcptr dinv);
 
@@ -163,27 +163,27 @@ LAMMP_API void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcpt
  * @param nn 被除数的 limb 长度
  * @param dp 除数指针（长度为 dn 个limb）
  * @param dn 结除数的 limb 长度
- * @param dinv 除数[dp,dn]的逆元，若为NULL，则自动计算
+ * @param dinv 除数[dp,dn]关于B^dn的逆元，若为NULL，则自动计算
  * @warning dp[0]%2==1, nn>=dn>0, dst!=NULL, np!=NULL, dp!=NULL, eqsep(dst,np), sep(dp,dinv,[dst|np])
  * @note 若dst==np，只会覆写 [dst,nn-dn+1] 区域
  */
 LAMMP_API void lmmp_divexact_unbalanced_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, mp_ptr dinv);
 
 /**
- * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0），朴素算法
  * @param dst 结果指针（长度为 nn-dn+1 个limb）
  * @param np 被除数指针（长度为 nn 个limb），将会被覆写为全零
  * @param nn 被除数的 limb 长度
  * @param dp 除数指针（长度为 dn 个limb）
  * @param dn 结除数的 limb 长度
- * @param dinv 除数低位的逆元
+ * @param dinv 除数低位dp[0]关于B的逆元
  * @warning dp[0]%2==1, d[0]*dinv==1 mod 2^64, nn>=dn>0, dst!=NULL, np!=NULL, dp!=NULL, eqsep(dst,np), sep(dp,[dst|np])
  * @note 若dst==np，将会覆写 [dst,nn] 区域，其中 [dst,nn-dn+1] 为商，[dst+nn-dn+1,dn-1] 将会被覆写为0
  */
 LAMMP_API void lmmp_divexact_basecase_(mp_ptr dst, mp_ptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, mp_limb_t dinv);
 
 /**
- * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0），分治算法
  * @param dst 结果指针（长度为 nn-dn+1 个limb）
  * @param np 被除数指针（长度为 nn 个limb）
  * @param nn 被除数的 limb 长度
@@ -364,9 +364,9 @@ LAMMP_API mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp);
 /**
  * @brief 计算奇数次幂算法 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
- * @param rn dst 的 limb 缓冲区长度
+ * @param rn 结果指针的 limb 缓冲区长度
  * @param base 底数指针
- * @param n 底数的 limb 长度
+ * @param n 底数指针的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), [base,n]>1, exp>=3, exp%2==1
  * @return 返回 dst 的实际 limb 长度
@@ -376,8 +376,8 @@ LAMMP_API mp_size_t lmmp_pow_basecase_(mp_ptr dst, mp_size_t rn, mp_srcptr base,
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数（4位无符号整数）
  * @param exp 指数
  * @warning 1<=base<=0xf, exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -387,8 +387,8 @@ LAMMP_API mp_size_t lmmp_u4_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong e
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数（8位无符号整数）
  * @param exp 指数
  * @warning 0<base<=0xff, exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -398,8 +398,8 @@ LAMMP_API mp_size_t lmmp_u8_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong e
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数（16位无符号整数）
  * @param exp 指数
  * @warning 0<base<=0xffff, exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -409,8 +409,8 @@ LAMMP_API mp_size_t lmmp_u16_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数（32位无符号整数）
  * @param exp 指数
  * @warning 0<base<=2^32-1, exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -420,8 +420,8 @@ LAMMP_API mp_size_t lmmp_u32_pow_1_(mp_ptr dst, mp_size_t rn, ulong base, ulong 
 /**
  * @brief 计算幂次方 [dst,rn] = [base,1] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数（64位无符号整数）
  * @param exp 指数
  * @warning 2^32<=base<=2^64-1, exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -441,9 +441,9 @@ LAMMP_API mp_size_t lmmp_pow_1_(mp_ptr dst, mp_size_t rn, mp_limb_t base, ulong 
 /**
  * @brief 计算幂次方2比特窗口快速幂算法 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
- * @param n 底数的 limb 长度
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数指针
+ * @param n 底数指针的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
@@ -453,9 +453,9 @@ LAMMP_API mp_size_t lmmp_pow_win2_(mp_ptr dst, mp_size_t rn, mp_srcptr base, mp_
 /**
  * @brief 计算大整数幂 [dst,rn] = [base,n] ^ exp
  * @param dst 结果指针
- * @param rn 结果 limb 长度
- * @param base 底数
- * @param n 底数的 limb 长度
+ * @param rn 结果指针的 limb 长度
+ * @param base 底数指针
+ * @param n 底数指针的 limb 长度
  * @param exp 指数
  * @warning n>0, base[n-1]!=0, sep(dst,base), exp>0
  * @return 返回 dst 的实际 limb 长度
