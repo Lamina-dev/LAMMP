@@ -41,5 +41,8 @@ void test_trialdiv();
 void test_remove();
 void test_binvert();
 void test_binvert_unbalanced();
+void test_divexact();
+void test_divexact_basecase();
+void test_divexact_unbalanced();
 
 #endif // __LAMMP_TEST_SHORT_H__
