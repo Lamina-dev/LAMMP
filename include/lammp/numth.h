@@ -135,6 +135,76 @@ LAMMP_API void lmmp_binvert_unbalanced_(mp_ptr dst, mp_srcptr numa, mp_size_t na
 LAMMP_API void lmmp_binvert_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n);
 
 /**
+ * @brief 精确除法（[dst,nn]=[np,nn]/d，且余数必须为0）
+ * @param dst 结果指针（长度为 nn 个limb）
+ * @param np 被除数指针（长度为 nn 个limb）
+ * @param nn 被除数的 limb 长度
+ * @param d 除数
+ * @param dinv 除数的逆元（d*dinv==1 mod 2^64）
+ * @warning d%2==1, d*dinv==1 mod 2^64, nn>0, dst!=NULL, np!=NULL, eqsep(dst,np)
+ */
+LAMMP_API void lmmp_divexact_1_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_limb_t d, mp_limb_t dinv);
+
+/**
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,2]，且余数必须为0）
+ * @param dst 结果指针（长度为 nn-1 个limb）
+ * @param np 被除数指针（长度为 nn 个limb）
+ * @param nn 被除数的 limb 长度
+ * @param dp 除数指针（长度为 2 个limb）
+ * @param dinv 除数的逆元指针（长度为 2 个limb）
+ * @warning dp[0]%2==1, dp*dinv==1 mod 2^128, nn>1, dst!=NULL, np!=NULL, eqsep(dst,np,dp,dinv)
+ */
+LAMMP_API void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_srcptr dinv);
+
+/**
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @param dst 结果指针（长度为 nn-dn+1 个limb）
+ * @param np 被除数指针（长度为 nn 个limb），将会被修改为全零
+ * @param nn 被除数的 limb 长度
+ * @param dp 除数指针（长度为 dn 个limb）
+ * @param dn 结除数的 limb 长度
+ * @param dinv 除数[dp,dn]的逆元，若为NULL，则自动计算
+ * @warning dp[0]%2==1, nn>=dn>0, dst!=NULL, np!=NULL, dp!=NULL, eqsep(dst,np), sep(dp,dinv,[dst|np])
+ * @note 若dst==np，只会覆写 [dst,nn-dn+1] 区域
+ */
+LAMMP_API void lmmp_divexact_unbalanced_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, mp_ptr dinv);
+
+/**
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @param dst 结果指针（长度为 nn-dn+1 个limb）
+ * @param np 被除数指针（长度为 nn 个limb），将会被覆写为全零
+ * @param nn 被除数的 limb 长度
+ * @param dp 除数指针（长度为 dn 个limb）
+ * @param dn 结除数的 limb 长度
+ * @param dinv 除数低位的逆元
+ * @warning dp[0]%2==1, d[0]*dinv==1 mod 2^64, nn>=dn>0, dst!=NULL, np!=NULL, dp!=NULL, eqsep(dst,np), sep(dp,[dst|np])
+ * @note 若dst==np，将会覆写 [dst,nn] 区域，其中 [dst,nn-dn+1] 为商，[dst+nn-dn+1,dn-1] 将会被覆写为0
+ */
+LAMMP_API void lmmp_divexact_basecase_(mp_ptr dst, mp_ptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn, mp_limb_t dinv);
+
+/**
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @param dst 结果指针（长度为 nn-dn+1 个limb）
+ * @param np 被除数指针（长度为 nn 个limb）
+ * @param nn 被除数的 limb 长度
+ * @param dp 除数指针（长度为 dn 个limb）
+ * @param dn 结除数的 limb 长度
+ * @warning dp[0]%2==1, nn>=dn>0, dn>=nn-dn+1, dst!=NULL, np!=NULL, dp!=NULL, sep(dst,np,dp)
+ */
+LAMMP_API void lmmp_divexact_divide_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn);
+
+/**
+ * @brief 精确除法（[dst,nn]=[np,nn]/[dp,dn]，且余数必须为0）
+ * @param dst 结果指针（长度为 nn-dn+1 个limb）
+ * @param np 被除数指针（长度为 nn 个limb）
+ * @param nn 被除数的 limb 长度
+ * @param dp 除数指针（长度为 dn 个limb）
+ * @param dn 结除数的 limb 长度
+ * @warning dp[0]%2==1, nn>=dn>0, dst!=NULL, np!=NULL, dp!=NULL, eqsep(dst,np), sep([dst|np],dp)
+ */
+LAMMP_API void lmmp_divexact_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr dp, mp_size_t dn);
+
+/**
  * @brief 计算两个无符号整数的最大公约数
  * @param u 第一个无符号整数
  * @param v 第二个无符号整数

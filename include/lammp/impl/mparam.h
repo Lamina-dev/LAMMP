@@ -135,6 +135,12 @@
 // binvert计算中，使用梅森乘法计算高位的阈值
 #define BINVERT_MULHI_MERSENNE_THRESHOLD 477
 
+// 精确除法中，除数小于此阈值时使用朴素法
+#define DIVEXACT_BASECASE_THRESHOLD 50
+// 精确除法中，被除数小于此阈值时使用朴素法
+#define DIVEXACT_NN_THRESHOLD 350
+
+
 // cache 一次处理的位图数量
 #define PRIME_CACHE_BLOCK_NUM 32
 // 一个位图中质数最多的数量（实际为31）
