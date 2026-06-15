@@ -30,12 +30,10 @@
 
 mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
     mp_size_t rn;
-    if (n == MP_UINT_MAX) {
-        rn = 131242625439;  // log2(gamma(2^32))
-    } else if (n < 20) {
+    if (n < 20) {
         rn = 64;
     } else {
-        rn = log2_gamma_ceil(n + 1);
+        rn = log2_fac_ceil(n);
     }
     rn = (rn + LIMB_BITS - 1) / LIMB_BITS + 2;  // more two limbs
     *bits = n - lmmp_limb_popcnt_(n);

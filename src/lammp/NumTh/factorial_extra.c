@@ -44,13 +44,13 @@ mp_size_t lmmp_2factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
         if (n % 2 == 0) {
             // n=2k
             // n! = (2k)! = 2^k * (k!)
-            rn = k + log2_gamma_ceil(k + 1);
+            rn = k + log2_fac_ceil(k);
             *bits = n - lmmp_limb_popcnt_(k);
         } else {
             // n=2k+1
             // n! = (2k+1)! = (2k+1)! / (2k)!! = (2k+1)! / (2^k * (k!))
-            rn = n == MP_UINT_MAX ? 131242625439 : log2_gamma_ceil(n + 1);
-            rn -= k + log2_gamma_floor(k + 1);
+            rn = log2_fac_ceil(n);
+            rn -= k + log2_fac_floor(k);
             *bits = 0;
         }
     }

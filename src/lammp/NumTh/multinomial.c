@@ -26,20 +26,16 @@ FIXME:
 static inline mp_size_t fac_size_lower(uint n) {
     if (n < 20) {
         return 0;
-    } else if (n == MP_UINT_MAX) {
-        return 131242625438; // floor(log2(gamma(2^32)))
     } else {
-        return log2_gamma_floor(n + 1);
+        return log2_fac_floor(n);
     }
 }
 
 static inline mp_size_t fac_size_bigger(uint n) {
     if (n < 20) {
         return 64;
-    } else if (n == MP_UINT_MAX) {
-        return 131242625439;  // ceil(log2(gamma(2^32)))
     } else {
-        return log2_gamma_ceil(n + 1);
+        return log2_fac_ceil(n);
     }
 }
 
