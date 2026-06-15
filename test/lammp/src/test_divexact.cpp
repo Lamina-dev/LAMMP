@@ -56,11 +56,12 @@ void test_divexact_unbalanced() {
     lmmp_free(p0);
     lmmp_free(p1);
     lmmp_free(p2);
+    lmmp_free(p3);
 }
 
 void test_divexact_basecase() {
-    mp_size_t bn = 242;
-    mp_size_t n = 50;
+    mp_size_t bn = 31;
+    mp_size_t n = 70;
     mp_ptr b = ALLOC_TYPE(bn, mp_limb_t);
     lmmp_seed_random_(b, bn, 191278311, 1);
     b[0] |= 1;
@@ -80,7 +81,7 @@ void test_divexact_basecase() {
 
     mp_ptr p2 = (mp_ptr)lmmp_alloc((p1n - bn + 1) * sizeof(mp_limb_t));
     auto start = std::chrono::high_resolution_clock::now();
-    lmmp_divexact_divide_(p2, p1, p1n, b, bn);
+    lmmp_divexact_unbalanced_(p2, p1, p1n, b, bn, NULL);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
               << std::endl;
@@ -98,7 +99,6 @@ void test_divexact_basecase() {
             break;
         }
     }
-    printf("=================\n%llu,%llu\n", p2[p1n - bn + 1 - 1], p3[p1n - bn + 1 - 1]);
     lmmp_free(b);
     lmmp_free(p0);
     lmmp_free(p1);
