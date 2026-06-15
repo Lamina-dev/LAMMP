@@ -146,8 +146,7 @@ void lmmp_divexact_unbalanced_(
             }
         }
     }
-
-    lmmp_sub_n_(l, np + i, c, nn - i);
+    lmmp_sub_n_(l, np + i, c, dn);
     lmmp_mullo_n_(dst + i, l, dinv, qn - i, scratch);
     TEMP_FREE;
 #undef c
@@ -169,9 +168,17 @@ void lmmp_divexact_basecase_(mp_ptr dst, mp_ptr np, mp_size_t nn, mp_srcptr rest
         q = dinv * np[i];
         hi = lmmp_submul_1_(np + i, dp, dn, q);
         lmmp_debug_assert(np[i] == 0);
+#if LAMMP_DEBUG_ASSERT_CHECK == 1
+        if (hi && i + dn < nn) {
+            lmmp_dec_1(np + i + dn, hi);
+        } else {
+            lmmp_debug_assert(hi == 0);
+        }
+#else
         if (hi) {
             lmmp_dec_1(np + i + dn, hi);
         }
+#endif
         dst[i] = q;
     }
 }
