@@ -128,7 +128,7 @@
 #define PERMUTATION_UINT_TIMES_THRESHOLD 13
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
-#define BINOMIAL_RN_BASECASE_THRESHOLD 30
+#define BINOMIAL_RN_BASECASE_THRESHOLD 40
 // 元素累乘中，低于此长度的累乘将使用朴素算法
 #define ELEM_MUL_BASECASE_THRESHOLD 25
 

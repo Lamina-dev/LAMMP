@@ -23,17 +23,17 @@ mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* restrict bits) {
         uint mean = n - r / 2 + 1;
         uint64_t l1, l2;
         l1 = lmmp_pow_1_size_(mean, r);
-        l2 = log2_gamma_floor(r + 1);
+        l2 = log2_fac_floor(r);
         l2 /= LIMB_BITS;
         rn = l1 - l2;
     } else {
         uint64_t l1, l2, l3;
-        l1 = log2_gamma_ceil(n + 1);
-        l2 = log2_gamma_floor(r + 1);
+        l1 = log2_fac_ceil(n);
+        l2 = log2_fac_floor(r);
         if (n - r < ODD_FACTORIAL_SIZE)
             l3 = 0;
         else
-            l3 = log2_gamma_floor(n - r + 1);
+            l3 = log2_fac_floor(n - r);
         rn = l1 - l2 - l3;
         rn = (rn + LIMB_BITS - 1) / LIMB_BITS;
     }
@@ -43,18 +43,19 @@ mp_size_t lmmp_nCr_size_(uint n, uint r, mp_bitcnt_t* restrict bits) {
     return rn + 2; // more 2 limb
 }
 
-/*
-FIXME:
-  使用此宏来进行单精度乘法
-*/
-
+// 无分支，尽管可能导致溢出
 #define mul_1(dst, rn, v)                             \
     do {                                              \
         mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
-        if (_c_ != 0) {                               \
-            ++rn;                                     \
-            dst[rn - 1] = _c_;                        \
-        }                                             \
+        dst[rn] = _c_;                                \
+        rn += _c_ > 0;                                \
+    } while (0)
+
+#define div_1(dst, rn, v)                          \
+    do {                                           \
+        mp_limb_t _dinv_ = lmmp_binvert_ulong_(v); \
+        lmmp_divexact_1_(dst, dst, rn, v, _dinv_); \
+        rn -= dst[rn - 1] == 0;                    \
     } while (0)
 
 static inline uint factor_size_int(mp_size_t rn, uint n) {
@@ -76,7 +77,7 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
 
 static inline ushort factor_size_short(mp_size_t rn) {
     /*
-     经过大量的校验，*8即使是在ushort输入下，也极少低估，但是为了留有冗余，我们还是选择*10，大致相当于质数83。
+     经过大量的校验，*8即使是在ushort输入下，也未见低估，但是为了留有冗余，我们还是选择*10，大致相当于质数83。
     */
     // 此处假定了LIMB_BITS为64
     uint approx1 = rn * 10;
@@ -109,13 +110,73 @@ static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, uint r, uin
     return nfactors;
 }
 
-/*
-FIXME:
-  当极不平衡时，质因数分解本身的效率很低，因为本身其质因数就极其稀疏，我们却需要遍历整个素数表。
-  因此，当极不平衡时，应该考虑采用其他方法，比如直接计算排列数和阶乘，再使用精确除法。
-  当排列数不平衡时，可能会直接使用累乘法来避免遍历质数表，而阶乘本身就是平衡的。
-  目前精确除法暂未实现。实现完成后，可以在此处使用。
-*/
+/**
+ * @brief 使用累乘函数计算nPr（奇数部分）
+ */
+static mp_size_t lmmp_odd_nPr_product_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
+    TEMP_DECL;
+    ulongp restrict limbs = TALLOC_TYPE(r / 2 + 1, ulong);
+    mp_size_t limbn = 0;
+    ulong t = 1;
+    uint v;
+    mp_bitcnt_t cnt = 0;
+    for (uint i = n - r + 1; i <= n; ++i) {
+        ctz_shr_u32(v, i, cnt);
+        t *= v;
+        if (t > MP_UINT_MAX) {
+            limbs[limbn++] = t;
+            t = 1;
+        }
+    }
+    if (t != 1)
+        limbs[limbn++] = t;
+
+    if (rn >= limbn) {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(dst, limbs, limbn, tp);
+    } else {
+        mp_ptr restrict tp = TALLOC_TYPE(limbn * 2, mp_limb_t);
+        rn = lmmp_elem_mul_ulong_(tp, limbs, limbn, tp + limbn);
+        lmmp_copy(dst, tp, rn);
+    }
+    TEMP_FREE;
+    return rn;
+}
+
+static inline mp_size_t lmmp_odd_factorial_(mp_ptr restrict dst, mp_size_t rn, uint n) {
+    if (n <= NPR_SHORT_LIMIT)
+        return lmmp_odd_nPr_ushort_(dst, rn, n, n);
+    else
+        return lmmp_odd_factorial_uint_(dst, rn, n);
+}
+
+typedef struct {
+    mp_size_t nPr_n;      // nPr的limb数量
+    mp_size_t fac_n;      // r! 的limb数量
+    mp_bitcnt_t nPr_bits; // nPr的bit数量
+    mp_bitcnt_t fac_bits; // r! 的bit数量
+    uint n;
+    uint r;
+} bino_choose_t;
+
+static mp_size_t lmmp_odd_nCr_div_(mp_ptr restrict dst, mp_size_t rn, bino_choose_t* restrict ctx) {
+    TEMP_DECL;
+
+    mp_ptr restrict nPr = TALLOC_TYPE(ctx->nPr_n, mp_limb_t);
+    mp_size_t shw1 = ctx->nPr_bits / LIMB_BITS;
+    mp_size_t nPr_n = lmmp_odd_nPr_product_(nPr, ctx->nPr_n - shw1, ctx->n, ctx->r);
+
+    mp_size_t shw2 = ctx->fac_bits / LIMB_BITS;
+    mp_ptr restrict fac = TALLOC_TYPE(ctx->fac_n, mp_limb_t);
+    mp_size_t fac_n = lmmp_odd_factorial_(fac, ctx->fac_n - shw2, ctx->r);
+
+    lmmp_debug_assert(rn >= nPr_n - fac_n + 1);
+    lmmp_divexact_(dst, nPr, nPr_n, fac, fac_n);
+    rn = nPr_n - fac_n + 1;
+    rn -= dst[rn - 1] == 0;
+    TEMP_FREE;
+    return rn;
+}
 
 mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= MP_USHORT_MAX);
@@ -124,9 +185,7 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
         rn = lmmp_odd_nPr_ushort_(dst, rn, n, r);
         mp_limb_t t = 0;
         lmmp_odd_nPr_ushort_(&t, 1, r, r);
-        // FIXME: 这里的除法应该使用精确除法
-        lmmp_div_1_(dst, dst, rn, t);
-        rn -= dst[rn - 1] == 0 ? 1 : 0;
+        div_1(dst, rn, t);
         return rn;
     } else if (rn < BINOMIAL_RN_BASECASE_THRESHOLD) {
         if (r <= 4 || n > 0xfff) {
@@ -137,12 +196,9 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
             for (ulong i = 1; i <= r; ++i) {
                 t = n - i + 1;
                 ctz_shr_u64(v, t, cnt);
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                mul_1(dst, rn, v);
                 ctz_shr_u64(v, i, cnt);
-                lmmp_div_1_(dst, dst, rn, v);
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                div_1(dst, rn, v);
             }
             return rn;
         } else {
@@ -158,22 +214,16 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
                 t = (n - i + 1) * (n - i) * (n - i - 1) * (n - i - 2);
                 t /= 3;
                 ctz_shr_u64(v, t, cnt);
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                mul_1(dst, rn, v);
                 ctz_shr_u64(v, d, cnt);
-                lmmp_div_1_(dst, dst, rn, v);
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                div_1(dst, rn, v);
             }
             for (; i <= r; ++i) {
                 t = n - i + 1;
                 ctz_shr_u64(v, t, cnt);
-                dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-                ++rn;
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                mul_1(dst, rn, v);
                 ctz_shr_u64(v, i, cnt);
-                lmmp_div_1_(dst, dst, rn, v);
-                rn -= dst[rn - 1] == 0 ? 1 : 0;
+                div_1(dst, rn, v);
             }
             return rn;
         }
@@ -207,12 +257,9 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         for (ulong i = 1; i <= r; ++i) {
             t = n - i + 1;
             ctz_shr_u64(v, t, cnt);
-            dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-            ++rn;
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            mul_1(dst, rn, v);
             ctz_shr_u64(v, i, cnt);
-            lmmp_div_1_(dst, dst, rn, v);
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            div_1(dst, rn, v);
         }
         return rn;
     } else if (rn < BINOMIAL_RN_BASECASE_THRESHOLD) {
@@ -225,46 +272,51 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
             d = i * (i + 1);
             t = (n - i + 1) * (n - i);
             ctz_shr_u64(v, t, cnt);
-            dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-            ++rn;
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            mul_1(dst, rn, v);
             ctz_shr_u64(v, d, cnt);
-            lmmp_div_1_(dst, dst, rn, v);
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            div_1(dst, rn, v);
         }
         for (; i <= r; ++i) {
             t = n - i + 1;
             ctz_shr_u64(v, t, cnt);
-            dst[rn] = lmmp_mul_1_(dst, dst, rn, v);
-            ++rn;
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            mul_1(dst, rn, v);
             ctz_shr_u64(v, i, cnt);
-            lmmp_div_1_(dst, dst, rn, v);
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
+            div_1(dst, rn, v);
         }
         return rn;
     } else {
-        lmmp_prime_int_table_init_(n);
-        TEMP_B_DECL;
-        uint nfactors = factor_size_int(rn, n);
-        fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
-        uint nr = n - r;
+        bino_choose_t ctx;
+        ctx.nPr_n = lmmp_nPr_size_(n, r, &ctx.nPr_bits);
+        ctx.fac_n = lmmp_factorial_size_(r, &ctx.fac_bits);
+        if (10 * ctx.nPr_n > 17 * ctx.fac_n) {
+            /* 这是一个调优值，精确除法的结果也即rn，大于分母fac_n的0.7时，*/
+            /* 此时说明分子相对更大，精确除法更占优 */
+            ctx.n = n;
+            ctx.r = r;
+            return lmmp_odd_nCr_div_(dst, rn, &ctx);
+        } else {
+            lmmp_prime_int_table_init_(n);
+            TEMP_B_DECL;
+            uint nfactors = factor_size_int(rn, n);
+            fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
+            uint nr = n - r;
 
-        nfactors = 0;
-        prime_cache_t cache;
-        lmmp_prime_cache_init_(&cache, n);
-        while (cache.is_end == 0) {
-            lmmp_prime_cache_next_(&cache);
-            for (uint i = 0; i < cache.size; ++i) {
-                nfactors = count_factors(fac, nfactors, n, r, nr, cache.pp[i]);
+            nfactors = 0;
+            prime_cache_t cache;
+            lmmp_prime_cache_init_(&cache, n);
+            while (cache.is_end == 0) {
+                lmmp_prime_cache_next_(&cache);
+                for (uint i = 0; i < cache.size; ++i) {
+                    nfactors = count_factors(fac, nfactors, n, r, nr, cache.pp[i]);
+                }
             }
+            lmmp_prime_cache_free_(&cache);
+
+            rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
+
+            TEMP_B_FREE;
+            return rn;
         }
-        lmmp_prime_cache_free_(&cache);
-
-        rn = lmmp_factors_mul_(dst, rn, fac, nfactors);
-
-        TEMP_B_FREE;
-        return rn;
     }
 }
 
