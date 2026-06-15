@@ -20,23 +20,20 @@
     else                                \
         lmmp_mul_(dst, bp, bn, ap, an)
 
+// 无分支，尽管可能导致溢出
 #define mul_1(dst, rn, v)                             \
     do {                                              \
         mp_limb_t _c_ = lmmp_mul_1_(dst, dst, rn, v); \
-        if (_c_ != 0) {                               \
-            ++rn;                                     \
-            dst[rn - 1] = _c_;                        \
-        }                                             \
+        dst[rn] = _c_;                                \
+        rn += _c_ > 0;                                \
     } while (0)
 
 mp_size_t lmmp_factorial_size_(uint n, mp_bitcnt_t* restrict bits) {
     mp_size_t rn;
-    if (n == MP_UINT_MAX) {
-        rn = 131242625439;  // log2(gamma(2^32))
-    } else if (n < 20) {
+    if (n < 20) {
         rn = 64;
     } else {
-        rn = log2_gamma_ceil(n + 1);
+        rn = log2_fac_ceil(n);
     }
     rn = (rn + LIMB_BITS - 1) / LIMB_BITS + 2;  // more two limbs
     *bits = n - lmmp_limb_popcnt_(n);

@@ -18,7 +18,7 @@ void test_arith_seqprod() {
     mp_size_t an = lmmp_arith_seqprod_(a, len, x, n, m);
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    std::cout << "Time elapsed: (native)" << duration << " microseconds" << std::endl;
+    std::cout << "Time elapsed: " << duration << " microseconds" << std::endl;
     ((void)an);
     lmmp_free(a);
     lmmp_global_deinit();

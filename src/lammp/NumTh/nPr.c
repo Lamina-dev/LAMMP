@@ -37,13 +37,13 @@ mp_size_t lmmp_nPr_size_(ulong n, ulong r, mp_bitcnt_t* restrict bits) {
     *bits = shl;
     if (n < ODD_FACTORIAL_SIZE || r <= 2) {
         return 3;
-    } else if (n < MP_UINT_MAX) {
+    } else if (n <= MP_UINT_MAX) {
         uint64_t l1, l2;
-        l1 = log2_gamma_ceil(n + 1);
+        l1 = log2_fac_ceil(n);
         if (n - r < ODD_FACTORIAL_SIZE)
             l2 = 0;
         else
-            l2 = log2_gamma_floor(n - r + 1);
+            l2 = log2_fac_floor(n - r);
         mp_size_t rn = l1 - l2;
         return (rn + LIMB_BITS - 1) / LIMB_BITS + 2; // more 2 limb
     } else {
@@ -80,10 +80,11 @@ static mp_size_t lmmp_odd_nPr_product_(mp_ptr restrict dst, mp_size_t rn, uint n
     TEMP_DECL;
     ulongp restrict limbs = TALLOC_TYPE(r / 2 + 1, ulong);
     mp_size_t limbn = 0;
-    ulong t = 1, v;
+    ulong t = 1;
+    uint v;
     mp_bitcnt_t cnt = 0;
-    for (ulong i = n - r + 1; i <= n; ++i) {
-        ctz_shr_u64(v, i, cnt);
+    for (uint i = n - r + 1; i <= n; ++i) {
+        ctz_shr_u32(v, i, cnt);
         t *= v;
         if (t > MP_UINT_MAX) {
             limbs[limbn++] = t;
@@ -124,7 +125,7 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         ulong i = n - r + 1;
         mp_bitcnt_t cnt = 0;
         lmmp_debug_assert(n >= 3);
-        for (; i <= (ulong)n - 3; i += 3) {
+        for (; i <= n - 3; i += 3) {
             t = i * (i + 1) * (i + 2);
             ctz_shr_u64(v, t, cnt);
             mul_1(dst, rn, v);
@@ -146,7 +147,7 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         ulong t = 0, v;
         ulong i = n - r + 1;
         mp_bitcnt_t cnt;
-        for (; i <= (ulong)n - 7; i += 7) {
+        for (; i <= n - 7; i += 7) {
             t = i * (i + 1) * (i + 2) * (i + 3) * (i + 4) * (i + 5) * (i + 6);
             ctz_shr_u64(v, t, cnt);
             mul_1(dst, rn, v);
