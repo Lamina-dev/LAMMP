@@ -12,7 +12,7 @@
 
 int main() {
     lmmp_global_init();
-    test_binvert_unbalanced();
+    test_bino();
     lmmp_global_deinit();
     return 0;
 }

@@ -12,31 +12,43 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_divexact_unbalanced() {
-    mp_limb_t b[2] = {13422534202027, 0x77771};
-    mp_limb_t binv[2];
-    lmmp_binvert_2_(binv, b);
-    mp_size_t n = 1000000;
+    mp_limb_t b = 13422534202027;
+    mp_size_t n = 10;
     mp_ptr p0 = (mp_ptr)lmmp_alloc(n * sizeof(mp_limb_t));
     lmmp_seed_random_(p0, n, 1981323762271, 1);
     mp_ptr p1 = (mp_ptr)lmmp_alloc((n + 2) * sizeof(mp_limb_t));
 
-    lmmp_mul_(p1, p0, n, b, 2);
-    mp_size_t p1n = n + 2;
+    lmmp_mul_(p1, p0, n, &b, 1);
+    mp_size_t p1n = n + 1;
     p1n -= p1[p1n - 1] == 0;
 
-    mp_ptr p2 = (mp_ptr)lmmp_alloc((p1n - 1) * sizeof(mp_limb_t));
+    size_t iter = 100000;
+    mp_ptr p2 = (mp_ptr)lmmp_alloc(p1n * sizeof(mp_limb_t));
+    mp_ptr p3 = (mp_ptr)lmmp_alloc(p1n * sizeof(mp_limb_t));
+
     auto start = std::chrono::high_resolution_clock::now();
-    lmmp_divexact_2_(p2, p1, p1n, b, binv);
+    mp_limb_t binv = lmmp_binvert_ulong_(b);
+    for (mp_size_t i = 0; i < iter; i++) {
+        lmmp_divexact_1_(p2, p1, p1n, b, binv);
+    }
     auto end = std::chrono::high_resolution_clock::now();
-    std::cout << "divexact_2_ Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
-              << std::endl;
-    
-    start = std::chrono::high_resolution_clock::now();
-    lmmp_divexact_unbalanced_(p1, p1, p1n, b, 2, NULL);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << "div_2_ Time taken:      " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
+    std::cout << "divexact_1_ Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
               << std::endl;
 
+    start = std::chrono::high_resolution_clock::now();
+    for (mp_size_t i = 0; i < iter; i++) {
+        lmmp_div_1_(p3, p1, p1n, b);
+    }
+    end = std::chrono::high_resolution_clock::now();
+    std::cout << "div_1_ Time taken:      " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
+              << std::endl;
+
+    for (mp_size_t i = 0; i < p1n - 1; i++) {
+        if (p3[i] != p2[i]) {
+            printf("Error at index %llu\n", i);
+            break;
+        }
+    }
     // for (mp_size_t i = 0; i < n; i++) {
     //     printf("%llu,%llu\n", p1[i], p2[i]);
     // }
