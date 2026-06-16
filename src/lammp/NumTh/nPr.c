@@ -289,9 +289,13 @@ mp_size_t lmmp_odd_nPr_ulong_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong 
 
 mp_size_t lmmp_nPr_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, ulong n, ulong r) {
     lmmp_debug_assert(n >= r);
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
+    lmmp_param_assert(rn > shw);
+
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
+
     if (n <= NPR_SHORT_LIMIT)
         rn = lmmp_odd_nPr_ushort_(dst + shw, rn - shw, n, r);
     else if (n <= NPR_INT_LIMIT)

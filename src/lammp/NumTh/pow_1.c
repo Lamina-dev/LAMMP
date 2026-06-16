@@ -522,6 +522,7 @@ mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong e
         mp_size_t shw = (exp * tz) / LIMB_BITS;
         mp_size_t shl = (exp * tz) % LIMB_BITS;
 
+        lmmp_param_assert(rn > shw);
         lmmp_zero(dst, shw);
         if (base <= (mp_limb_t)0xf)
             rn = lmmp_u4_pow_1_(dst + shw, rn - shw, base, exp);
@@ -533,6 +534,7 @@ mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong e
             rn = lmmp_u32_pow_1_(dst + shw, rn - shw, base, exp);
         else
             rn = lmmp_u64_pow_1_(dst + shw, rn - shw, base, exp);
+
         if (shl) {
             dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, shl);
             rn += shw + 1;

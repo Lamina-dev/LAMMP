@@ -325,10 +325,13 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
 
 mp_size_t lmmp_nCr_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(r <= (n / 2));
-    lmmp_param_assert(rn > 0 && dst != NULL);
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
+    lmmp_param_assert(rn > shw);
+
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
+
     if (n <= NCR_SHORT_LIMIT)
         rn = lmmp_odd_nCr_ushort_(dst + shw, rn - shw, n, r);
     else
