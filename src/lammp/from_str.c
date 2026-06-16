@@ -4,9 +4,10 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/base_table.h"
+#include "../../include/lammp/impl/inlines.h"
 #include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
-#include "../../include/lammp/impl/base_table.h"
 #include "../../include/lammp/lmmpn.h"
 
 
@@ -22,7 +23,15 @@ mp_size_t lmmp_from_str_len_(const mp_byte_t* src, mp_size_t len, int base) {
     return lmmp_mulh_(len, lmmp_bases_table[base - 2].lg_base) + 1;
 }
 
-// assume src[len-1]!=0
+/**
+ * @brief 将字符串转换为mp_limb_t数组
+ * @param dst 输出数组
+ * @param src 输入字符串
+ * @param len 字符串长度
+ * @param base 转换基数
+ * @warning src[len-1]!=0
+ * @return 返回转换后的limb数量
+ */
 static mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
     lmmp_param_assert(src[len - 1] != 0);
     mp_size_t digitspl = lmmp_bases_table[base - 2].digits_in_limb;
@@ -61,17 +70,25 @@ static mp_size_t lmmp_from_str_basecase_(mp_ptr dst, const mp_byte_t* src, mp_si
     return limbs;
 }
 
-// assume src[len-1]!=0
-// N=pow->np+pow->zeros
-// limbs=return value
-// 1st level need(nh>=2, [dst,2*N], [tp,limbs])
-// recursive need(N>=2, [dst,limbs+1], [tp,2*N-1])
+/**
+ * @brief 将字符串转换为mp_limb_t数组
+ * @param dst 输出数组
+ * @param src 输入字符串
+ * @param len 字符串长度
+ * @param pow 指数表
+ * @param tp 临时数组
+ * @warning src[len-1]!=0, sep(dst,tp)
+ * @note 第一层调用时：nh>=2, [dst,2*N], [tp,limbs]
+ *       后序递归时：N>=2, [dst,limbs+1], [tp,2*N-1]
+ *       limbs为返回值，N = pow->np + pow->zeros
+ * @return 返回转换后的limb数量
+ */
 static mp_size_t lmmp_from_str_divide_(
-          mp_ptr        dst, 
-    const mp_byte_t*    src, 
-          mp_size_t     len, 
-          mp_basepow_t* pow, 
-          mp_ptr        tp
+          mp_ptr       restrict dst,
+    const mp_byte_t*            src,
+          mp_size_t             len,
+          mp_basepow_t*         pow,
+          mp_ptr       restrict  tp
 ) {
     lmmp_param_assert(src[len - 1] != 0);
     mp_size_t limbs;
