@@ -549,7 +549,7 @@ LAMMP_API mp_size_t lmmp_fft_next_size_(mp_size_t n);
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn, rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
+ * @warning eqsep(dst,[numa|numb]), 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn, rn = lmmp_fft_next_size_((na+nb+1)>>1)
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -562,7 +562,7 @@ LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_siz
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn, rn = lmmp_fft_next_size_((na + nb + 1) >> 1)
+ * @warning eqsep(dst,[numa|numb]), 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn, rn = lmmp_fft_next_size_((na+nb+1)>>1)
  * @return 无返回值，结果存储在dst中，
  */
 LAMMP_API void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
