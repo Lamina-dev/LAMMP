@@ -160,6 +160,7 @@ typedef struct {
 } bino_choose_t;
 
 static mp_size_t lmmp_odd_nCr_div_(mp_ptr restrict dst, mp_size_t rn, bino_choose_t* restrict ctx) {
+    lmmp_param_assert(rn > 0 && dst != NULL);
     TEMP_DECL;
 
     mp_ptr restrict nPr = TALLOC_TYPE(ctx->nPr_n, mp_limb_t);
@@ -180,6 +181,7 @@ static mp_size_t lmmp_odd_nCr_div_(mp_ptr restrict dst, mp_size_t rn, bino_choos
 
 mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(n <= MP_USHORT_MAX);
+    lmmp_param_assert(rn > 0 && dst != NULL);
     lmmp_param_assert(r <= n / 2);
     if (r < ODD_FACTORIAL_SIZE) {
         rn = lmmp_odd_nPr_ushort_(dst, rn, n, r);
@@ -249,6 +251,7 @@ mp_size_t lmmp_odd_nCr_ushort_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r
 
 mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) {
     lmmp_param_assert(r <= (n / 2));
+    lmmp_param_assert(rn > 0 && dst != NULL);
     if (r <= 3 || (n > 0xfffffff && rn < BINOMIAL_RN_BASECASE_THRESHOLD)) {
         dst[0] = 1;
         rn = 1;
@@ -320,8 +323,9 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
     }
 }
 
-mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r) {
-    lmmp_debug_assert(r <= (n / 2));
+mp_size_t lmmp_nCr_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r) {
+    lmmp_param_assert(r <= (n / 2));
+    lmmp_param_assert(rn > 0 && dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
@@ -329,6 +333,7 @@ mp_size_t lmmp_nCr_(mp_ptr dst, mp_bitcnt_t bits, mp_size_t rn, uint n, uint r) 
         rn = lmmp_odd_nCr_ushort_(dst + shw, rn - shw, n, r);
     else
         rn = lmmp_odd_nCr_uint_(dst + shw, rn - shw, n, r);
+
     if (bits > 0) {
         dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, bits);
         rn += shw + 1;
