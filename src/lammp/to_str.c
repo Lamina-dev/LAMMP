@@ -5,9 +5,11 @@
  */
 
 #include "../../include/lammp/impl/base_table.h"
+#include "../../include/lammp/impl/inlines.h"
 #include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
+
 
 mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
     lmmp_param_assert(base >= 2 && base <= 256);
@@ -22,7 +24,15 @@ mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base) {
     return lmmp_mulh_(na * LIMB_BITS + mslbits, lmmp_bases_table[base - 2].inv_lg_base) + 1;
 }
 
-// assume numa[na-1]!=0
+/**
+ * @brief 将mp_limb_t数组转换为字符串
+ * @param dst 输出字符串
+ * @param numa 输入数组
+ * @param na 输入数组长度
+ * @param base 转换基数
+ * @warning numa[na-1]!=0
+ * @return 返回转换后的字符串长度
+ */
 static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1]!= 0);
@@ -66,12 +76,23 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
 }
 
 // assume numa[na-1]!=0, need an extra limb at numa[na]
+
+/**
+ * @brief 将mp_limb_t数组转换为字符串
+ * @param dst 输出字符串
+ * @param numa 输入数组
+ * @param na 输入数组长度
+ * @param pow 指数表
+ * @param tpq 临时数组
+ * @warning numa[na-1]!=0, sep(dst,tp)
+ * @return 返回转换后的字符串长度
+ */
 static mp_size_t lmmp_to_str_divide_(
-    mp_byte_t*     dst, 
-    mp_ptr        numa, 
-    mp_size_t       na, 
-    mp_basepow_t*  pow, 
-    mp_ptr         tpq
+    mp_byte_t*              dst, 
+    mp_ptr        restrict numa, 
+    mp_size_t                na,
+    mp_basepow_t*           pow,
+    mp_ptr        restrict  tpq
 ) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1] != 0);
@@ -145,6 +166,7 @@ static mp_size_t lmmp_to_str_divide_(
 }
 
 mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
     do {
         if (na == 0)
             return 0;

@@ -143,6 +143,7 @@ static mp_size_t lmmp_from_str_divide_(
 }
 
 mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base) {
+    lmmp_param_assert(base >= 2 && base <= 256);
     do {
         if (len == 0)
             return 0;
