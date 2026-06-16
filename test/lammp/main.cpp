@@ -12,7 +12,7 @@
 
 int main() {
     lmmp_global_init();
-    test_bino();
+    test_mullo();
     lmmp_global_deinit();
     return 0;
 }

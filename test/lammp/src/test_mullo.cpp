@@ -10,7 +10,7 @@
 #define ALLOC_TYPE(n, type) (type*)lmmp_alloc((n) * sizeof(type))
 
 void test_mullo() {
-    mp_size_t n = 2238;
+    mp_size_t n = 1938;
     mp_ptr a = ALLOC_TYPE(n, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(n, mp_limb_t);
     mp_ptr c = ALLOC_TYPE(n, mp_limb_t);
@@ -24,13 +24,13 @@ void test_mullo() {
     lmmp_mul_n_(d, a, b, n);
     auto t2 = std::chrono::high_resolution_clock::now();
     auto dur = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "lmmp_mullo_fft_ time: " << dur << " microseconds" << std::endl;
+    std::cout << "lmmp_mul_n_ time: " << dur << " microseconds" << std::endl;
 
     t1 = std::chrono::high_resolution_clock::now();
     lmmp_mullo_(c, a, b, n);
     t2 = std::chrono::high_resolution_clock::now();
     dur = std::chrono::duration_cast<std::chrono::microseconds>(t2 - t1).count();
-    std::cout << "lmmp_mul_n_ time: " << dur << " microseconds" << std::endl;
+    std::cout << "lmmp_mullo_ time: " << dur << " microseconds" << std::endl;
 
 
     for (mp_size_t i = 0; i < n - 1; i++) {
