@@ -17,7 +17,7 @@
  * @param n 除数长度
  * @param inv21 除数高128位的逆
  * @param tp 临时工作区指针（需要 n 个 limb 的空间）
- * @warning n>=6, MSB(numb)=1, inv21=(2^192-1)/[numb+nb-2,2]-2^64, sep(dstq,numa,numb,tp)
+ * @warning n>=6, MSB(numb)=1, inv21=(2^192-1)/[numb+n-2,2]-2^64, sep(dstq,numa,numb,tp)
  * @return 除法结果最高位商
  */
 static mp_limb_t lmmp_div_divide_n_(

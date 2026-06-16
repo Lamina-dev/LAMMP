@@ -75,8 +75,6 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
     return n;
 }
 
-// assume numa[na-1]!=0, need an extra limb at numa[na]
-
 /**
  * @brief 将mp_limb_t数组转换为字符串
  * @param dst 输出字符串
@@ -84,7 +82,7 @@ static mp_size_t lmmp_to_str_basecase_(mp_byte_t* dst, mp_srcptr numa, mp_size_t
  * @param na 输入数组长度
  * @param pow 指数表
  * @param tpq 临时数组
- * @warning numa[na-1]!=0, sep(dst,tp)
+ * @warning numa[na-1]!=0, sep(dst,tpq)
  * @return 返回转换后的字符串长度
  */
 static mp_size_t lmmp_to_str_divide_(
