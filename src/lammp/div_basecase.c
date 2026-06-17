@@ -7,7 +7,15 @@
 #include "../../include/lammp/lmmpn.h"
 #include "../../include/lammp/impl/mparam.h"
 
-mp_limb_t lmmp_div_basecase_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
+
+mp_limb_t lmmp_div_basecase_(
+    mp_ptr    restrict dstq,
+    mp_ptr    restrict numa, 
+    mp_size_t            na,
+    mp_srcptr restrict numb,
+    mp_size_t            nb,
+    mp_limb_t inv21
+) {
     lmmp_param_assert(na >= nb);
     lmmp_param_assert(nb >= 3);
     lmmp_param_assert(numb[nb - 1] >= LIMB_B_2);

@@ -240,14 +240,16 @@ static mp_size_t lmmp_odd_2factorial_uint_(mp_ptr restrict dst, mp_size_t rn, ui
 }
 
 mp_size_t lmmp_2factorial_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, uint n) {
-    const mp_limb_t odd_2factorial_table[17] = {1, 3, 15, 105, 945, 10395, 135135,
-                                                2027025, 34459425, 654729075,
-                                                13749310575, 316234143225,
-                                                7905853580625, 213458046676875,
-                                                6190283353629375, 191898783962510625,
-                                                6332659870762850625};
+    static const mp_limb_t odd_2factorial_table[17] = {1, 3, 15, 105, 945, 10395, 135135,
+                                                       2027025, 34459425, 654729075,
+                                                       13749310575, 316234143225,
+                                                       7905853580625, 213458046676875,
+                                                       6190283353629375, 191898783962510625,
+                                                       6332659870762850625};
 
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
+    lmmp_param_assert(rn > shw);
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
 
@@ -340,14 +342,16 @@ mp_size_t lmmp_superfac_size_(ushort n, mp_bitcnt_t* restrict bits) {
 }
 
 mp_size_t lmmp_hyperfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, ushort n) {
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
     bits %= LIMB_BITS;
     if (n == 0) {
+        lmmp_debug_assert(shw == 0);
         dst[0] = 1;
         return 1;
     } else if (n <= 8) {
         lmmp_debug_assert(shw == 0);
-        const mp_limb_t odd_hyperfac_table[8] = {1, 1, 27, 27, 84375, 61509375, 50655615215625, 50655615215625};
+        static const mp_limb_t odd_hyperfac_table[8] = {1, 1, 27, 27, 84375, 61509375, 50655615215625, 50655615215625};
         dst[0] = odd_hyperfac_table[n - 1];
         rn = 1;
     } else {
@@ -364,6 +368,7 @@ mp_size_t lmmp_hyperfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, us
             fac[nfactors++].j = j;
         }
 
+        lmmp_param_assert(rn > shw);
         rn = lmmp_factors_mul_ushort_(dst + shw, rn - shw, fac, nfactors);
         TEMP_FREE;
     }
@@ -378,6 +383,7 @@ mp_size_t lmmp_hyperfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, us
 }
 
 mp_size_t lmmp_superfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, ushort n) {
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
     bits %= LIMB_BITS;
     if (n == 0) {
@@ -386,7 +392,7 @@ mp_size_t lmmp_superfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, us
         return 1;
     } else if (n <= 8) {
         lmmp_debug_assert(shw == 0);
-        const mp_limb_t odd_superfac_table[8] = {1, 1, 3, 9, 135, 6075, 1913625, 602791875};
+        static const mp_limb_t odd_superfac_table[8] = {1, 1, 3, 9, 135, 6075, 1913625, 602791875};
         dst[0] = odd_superfac_table[n - 1];
         rn = 1;
     } else {
@@ -403,6 +409,7 @@ mp_size_t lmmp_superfac_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, us
             fac[nfactors++].j = j;
         }
 
+        lmmp_param_assert(rn > shw);
         rn = lmmp_factors_mul_ushort_(dst + shw, rn - shw, fac, nfactors);
         TEMP_FREE;
     }
@@ -427,7 +434,7 @@ mp_size_t lmmp_primefac_size_(uint n) {
     return rn;
 }
 
-mp_size_t lmmp_primefac_(mp_ptr dst, mp_size_t rn, uint n) {
+mp_size_t lmmp_primefac_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     if (n < 2) {
         dst[0] = 1;
         return 1;

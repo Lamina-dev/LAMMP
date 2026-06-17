@@ -24,7 +24,7 @@ mp_size_t lmmp_arith_seqprod_size_(uint x, uint n, uint m) {
     return LMMP_MIN(rn1, rn2);
 }
 
-static inline mp_size_t _odd_pow_(mp_ptr dst, mp_size_t rn, uint base, ulong exp) {
+static inline mp_size_t _odd_pow_(mp_ptr restrict dst, mp_size_t rn, uint base, ulong exp) {
     if (base <= 0xf)
         return lmmp_u4_pow_1_(dst, rn, base, exp);
     else if (base <= MP_UCHAR_MAX)

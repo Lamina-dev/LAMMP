@@ -4,18 +4,20 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../include/lammp/impl/tmp_alloc.h"
+#include "../../include/lammp/impl/inlines.h"
 #include "../../include/lammp/impl/mparam.h"
+#include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
-void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+
+void lmmp_inv_basecase_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa[na - 1] >= LIMB_B_2);
     if (na == 1)
         *dst = lmmp_inv_1_(*numa);
     else {
         TEMP_DECL;
-        mp_ptr xp = TALLOC_TYPE(2 * na, mp_limb_t);
+        mp_ptr restrict xp = TALLOC_TYPE(2 * na, mp_limb_t);
         mp_size_t i = na;
         do {
             xp[--i] = LIMB_MAX;
@@ -37,7 +39,7 @@ void lmmp_inv_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     }
 }
 
-void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+void lmmp_invappr_newton_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(na > 4);
     lmmp_param_assert(numa[na - 1] >= LIMB_B_2);
     
@@ -57,7 +59,7 @@ void lmmp_invappr_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
     lmmp_inv_basecase_(dst - nr, numa - nr, nr);
 
     TEMP_DECL;
-    mp_ptr xp = TALLOC_TYPE(3 * (na >> 1) + 3, mp_limb_t);
+    mp_ptr restrict xp = TALLOC_TYPE(3 * (na >> 1) + 3, mp_limb_t);
     do {
         na = *--sizp;
 
@@ -157,7 +159,7 @@ void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
     TEMP_DECL;
     if (dst == numa || nsh || nf) {
         nf += nsh != 0;
-        mp_ptr numa2 = TALLOC_TYPE(na + nf, mp_limb_t);
+        mp_ptr restrict numa2 = TALLOC_TYPE(na + nf, mp_limb_t);
         lmmp_zero(numa2, nf);
         if (nsh)
             lmmp_shl_(numa2 + nf, numa, na, nsh);
@@ -173,7 +175,7 @@ void lmmp_inv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
     TEMP_FREE;
 }
 
-void lmmp_invappr_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
+void lmmp_invappr_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na) {
     if (na < INV_NEWTON_THRESHOLD)
         lmmp_inv_basecase_(dst, numa, na);
     else

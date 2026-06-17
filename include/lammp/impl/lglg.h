@@ -213,6 +213,7 @@ static inline uint64_t log2n_2n1_floor(uint32_t n) {
 }
 #undef tab
 #undef H
+#undef adj_H
 
 /**
  * @brief 计算 n * (log2(e)-1)

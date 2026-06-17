@@ -4,9 +4,11 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/inlines.h"
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
-#include "../../include/lammp/impl/mparam.h"
+
 
 void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_ptr scratch) {
     lmmp_param_assert(n > 0);
@@ -133,25 +135,34 @@ void lmmp_mullo_dc_(
             m = 9 * n / 10;
         }
         t = n - m;
+        lmmp_debug_assert(2 * n > 4 * t);
 
-#define a0 (numa)
-#define a1 (numa + m)
-#define b0 (numb)
-#define b1 (numb + m)
-#define c0 (dst)
-#define c1 (dst + m)
-#define lo1 (tp)              // [tp,  2*t]
-#define tp1 (tp + 2 * t)      // [tp+2*t, 2*t]
-#define lo2 (tp + 2 * t)      // [tp+2*t, 2*t]
-#define tp2 (tp + 4 * t)      // [tp+2*t, 2*t]
+#define a0 (numa)             // [numa,     m]
+#define a1 (numa + m)         // [numa+m,   t]
+#define b0 (numb)             // [numb,     m]
+#define b1 (numb + m)         // [numb+m,   t]
+#define c0 (dst)              // [dst,      m]
+#define c1 (dst + m)          // [dst+m,    t]
+#define lo1 (tp)              // [tp,       t]
+#define lo2 (tp + t)          // [tp+t,     t]
+#define scratch (tp + 2 * t)  // [tp+2*t, 2*t]
         lmmp_mul_n_(tp, a0, b0, m);
         lmmp_copy(c0, tp, n);
-        lmmp_mullo_dc_(lo1, a1, b0, tp1, t);
-        lmmp_mullo_dc_(lo2, a0, b1, tp2, t);
+        lmmp_mullo_dc_(lo1, a1, b0, scratch, t);
+        lmmp_mullo_dc_(lo2, a0, b1, scratch, t);
         lmmp_add_n_(c1, c1, lo1, t);
         lmmp_add_n_(c1, c1, lo2, t);
         return;
     }
+#undef a0
+#undef a1
+#undef b0
+#undef b1
+#undef c0
+#undef c1
+#undef lo1
+#undef lo2
+#undef scratch
 }
 
 void lmmp_sqrlo_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_ptr restrict tp, mp_size_t n) {
@@ -176,17 +187,24 @@ void lmmp_sqrlo_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_ptr restric
             m = 9 * n / 10;
         }
         t = n - m;
+
 #define a0 (numa)
 #define a1 (numa + m)
 #define c0 (dst)
 #define c1 (dst + m)
-#define lo1 (tp)              // [tp, 2*t]
-#define tp1 (tp + 2 * t)      // [tp+2*t, 2*t]
+#define lo (tp)          // [tp, t]
+#define scratch (tp + t) // [tp+t, 2*t]
         lmmp_sqr_(tp, a0, m);
         lmmp_copy(c0, tp, n);
-        lmmp_mullo_dc_(lo1, a0, a1, tp1, t);
-        lmmp_addshl1_n_(c1, c1, lo1, t);
+        lmmp_mullo_dc_(lo, a0, a1, scratch, t);
+        lmmp_addshl1_n_(c1, c1, lo, t);
     }
+#undef a0
+#undef a1
+#undef c0
+#undef c1
+#undef lo
+#undef scratch
 }
 
 void lmmp_mullo_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_srcptr restrict numb, mp_size_t n) {

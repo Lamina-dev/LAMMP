@@ -76,7 +76,7 @@ void lmmp_mul_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_sr
             lmmp_mul_toom42_unbalance_(dst, numa, na, numb, nb);
     } else if (((na + nb) >> 1) < MUL_FFT_THRESHOLD || 3 * nb < MUL_FFT_THRESHOLD) {
         if (na < 5 * nb) {
-            if (4 * na < 5 * nb) 
+            if (4 * na < 5 * nb)
                 lmmp_mul_toom44_(dst, numa, na, numb, nb);
             else if (3 * na < 5 * nb)
                 lmmp_mul_toom43_(dst, numa, na, numb, nb);

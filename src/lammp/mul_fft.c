@@ -313,12 +313,12 @@ static void lmmp_fft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_siz
  *          ms->temp_coef 有至少 lenw + 1 个字长
  */
 static void lmmp_ifft_bfy_(fft_memstack* ms, mp_ptr* coef, mp_size_t wing, mp_size_t w) {
-    mp_ptr numa = coef[0];                // 系数a
-    mp_ptr numb = coef[wing];             // 系数b
-    mp_ptr numc = ms->temp_coef;          // 临时数组（存储a-(b>>w)）
-    mp_size_t shr = w & (LIMB_BITS - 1);  // 比特级右移量
-    w /= LIMB_BITS;                       // 机器字级右移量
-    mp_size_t l = ms->lenw;               // 系数长度
+    mp_ptr numa = coef[0];
+    mp_ptr numb = coef[wing];
+    mp_ptr numc = ms->temp_coef;
+    mp_size_t shr = w & (LIMB_BITS - 1);
+    w /= LIMB_BITS;
+    mp_size_t l = ms->lenw;
 
     mp_slimb_t bcyo = 0, acyo = 0, ah;
     mp_limb_t shrcyo = shr ? numb[0] << (LIMB_BITS - shr) : 0;
@@ -442,10 +442,10 @@ static void lmmp_fft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w
 }
 
 static void lmmp_fft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
-    mp_size_t k1 = k >> 1;                // k1 = k/2（右移1位等价于除以2）
-    k -= k1;                              // k = k - k1（剩余层数）
-    mp_size_t Kp = ((mp_size_t)1) << k;   // Kp = 2^k
-    mp_size_t Kq = ((mp_size_t)1) << k1;  // Kq = 2^k1
+    mp_size_t k1 = k >> 1;
+    k -= k1;
+    mp_size_t Kp = ((mp_size_t)1) << k;
+    mp_size_t Kq = ((mp_size_t)1) << k1;
 
     for (mp_size_t i = 0; i < Kp; ++i) lmmp_fft_b1_(ms, coef + i, Kp, k1, w, i * w);
 
@@ -495,10 +495,10 @@ static void lmmp_ifft_4_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t 
 }
 
 static void lmmp_ifft_(fft_memstack* ms, mp_ptr* coef, mp_size_t k, mp_size_t w) {
-    mp_size_t k1 = k >> 1;                // k1 = k/2
-    k -= k1;                              // k = k - k1
-    mp_size_t Kp = ((mp_size_t)1) << k;   // Kp = 2^k
-    mp_size_t Kq = ((mp_size_t)1) << k1;  // Kq = 2^k1
+    mp_size_t k1 = k >> 1;
+    k -= k1;
+    mp_size_t Kp = ((mp_size_t)1) << k;
+    mp_size_t Kq = ((mp_size_t)1) << k1;
 
     for (mp_size_t i = 0; i < Kq; ++i) lmmp_ifft_4_(ms, coef + Kp * i, k, w * Kq);
 
@@ -600,11 +600,10 @@ static void lmmp_mul_fermat_recombine_(
  *          nsqr=1表示乘法，nsqr=0表示平方
  */
 static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2, mp_size_t K0) {
-    int nsqr = pc1 != pc2;  // 判断是否为平方运算
+    int nsqr = pc1 != pc2;
     mp_ptr push_temp_coef = ms->temp_coef;
-    mp_size_t rn = ms->lenw;  // 当前系数长度
+    mp_size_t rn = ms->lenw;
 
-    // 小于阈值则不使用FFT
     if (rn < MUL_FFT_MODF_THRESHOLD) {
         mp_ptr temp_mul = (mp_ptr)lmmp_fft_memstack_(ms, (rn + 1) * 2 * LIMB_BYTES);
         for (mp_size_t i = 0; i < K0; ++i) {
@@ -621,15 +620,15 @@ static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2,
         lmmp_fft_memstack_(ms, 0);
     } else {
         mp_size_t N = rn * LIMB_BITS;        // 总比特数
-        mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
+        mp_size_t k = lmmp_fft_best_k_(rn);
         mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
         lmmp_debug_assert(!(N & (K - 1)));
         mp_size_t M = N >> k;         // 每个块的比特数（N/K）
         mp_size_t n = 2 * M + k + 2;  // 扩展系数长度（保证归一化）
 
         // 规整n：必须是LIMB_BITS和K的整数倍
-        n = (n + LIMB_BITS - 1) & (-LIMB_BITS);  // 向上取整到LIMB_BITS的倍数
-        n = (((n - 1) >> k) + 1) << k;           // 向上取整到K的倍数
+        n = (n + LIMB_BITS - 1) & (-LIMB_BITS);
+        n = (((n - 1) >> k) + 1) << k;
 
         ms->lenw = n / LIMB_BITS;
         mp_size_t nlen = ms->lenw + 1;
@@ -679,7 +678,7 @@ static void lmmp_mul_fermat_recurse_(fft_memstack* ms, mp_ptr* pc1, mp_ptr* pc2,
 void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
     int nsqr = numa != numb || na != nb;  // 判断是否为平方运算
     mp_size_t N = rn * LIMB_BITS;         // 结果总比特数
-    mp_size_t k = lmmp_fft_best_k_(rn);   // 最优FFT层数
+    mp_size_t k = lmmp_fft_best_k_(rn);
     mp_size_t K = ((mp_size_t)1) << k;    // FFT块数（2^k）
     lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;         // 每个块的比特数
@@ -692,8 +691,8 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
     fft_memstack msr;
     msr.maxdepth = -1;
     msr.tempdepth = -1;
-    msr.lenw = n / LIMB_BITS;       // 系数长度（机器字）
-    mp_size_t nlen = msr.lenw + 1;  // 系数总长度
+    msr.lenw = n / LIMB_BITS;
+    mp_size_t nlen = msr.lenw + 1;
 
     msr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&msr, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
 
@@ -708,7 +707,6 @@ void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp
             coeflen = LMMP_MIN(narest, coeflen);
             narest -= coeflen;
             lmmp_fft_extract_coef_(pfca[i], numa, M * i, coeflen, msr.lenw);
-            // 非第一个块：左移补偿
             if (i > 0)
                 lmmp_fft_shl_coef_(&msr, pfca + i, i * n >> k);
         } else {
@@ -769,8 +767,8 @@ void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, 
     fft_memstack msr;
     msr.maxdepth = -1;
     msr.tempdepth = -1;
-    msr.lenw = n / LIMB_BITS;       // 系数长度（机器字）
-    mp_size_t nlen = msr.lenw + 1;  // 系数总长度
+    msr.lenw = n / LIMB_BITS;
+    mp_size_t nlen = msr.lenw + 1;
 
     msr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&msr, (((nlen + 1) << (k + nsqr)) + nlen) * LIMB_BYTES);
 
@@ -875,7 +873,7 @@ static void lmmp_mul_fermat_single_(
     int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
     lmmp_assert(nsqr);
     mp_size_t N = rn * LIMB_BITS;        // 结果总比特数
-    mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
+    mp_size_t k = lmmp_fft_best_k_(rn);
     mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
     lmmp_debug_assert(!(N & (K - 1)));
     mp_size_t M = N >> k;         // 每个块的比特数
@@ -888,8 +886,8 @@ static void lmmp_mul_fermat_single_(
     fft_memstack amsr;
     amsr.maxdepth = -1;
     amsr.tempdepth = -1;
-    amsr.lenw = n / LIMB_BITS;       // 系数长度（机器字）
-    mp_size_t nlen = amsr.lenw + 1;  // 系数总长度
+    amsr.lenw = n / LIMB_BITS;
+    mp_size_t nlen = amsr.lenw + 1;
     mp_size_t a_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     mp_size_t b_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     amsr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&amsr, a_size);
@@ -989,8 +987,8 @@ static void lmmp_mul_mersenne_single_(
     fft_memstack amsr;
     amsr.maxdepth = -1;
     amsr.tempdepth = -1;
-    amsr.lenw = n / LIMB_BITS;       // 系数长度（机器字）
-    mp_size_t nlen = amsr.lenw + 1;  // 系数总长度
+    amsr.lenw = n / LIMB_BITS;
+    mp_size_t nlen = amsr.lenw + 1;
     mp_size_t a_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     mp_size_t b_size = (((nlen + 1) << (k)) + nlen) * LIMB_BYTES;
     amsr.temp_coef = (mp_ptr)lmmp_fft_memstack_(&amsr, a_size);

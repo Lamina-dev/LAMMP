@@ -4,11 +4,19 @@
  * See LICENSE in the project root for the full license text.
  */
 
+#include "../../include/lammp/impl/inlines.h"
+#include "../../include/lammp/impl/mparam.h"
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
-#include "../../include/lammp/impl/mparam.h"
 
-mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+
+mp_limb_t lmmp_div_s_(
+    mp_ptr    restrict dstq,
+    mp_ptr    restrict numa,
+    mp_size_t            na,
+    mp_srcptr restrict numb,
+    mp_size_t            nb
+) {
     TEMP_DECL;
     mp_limb_t nq = na - nb;
     mp_limb_t qh;
@@ -23,7 +31,7 @@ mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp
     } else if (nq < nb) {
         qh = lmmp_div_s_(dstq, numa + na - 2 * nq, 2 * nq, numb + nb - nq, nq);
 
-        mp_ptr tp = TALLOC_TYPE(nb, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE(nb, mp_limb_t);
         if (nq > nb - nq)
             lmmp_mul_(tp, dstq, nq, numb, nb - nq);
         else
@@ -45,7 +53,7 @@ mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp
             qh = lmmp_div_divide_(dstq, numa, na, numb, nb, inv21);
         else {
             mp_limb_t ni = lmmp_div_inv_size_(nq, nb);
-            mp_ptr invappr = TALLOC_TYPE(ni, mp_limb_t);
+            mp_ptr restrict invappr = TALLOC_TYPE(ni, mp_limb_t);
             lmmp_inv_prediv_(invappr, numb, nb, ni);
             qh = lmmp_div_mulinv_(dstq, numa, na, numb, nb, invappr, ni);
         }
@@ -86,7 +94,7 @@ void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr
         dstq[na - nb] = 0;
 
         if (nq >= nb) {
-            mp_ptr numa2 = TALLOC_TYPE(na + 1, mp_limb_t);
+            mp_ptr restrict numa2 = TALLOC_TYPE(na + 1, mp_limb_t);
             mp_ptr numb2;
             if (cnt) {
                 numa2[na] = lmmp_shl_(numa2, numa, na, cnt);

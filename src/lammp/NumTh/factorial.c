@@ -153,12 +153,16 @@ static inline void count_factors(fac_ptr fac, uint nfactors, uint n, uint p) {
 }
 
 mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(rn > 0);
+    lmmp_param_assert(n > MP_USHORT_MAX);
+
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
     uint nfactors = lmmp_prime_size_(n);
     fac_ptr restrict fac = BALLOC_TYPE(nfactors, fac_t);
     nfactors = 0;
-    
+
     prime_cache_t cache;
     lmmp_prime_cache_init_(&cache, n);
     while(cache.is_end == 0) {
@@ -177,14 +181,17 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
 }
 
 mp_size_t lmmp_factorial_(mp_ptr restrict dst, mp_bitcnt_t bits, mp_size_t rn, uint n) {
+    lmmp_param_assert(dst != NULL);
     mp_size_t shw = bits / LIMB_BITS;
+    lmmp_param_assert(rn > shw);
     bits %= LIMB_BITS;
     lmmp_zero(dst, shw);
+
     if (n <= NPR_SHORT_LIMIT)
         rn = lmmp_odd_nPr_ushort_(dst + shw, rn - shw, n, n);
     else
         rn = lmmp_odd_factorial_uint_(dst + shw, rn - shw, n);
-    
+
     if (bits > 0) {
         dst[shw + rn] = lmmp_shl_(dst + shw, dst + shw, rn, bits);
         rn += shw + 1;

@@ -8,9 +8,26 @@
 #include "../../include/lammp/impl/tmp_alloc.h"
 #include "../../include/lammp/lmmpn.h"
 
-// qh:[dstq,n]=[numa,2*n] div [numb,n], [numa,n]=[numa,2*n] mod [numb,n], return qh
-// need(n>=6, MSB(numb)=1, [tp,n], inv21=(2^192-1)/[numb+nb-2,2]-2^64, sep(dstq,numa,numb,tp))
-static mp_limb_t lmmp_div_divide_n_(mp_ptr dstq, mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t inv21, mp_ptr tp) {
+
+/**
+ * @brief 分治除法
+ * @param dstq 结果商指针（[dstq,n]=[numa,2*n] div [numb,n]）
+ * @param numa 被除数指针（[numa,n]=[numa,2*n] mod [numb,n]）
+ * @param numb 除数指针
+ * @param n 除数长度
+ * @param inv21 除数高128位的逆
+ * @param tp 临时工作区指针（需要 n 个 limb 的空间）
+ * @warning n>=6, MSB(numb)=1, inv21=(2^192-1)/[numb+n-2,2]-2^64, sep(dstq,numa,numb,tp)
+ * @return 除法结果最高位商
+ */
+static mp_limb_t lmmp_div_divide_n_(
+    mp_ptr    restrict dstq,
+    mp_ptr    restrict numa,
+    mp_srcptr restrict numb,
+    mp_size_t             n,
+    mp_limb_t         inv21,
+    mp_ptr    restrict   tp
+) {
     lmmp_param_assert(n >= 6);
     lmmp_param_assert(numb[n - 1] >= LIMB_B_2);
     mp_size_t lo = n >> 1, hi = n - lo;
@@ -50,7 +67,14 @@ static mp_limb_t lmmp_div_divide_n_(mp_ptr dstq, mp_ptr numa, mp_srcptr numb, mp
     return qh;
 }
 
-mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb, mp_limb_t inv21) {
+mp_limb_t lmmp_div_divide_(
+    mp_ptr    restrict dstq,
+    mp_ptr    restrict numa,
+    mp_size_t            na,
+    mp_srcptr restrict numb,
+    mp_size_t            nb,
+    mp_limb_t         inv21
+) {
     lmmp_param_assert(na >= 2 * nb);
     lmmp_param_assert(nb >= 6);
     lmmp_param_assert(numb[nb - 1] >= LIMB_B_2);
@@ -70,7 +94,7 @@ mp_limb_t lmmp_div_divide_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr num
     mp_limb_t qh = lmmp_div_s_(dstq, numa, nb + nq, numb, nb);
 
     TEMP_DECL;
-    mp_ptr tp = TALLOC_TYPE(nb, mp_limb_t);
+    mp_ptr restrict tp = TALLOC_TYPE(nb, mp_limb_t);
     nq = na - nb - nq;
 
     do {
