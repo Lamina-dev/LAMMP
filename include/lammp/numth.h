@@ -744,6 +744,15 @@ LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* r
  */
 LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
+/**
+ * @brief 计算 floor(x^(1/n))
+ * @param x 被开方数
+ * @param n 开方次数
+ * @return floor(x^(1/n))
+ * @warning MSB(x)=1, n>1
+ */
+LAMMP_API ulong lmmp_nthroot_ulong_(ulong x, uchar n);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
