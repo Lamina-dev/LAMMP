@@ -155,7 +155,7 @@ static inline void count_factors(fac_ptr fac, uint nfactors, uint n, uint p) {
 mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
     lmmp_param_assert(dst != NULL);
     lmmp_param_assert(rn > 0);
-    lmmp_param_assert(n >= MP_USHORT_MAX);
+    lmmp_param_assert(n > MP_USHORT_MAX);
 
     lmmp_prime_int_table_init_(n);
     TEMP_B_DECL;
