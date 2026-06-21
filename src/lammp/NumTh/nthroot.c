@@ -4,100 +4,94 @@
  * See LICENSE in the project root for the full license text.
  */
 
-#include "../../../include/lammp/impl/tmp_alloc.h"
-#include "../../../include/lammp/impl/lglg.h"
-#include "../../../include/lammp/impl/longlong.h"
-#include "../../../include/lammp/impl/mparam.h"
-#include "../../../include/lammp/lmmpn.h"
+#include <math.h>
+
 #include "../../../include/lammp/numth.h"
 
 
-static inline ulong pow_gt(ulong x, uchar n) {
+ulong lmmp_sqrt_ulong_(ulong a) {
+    ulong is;
+
+    is = (ulong)sqrt((double)a);
+
+    is -= (is * is > a);
+    if (is == (1ULL << 32))
+        is--;
+    return is;
+}
+
+static inline ulong pow_n(ulong x, ulong n) {
     ulong ret = 1;
-    mp_limb_t hi;
-    for (uchar i = 0; i < n; i++) {
-        _umul64to128_(ret, x, &ret, &hi);
+    for (ulong i = 0; i < n; ++i) {
+        ret *= x;
     }
-    if (hi != 0)
-        return MP_ULONG_MAX;
+    return ret;
+}
+
+static const float inv_table[] = {
+    0.200000000000000, 0.166666666666667, 0.142857142857143, 0.125000000000000, 0.111111111111111, 0.100000000000000,
+    0.090909090909091, 0.083333333333333, 0.076923076923077, 0.071428571428571, 0.066666666666667, 0.062500000000000,
+    0.058823529411765, 0.055555555555556, 0.052631578947368, 0.050000000000000, 0.047619047619048, 0.045454545454545,
+    0.043478260869565, 0.041666666666667, 0.040000000000000, 0.038461538461538, 0.037037037037037, 0.035714285714286,
+    0.034482758620690, 0.033333333333333, 0.032258064516129, 0.031250000000000, 0.030303030303030, 0.029411764705882,
+    0.028571428571429, 0.027777777777778, 0.027027027027027, 0.026315789473684, 0.025641025641026, 0.025000000000000,
+};
+
+/* This table has the max possible base for a given root. For n >= 4,
+   max_base[n-4] = floor(UWORD_MAX^(1/n)).*/
+static const uint16_t max_base[] = {
+    65535, 7131, 1625, 565, 255, 138, 84, 56, 40, 30, 23, 19, 15, 13, 11, 10, 9, 8, 7, 6, 6, 5, 5, 5, 4, 4, 4, 4, 3, 3,
+    3,     3,    3,    3,   3,   3,   3,  2,  2,  2,  2,  2,  2,  2,  2,  2,  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2};
+
+ulong lmmp_nthroot_ulong_(ulong n, ulong root) {
+    ulong x, currval, base, upper_limit;
+
+    if (n == 0 || root == 0)
+        return 0;
+    if (root == 1)
+        return n;
+    if (root == 2)
+        return lmmp_sqrt_ulong_(n);
+    if (root == 3)
+        return lmmp_cbrt_ulong_(n);
+
+    if (root >= LIMB_BITS || n < (1ULL << root))
+        return 1;
+
+    /* n <= upper_limit^root */
+    upper_limit = max_base[root - 4];
+
+    if (upper_limit == 2)
+        return upper_limit;
+
+    /* upper_limit = 2 for root >= 41 */
+    lmmp_debug_assert(root <= 40);
+
+    if (root == 4)
+        x = sqrt(sqrt(n));
     else
-        return ret;
-}
+        x = expf(inv_table[root - 5] * logf(n));
 
-typedef struct {
-    ulong upper;
-    ulong lower;
-} nthroot_1_bound_t;
+    base = x;
 
-static inline void nthroot_1_bound(ulong x, uchar n, nthroot_1_bound_t* bound) {
-    // x = 1.xxxx * 2^63
-    // frac = x - 2^63
-    ulong frac = x - (1ULL << 63);
+    if (base >= upper_limit)
+        base = upper_limit - 1;
 
-    uint idx = frac >> (63 - 9);
+    currval = pow_n(base, root);
+    if (currval == n)
+        return base;
 
-    ulong log2x_q9_lower = idx == 0 ? 0 : log2_fix32_q9[idx - 1];
-    ulong log2x_q9_upper = log2_fix32_q9[idx];
-
-    ulong log2x, L, guess;
-    uint F, lo, hi;
-
-    log2x = ((ulong)63 << 32) + log2x_q9_lower;
-    log2x /= n;
-
-    L = log2x >> 32;
-    F = (uint)(log2x & 0xFFFFFFFF);  // (Q32)
-
-    if (F >= log2_fix32_q9[0]) {
-        lo = 0, hi = 511;
-        while (lo < hi) {
-            uint mid = (lo + hi + 1) >> 1;
-            if ((uint)log2_fix32_q9[mid] <= F)
-                lo = mid;
-            else
-                hi = mid - 1;
-        }
-        // 2^f >= 1 + (lo+1)/512
-        guess = 512 + lo + 1;
-    } else {
-        guess = 512;
+    while (currval <= n) {
+        base++;
+        currval = pow_n(base, root);
+        if (base == upper_limit)
+            break;
     }
-    bound->lower = (guess << L) / 512;
 
-    log2x = ((ulong)63 << 32) + log2x_q9_upper;
-    log2x /= n;
-
-    L = log2x >> 32;
-    F = (uint)(log2x & 0xFFFFFFFF);  // (Q32)
-
-    lo = 0, hi = 511;
-    while (lo < hi) {
-        uint mid = (lo + hi + 1) >> 1;
-        if ((uint)log2_fix32_q9[mid] <= F)
-            lo = mid;
-        else
-            hi = mid - 1;
+    while (currval > n) {
+        base--;
+        currval = pow_n(base, root);
     }
-    lo++;
-    // 2^f < 1 + (lo+1)/512
-    guess = 512 + lo + 1;
-    bound->upper = (guess << L) / 512;
-}
 
-ulong lmmp_nthroot_ulong_(ulong x, uchar n) {
-    lmmp_param_assert(n > 1);
-    lmmp_param_assert(x >= LIMB_B_2);
-    nthroot_1_bound_t bound;
-    nthroot_1_bound(x, n, &bound);
-    ulong lo = bound.lower, hi = bound.upper;
-    while (lo + 1 < hi) {
-        ulong mid = lo + (hi - lo) / 2;
-        ulong p = pow_gt(mid, n);
-        if (p <= x) {
-            lo = mid;
-        } else {
-            hi = mid;
-        }
-    }
-    return lo;
+    return base;
 }

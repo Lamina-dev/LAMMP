@@ -745,13 +745,46 @@ LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* r
 LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
 /**
- * @brief 计算 floor(x^(1/n))
- * @param x 被开方数
- * @param n 开方次数
- * @return floor(x^(1/n))
- * @warning MSB(x)=1, n>1
+ * @brief 计算算术平方根 floor(sqrt(n))
+ * @param n 被开方数
+ * @return floor(sqrt(n))
  */
-LAMMP_API ulong lmmp_nthroot_ulong_(ulong x, uchar n);
+LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
+
+/**
+ * @brief 计算算数立方根 floor(cbrt(n))
+ * @param n 被开方数
+ * @return floor(cbrt(n))
+ * @note 使用Chebyshev估计，当n较大时，此算法更占优势
+ */
+LAMMP_API ulong lmmp_cbrt_chebyshev_(ulong n);
+
+/**
+ * @brief 计算算数立方根 floor(cbrt(n))
+ * @param n 被开方数
+ * @return floor(cbrt(n))
+ * @note 会依据n的大小，选择合适的算法
+ */
+LAMMP_API ulong lmmp_cbrt_ulong_(ulong n);
+
+/**
+ * @brief 计算算数立方根 floor(cbrt(a0+a1*B+a2*B^2))
+ * @param n 被开方数
+ * @warning a1>0
+ * @note a2可以为0，但a1需要大于0，即这个数至少应有65个bit
+ * @return floor(cbrt(a0+a1*B+a2*B^2))
+ */
+LAMMP_API mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
+
+/**
+ * @brief 计算 floor(n^(1/root))
+ * @param n 被开方数
+ * @param root 开方次数
+ * @return floor(n^(1/root))
+ * @note root=0时，返回0
+ */
+LAMMP_API ulong lmmp_nthroot_ulong_(ulong n, ulong root);
+
 
 #ifdef __cplusplus
 }
