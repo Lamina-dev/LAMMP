@@ -745,9 +745,9 @@ LAMMP_API ushortp lmmp_trialdiv_(mp_srcptr np, mp_size_t nn, ushort N, ushort* r
 LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn);
 
 /**
- * @brief 计算算术平方根 floor(sqrt(n))
- * @param n 被开方数
- * @return floor(sqrt(n))
+ * @brief 计算算术平方根 floor(sqrt(a))
+ * @param a 被开方数
+ * @return floor(sqrt(a))
  */
 LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
 
@@ -755,6 +755,7 @@ LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
  * @brief 计算算数立方根 floor(cbrt(n))
  * @param n 被开方数
  * @return floor(cbrt(n))
+ * @warning n>0
  * @note 使用Chebyshev估计，当n较大时，此算法更占优势
  */
 LAMMP_API ulong lmmp_cbrt_chebyshev_(ulong n);
@@ -769,7 +770,9 @@ LAMMP_API ulong lmmp_cbrt_ulong_(ulong n);
 
 /**
  * @brief 计算算数立方根 floor(cbrt(a0+a1*B+a2*B^2))
- * @param n 被开方数
+ * @param a0 低位 limb
+ * @param a1 中位 limb
+ * @param a2 高位 limb
  * @warning a1>0
  * @note a2可以为0，但a1需要大于0，即这个数至少应有65个bit
  * @return floor(cbrt(a0+a1*B+a2*B^2))

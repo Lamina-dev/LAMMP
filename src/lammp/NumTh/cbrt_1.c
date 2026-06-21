@@ -29,6 +29,7 @@ static const float coeff[16][3] = {{0.445434042, 0.864136635, -0.335205926},  /*
                                    {0.552627494, 0.561446514, -0.114074068}}; /* [0.96875, 1.00000]  */
 
 ulong lmmp_cbrt_chebyshev_(ulong n) {
+    lmmp_param_assert(n > 0);
     typedef union {
         ulong uword_val;
         double double_val;
