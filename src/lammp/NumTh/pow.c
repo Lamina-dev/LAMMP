@@ -30,7 +30,6 @@ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
             b = base << (32 - base_tz);
         } else {
             b = base >> (base_tz - 32);
-            b++;
         }
         base_tz = base_tz - 32;
         base_tz *= exp;
@@ -48,7 +47,6 @@ mp_size_t lmmp_pow_1_size_(mp_limb_t base, ulong exp) {
             b = base << (32 - base_tz);
         } else {
             b = base >> (base_tz - 32);
-            b++;
         }
         base_tz = base_tz - 32;
         base_tz *= exp;
@@ -98,7 +96,6 @@ mp_size_t lmmp_pow_size_(mp_srcptr base, mp_size_t n, ulong exp) {
             b = base[n - 1] >> (base_tz - 32);
             base_tz = (n - 1) * LIMB_BITS + base_tz - 32;
         }
-        b++;
 
         mp_size_t rn;
         if (exp <= MP_UINT_MAX) {
