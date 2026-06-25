@@ -89,13 +89,7 @@
 #endif
 
 // L1缓存分块大小
-#define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 4)
-
-// 元素连乘朴素连乘空间长度
-#define LIMB_ELEMMUL_MP_THRESHOLD 20
-
-// 向量连乘朴素连乘空间长度
-#define VEC_ELEMMUL_MP_THRESHOLD 40
+#define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 2)
 
 // 2x2矩阵乘法选择STRASSEN算法的阈值
 #define MAT22_MUL_STRASSEN_THRESHOLD 60
@@ -132,8 +126,8 @@
 // 元素累乘中，低于此长度的累乘将使用朴素算法
 #define ELEM_MUL_BASECASE_THRESHOLD 25
 
-// binvert计算中，使用梅森乘法计算高位的阈值
-#define BINVERT_MULHI_MERSENNE_THRESHOLD 477
+// 使用梅森乘法计算高位的阈值
+#define MULHI_MERSENNE_THRESHOLD 477
 
 // 精确除法中，除数小于此阈值时使用朴素法
 #define DIVEXACT_BASECASE_THRESHOLD 50
