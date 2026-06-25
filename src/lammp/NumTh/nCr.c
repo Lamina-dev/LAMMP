@@ -291,8 +291,8 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         bino_choose_t ctx;
         ctx.nPr_n = lmmp_nPr_size_(n, r, &ctx.nPr_bits);
         ctx.fac_n = lmmp_factorial_size_(r, &ctx.fac_bits);
-        if (10 * ctx.nPr_n > 17 * ctx.fac_n) {
-            /* 这是一个调优值，精确除法的结果也即rn，大于分母fac_n的0.7时，*/
+        if (20 * ctx.nPr_n > 33 * ctx.fac_n) {
+            /* 这是一个调优值，精确除法的结果也即rn，大于分母fac_n的0.65时，*/
             /* 此时说明分子相对更大，精确除法更占优 */
             ctx.n = n;
             ctx.r = r;

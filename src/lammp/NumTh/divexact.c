@@ -108,6 +108,46 @@ static inline void lmmp_mullo_n_(
     }
 }
 
+/**
+ * @brief 已知乘积的低位，计算乘积的高位
+ * @param dst 乘积的高位，长度为 n
+ * @param lop 乘积的低位，长度为 n
+ * @param numa 乘数a
+ * @param numb 乘数b
+ * @param n 乘数a和乘数b的 limb 长度
+ * @param tp 临时空间（应需要2*n个limb）
+ * @warning eqsep(dst,tp)
+ */
+static inline void lmmp_mulhi_n_(
+    mp_ptr              dst,
+    mp_srcptr restrict  lop,
+    mp_srcptr restrict numa,
+    mp_srcptr restrict numb,
+    mp_size_t             n,
+    mp_ptr               tp
+) {
+    if (n < MULHI_MERSENNE_THRESHOLD) {
+        lmmp_mul_n_(tp, numa, numb, n);
+        lmmp_copy(dst, tp + n, n);
+    } else {
+        mp_limb_t c;
+        mp_size_t m = lmmp_fft_next_size_((n * 2 + 1) >> 1);
+        lmmp_debug_assert(n * 2 > m && m >= n);
+        lmmp_mul_mersenne_(tp, m, numa, n, numb, n);
+        c = lmmp_sub_(tp, tp, m, lop, n);
+        if (c != 0)
+            lmmp_dec(tp);
+        if (m == n) {
+            lmmp_copy(dst, tp, n);
+        } else {
+            mp_size_t fn = m - n;
+            mp_size_t sn = n - fn;
+            lmmp_copy(dst, tp + n, fn);
+            lmmp_copy(dst + fn, tp, sn);
+        }
+    }
+}
+
 void lmmp_divexact_unbalanced_(
     mp_ptr              dst,
     mp_srcptr            np,
@@ -127,9 +167,11 @@ void lmmp_divexact_unbalanced_(
         dinv = TALLOC_TYPE(dn, mp_limb_t);
         lmmp_binvert_n_dc_(dinv, dp, dn, tp);
     }
-#define c (tp)     // [tp, dn]
-#define l (tp + dn) // [tp + dn, dn]
+
+#define c       (tp)          // [tp, dn]
+#define l       (tp + dn)     // [tp + dn, dn]
 #define scratch (tp + 2 * dn) // [tp + 2 * dn, 2*dn]
+
     mp_size_t i = 0, qn = nn - dn + 1;
     mp_limb_t ca;
     lmmp_zero(c, dn);
@@ -137,8 +179,14 @@ void lmmp_divexact_unbalanced_(
         for (; i < qn - dn; i += dn) {
             lmmp_sub_n_(l, np + i, c, dn);
             ca = lmmp_cmp_(l, np + i, dn) == 1 ? 1 : 0;
+            /*
+            FIXME: 这里的循环中，第二个乘数dinv以及dp，始终保持不变
+                   在拥有可以惰性初始化的FFT算法的情况下，可以节省numa的正变换
+                   在循环的情况下，这将会有可观的性能提升
+            */
             lmmp_mullo_n_(dst + i, l, dinv, dn, scratch);
-            lmmp_mul_n_(scratch, dst + i, dp, dn);
+            lmmp_mulhi_n_(scratch + dn, l, dst + i, dp, dn, scratch);
+            //lmmp_mul_n_(scratch, dst + i, dp, dn);
             if (ca) {
                 lmmp_add_1_(c, scratch + dn, dn, 1);
             } else {
@@ -191,12 +239,20 @@ void lmmp_divexact_divide_(mp_ptr restrict dst, mp_srcptr restrict np, mp_size_t
 
     mp_size_t qn = nn - dn + 1;
     lmmp_param_assert(qn <= dn);
+    mp_size_t rn = qn - qn / 2;
+    qn = qn / 2;
 
     TEMP_DECL;
-    mp_ptr restrict tp = TALLOC_TYPE((5 * qn + 5) / 2, mp_limb_t);
-    mp_ptr restrict dinv = TALLOC_TYPE(qn, mp_limb_t);
-    lmmp_binvert_n_dc_(dinv, dp, qn, tp);
-    lmmp_mullo_n_(dst, np, dinv, qn, tp);
+    mp_ptr restrict dinv = TALLOC_TYPE(rn, mp_limb_t);
+    mp_ptr restrict tp = TALLOC_TYPE(3 * rn, mp_limb_t);
+    lmmp_binvert_n_dc_(dinv, dp, rn, tp);
+    lmmp_mullo_n_(dst, np, dinv, rn, tp);
+    lmmp_debug_assert(3 * rn >= qn + rn);
+    lmmp_mul_(tp, dp, qn + rn, dst, rn);
+
+    // 即使存在错位，高位的np也一定可以将其约减去，因此无需进行任何处理
+    lmmp_sub_n_(tp, np + rn, tp + rn, qn);
+    lmmp_mullo_n_(dst + rn, tp, dinv, qn, tp + rn);
     TEMP_FREE;
 }
 
