@@ -17,7 +17,7 @@
  * @warning [xp,n] * [ap,n] mod B^n == 1
  */
 static inline void binvert_mulhi_(mp_ptr dst, mp_srcptr xp, mp_srcptr ap, mp_size_t n, mp_ptr tp) {
-    if (n < BINVERT_MULHI_MERSENNE_THRESHOLD) {
+    if (n < MULHI_MERSENNE_THRESHOLD) {
         lmmp_mul_n_(tp, xp, ap, n);
         lmmp_copy(dst, tp + n, n);
     } else {
@@ -187,6 +187,11 @@ void lmmp_binvert_unbalanced_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_s
     mp_size_t i = na;
     for (; i < n - na; i += na) {
         lmmp_mullo_n_(dst + i, a_binvert, k, na, scratch);
+        /*
+        FIXME: 这里的循环中，第二个乘数numa，始终保持不变
+               在拥有可以惰性初始化的FFT算法的情况下，可以节省numa的正变换
+               在循环的情况下，这将会有可观的性能提升
+        */
         lmmp_mul_n_(scratch, dst + i, numa, na);
         // now [scratch,2*na] = a * p
         if (lmmp_add_n_(scratch, scratch, k, na)) {
