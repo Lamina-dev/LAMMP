@@ -165,7 +165,7 @@ mp_size_t lmmp_odd_factorial_uint_(mp_ptr restrict dst, mp_size_t rn, uint n) {
 
     prime_cache_t cache;
     lmmp_prime_cache_init_(&cache, n);
-    while(cache.is_end == 0) {
+    while (cache.is_end == 0) {
         lmmp_prime_cache_next_(&cache);
         for (uint i = 0; i < cache.size; i++) {
             // 对于阶乘n!，对于所有小于等于n的质数，贡献都至少为1
