@@ -247,6 +247,11 @@ void lmmp_divexact_divide_(mp_ptr restrict dst, mp_srcptr restrict np, mp_size_t
     mp_ptr restrict tp = TALLOC_TYPE(3 * rn, mp_limb_t);
     lmmp_binvert_n_dc_(dinv, dp, rn, tp);
     lmmp_mullo_n_(dst, np, dinv, rn, tp);
+    if (qn == 0) {
+        TEMP_FREE;
+        return;
+    }
+
     lmmp_debug_assert(3 * rn >= qn + rn);
     lmmp_mul_(tp, dp, qn + rn, dst, rn);
 
