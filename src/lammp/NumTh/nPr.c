@@ -187,7 +187,8 @@ mp_size_t lmmp_odd_nPr_ushort_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong
         lmmp_copy(dst, tp, rn);
         TEMP_S_FREE;
         return rn;
-    } else if (rn < PERMUTATION_USHORT_MUL_THRESHOLD || n >= (PERMUTATION_USHORT_TIMES_THRESHOLD * r)) {
+    } else if (n + PERMUTATION_USHORT_B_THRESHOLD > r * PERMUTATION_USHORT_K_THRESHOLD) {
+        /* 测量发现，累乘法和因子分解法的算法耗时流形交线大致为直线 */
         return lmmp_odd_nPr_product_(dst, rn, n, r);
     } else {
         TEMP_DECL;
@@ -221,7 +222,9 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r
             mul_1(dst, rn, v);
         }
         return rn;
-    } else if (rn < PERMUTATION_UINT_MUL_THRESHOLD || n >= (PERMUTATION_UINT_TIMES_THRESHOLD * r)) {
+    } else if (n + PERMUTATION_UINT_B_THRESHOLD > r * PERMUTATION_UINT_K_THRESHOLD) {
+        /* 这个调优值是在近似忽略了质数表的初始化开销，主要瓶颈集中在质数表的遍历的情况下测得的 */
+        /* 因此，当质数表未初始化时，这个调优值将无法代表真实性能边界 */
         return lmmp_odd_nPr_product_(dst, rn, n, r);
     } else{
         TEMP_B_DECL;
@@ -234,7 +237,7 @@ mp_size_t lmmp_odd_nPr_uint_(mp_ptr restrict dst, mp_size_t rn, ulong n, ulong r
 
         prime_cache_t cache;
         lmmp_prime_cache_init_(&cache, n);
-        while(cache.is_end == 0) {
+        while (cache.is_end == 0) {
             lmmp_prime_cache_next_(&cache);
             for (uint i = 0; i < cache.size; ++i) {
                 nfactors = count_factors(fac, nfactors, n, r, cache.pp[i]);

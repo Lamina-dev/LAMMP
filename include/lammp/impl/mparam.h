@@ -109,17 +109,11 @@
 // 因子累乘中，因子数量低于此阈值则使用朴素连乘
 #define FACTORS_MUL_N_THRESHOLD 30
 
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_USHORT_MUL_THRESHOLD 1120
-
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_UINT_MUL_THRESHOLD 3200
-
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_USHORT_TIMES_THRESHOLD 8
-
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_UINT_TIMES_THRESHOLD 13
+// 排列数计算中，nPr直线分割阈值
+#define PERMUTATION_USHORT_K_THRESHOLD 18
+#define PERMUTATION_USHORT_B_THRESHOLD 21164
+#define PERMUTATION_UINT_K_THRESHOLD 136
+#define PERMUTATION_UINT_B_THRESHOLD 1659975
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 40

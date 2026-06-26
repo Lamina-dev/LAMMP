@@ -291,9 +291,9 @@ mp_size_t lmmp_odd_nCr_uint_(mp_ptr restrict dst, mp_size_t rn, uint n, uint r) 
         bino_choose_t ctx;
         ctx.nPr_n = lmmp_nPr_size_(n, r, &ctx.nPr_bits);
         ctx.fac_n = lmmp_factorial_size_(r, &ctx.fac_bits);
-        if (20 * ctx.nPr_n > 33 * ctx.fac_n) {
-            /* 这是一个调优值，精确除法的结果也即rn，大于分母fac_n的0.65时，*/
-            /* 此时说明分子相对更大，精确除法更占优 */
+        if (50 * ctx.nPr_n > 89 * ctx.fac_n) {
+            /* 这个调优值是在近似忽略了质数表的初始化开销，主要瓶颈集中在质数表的遍历的情况下测得的 */
+            /* 因此，当质数表未初始化时，这个调优值将无法代表真实性能边界 */
             ctx.n = n;
             ctx.r = r;
             return lmmp_odd_nCr_div_(dst, rn, &ctx);
