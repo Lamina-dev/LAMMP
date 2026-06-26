@@ -112,9 +112,11 @@ void test_divexact() {
     mp_ptr b = ALLOC_TYPE(bn, mp_limb_t);
     lmmp_seed_random_(b, bn, 19123311, 1);
     b[0] |= 1;
+    b[bn - 1] |= ((mp_limb_t)1 << (LIMB_BITS - 1));
 
     mp_ptr p0 = (mp_ptr)lmmp_alloc(n * sizeof(mp_limb_t));
     lmmp_seed_random_(p0, n, 198132271, 2);
+    p0[n - 1] |= ((mp_limb_t)1 << (LIMB_BITS - 1));
     mp_ptr p1 = (mp_ptr)lmmp_alloc((n + bn) * sizeof(mp_limb_t));
 
     if (bn >= n)
