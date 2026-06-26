@@ -100,8 +100,8 @@ failed:
 
 void test_bino() {
     for (size_t n = 50000; n < 10000000; n += 50000) {
-        for (size_t i = 5; i <= 25; i++) {
-            mp_size_t r = (n * i) / 2000;
+        for (size_t i = 20; i <= 40; i++) {
+            mp_size_t r = (n * i) / 10000;
             std::cout << n << "," << r << ",";
             test_temp(n, r);
         }
