@@ -6,6 +6,7 @@
 
 #include "../../../include/lammp/impl/prime_table.h"
 #include "../../../include/lammp/impl/mparam.h"
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 
 
@@ -29,63 +30,62 @@ static inline uint prime_table_size(uint n) {
 void lmmp_prime_int_table_init_(uint n) {
     if (n < PRIME_SHORT_TABLE_N || G.N >= n)
         return;
-
-#define IDX(x) ((x) / 2)
-#define set_not_prime(_i_)                                                  \
-    do {                                                                    \
-        uint idx = IDX(_i_);                                                \
-        G.m[idx / LMMP_BITSET_BITS] &= ~(1ULL << (idx % LMMP_BITSET_BITS)); \
-    } while (0)
+#define IDX(p) ((p) >> 1)
+#define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= ~(1ULL << (i % LMMP_BITSET_BITS))
 
     if (G.m == NULL) {
         G.N = n;
         G.m_size = prime_table_size(n);
-        G.m = ALLOC_TYPE(G.m_size, lmmp_bitset_t);
+        lmmp_bitset_p restrict p = ALLOC_TYPE(G.m_size, lmmp_bitset_t);
         for (uint i = 0; i < G.m_size; ++i) {
-            G.m[i] = LMMP_BITSET_MASK; 
+            p[i] = LMMP_BITSET_MASK;
         }
-        set_not_prime(1);
-        for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
+        set_not_prime(p, 0);
+
+        ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
+        uint max_idx = lmmp_prime_cnt16_(sqrt_n);
+        uint limit_idx = n >> 1;
+
+        for (ushort i = 1; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
-            if (prime > n)
-                break;
-            uint start = prime * prime;
-            if (start > n)
-                break;
-            for (uint j = start; j <= n; j += prime) {
-                if (j % 2 == 1) {
-                    set_not_prime(j);
-                }
+            uint start_idx = (prime * prime) >> 1;
+            for (uint idx = start_idx; idx <= limit_idx; idx += prime) {
+                set_not_prime(p, idx);
             }
         }
+        G.m = p;
     } else {
+        uint old_N = G.N;
         uint new_size = prime_table_size(n);
         G.m = REALLOC_TYPE(G.m, new_size, lmmp_bitset_t);
-        for (uint i = G.m_size; i < new_size; ++i) {
-            G.m[i] = LMMP_BITSET_MASK; 
-        }
+        for (uint i = G.m_size; i < new_size; ++i) 
+            G.m[i] = LMMP_BITSET_MASK;
         G.m_size = new_size;
-        set_not_prime(1);
+        G.N = n;
 
-        // 继续筛法
-        for (ushort i = 0; i < PRIME_SHORT_TABLE_SIZE; ++i) {
+        lmmp_bitset_p restrict p = G.m;
+        uint limit_idx = (n - 1) >> 1;
+        uint old_limit_idx = (old_N - 1) >> 1;
+
+        // set_not_prime(p, 0);
+
+        ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
+        uint max_idx = lmmp_prime_cnt16_(sqrt_n);
+
+        for (ushort i = 1; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
-            if (prime > n)
-                break;
             uint start = prime * prime;
-            if (start > n)
-                break;
-            if (start <= G.N) {
-                uint k = (G.N - start) / prime + 1;
-                start = start + k * prime;
+            uint start_idx = start >> 1;
+
+            if (start_idx <= old_limit_idx) {
+                uint k = (old_limit_idx + 1 - start_idx + prime - 1) / prime;
+                start_idx += k * prime;
             }
-            for (uint j = start; j <= n; j += prime) {
-                if (j % 2 == 1) {
-                    set_not_prime(j);
-                }
+
+            for (uint idx = start_idx; idx <= limit_idx; idx += prime) {
+                set_not_prime(p, idx);
             }
         }
-        G.N = n;
     }
 }
 
@@ -106,10 +106,14 @@ bool lmmp_is_prime_table_(uint p) {
 }
 
 void lmmp_prime_cache_init_(prime_cache_t* cache, uint n) {
+    lmmp_param_assert(n > 2);
+    lmmp_param_assert(n <= G.N);
     cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);
     cache->size = 0;
     cache->start_idx = 0;
+    uint max_bit_idx = (n - 1) / 2;
     cache->end_num = n;
+    cache->end_idx = max_bit_idx / LMMP_BITSET_BITS;
     cache->is_end = 0;
 }
 
@@ -117,91 +121,62 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
     uint size = 0;
     ulong idx = cache->start_idx;
 
-    if (idx + PRIME_CACHE_BLOCK_NUM < G.m_size) {
-        uint buf[PRIME_CACHE_BLOCK_SIZE * 4];
+    if (idx + PRIME_CACHE_BLOCK_NUM < cache->end_idx) {
         lmmp_bitset_t m0, m1, m2, m3;
-        uintp p0, p1, p2, p3;
-        uintp begin = cache->pp, end;
+        uintp begin = cache->pp;
         for (uint i = 0; i < PRIME_CACHE_BLOCK_NUM / 4; ++i) {
             m0 = G.m[idx + 0];
             m1 = G.m[idx + 1];
             m2 = G.m[idx + 2];
             m3 = G.m[idx + 3];
-            p0 = buf + 0 * PRIME_CACHE_BLOCK_SIZE;
-            p1 = buf + 1 * PRIME_CACHE_BLOCK_SIZE;
-            p2 = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
-            p3 = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
-            for (uint j = 0; j < LMMP_BITSET_BITS; ++j) {
-                if (m0 & 1) *p0++ = ((idx + 0) * LMMP_BITSET_BITS + j) * 2 + 1;
-                if (m1 & 1) *p1++ = ((idx + 1) * LMMP_BITSET_BITS + j) * 2 + 1;
-                if (m2 & 1) *p2++ = ((idx + 2) * LMMP_BITSET_BITS + j) * 2 + 1;
-                if (m3 & 1) *p3++ = ((idx + 3) * LMMP_BITSET_BITS + j) * 2 + 1;
 
-                m0 >>= 1;
-                m1 >>= 1;
-                m2 >>= 1;
-                m3 >>= 1;
+            while (m0) {
+                uint cnt = lmmp_tailing_zeros_(m0);
+                begin[size++] = ((idx + 0) * LMMP_BITSET_BITS + cnt) * 2 + 1;
+                m0 &= (m0 - 1);
             }
-            end = buf;
-            while(end < p0) {
-                if (*end > cache->end_num) {
-                    cache->is_end = 1;
-                    goto end1;
-                }
-                *begin++ = *end++;
-                ++size;
+            while (m1) {
+                uint cnt = lmmp_tailing_zeros_(m1);
+                begin[size++] = ((idx + 1) * LMMP_BITSET_BITS + cnt) * 2 + 1;
+                m1 &= (m1 - 1);
             }
-            end = buf + PRIME_CACHE_BLOCK_SIZE;
-            while(end < p1) {
-                if (*end > cache->end_num) {
-                    cache->is_end = 1;
-                    goto end1;
-                }
-                *begin++ = *end++;
-                ++size;
+            while (m2) {
+                uint cnt = lmmp_tailing_zeros_(m2);
+                begin[size++] = ((idx + 2) * LMMP_BITSET_BITS + cnt) * 2 + 1;
+                m2 &= (m2 - 1);
             }
-            end = buf + 2 * PRIME_CACHE_BLOCK_SIZE;
-            while(end < p2) {
-                if (*end > cache->end_num) {
-                    cache->is_end = 1;
-                    goto end1;
-                }
-                *begin++ = *end++;
-                ++size;
-            }
-            end = buf + 3 * PRIME_CACHE_BLOCK_SIZE;
-            while(end < p3) {
-                if (*end > cache->end_num) {
-                    cache->is_end = 1;
-                    goto end1;
-                }
-                *begin++ = *end++;
-                ++size;
+            while (m3) {
+                uint cnt = lmmp_tailing_zeros_(m3);
+                begin[size++] = ((idx + 3) * LMMP_BITSET_BITS + cnt) * 2 + 1;
+                m3 &= (m3 - 1);
             }
             idx += 4;
         }
         lmmp_debug_assert(idx - cache->start_idx == PRIME_CACHE_BLOCK_NUM);
         cache->start_idx = idx;
-        end1:
         cache->size = size;
         return;
     } else {
+        uint max_bit_idx = (cache->end_num - 1) / 2;
+        uint last_off = max_bit_idx % LMMP_BITSET_BITS;
+        lmmp_bitset_t last_mask =
+            (last_off == LMMP_BITSET_BITS - 1) ? (lmmp_bitset_t)-1 : ((1ULL << (last_off + 1)) - 1);
         lmmp_bitset_t m;
-        for (uint i = idx; i < G.m_size; ++i) {
+        for (uint i = idx; i < cache->end_idx; ++i) {
             m = G.m[i];
-            for (uint j = 0; j < LMMP_BITSET_BITS; ++j) {
-                if (m & 1) {
-                    uint t = (i * LMMP_BITSET_BITS + j) * 2 + 1;
-                    if (t > G.N || t > cache->end_num) {
-                        goto end2;
-                    } else {
-                        cache->pp[size++] = t;
-                    }
-                }
-                m >>= 1;
+            while (m) {
+                uint cnt = lmmp_tailing_zeros_(m);
+                cache->pp[size++] = (i * LMMP_BITSET_BITS + cnt) * 2 + 1;
+                m &= (m - 1);
             }
         }
-        end2:
+        idx = cache->end_idx;
+        m = G.m[idx] & last_mask;
+        while (m) {
+            uint cnt = lmmp_tailing_zeros_(m);
+            cache->pp[size++] = (idx * LMMP_BITSET_BITS + cnt) * 2 + 1;
+            m &= (m - 1);
+        }
         cache->start_idx = G.m_size;
         cache->size = size;
         cache->is_end = 1;
@@ -212,10 +187,6 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
 void lmmp_prime_cache_free_(prime_cache_t* cache) {
     lmmp_free(cache->pp);
     cache->pp = NULL;
-    cache->size = 0;
-    cache->end_num = 0;
-    cache->start_idx = 0;
-    cache->is_end = 0;
 }
 
 #undef IDX

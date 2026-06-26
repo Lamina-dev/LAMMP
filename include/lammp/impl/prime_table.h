@@ -113,14 +113,15 @@ void lmmp_prime_int_table_free_(void);
 typedef struct {
     uintp pp;       // 仅存储奇素数
     uint size;      // pp 数组大小
-    uint start_idx; // 位图下一次解析的起始索引
-    uint end_num;   // 达到此数时，位图解析结束
+    uint start_idx; // 位图下一次解析的起始索引（字）
+    uint end_idx;   // 位图应该终止解析的结束索引（字）
+    uint end_num;   // 终止解析的最大数
     int is_end;     // 是否已经遍历到全局质数表末尾
 } prime_cache_t;
 
 /*
- * 示例代码（遍历全局奇素数表）：
- *
+ 示例代码（遍历全局奇素数表）：
+
     lmmp_prime_int_table_init_(n);
     prime_cache_t cache;
     lmmp_prime_cache_init_(&cache, n);

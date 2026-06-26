@@ -861,6 +861,11 @@ static inline void lmmp_mul_fft_cache_free_(fft_cache* GH) {
         lmmp_fft_memstack_(&GH->msr_mersenne, 0);
 }
 
+/*
+FIXME: 可以将固定的临时memstack移动到缓存中，而非每次都进行重新分配，另一个优化点可以是，将重复计算的一些值也移入到
+       缓存中，只需要初始化一次即可。建议分成初始化函数和循环计算函数。
+*/
+
 static void lmmp_mul_fermat_single_(
     mp_ptr     dst,
     mp_size_t   rn,
@@ -870,8 +875,6 @@ static void lmmp_mul_fermat_single_(
     mp_size_t   nb,
     fft_cache*  GH
 ) {
-    int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
-    lmmp_assert(nsqr);
     mp_size_t N = rn * LIMB_BITS;        // 结果总比特数
     mp_size_t k = lmmp_fft_best_k_(rn);
     mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）
@@ -968,8 +971,6 @@ static void lmmp_mul_mersenne_single_(
     mp_size_t   nb,
     fft_cache*  GH
 ) {
-    int nsqr = numa != numb || na != nb;  // 1为非平方，0为平方
-    lmmp_assert(nsqr);
     mp_size_t N = rn * LIMB_BITS;        // 结果总比特数
     mp_size_t k = lmmp_fft_best_k_(rn);  // 最优FFT层数
     mp_size_t K = ((mp_size_t)1) << k;   // FFT块数（2^k）

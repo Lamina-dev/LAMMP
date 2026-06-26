@@ -443,7 +443,7 @@ ulong lmmp_next_prime_ulong_(ulong n) {
         return MP_ULONG_MAX;
     } else {
         n += (n % 2 == 0) ? 1 : 2;
-        while(1) {
+        while (1) {
             if (trial_div35711(n)
              || trial_div13(n)
              || trial_div17(n)

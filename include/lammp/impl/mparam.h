@@ -89,13 +89,7 @@
 #endif
 
 // L1缓存分块大小
-#define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 4)
-
-// 元素连乘朴素连乘空间长度
-#define LIMB_ELEMMUL_MP_THRESHOLD 20
-
-// 向量连乘朴素连乘空间长度
-#define VEC_ELEMMUL_MP_THRESHOLD 40
+#define PART_SIZE (L1_CACHE_SIZE / LIMB_BYTES / 2)
 
 // 2x2矩阵乘法选择STRASSEN算法的阈值
 #define MAT22_MUL_STRASSEN_THRESHOLD 60
@@ -115,25 +109,19 @@
 // 因子累乘中，因子数量低于此阈值则使用朴素连乘
 #define FACTORS_MUL_N_THRESHOLD 30
 
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_USHORT_MUL_THRESHOLD 1120
-
-// 排列数计算中，结果长度小于此阈值的将使用累乘
-#define PERMUTATION_UINT_MUL_THRESHOLD 3200
-
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_USHORT_TIMES_THRESHOLD 8
-
-// 排列数计算中，n与r相差的倍数阈值，相差倍数大于此值，使用累乘
-#define PERMUTATION_UINT_TIMES_THRESHOLD 13
+// 排列数计算中，nPr直线分割阈值
+#define PERMUTATION_USHORT_K_THRESHOLD 18
+#define PERMUTATION_USHORT_B_THRESHOLD 21164
+#define PERMUTATION_UINT_K_THRESHOLD 136
+#define PERMUTATION_UINT_B_THRESHOLD 1659975
 
 // 排列数计算中，结果长度小于此阈值的将使用朴素算法
 #define BINOMIAL_RN_BASECASE_THRESHOLD 40
 // 元素累乘中，低于此长度的累乘将使用朴素算法
 #define ELEM_MUL_BASECASE_THRESHOLD 25
 
-// binvert计算中，使用梅森乘法计算高位的阈值
-#define BINVERT_MULHI_MERSENNE_THRESHOLD 477
+// 使用梅森乘法计算高位的阈值
+#define MULHI_MERSENNE_THRESHOLD 477
 
 // 精确除法中，除数小于此阈值时使用朴素法
 #define DIVEXACT_BASECASE_THRESHOLD 50

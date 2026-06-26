@@ -13,7 +13,6 @@
 
 
 void test_add_nc();
-void test_umul64to128();
 void test_sqrt();
 int test_pow();
 void test_powmod();
@@ -32,7 +31,6 @@ void test_gcd();
 void test_gcd2();
 void test_rand();
 void test_hash();
-void test_vec_ele_mul();
 void test_mod();
 void test_mullo();
 void test_arith_seqprod();
