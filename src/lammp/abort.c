@@ -7,28 +7,62 @@
 #include "../../include/lammp/lmmp.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#if defined(LAMMP_WINDOWS)
+#include <windows.h>
+
+static CRITICAL_SECTION abort_func_cs;
+static INIT_ONCE abort_cs_once = INIT_ONCE_STATIC_INIT;
+
+static BOOL CALLBACK init_abort_cs(PINIT_ONCE once, PVOID param, PVOID* ctx) {
+    (void)once;
+    (void)param;
+    (void)ctx;
+    InitializeCriticalSection(&abort_func_cs);
+    return TRUE;
+}
+
+static void abort_func_lock(void) {
+    InitOnceExecuteOnce(&abort_cs_once, init_abort_cs, NULL, NULL);
+    EnterCriticalSection(&abort_func_cs);
+}
+
+static void abort_func_unlock(void) {
+    LeaveCriticalSection(&abort_func_cs);
+}
+
+#else
 #ifdef __STDC_NO_THREADS__
 #error "Threads support is required for setting abort function"
 #else
 #include <threads.h>
 #endif
 
-
-static lmmp_abort_fn lmmp_abort_func = NULL;
 static mtx_t abort_func_mtx;
 static once_flag abort_func_init_flag = ONCE_FLAG_INIT;
 
-static void init_abort_lock(void) { 
-    mtx_init(&abort_func_mtx, mtx_plain); 
+static void init_abort_lock(void) {
+    mtx_init(&abort_func_mtx, mtx_plain);
 }
 
-lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
+static void abort_func_lock(void) {
     call_once(&abort_func_init_flag, init_abort_lock);
-
     mtx_lock(&abort_func_mtx);
+}
+
+static void abort_func_unlock(void) {
+    mtx_unlock(&abort_func_mtx);
+}
+
+#endif
+
+static lmmp_abort_fn lmmp_abort_func = NULL;
+
+lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func) {
+    abort_func_lock();
     lmmp_abort_fn old = lmmp_abort_func;
     lmmp_abort_func = func;
-    mtx_unlock(&abort_func_mtx);
+    abort_func_unlock();
 
     return old;
 }
@@ -57,11 +91,9 @@ static const char* type_to_str(lmmp_error_t type) {
 }
 
 void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line) {
-    call_once(&abort_func_init_flag, init_abort_lock);
-
-    mtx_lock(&abort_func_mtx);
+    abort_func_lock();
     lmmp_abort_fn fn = lmmp_abort_func;
-    mtx_unlock(&abort_func_mtx);
+    abort_func_unlock();
 
     if (fn != NULL) {
         fn(type, msg, func, line);
