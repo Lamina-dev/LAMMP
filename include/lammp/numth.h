@@ -780,6 +780,35 @@ LAMMP_API ulong lmmp_cbrt_ulong_(ulong n);
 LAMMP_API mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
 
 /**
+ * @brief 计算算数立方根 floor(cbrt([numa,na])
+ * @param dst 结果指针（长度为 2 个limb）
+ * @param numa 被开方数指针
+ * @param na 被开方数的 limb 长度
+ * @warning dst!=NULL, numa!=NULL, 3<na<=6, numa[na-1]!=0, eqsep(dst,numa)
+ */
+LAMMP_API void lmmp_cbrt_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief 计算近似立方根 floor(cbrt(a0+a1*B+a2*B^2))-[0|1]
+ * @param a0 低位 limb
+ * @param a1 中位 limb
+ * @param a2 高位 limb
+ * @warning a1>0
+ * @note a2可以为0，但a1需要大于0，即这个数至少应有65个bit
+ * @return floor(cbrt(a0+a1*B+a2*B^2))
+ */
+LAMMP_API mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
+
+/**
+ * @brief 计算近似立方根 floor(cbrt([numa,na])-[0|1]
+ * @param dst 结果指针（长度为 2 个limb）
+ * @param numa 被开方数指针
+ * @param na 被开方数的 limb 长度
+ * @warning dst!=NULL, numa!=NULL, 3<na<=6, numa[na-1]!=0, eqsep(dst,numa)
+ */
+LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
  * @brief 计算 floor(n^(1/root))
  * @param n 被开方数
  * @param root 开方次数
