@@ -153,11 +153,13 @@ void lmmp_cbrt_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
         r[1] = ret[1] + (r[0] == 0 ? 1 : 0);
         mp_limb_t t[10];
         mp_size_t tn = lmmp_cube_(t, r, 2, t + 6);
-        lmmp_debug_assert(tn >= na);
-        if (tn > na) {
+        if (tn < na) {
+            dst[0] = r[0];
+            dst[1] = r[1];
+        } else if (tn > na) {
             dst[0] = ret[0];
             dst[1] = ret[1];
-        } else {
+        } else if (tn == na) {
             int cmp = lmmp_cmp_(t, numa, tn);
             // approx的结果至多只会低估1
             if (cmp <= 0) {
