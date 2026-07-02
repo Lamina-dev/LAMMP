@@ -204,7 +204,7 @@ static const bool log2_coeffs_bool_4[] = {true,  true, false, true, false, true,
 #define LOG2_COEFFS_SIZE_3 29
 #define LOG2_COEFFS_SIZE_4 29
 
-void umul192x128_tohi192(uint64_t dst[3], const uint64_t i192[3], const uint64_t i128[2]) {
+static inline void umul192x128_tohi192(uint64_t dst[3], const uint64_t i192[3], const uint64_t i128[2]) {
     uint64_t a0 = i192[0], a1 = i192[1], a2 = i192[2];
     uint64_t b0 = i128[0], b1 = i128[1];
 
@@ -252,7 +252,7 @@ void umul192x128_tohi192(uint64_t dst[3], const uint64_t i192[3], const uint64_t
     dst[2] = p21_h + carry;
 }
 
-void umul128x64_tohi128(uint64_t dst[2], const uint64_t i128[2], uint64_t i64) {
+static inline void umul128x64_tohi128(uint64_t dst[2], const uint64_t i128[2], uint64_t i64) {
     uint64_t a0 = i128[0], a1 = i128[1];
     uint64_t b0 = i64;
 
