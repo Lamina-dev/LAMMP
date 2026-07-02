@@ -38,7 +38,7 @@ uint64_t exp2_fixed_64(uint64_t x);
  * @brief floor(log2(1+x/B)*B), B=2^128
  * @param high 输入的小数部分高64位
  * @param low 输入的小数部分低64位
- * @param dst 输出数组（2个元素），floor(log2(1+x/B)*B) 的高64位，低64位
+ * @param dst 输出数组（2个元素）：dst[0] 为低64位，dst[1] 为高64位
  * @note x = high * 2^64 + low
  */
 void log2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low);
@@ -47,7 +47,7 @@ void log2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low);
  * @brief floor(exp2(x/B)*B-B), B=2^128
  * @param high 输入的小数部分高64位
  * @param low 输入的小数部分低64位
- * @param dst 输出数组（2个元素），floor(exp2(x/B)*B-B) 的高64位，低64位
+ * @param dst 输出数组（2个元素）：dst[0] 为低64位，dst[1] 为高64位
  * @note x = high * 2^64 + low
  */
 void exp2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low);
