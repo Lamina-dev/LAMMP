@@ -1,6 +1,16 @@
-﻿# LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
-# This file is part of lammp, under the GNU LGPL v2 license.
-# See LICENSE in the project root for the full license text.
+﻿#
+#  Copyright (C) 2026 HJimmyK(Jericho Knox)
+#
+#  This file is part of LAMMP.
+#
+#  LAMMP is free software: you can redistribute it and/or modify it under
+#  the terms of the GNU Lesser General Public License (LGPL) as published
+#   by the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed WITHOUT ANY WARRANTY. 
+#
+#  See <https://www.gnu.org/licenses/>.
 
 file(GLOB_RECURSE LAMMP_CORE_SRCS
     LIST_DIRECTORIES FALSE

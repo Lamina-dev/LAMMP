@@ -36,7 +36,7 @@ LAMMP/                      # 项目根目录
 ├── CMakeLists.txt          # 根目录CMake（全局配置：构建类型、C/C++标准、输出目录等）
 ├── main.c                  # 项目主程序（编译后生成LammpMain可执行文件）
 ├── dist/                   # 编译产物根目录（自动生成，存放所有库和可执行文件）
-│   └── lammp/              # Lammp项目专属产物目录（隔离其他库）
+│   └── lammp/              # Lammp项目专属产物目录
 │       ├── bin/            # 可执行文件输出目录
 │       └── lib/            # 动态库输出目录
 ├── include/                # 头文件目录（对外暴露，所有子模块可引用）
@@ -46,13 +46,16 @@ LAMMP/                      # 项目根目录
 │       └── .h              # 其他头文件
 ├── src/                    # 核心源代码根目录
 │   └── lammp/              # 核心库源代码目录（对应include/lammp）
-│       ├── CMakeLists.txt  # 核心动态库专属CMake（编译LammpCore）
+│       ├── lmmp/           # 通用函数或通用逻辑实现文件
+│       ├── lmmpn/          # 多精度整数运算子模块实现文件
+│       │   ├── asm         # 汇编实现文件
+│       │   ├── generic     # c模拟汇编实现文件
+│       │   └── *.c/        # 实现文件
 │       ├── global/         # 全局变量定义文件
-│       ├── NumTh/          # 数论计算子模块实现文件
+│       ├── numth/          # 数论计算子模块实现文件
 │       ├── secret/         # 密码学子模块实现文件
 │       ├── mprand/         # 随机数生成子模块实现文件
-│       ├── asm/xx/.asm     # nasm汇编源代码文件（按照架构分类）
-│       └── .c              # 实现文件
+│       └── CMakeLists.txt  # 源码目录CMake（编译LammpCore）
 ├── benchmark/              # 基准测试根目录
 │   └── lammp/              # Lammp项目基准测试目录
 │       ├── CMakeLists.txt  # 基准测试CMake配置
