@@ -1,6 +1,20 @@
-﻿# LAMMP - Copyright (C) 2025-2026 HJimmyK(Jericho Knox)
-# This file is part of lammp, under the GNU LGPL v2 license.
-# See LICENSE in the project root for the full license text.
+﻿#
+#  Copyright (C) 2026 HJimmyK(Jericho Knox)
+#
+#  This file is part of LAMMP.
+#
+#  LAMMP is free software: you can redistribute it and/or modify it under
+#  the terms of the GNU Lesser General Public License (LGPL) as published
+#   by the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed WITHOUT ANY WARRANTY. 
+#
+#  See <https://www.gnu.org/licenses/>.
+
+
+set(LAMMPCORE_VERSION "4.2.0")
+
 
 file(GLOB_RECURSE LAMMP_CORE_SRCS
     LIST_DIRECTORIES FALSE
@@ -11,7 +25,7 @@ if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     
     # 启用汇编时，需要使用.def文件导出汇编实现的函数
     # 未启用时，纯c实现的函数会自动导出 
-    set(DEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/asm/lammp_asm.def)
+    set(DEF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/lmmpn/asm/lammp_asm.def)
     if(TARGET_SYSTEM STREQUAL "WIN")
         list(APPEND LAMMP_CORE_SRCS ${DEF_FILE})
     endif()
@@ -21,7 +35,7 @@ if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     # 收集汇编文件
     file(GLOB ASM_SRCS
         LIST_DIRECTORIES FALSE
-        ${CMAKE_CURRENT_SOURCE_DIR}/asm/x64/*.asm
+        ${CMAKE_CURRENT_SOURCE_DIR}/lmmpn/asm/x64/*.asm
     )
 
     if(NOT ASM_SRCS)
@@ -44,9 +58,14 @@ endif()
 
 set_target_properties(LammpCore PROPERTIES
     OUTPUT_NAME "LammpCore"
-    VERSION 4.2.0
+    VERSION ${LAMMPCORE_VERSION}
     SOVERSION 1
     PDB_OUTPUT_DIRECTORY "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
+)
+
+target_compile_definitions(LammpCore PRIVATE
+    LAMMP_VERSION_STR="${LAMMPCORE_VERSION}"
+    LAMMP_BUILD_TYPE_STR="${CMAKE_BUILD_TYPE}"
 )
 
 lammp_target_setup(LammpCore)

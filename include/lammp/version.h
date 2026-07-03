@@ -1,42 +1,39 @@
-/*
- * [LAMMP]
- * Copyright (C) [2025-2026] [HJimmyK(Jericho Knox)]
+﻿/**
+ *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Lesser General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ *  This file is part of LAMMP.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Lesser General Public License for more details.
+ *  LAMMP is free software: you can redistribute it and/or modify it under
+ *  the terms of the GNU Lesser General Public License (LGPL) as published
+ *   by the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
  *
- * You should have received a copy of the GNU Lesser General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ *  This program is distributed WITHOUT ANY WARRANTY.
+ *
+ *  See <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __LAMMP_VERSION_H__
-#define __LAMMP_VERSION_H__
+#ifndef LAMMP_VERSION_H
+#define LAMMP_VERSION_H
 
-#ifdef __clang__
-#define LAMMP_COMPILER "Clang C++"
-#define LAMMP_COMPILER_VERSION 4
-#elif defined(__GNUC__)
-#define LAMMP_COMPILER "GNU C++"
-#define LAMMP_COMPILER_VERSION 1
-#elif defined(_MSC_VER)
-#define LAMMP_COMPILER "Microsoft Visual C++"
-#define LAMMP_COMPILER_VERSION 2
-#elif defined(__INTEL_COMPILER)
-#define LAMMP_COMPILER "Intel C++"
-#define LAMMP_COMPILER_VERSION 3
-#else
-#define LAMMP_COMPILER "Unknown"
-#define LAMMP_COMPILER_VERSION 0
+#include "lmmp.h"
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#define LAMMP_VERSION "4.1.0"
-#define LAMMP_ALPHA_YEAR "2026"
+/**
+ * @brief 获取 LAMMP 的版本字符串.
+ */
+LAMMP_API const char* lmmp_get_version(void);
 
-#endif /* __LAMMP_VERSION_H__ */
+/**
+* @brief 获取 LAMMP 的构建类型字符串.
+*/
+LAMMP_API const char* lmmp_get_build_type(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* LAMMP_VERSION_H */
