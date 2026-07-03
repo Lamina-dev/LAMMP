@@ -12,6 +12,10 @@
 #
 #  See <https://www.gnu.org/licenses/>.
 
+
+set(LAMMPCORE_VERSION "4.2.0")
+
+
 file(GLOB_RECURSE LAMMP_CORE_SRCS
     LIST_DIRECTORIES FALSE
     ${CMAKE_CURRENT_SOURCE_DIR}/*.c
@@ -54,9 +58,14 @@ endif()
 
 set_target_properties(LammpCore PROPERTIES
     OUTPUT_NAME "LammpCore"
-    VERSION 4.2.0
+    VERSION ${LAMMPCORE_VERSION}
     SOVERSION 1
     PDB_OUTPUT_DIRECTORY "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
+)
+
+target_compile_definitions(LammpCore PRIVATE
+    LAMMP_VERSION_STR="${LAMMPCORE_VERSION}"
+    LAMMP_BUILD_TYPE_STR="${CMAKE_BUILD_TYPE}"
 )
 
 lammp_target_setup(LammpCore)

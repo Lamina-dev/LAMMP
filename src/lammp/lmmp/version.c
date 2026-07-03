@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -13,27 +13,13 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-#ifndef LAMMP_VERSION_H
-#define LAMMP_VERSION_H
+#include "../../../include/lammp/version.h"
 
-#include "lmmp.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * @brief 获取 LAMMP 的版本字符串.
- */
-LAMMP_API const char* lmmp_get_version(void);
-
-/**
-* @brief 获取 LAMMP 的构建类型字符串.
-*/
-LAMMP_API const char* lmmp_get_build_type(void);
-
-#ifdef __cplusplus
+const char* lmmp_get_version(void) {
+    return LAMMP_VERSION_STR;
 }
-#endif
 
-#endif /* LAMMP_VERSION_H */
+const char* lmmp_get_build_type(void) {
+    return LAMMP_BUILD_TYPE_STR;
+}
