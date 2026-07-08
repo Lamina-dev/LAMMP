@@ -110,6 +110,6 @@ void lmmp_abort(lmmp_error_t type, const char* msg, const char* func, int line) 
         fprintf(stderr, "LAMMP abort at [%s]:%d\n", func, line);
         fprintf(stderr, "Abort type: %s, abort msg: \n%s\n", type_to_str(type), msg);
         fflush(stderr);
-        abort();
     }
+    abort();
 }

@@ -72,6 +72,87 @@ extern "C" {
 #endif
 #endif
 
+typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
+typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
+typedef uint64_t mp_size_t;          // 表示limb数量的无符号整数类型
+typedef int64_t mp_slimb_t;          // 有符号limb类型 (64位有符号整数)
+typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
+typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
+typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
+typedef size_t mp_bitcnt_t;          // 表示bit数量的无符号整数类型
+
+#define LAMMP_MAX_ALIGN 16  // 最大对齐单位（字节）
+
+#define LIMB_BITS 64
+#define LIMB_BYTES 8
+#define LOG2_LIMB_BITS 6
+#define LIMB_MAX (~(mp_limb_t)0)
+#define LLIMB_BITS 32
+#define LLIMB_BYTES 4
+#define LLIMB_MASK ((mp_limb_t)0xffffffff)
+
+#if defined(LAMMP_WINDOWS) && (defined(__GNUC__) || defined(__clang__))
+    // MinGW on Windows: use native TLS section
+    #define LAMMP_THREAD_LOCAL __thread
+#elif defined(_MSC_VER)
+    #define LAMMP_THREAD_LOCAL __declspec(thread)
+#elif defined(__GNUC__) // Linux/macOS
+    #define LAMMP_THREAD_LOCAL __thread
+#else
+    #define LAMMP_THREAD_LOCAL _Thread_local
+#endif
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+    #define STATIC_ASSERT _Static_assert
+#elif defined(__cplusplus) && __cplusplus >= 201103L
+    #define STATIC_ASSERT static_assert
+#else
+    // C99/C89 fallback (no message)
+    #define STATIC_ASSERT(cond, msg) typedef char static_assert_##__LINE__[(cond) ? 1 : -1]
+#endif
+
+STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
+
+#undef STATIC_ASSERT
+
+#ifdef __cplusplus
+    /* C++ */
+    #if __cplusplus >= 201103L
+        /* C++11 and higher */
+        #define LAMMP_NORETURN [[noreturn]]
+    #else
+        #if defined(__GNUC__) || defined(__clang__)
+            #define LAMMP_NORETURN __attribute__((noreturn))
+        #elif defined(_MSC_VER)
+            #define LAMMP_NORETURN __declspec(noreturn)
+        #else
+            #define LAMMP_NORETURN /* no definition */
+        #endif
+    #endif
+#else
+    /* C  */
+    #if defined(__STDC_VERSION__)
+        #if __STDC_VERSION__ >= 202311L
+            /* C23 and higher */
+            #define LAMMP_NORETURN [[noreturn]]
+        #elif __STDC_VERSION__ >= 201112L
+            /* C11 / C17 */
+            #define LAMMP_NORETURN _Noreturn
+        #endif
+    #endif
+
+    /* fallback */
+    #ifndef LAMMP_NORETURN
+        #if defined(__GNUC__) || defined(__clang__)
+            #define LAMMP_NORETURN __attribute__((noreturn))
+        #elif defined(_MSC_VER)
+            #define LAMMP_NORETURN __declspec(noreturn)
+        #else
+            #define LAMMP_NORETURN /* no definition */
+        #endif
+    #endif
+#endif
+
 /*
  LAMMP 内存分配函数指针类型：
  1. heap_alloc : 堆内存分配器
@@ -152,7 +233,8 @@ typedef void (*lmmp_abort_fn)(lmmp_error_t type, const char* msg, const char* fu
  * @param func 退出函数指针，可以为NULL
  * @warning 请注意，我们将不会对 func 的调用做任何保护，因此请不要在 func 里做任何危险的操作，
  *          本库的开发者不对 func 函数的调用产生的影响做任何保证。
- * @note 若 func 为 NULL，则代表使用默认的退出机制。同时，此函数指针是全局的，所有线程共享。
+ * @note 若 func 为 NULL，则代表使用默认的退出机制。lmmp_abort 函数被标记为无返回值，因此
+ *       设置的函数也应当无返回值，即使自定义的func函数真的会返回了，那么也将会调用 abort 函数中断程序。
  * @return 返回之前的退出函数指针，若原指针为NULL，则返回NULL。
  */
 LAMMP_API lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
@@ -197,52 +279,7 @@ LAMMP_API lmmp_abort_fn lmmp_set_abort_fn(lmmp_abort_fn func);
  *          abort 函数中断程序。自定义全局退出函数请通过 lmmp_set_abort_fn 函数进行设置。请不要在全局退出函数里做任
  *          何危险的操作，本库的开发者不对其调用产生的影响做任何保证。
  */
-LAMMP_API void lmmp_abort(lmmp_error_t type, const char *msg, const char *func, int line);
-
-typedef uint8_t mp_byte_t;           // 字节类型 (8位无符号整数)
-typedef uint64_t mp_limb_t;          // 基本运算单元(limb)类型 (64位无符号整数)
-typedef uint64_t mp_size_t;          // 表示limb数量的无符号整数类型
-typedef int64_t mp_slimb_t;          // 有符号limb类型 (64位有符号整数)
-typedef int64_t mp_ssize_t;          // 表示limb数量的有符号整数类型
-typedef mp_limb_t* mp_ptr;           // 指向limb类型的指针
-typedef const mp_limb_t* mp_srcptr;  // 指向const limb类型的指针（源操作数指针）
-typedef size_t mp_bitcnt_t;          // 表示bit数量的无符号整数类型
-
-#define LAMMP_MAX_ALIGN 16  // 最大对齐单位（字节）
-
-#define LIMB_BITS 64
-#define LIMB_BYTES 8
-#define LOG2_LIMB_BITS 6
-#define LIMB_MAX (~(mp_limb_t)0)
-#define LLIMB_BITS 32
-#define LLIMB_BYTES 4
-#define LLIMB_MASK ((mp_limb_t)0xffffffff)
-
-#if defined(LAMMP_WINDOWS) && (defined(__GNUC__) || defined(__clang__))
-    // MinGW on Windows: use native TLS section
-    #define LAMMP_THREAD_LOCAL __thread
-#elif defined(_MSC_VER)
-    #define LAMMP_THREAD_LOCAL __declspec(thread)
-#elif defined(__GNUC__) // Linux/macOS
-    #define LAMMP_THREAD_LOCAL __thread
-#else
-    #define LAMMP_THREAD_LOCAL _Thread_local
-#endif
-
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
-#define STATIC_ASSERT _Static_assert
-#elif defined(__cplusplus) && __cplusplus >= 201103L
-#define STATIC_ASSERT static_assert
-#else
-// C99/C89 fallback (no message)
-#define STATIC_ASSERT(cond, msg) typedef char static_assert_##__LINE__[(cond) ? 1 : -1]
-#endif
-
-STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
-
-#undef STATIC_ASSERT
-
-// ============================内存管理相关函数=============================
+LAMMP_NORETURN LAMMP_API void lmmp_abort(lmmp_error_t type, const char *msg, const char *func, int line);
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 LAMMP_API void* lmmp_alloc(size_t size, const char* func, int line);
@@ -327,9 +364,9 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
 #define LMMP_ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
 
 // 内存拷贝宏：拷贝n个limb（每个8字节），使用memmove保证重叠安全
-#define lmmp_copy(dst, src, n) memmove(dst, src, (n) << 3)
+#define lmmp_copy(dst, src, n) memmove((dst), (src), ((size_t)(n) << 3))
 // 内存置零宏：将n个limb置零（每个8字节）
-#define lmmp_zero(dst, n) memset(dst, 0, (n) << 3)
+#define lmmp_zero(dst, n) memset((dst), 0, ((size_t)(n) << 3))
 
 // 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
 // RELEASE 版本也会检查
