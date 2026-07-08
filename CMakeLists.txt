@@ -122,7 +122,7 @@ function(lammp_target_setup target)
     if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
-                -Wall -Wextra -Wpedantic -m64 -mcmodel=large
+                -Wall -Wextra -Wpedantic -m64
                 $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
@@ -130,7 +130,7 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
-                -Wall -Wextra -Wpedantic -m64 -mcmodel=large
+                -Wall -Wextra -Wpedantic -m64
                 $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
@@ -142,13 +142,15 @@ function(lammp_target_setup target)
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
                 /MP /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
+                /wd4305 /wd4244
                 $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
                 $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
                 $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
-                /MP /W4 /DWIN64
+                /MP /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
+                /wd4305 /wd4244
                 $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
                 $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
                 $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
