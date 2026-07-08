@@ -13,9 +13,11 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-#include "../../../include/lammp/numth.h"
-#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
+#include "../../../include/lammp/lmmpn.h"
+#include "../../../include/lammp/numth.h"
+
 
 /*
 事实上，我们可以知道，[np,nn]至多为[dp,dn]的2^64次方
@@ -62,7 +64,7 @@ static inline mp_size_t try_div_(mp_ptr qp, mp_ptr rp, mp_srcptr divp, mp_size_t
     }
 }
 
-mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
+mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* restrict nn, mp_srcptr dp, mp_size_t dn) {
     lmmp_param_assert(np != NULL && *nn > 0);
     lmmp_param_assert(dp != NULL && dn > 0);
 
@@ -90,7 +92,7 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
             divn = qn;
             LMMP_SWAP(qp, divp, mp_ptr);
 
-            ret += 1 << (i - 1);
+            ret += (mp_size_t)1 << (i - 1);
             pn_pow[i] = 2 * pn_pow[i - 1];
             if (divn < pn_pow[i]) {
                 ++i;
@@ -109,7 +111,7 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size_t dn) {
             divn = qn;
             LMMP_SWAP(qp, divp, mp_ptr);
 
-            ret += 1 << (j - 1);
+            ret += (mp_size_t)1 << (j - 1);
         }
     }
     if (qn == 0) {

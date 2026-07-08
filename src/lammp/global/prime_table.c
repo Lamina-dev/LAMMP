@@ -20,12 +20,16 @@
 
 
 typedef struct prime_int {
-    lmmp_bitset_p restrict m;     // prime 位图指针（1为质数，0为合数）
-    uint m_size;  // prime 位图容量
-    uint N;       // 位图记录的最大值 N
+    lmmp_bitset_p restrict map;     // prime 位图指针（1为质数，0为合数）
+    uint map_size;  // prime 位图容量
+    uint max;       // 位图记录的最大值
 } prime_int;
 
-static LAMMP_THREAD_LOCAL prime_int global_prime_int_table = {NULL, 0, 0};
+static LAMMP_THREAD_LOCAL prime_int global_prime_int_table = {
+    .map = NULL,
+    .map_size = 0,
+    .max = 0
+};
 
 #define G global_prime_int_table
 
@@ -37,16 +41,16 @@ static inline uint prime_table_size(uint n) {
 }
 
 void lmmp_prime_int_table_init_(uint n) {
-    if (n < PRIME_SHORT_TABLE_N || G.N >= n)
+    if (n < PRIME_SHORT_TABLE_N || G.max >= n)
         return;
 #define IDX(p) ((p) >> 1)
 #define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= ~(1ULL << (i % LMMP_BITSET_BITS))
 
-    if (G.m == NULL) {
-        G.N = n;
-        G.m_size = prime_table_size(n);
-        lmmp_bitset_p restrict p = ALLOC_TYPE(G.m_size, lmmp_bitset_t);
-        for (uint i = 0; i < G.m_size; ++i) {
+    if (G.map == NULL) {
+        G.max = n;
+        G.map_size = prime_table_size(n);
+        lmmp_bitset_p restrict p = ALLOC_TYPE(G.map_size, lmmp_bitset_t);
+        for (uint i = 0; i < G.map_size; ++i) {
             p[i] = LMMP_BITSET_MASK;
         }
         set_not_prime(p, 0);
@@ -62,17 +66,17 @@ void lmmp_prime_int_table_init_(uint n) {
                 set_not_prime(p, idx);
             }
         }
-        G.m = p;
+        G.map = p;
     } else {
-        uint old_N = G.N;
+        uint old_N = G.max;
         uint new_size = prime_table_size(n);
-        G.m = REALLOC_TYPE(G.m, new_size, lmmp_bitset_t);
-        for (uint i = G.m_size; i < new_size; ++i) 
-            G.m[i] = LMMP_BITSET_MASK;
-        G.m_size = new_size;
-        G.N = n;
+        G.map = REALLOC_TYPE(G.map, new_size, lmmp_bitset_t);
+        for (uint i = G.map_size; i < new_size; ++i) 
+            G.map[i] = LMMP_BITSET_MASK;
+        G.map_size = new_size;
+        G.max = n;
 
-        lmmp_bitset_p restrict p = G.m;
+        lmmp_bitset_p restrict p = G.map;
         uint limit_idx = (n - 1) >> 1;
         uint old_limit_idx = (old_N - 1) >> 1;
 
@@ -106,17 +110,17 @@ bool lmmp_is_prime_table_(uint p) {
         return false;
     } else {
         // p>=3
-        lmmp_debug_assert(G.N >= p);
+        lmmp_debug_assert(G.max >= p);
         lmmp_param_assert(p > 1);
         lmmp_param_assert((p & 1) == 1);
         uint idx = IDX(p);
-        return (G.m[idx / LMMP_BITSET_BITS] >> (idx % LMMP_BITSET_BITS) & 1);
+        return (G.map[idx / LMMP_BITSET_BITS] >> (idx % LMMP_BITSET_BITS) & 1);
     }
 }
 
 void lmmp_prime_cache_init_(prime_cache_t* cache, uint n) {
     lmmp_param_assert(n > 2);
-    lmmp_param_assert(n <= G.N);
+    lmmp_param_assert(n <= G.max);
     cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);
     cache->size = 0;
     cache->start_idx = 0;
@@ -134,10 +138,10 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
         lmmp_bitset_t m0, m1, m2, m3;
         uintp begin = cache->pp;
         for (uint i = 0; i < PRIME_CACHE_BLOCK_NUM / 4; ++i) {
-            m0 = G.m[idx + 0];
-            m1 = G.m[idx + 1];
-            m2 = G.m[idx + 2];
-            m3 = G.m[idx + 3];
+            m0 = G.map[idx + 0];
+            m1 = G.map[idx + 1];
+            m2 = G.map[idx + 2];
+            m3 = G.map[idx + 3];
 
             while (m0) {
                 uint cnt = lmmp_tailing_zeros_(m0);
@@ -172,7 +176,7 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             (last_off == LMMP_BITSET_BITS - 1) ? (lmmp_bitset_t)-1 : ((1ULL << (last_off + 1)) - 1);
         lmmp_bitset_t m;
         for (uint i = idx; i < cache->end_idx; ++i) {
-            m = G.m[i];
+            m = G.map[i];
             while (m) {
                 uint cnt = lmmp_tailing_zeros_(m);
                 cache->pp[size++] = (i * LMMP_BITSET_BITS + cnt) * 2 + 1;
@@ -180,13 +184,13 @@ void lmmp_prime_cache_next_(prime_cache_t* cache) {
             }
         }
         idx = cache->end_idx;
-        m = G.m[idx] & last_mask;
+        m = G.map[idx] & last_mask;
         while (m) {
             uint cnt = lmmp_tailing_zeros_(m);
             cache->pp[size++] = (idx * LMMP_BITSET_BITS + cnt) * 2 + 1;
             m &= (m - 1);
         }
-        cache->start_idx = G.m_size;
+        cache->start_idx = G.map_size;
         cache->size = size;
         cache->is_end = 1;
         return;
@@ -222,11 +226,11 @@ ushort lmmp_prime_cnt16_(ushort n) {
 }
 
 void lmmp_prime_int_table_free_(void) {
-    if (G.m != NULL)
-        lmmp_free(G.m);
-    G.m = NULL;
-    G.N = 0;
-    G.m_size = 0;
+    if (G.map != NULL)
+        lmmp_free(G.map);
+    G.map = NULL;
+    G.max = 0;
+    G.map_size = 0;
 }
 
 const lmmp_bitset_t r35711_mask_map[19] = {

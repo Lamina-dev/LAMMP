@@ -80,11 +80,11 @@ static inline ulong mont63_reduce(u128 t, ulong m, ulong m_inv) {
 }
 
 static inline ulong mont63_R2(ulong m) {
-    // FIXME: 内联lmmp_leading_zeros_
-    int shift = lmmp_leading_zeros_(m);
+    mp_bitcnt_t shift = 0;
+    clz_shl_u64(m, m, shift);
     u192 r = {0, 0, 1ull << shift};
     u128 q;
-    lmmp_div_1_s_(q, r, 3, m << shift);
+    lmmp_div_1_s_(q, r, 3, m);
     return r[0] >> shift;
 }
 

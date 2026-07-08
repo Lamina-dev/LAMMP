@@ -29,7 +29,7 @@ static const uchar binv_tab[128] = {
 
 uint lmmp_binvert_uint_(uint a) {
     lmmp_param_assert(a % 2 == 1);
-    ulong r, y;
+    uint r, y;
 
     r = binv_tab[(a / 2) & 0x7F]; /* 8 bits */
     y = 1 - a * r;
