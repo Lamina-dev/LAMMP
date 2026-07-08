@@ -16,8 +16,6 @@
 #ifndef LAMMP_MPRAND_H
 #define LAMMP_MPRAND_H
 
-#include "lmmp.h"
-
 /*
  本头文件提供的随机数发生器均为非密码学安全的伪随机数生成器，仅用于生成随机数序列。
  输入种子类型为int时，意味着无需输入高熵的随机数，我们会通过一些额外的信息（生成序列的长度）
@@ -51,6 +49,8 @@
  梅森旋转法大致相当。这是由于初始化随机状态的巨大开销导致的。在多次生成固定长度的随机大整数序列时，强随机生成
  器的生成速度则比pcg-xsl-rr-128/64略慢，但仍然快于梅森旋转算法（Mersenne Twister）。
  */
+
+#include "lmmp.h"
 
 #ifdef __cplusplus
 extern "C" {
