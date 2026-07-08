@@ -27,9 +27,9 @@
 #define HSIZE sizeof(void*)
 
 LAMMP_THREAD_LOCAL lmmp_heap_allocator_t global_heap = {
-    .alloc = malloc,
-    .free = free,
-    .realloc = realloc,
+    .alloc   = (lmmp_heap_alloc_fn)malloc,
+    .free    = (lmmp_heap_free_fn)free,
+    .realloc = (lmmp_realloc_fn)realloc,
 };
 
 #define heap_alloc_func global_heap.alloc
@@ -40,12 +40,12 @@ static LAMMP_THREAD_LOCAL int heap_alloc_count = 0;
 
 LAMMP_THREAD_LOCAL lmmp_memory_ctx lmmp_tmpmem_ctx = {
     .stack_begin = NULL,
-    .stack_end = NULL,
-    .stack_top = NULL,
-    .pool_begin = NULL,
-    .pool_top = NULL,
-    .remain = 0,
-    .capacity = 0,
+    .stack_end   = NULL,
+    .stack_top   = NULL,
+    .pool_begin  = NULL,
+    .pool_top    = NULL,
+    .remain      = 0,
+    .capacity    = 0,
 };
 
 int lmmp_stack_deinit(void) {

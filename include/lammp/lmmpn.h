@@ -50,7 +50,6 @@
 #define LAMMP_LMMPN_H
 
 #include <stdbool.h>
-#include <stdio.h>
 #include "lmmp.h"
 
 #define INLINE_ static inline
@@ -65,7 +64,7 @@ extern "C" {
  */
 INLINE_ bool lmmp_endian(void) {
     int num = 1;
-    return (*(char*)&num) == 0; 
+    return (*(char*)&num) == 0;
 }
 
 /**

@@ -78,10 +78,10 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
      为了同时处理不平衡与不平衡的情况，我们这里对两个估计进行比较，取较小的一个作为最终结果。不平衡时，approx1要更紧一些。
     */
     // 此处假定了LIMB_BITS为64
-    uint approx1 = rn * 8;
+    ulong approx1 = rn * 8;
     lmmp_debug_assert(approx1 <= MP_UINT_MAX);
-    uint approx2 = lmmp_prime_size_(n);
-    return approx1 < approx2? approx1 : approx2;
+    ulong approx2 = lmmp_prime_size_(n);
+    return approx1 < approx2 ? approx1 : approx2;
 }
 
 static inline ushort factor_size_short(mp_size_t rn) {

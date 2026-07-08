@@ -245,19 +245,16 @@ static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_hi
 }
 
 static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_t den, uint64_t* r) {
-#if defined(__GNUC__)
-#if defined(USE_ASM)
+#if (defined(__GNUC__) || defined(__clang__)) && defined(USE_ASM)
     uint64_t result;
     __asm__("div %[v]" : "=a"(result), "=d"(*r) : [v] "r"(den), "a"(numlo), "d"(numhi));
     return result;
-#else
+#elif defined(__GNUC__)
     __uint128_t num = (__uint128_t)numhi << 64 | numlo;
     uint64_t result = num / den;
     *r = num % den;
     return result;
-#endif
-#else
-#if defined(_MSC_VER) && (defined(_M_X64)) && (!defined(__clang__))
+#elif defined(_MSC_VER) && (defined(_M_X64)) && (!defined(__clang__))
     return _udiv128(numhi, numlo, den, r);
 #else
     const uint64_t b = ((uint64_t)1 << 32);
@@ -324,7 +321,6 @@ static inline uint64_t _udiv128by64to64_(uint64_t numhi, uint64_t numlo, uint64_
     if (r)
         *r = num10 - q * den10;
     return q;
-#endif
 #endif
 }
 
@@ -483,6 +479,7 @@ static inline _udiv64_t _udiv64_gen_internal_(uint64_t d, int branchfree) {
     int shift;
     uint64_t t;
     clz_shl_u64(t, d, shift);
+    (void)t;
     uint32_t floor_log_2_d = 63 - shift;
 
     // Power of 2

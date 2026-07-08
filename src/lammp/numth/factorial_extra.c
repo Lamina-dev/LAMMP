@@ -104,7 +104,7 @@ mp_size_t lmmp_factors_mul_ushort_(mp_ptr restrict dst, mp_size_t rn, fac_ptr re
         return rn;
     } else {
         TEMP_DECL;
-        mp_size_t new_nfactors = 0;
+        ushort new_nfactors = 0;
         ulongp restrict limbs = TALLOC_TYPE(nfactors / 4 + 1, ulong);
         ulong t = 1;
         mp_size_t limbn = 0;
