@@ -21,17 +21,6 @@
 #include "../../../include/lammp/impl/prime_table.h"
 
 
-/*
-FIXME:
-  多项式系数在极不平衡时，先进行质数预处理将耗费大多数时间，而实际因子却及其稀疏，
-  需要进行优化。
-  一个优化思路是这样的，同样分成分子和分母两个部分，我们先预选出r[i]中最大的
-  和次大的，如果这两个数相差非常大，则意味着此时极不平衡。我们可以用排列数来
-  计算这不平衡的部分（排列数的不平衡情况已得到很好优化），剩下的r[i]元素，
-  我们可以采用一次性分解并累乘完毕。最后只需要使用精确除法，将不平衡的组合数
-  除以余下的r[i]的结果即可。
-*/
-
 static inline mp_size_t fac_size_lower(uint n) {
     if (n < 20) {
         return 0;
@@ -57,7 +46,7 @@ mp_size_t lmmp_multinomial_size_(const uintp r, uint m, ulong* restrict n) {
     lmmp_param_assert(n_ret > 0);
     *n = n_ret;
     mp_size_t rn = fac_size_bigger(n_ret);
-    
+
     for (i = 0; i < m; ++i) {
         rn -= fac_size_lower(r[i]);
     }
@@ -74,7 +63,7 @@ static inline uint count_factors(fac_ptr fac, uint nfactors, uint n, const uintp
         e += pn;
     }
     for (uint i = 0; i < m; ++i) {
-        uint pn = r[i];
+        pn = r[i];
         while (pn > 0) {
             _udiv32by32_q_preinv(pn, pn, inv);
             e -= pn;
@@ -91,9 +80,9 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
     /*
      使用类似组合数的思路来估计缓冲区大小。
     */
-    uint approx1 = rn * 8;
+    ulong approx1 = rn * 8;
     lmmp_debug_assert(approx1 <= MP_UINT_MAX);
-    uint approx2 = lmmp_prime_size_(n);
+    ulong approx2 = lmmp_prime_size_(n);
     return approx1 < approx2 ? approx1 : approx2;
 }
 
