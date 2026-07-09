@@ -127,9 +127,9 @@
 
 
 // cache 一次处理的位图数量
-#define PRIME_CACHE_BLOCK_NUM 32
-// 一个位图中质数最多的数量（实际为31）
-#define PRIME_CACHE_BLOCK_SIZE 32
+#define PRIME_CACHE_BLOCK_NUM 64
+// cache 中质数最多可能的数量（取决于上面的PRIME_CACHE_BLOCK_NUM）
+#define PRIME_CACHE_SIZE 1028
 
 #define MP_UCHAR_MAX (0xff)
 #define MP_USHORT_MAX (0xffff)

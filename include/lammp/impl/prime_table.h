@@ -36,10 +36,10 @@ extern const ushort prime_short_table[PRIME_SHORT_TABLE_SIZE];
  * @brief 根据全局素数表判断一个数是否为素数
  * @param p 待判断的数
  * @warning p>1, p%2==1
- * @note 若 p 超过了当前全局素数表的范围，则会触发 debug_assert
- * @return true 素数，false 合数
+ * @note 若 p 超过了当前全局素数表的范围，则返回 -1
+ * @return 1 素数，0 合数，-1 超出质数表范围
  */
-bool lmmp_is_prime_table_(uint p);
+int lmmp_is_prime_table_(uint p);
 
 /**
  * @brief 计算小于等于 n 的素数数量
@@ -158,12 +158,10 @@ extern const lmmp_bitset_t r35711_mask_map[19];
  * @brief 校验是否能被3,5,7,11整除，能够整除则返回1，否则返回0
  */
 static inline int trial_div35711(ulong n) {
-#define MOD 1155
-    uint rem = n % MOD;
+    uint rem = n % 1155; // 1155 = 3 * 5 * 7 * 11
     uint idx = rem / LMMP_BITSET_BITS;
     uint bit = rem % LMMP_BITSET_BITS;
     return (r35711_mask_map[idx] >> bit) & 1ULL;
-#undef MOD
 }
 
 #endif  // __LAMMP_PRIME_TABLE_H__
