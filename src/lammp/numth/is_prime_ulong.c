@@ -257,13 +257,18 @@ static inline int miller_rabin_64(ulong a, ulong t, ulong u, ulong m, ulong m_in
  *******************************************************************************/
 
 bool lmmp_is_prime_uint_(uint n) {
-    if (n < PRIME_SHORT_TABLE_N) {
-        return lmmp_is_prime_table_(n);
-    }
-    if (n % 2 == 0)
+    if (n % 2 == 0 || n <= 1)
         return false;
+    int judge = lmmp_is_prime_table_(n);
+    if (judge == 0) {
+        return false;
+    } else if (judge == 1) {
+        return true;
+    }
+
     if (trial_div35711(n))
         return false;
+
     ushort bases[2];
     bases[0] = 2;
     bases[1] = dj_base49[((0x3AC69A35UL * n) & 0xFFFFFFFFUL) >> 21] + 3;
@@ -374,11 +379,14 @@ bool lmmp_is_prime_notrial_(ulong n) {
 }
 
 bool lmmp_is_prime_ulong_(ulong n) {
-    if (n < PRIME_SHORT_TABLE_N) {
-        return lmmp_is_prime_table_(n);
-    }
-    if (n % 2 == 0)
+    if (n % 2 == 0 || n <= 1)
         return false;
+    int judge = lmmp_is_prime_table_(n);
+    if (judge == 0) {
+        return false;
+    } else if (judge == 1) {
+        return true;
+    }
     if (trial_div35711(n))
         return false;
     return lmmp_is_prime_notrial_(n);

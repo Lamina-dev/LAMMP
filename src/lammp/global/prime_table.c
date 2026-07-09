@@ -26,9 +26,9 @@ typedef struct prime_int {
 } prime_int;
 
 static LAMMP_THREAD_LOCAL prime_int global_prime_int_table = {
-    .map = NULL,
+    .map      = NULL,
     .map_size = 0,
-    .max = 0
+    .max      = 0
 };
 
 #define G global_prime_int_table
@@ -40,26 +40,90 @@ static inline uint prime_table_size(uint n) {
     return bits + 1;
 }
 
+/*
+ * 预填充表没有排除idx == 0的情况，这是为了确保210*m+1的奇数被填充
+ * 但是这会导致索引为0，也即1被错误标记，需要单独处理
+  for (int s = 0; s < 105; ++s) {
+    lmmp_bitset_t mask = 0;
+    for (int k = 0; k < 64; ++k) {
+      int idx = (s + k) % 105; // 取模周期
+      uint p = 2 * idx + 1;    // 对应的奇数
+      if (p % 3 != 0 && p % 5 != 0 && p % 7 != 0)
+        mask |= 1ULL << k;
+    }
+    wheel_mask[s] = mask;
+  }
+*/
+// 预填充表（预筛了3,5,7的倍数，以及1，和他们本身）
+static const lmmp_bitset_t wheel_mask[105] = {
+    (lmmp_bitset_t)0x916d129a64b4cb61, (lmmp_bitset_t)0x48b6894d325a65b0, (lmmp_bitset_t)0xa45b44a6992d32d8,
+    (lmmp_bitset_t)0x522da2534c96996c, (lmmp_bitset_t)0x2916d129a64b4cb6, (lmmp_bitset_t)0x948b6894d325a65b,
+    (lmmp_bitset_t)0xca45b44a6992d32d, (lmmp_bitset_t)0x6522da2534c96996, (lmmp_bitset_t)0xb2916d129a64b4cb,
+    (lmmp_bitset_t)0x5948b6894d325a65, (lmmp_bitset_t)0x2ca45b44a6992d32, (lmmp_bitset_t)0x96522da2534c9699,
+    (lmmp_bitset_t)0xcb2916d129a64b4c, (lmmp_bitset_t)0x65948b6894d325a6, (lmmp_bitset_t)0x32ca45b44a6992d3,
+    (lmmp_bitset_t)0x996522da2534c969, (lmmp_bitset_t)0x4cb2916d129a64b4, (lmmp_bitset_t)0x265948b6894d325a,
+    (lmmp_bitset_t)0x932ca45b44a6992d, (lmmp_bitset_t)0x4996522da2534c96, (lmmp_bitset_t)0xa4cb2916d129a64b,
+    (lmmp_bitset_t)0xd265948b6894d325, (lmmp_bitset_t)0x6932ca45b44a6992, (lmmp_bitset_t)0xb4996522da2534c9,
+    (lmmp_bitset_t)0x5a4cb2916d129a64, (lmmp_bitset_t)0x2d265948b6894d32, (lmmp_bitset_t)0x96932ca45b44a699,
+    (lmmp_bitset_t)0xcb4996522da2534c, (lmmp_bitset_t)0x65a4cb2916d129a6, (lmmp_bitset_t)0x32d265948b6894d3,
+    (lmmp_bitset_t)0x996932ca45b44a69, (lmmp_bitset_t)0x4cb4996522da2534, (lmmp_bitset_t)0xa65a4cb2916d129a,
+    (lmmp_bitset_t)0xd32d265948b6894d, (lmmp_bitset_t)0x6996932ca45b44a6, (lmmp_bitset_t)0xb4cb4996522da253,
+    (lmmp_bitset_t)0xda65a4cb2916d129, (lmmp_bitset_t)0x6d32d265948b6894, (lmmp_bitset_t)0x36996932ca45b44a,
+    (lmmp_bitset_t)0x1b4cb4996522da25, (lmmp_bitset_t)0xda65a4cb2916d12,  (lmmp_bitset_t)0x86d32d265948b689,
+    (lmmp_bitset_t)0xc36996932ca45b44, (lmmp_bitset_t)0x61b4cb4996522da2, (lmmp_bitset_t)0x30da65a4cb2916d1,
+    (lmmp_bitset_t)0x186d32d265948b68, (lmmp_bitset_t)0xc36996932ca45b4,  (lmmp_bitset_t)0x861b4cb4996522da,
+    (lmmp_bitset_t)0xc30da65a4cb2916d, (lmmp_bitset_t)0x6186d32d265948b6, (lmmp_bitset_t)0xb0c36996932ca45b,
+    (lmmp_bitset_t)0xd861b4cb4996522d, (lmmp_bitset_t)0x6c30da65a4cb2916, (lmmp_bitset_t)0xb6186d32d265948b,
+    (lmmp_bitset_t)0x5b0c36996932ca45, (lmmp_bitset_t)0x2d861b4cb4996522, (lmmp_bitset_t)0x96c30da65a4cb291,
+    (lmmp_bitset_t)0xcb6186d32d265948, (lmmp_bitset_t)0x65b0c36996932ca4, (lmmp_bitset_t)0x32d861b4cb499652,
+    (lmmp_bitset_t)0x996c30da65a4cb29, (lmmp_bitset_t)0x4cb6186d32d26594, (lmmp_bitset_t)0xa65b0c36996932ca,
+    (lmmp_bitset_t)0xd32d861b4cb49965, (lmmp_bitset_t)0x6996c30da65a4cb2, (lmmp_bitset_t)0xb4cb6186d32d2659,
+    (lmmp_bitset_t)0x5a65b0c36996932c, (lmmp_bitset_t)0x2d32d861b4cb4996, (lmmp_bitset_t)0x96996c30da65a4cb,
+    (lmmp_bitset_t)0x4b4cb6186d32d265, (lmmp_bitset_t)0x25a65b0c36996932, (lmmp_bitset_t)0x92d32d861b4cb499,
+    (lmmp_bitset_t)0xc96996c30da65a4c, (lmmp_bitset_t)0x64b4cb6186d32d26, (lmmp_bitset_t)0x325a65b0c3699693,
+    (lmmp_bitset_t)0x992d32d861b4cb49, (lmmp_bitset_t)0x4c96996c30da65a4, (lmmp_bitset_t)0xa64b4cb6186d32d2,
+    (lmmp_bitset_t)0xd325a65b0c369969, (lmmp_bitset_t)0x6992d32d861b4cb4, (lmmp_bitset_t)0x34c96996c30da65a,
+    (lmmp_bitset_t)0x9a64b4cb6186d32d, (lmmp_bitset_t)0x4d325a65b0c36996, (lmmp_bitset_t)0xa6992d32d861b4cb,
+    (lmmp_bitset_t)0x534c96996c30da65, (lmmp_bitset_t)0x29a64b4cb6186d32, (lmmp_bitset_t)0x94d325a65b0c3699,
+    (lmmp_bitset_t)0x4a6992d32d861b4c, (lmmp_bitset_t)0x2534c96996c30da6, (lmmp_bitset_t)0x129a64b4cb6186d3,
+    (lmmp_bitset_t)0x894d325a65b0c369, (lmmp_bitset_t)0x44a6992d32d861b4, (lmmp_bitset_t)0xa2534c96996c30da,
+    (lmmp_bitset_t)0xd129a64b4cb6186d, (lmmp_bitset_t)0x6894d325a65b0c36, (lmmp_bitset_t)0xb44a6992d32d861b,
+    (lmmp_bitset_t)0xda2534c96996c30d, (lmmp_bitset_t)0x6d129a64b4cb6186, (lmmp_bitset_t)0xb6894d325a65b0c3,
+    (lmmp_bitset_t)0x5b44a6992d32d861, (lmmp_bitset_t)0x2da2534c96996c30, (lmmp_bitset_t)0x16d129a64b4cb618,
+    (lmmp_bitset_t)0x8b6894d325a65b0c, (lmmp_bitset_t)0x45b44a6992d32d86, (lmmp_bitset_t)0x22da2534c96996c3};
+
+#define IDX(p) ((p) >> 1)
+#define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= ~(1ULL << (i % LMMP_BITSET_BITS))
+#define set_prime(p, i) p[i / LMMP_BITSET_BITS] |= (1ULL << (i % LMMP_BITSET_BITS))
+
 void lmmp_prime_int_table_init_(uint n) {
     if (n < PRIME_SHORT_TABLE_N || G.max >= n)
         return;
-#define IDX(p) ((p) >> 1)
-#define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= ~(1ULL << (i % LMMP_BITSET_BITS))
-
     if (G.map == NULL) {
         G.max = n;
         G.map_size = prime_table_size(n);
         lmmp_bitset_p restrict p = ALLOC_TYPE(G.map_size, lmmp_bitset_t);
-        for (uint i = 0; i < G.map_size; ++i) {
-            p[i] = LMMP_BITSET_MASK;
+
+        // 按 105 周期填充
+        for (uint i = 0, s = 0; i < G.map_size; ++i) {
+            p[i] = wheel_mask[s];
+            // s = (s + 64) % 105;
+            s += LMMP_BITSET_BITS;
+            if (s >= 105)
+                s -= 105;
         }
+
         set_not_prime(p, 0);
+        set_prime(p, IDX(3));
+        set_prime(p, IDX(5));
+        set_prime(p, IDX(7));
 
         ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
         uint max_idx = lmmp_prime_cnt16_(sqrt_n);
         uint limit_idx = n >> 1;
 
-        for (ushort i = 1; i < max_idx; ++i) {
+        // 从质数 11 开始（下标 4）
+        for (ushort i = 4; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
             uint start_idx = (prime * prime) >> 1;
             for (uint idx = start_idx; idx <= limit_idx; idx += prime) {
@@ -68,24 +132,35 @@ void lmmp_prime_int_table_init_(uint n) {
         }
         G.map = p;
     } else {
+        // 扩展部分（重分配）
         uint old_N = G.max;
         uint new_size = prime_table_size(n);
         G.map = REALLOC_TYPE(G.map, new_size, lmmp_bitset_t);
-        for (uint i = G.map_size; i < new_size; ++i) 
-            G.map[i] = LMMP_BITSET_MASK;
+
+        // 新块填充 wheel_mask
+        for (uint i = G.map_size, s = (G.map_size * 64) % 105; i < new_size; ++i) {
+            G.map[i] = wheel_mask[s];
+            s += LMMP_BITSET_BITS;
+            if (s >= 105)
+                s -= 105;
+        }
+
         G.map_size = new_size;
         G.max = n;
 
         lmmp_bitset_p restrict p = G.map;
+        set_not_prime(p, 0);
+        set_prime(p, IDX(3));
+        set_prime(p, IDX(5));
+        set_prime(p, IDX(7));
         uint limit_idx = (n - 1) >> 1;
         uint old_limit_idx = (old_N - 1) >> 1;
-
-        // set_not_prime(p, 0);
 
         ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
         uint max_idx = lmmp_prime_cnt16_(sqrt_n);
 
-        for (ushort i = 1; i < max_idx; ++i) {
+        // 从质数 11 开始
+        for (ushort i = 4; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
             uint start = prime * prime;
             uint start_idx = start >> 1;
@@ -102,15 +177,18 @@ void lmmp_prime_int_table_init_(uint n) {
     }
 }
 
-bool lmmp_is_prime_table_(uint p) {
+#undef set_prime
+
+int lmmp_is_prime_table_(uint p) {
     if (p < PRIME_SHORT_TABLE_N) {
         ushort i = lmmp_prime_cnt16_(p);
         if (prime_short_table[i - 1] == p)
-            return true;
-        return false;
+            return 1;
+        return 0;
+    } else if (p > G.max) {
+        return -1;
     } else {
         // p>=3
-        lmmp_debug_assert(G.max >= p);
         lmmp_param_assert(p > 1);
         lmmp_param_assert((p & 1) == 1);
         uint idx = IDX(p);
@@ -121,7 +199,7 @@ bool lmmp_is_prime_table_(uint p) {
 void lmmp_prime_cache_init_(prime_cache_t* cache, uint n) {
     lmmp_param_assert(n > 2);
     lmmp_param_assert(n <= G.max);
-    cache->pp = ALLOC_TYPE(PRIME_CACHE_BLOCK_SIZE * PRIME_CACHE_BLOCK_NUM, uint);
+    cache->pp = ALLOC_TYPE(PRIME_CACHE_SIZE, uint);
     cache->size = 0;
     cache->start_idx = 0;
     uint max_bit_idx = (n - 1) / 2;
