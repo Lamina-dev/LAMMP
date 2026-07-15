@@ -814,6 +814,17 @@ LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  */
 LAMMP_API ulong lmmp_nthroot_ulong_(ulong n, ulong root);
 
+/**
+ * @brief 计算 [p,n] % 2^48-1
+ * @param p 被除数指针
+ * @param n 被除数的 limb 长度
+ * @warning p!=NULL, n>0
+ * @return [numa,na] % 2^48-1
+ */
+LAMMP_API mp_limb_t lmmp_mod_2p48sub1_(mp_srcptr p, mp_size_t n);
+
+LAMMP_API bool lmmp_perfsqr_filter_1_(mp_limb_t p);
+LAMMP_API bool lmmp_perfsqr_filter_(mp_srcptr p, mp_size_t n);
 
 #ifdef __cplusplus
 }
