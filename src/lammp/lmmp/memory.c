@@ -102,12 +102,6 @@ void lmmp_set_heap_allocator(const lmmp_heap_allocator_t* heap) {
     lmmp_global_init();
 }
 
-static inline void lmmp_chech_memory(size_t size, const char* func, int line) {
-    char msg[64];
-    snprintf(msg, sizeof(msg), "Memory allocation failed (size: %zu bytes)", size);
-    lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, func, line);
-}
-
 #include "../../../include/lammp/impl/safe_memory.h"
 
 int lmmp_alloc_count(int cnt) {
@@ -161,6 +155,12 @@ void* lmmp_alloc(size_t size, const char* func, int line) {
     return NULL;
 }
 #else
+static inline void lmmp_chech_memory(size_t size, const char* func, int line) {
+    char msg[64];
+    snprintf(msg, sizeof(msg), "Memory allocation failed (size: %zu bytes)", size);
+    lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, func, line);
+}
+
 void* lmmp_alloc(size_t size) {
     if (size) {
         void* ret = heap_alloc_func(size);
