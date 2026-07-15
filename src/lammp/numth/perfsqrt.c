@@ -63,7 +63,7 @@ mp_limb_t lmmp_mod_2p48sub1_(mp_srcptr p, mp_size_t n) {
     if (n == 2) {
         ADD(c0, a0, p[0]);
         ADD(c1, a1, p[1]);
-    } else {
+    } else if (n == 1) {
         ADD(c0, a0, p[0]);
     }
 
