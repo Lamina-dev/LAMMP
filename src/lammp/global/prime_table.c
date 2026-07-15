@@ -92,8 +92,33 @@ static const lmmp_bitset_t wheel_mask[105] = {
     (lmmp_bitset_t)0x5b44a6992d32d861, (lmmp_bitset_t)0x2da2534c96996c30, (lmmp_bitset_t)0x16d129a64b4cb618,
     (lmmp_bitset_t)0x8b6894d325a65b0c, (lmmp_bitset_t)0x45b44a6992d32d86, (lmmp_bitset_t)0x22da2534c96996c3};
 
+static const lmmp_bitset_t not_mask_64[LMMP_BITSET_BITS] = {
+    (lmmp_bitset_t)0xfffffffffffffffe, (lmmp_bitset_t)0xfffffffffffffffd, (lmmp_bitset_t)0xfffffffffffffffb,
+    (lmmp_bitset_t)0xfffffffffffffff7, (lmmp_bitset_t)0xffffffffffffffef, (lmmp_bitset_t)0xffffffffffffffdf,
+    (lmmp_bitset_t)0xffffffffffffffbf, (lmmp_bitset_t)0xffffffffffffff7f, (lmmp_bitset_t)0xfffffffffffffeff,
+    (lmmp_bitset_t)0xfffffffffffffdff, (lmmp_bitset_t)0xfffffffffffffbff, (lmmp_bitset_t)0xfffffffffffff7ff,
+    (lmmp_bitset_t)0xffffffffffffefff, (lmmp_bitset_t)0xffffffffffffdfff, (lmmp_bitset_t)0xffffffffffffbfff,
+    (lmmp_bitset_t)0xffffffffffff7fff, (lmmp_bitset_t)0xfffffffffffeffff, (lmmp_bitset_t)0xfffffffffffdffff,
+    (lmmp_bitset_t)0xfffffffffffbffff, (lmmp_bitset_t)0xfffffffffff7ffff, (lmmp_bitset_t)0xffffffffffefffff,
+    (lmmp_bitset_t)0xffffffffffdfffff, (lmmp_bitset_t)0xffffffffffbfffff, (lmmp_bitset_t)0xffffffffff7fffff,
+    (lmmp_bitset_t)0xfffffffffeffffff, (lmmp_bitset_t)0xfffffffffdffffff, (lmmp_bitset_t)0xfffffffffbffffff,
+    (lmmp_bitset_t)0xfffffffff7ffffff, (lmmp_bitset_t)0xffffffffefffffff, (lmmp_bitset_t)0xffffffffdfffffff,
+    (lmmp_bitset_t)0xffffffffbfffffff, (lmmp_bitset_t)0xffffffff7fffffff, (lmmp_bitset_t)0xfffffffeffffffff,
+    (lmmp_bitset_t)0xfffffffdffffffff, (lmmp_bitset_t)0xfffffffbffffffff, (lmmp_bitset_t)0xfffffff7ffffffff,
+    (lmmp_bitset_t)0xffffffefffffffff, (lmmp_bitset_t)0xffffffdfffffffff, (lmmp_bitset_t)0xffffffbfffffffff,
+    (lmmp_bitset_t)0xffffff7fffffffff, (lmmp_bitset_t)0xfffffeffffffffff, (lmmp_bitset_t)0xfffffdffffffffff,
+    (lmmp_bitset_t)0xfffffbffffffffff, (lmmp_bitset_t)0xfffff7ffffffffff, (lmmp_bitset_t)0xffffefffffffffff,
+    (lmmp_bitset_t)0xffffdfffffffffff, (lmmp_bitset_t)0xffffbfffffffffff, (lmmp_bitset_t)0xffff7fffffffffff,
+    (lmmp_bitset_t)0xfffeffffffffffff, (lmmp_bitset_t)0xfffdffffffffffff, (lmmp_bitset_t)0xfffbffffffffffff,
+    (lmmp_bitset_t)0xfff7ffffffffffff, (lmmp_bitset_t)0xffefffffffffffff, (lmmp_bitset_t)0xffdfffffffffffff,
+    (lmmp_bitset_t)0xffbfffffffffffff, (lmmp_bitset_t)0xff7fffffffffffff, (lmmp_bitset_t)0xfeffffffffffffff,
+    (lmmp_bitset_t)0xfdffffffffffffff, (lmmp_bitset_t)0xfbffffffffffffff, (lmmp_bitset_t)0xf7ffffffffffffff,
+    (lmmp_bitset_t)0xefffffffffffffff, (lmmp_bitset_t)0xdfffffffffffffff, (lmmp_bitset_t)0xbfffffffffffffff,
+    (lmmp_bitset_t)0x7fffffffffffffff};
+
+
 #define IDX(p) ((p) >> 1)
-#define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= ~(1ULL << (i % LMMP_BITSET_BITS))
+#define set_not_prime(p, i) p[i / LMMP_BITSET_BITS] &= not_mask_64[(i % LMMP_BITSET_BITS)]
 #define set_prime(p, i) p[i / LMMP_BITSET_BITS] |= (1ULL << (i % LMMP_BITSET_BITS))
 
 void lmmp_prime_int_table_init_(uint n) {
@@ -120,12 +145,12 @@ void lmmp_prime_int_table_init_(uint n) {
 
         ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
         uint max_idx = lmmp_prime_cnt16_(sqrt_n);
-        uint limit_idx = n >> 1;
+        uint limit_idx = IDX(n);
 
         // 从质数 11 开始（下标 4）
         for (ushort i = 4; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
-            uint start_idx = (prime * prime) >> 1;
+            uint start_idx = IDX(prime * prime);
             for (uint idx = start_idx; idx <= limit_idx; idx += prime) {
                 set_not_prime(p, idx);
             }
@@ -153,8 +178,8 @@ void lmmp_prime_int_table_init_(uint n) {
         set_prime(p, IDX(3));
         set_prime(p, IDX(5));
         set_prime(p, IDX(7));
-        uint limit_idx = (n - 1) >> 1;
-        uint old_limit_idx = (old_N - 1) >> 1;
+        uint limit_idx = IDX(n - 1);
+        uint old_limit_idx = IDX(old_N - 1);
 
         ushort sqrt_n = n > 4294836225 ? 0xffff : (ushort)sqrt(n);
         uint max_idx = lmmp_prime_cnt16_(sqrt_n);
@@ -163,7 +188,7 @@ void lmmp_prime_int_table_init_(uint n) {
         for (ushort i = 4; i < max_idx; ++i) {
             uint prime = prime_short_table[i];
             uint start = prime * prime;
-            uint start_idx = start >> 1;
+            uint start_idx = IDX(start);
 
             if (start_idx <= old_limit_idx) {
                 uint k = (old_limit_idx + 1 - start_idx + prime - 1) / prime;
