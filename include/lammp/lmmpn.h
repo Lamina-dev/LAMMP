@@ -740,7 +740,7 @@ LAMMP_API mp_limb_t lmmp_div_1_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_li
  * @param na 被除数的 limb 长度
  * @param x 除数（单个 limb ）
  * @return 除法余数（单个 limb ）
- * @warning na>0, x!=0, eqsep(dstq,numa), dstq>=numa-1 是可以接受的
+ * @warning na>0, x!=0, numa!=NULL
  */
 LAMMP_API mp_limb_t lmmp_mod_1_(mp_srcptr numa, mp_size_t na, mp_limb_t x);
 
@@ -760,7 +760,7 @@ LAMMP_API void lmmp_div_2_(mp_ptr dstq, mp_srcptr numa, mp_size_t na, mp_ptr num
  * @param numa 输入被除数（长度na）
  * @param na 被除数的 limb 长度
  * @param numb 输入除数（长度2）[numb,2]=[numa,na] mod [numb,2]
- * @warning na>=2, numb[1]!=0, eqsep(dstq,numa), dstq>=numa 是可以接受的
+ * @warning na>=2, numb[1]!=0, numb!=NULL, numa!=NULL
  */
 LAMMP_API void lmmp_mod_2_(mp_srcptr numa, mp_size_t na, mp_ptr numb);
 
