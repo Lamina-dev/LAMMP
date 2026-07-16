@@ -160,6 +160,12 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
  3. realloc : 堆内存重新分配器
 
  默认使用 malloc、free、realloc 实现。
+ 如果你需要传入自定义的分配器，为了避免重复处理，且由于LAMMP内部几乎不直接
+ 通过指定的指针来进行内存分配，所以为了避免不必要的错误处理，建议遵循一下的行为：
+ 1. 传给free的指针应可以为NULL
+ 2. malloc(size)可以假定size>0，若size为0，可以是未定义行为，可以直接中断。
+ 3. realloc(p, size)可以假定size>0，若size为0，可以是未定义行为，可以直接中断。
+ 4. realloc/malloc(p, size)若内存耗尽，或者无空闲块，可以返回NULL，代表分配失败。
  */
 
 typedef void* (*lmmp_heap_alloc_fn)(size_t size);
@@ -283,16 +289,24 @@ LAMMP_NORETURN LAMMP_API void lmmp_abort(lmmp_error_t type, const char *msg, con
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 LAMMP_API void* lmmp_alloc(size_t size, const char* func, int line);
+/**
+ * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
+ * @param size 要分配的内存字节数
+ * @warning size>0
+ * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
+ * @return 返回指向分配内存的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
+ */
 #define lmmp_alloc(size) lmmp_alloc(size, __func__, __LINE__)
 #else
 /**
  * @brief 内存分配函数（调用lmmp_heap_alloc_fn）
  * @param size 要分配的内存字节数
+ * @warning size>0
  * @note 调用堆内存分配器，分配失败将触发 lmmp_abort
  * @return 返回指向分配内存的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
 LAMMP_API void* lmmp_alloc(size_t size);
-#endif 
+#endif
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 LAMMP_API void* lmmp_realloc(void* ptr, size_t size, const char* func, int line);
@@ -302,7 +316,9 @@ LAMMP_API void* lmmp_realloc(void* ptr, size_t size, const char* func, int line)
  * @brief 内存重分配函数（调用lmmp_realloc_fn）
  * @param ptr 已分配的内存指针
  * @param size 新的内存大小（字节）
+ * @warning size>0
  * @note 调用堆内存重新分配器，分配失败将触发 lmmp_abort
+ *       在LAMMP_DEBUG_PARAM_ASSERT_CHECK宏为1时，重分配 0 字节将触发 lmmp_abort
  * @return 成功返回指向新内存区域的指针（分配失败不会 return NULL，而是直接触发 lmmp_abort）
  */
 LAMMP_API void* lmmp_realloc(void* ptr, size_t size);
@@ -310,11 +326,17 @@ LAMMP_API void* lmmp_realloc(void* ptr, size_t size);
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 LAMMP_API void lmmp_free(void* ptr, const char* func, int line);
+/**
+ * @brief 内存释放函数（调用lmmp_heap_free_fn）
+ * @param ptr 要释放的内存指针
+ * @note ptr 可以为空指针
+ */
 #define lmmp_free(ptr) lmmp_free(ptr, __func__, __LINE__)
 #else
 /**
  * @brief 内存释放函数（调用lmmp_heap_free_fn）
  * @param ptr 要释放的内存指针
+ * @note ptr 可以为空指针
  */
 LAMMP_API void lmmp_free(void* ptr);
 #endif

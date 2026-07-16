@@ -145,33 +145,33 @@ void lmmp_leak_tracker(const char* func, int line) {
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 void* lmmp_alloc(size_t size, const char* func, int line) {
-    if (size) {
-        void* ret = lmmp_alloc_debug(size, func, line);
+    void* ret = lmmp_alloc_debug(size, func, line);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
-        heap_alloc_count++;
+    heap_alloc_count++;
 #endif
-        return ret;
-    }
-    return NULL;
+    return ret;
 }
 #else
-static inline void lmmp_chech_memory(size_t size, const char* func, int line) {
+static inline void lmmp_memory_abort(size_t size, const char* func, int line) {
     char msg[64];
     snprintf(msg, sizeof(msg), "Memory allocation failed (size: %zu bytes)", size);
     lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, msg, func, line);
 }
 
 void* lmmp_alloc(size_t size) {
-    if (size) {
-        void* ret = heap_alloc_func(size);
-        if (ret == NULL)
-            lmmp_chech_memory(size, __func__, __LINE__);
-#if LAMMP_DEBUG_MEMORY_LEAK == 1
-        heap_alloc_count++;
-#endif
-        return ret;
+#if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
+    if (size == 0) {
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Allocating zero bytes is not allowed.", func, line);
+        return NULL;
     }
-    return NULL;
+#endif  // LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
+    void* ret = heap_alloc_func(size);
+    if (ret == NULL)
+        lmmp_memory_abort(size, __func__, __LINE__);
+#if LAMMP_DEBUG_MEMORY_LEAK == 1
+    heap_alloc_count++;
+#endif
+    return ret;
 }
 #endif
 
@@ -182,30 +182,33 @@ void* lmmp_realloc(void* oldptr, size_t new_size, const char* func, int line) {
 }
 #else
 void* lmmp_realloc(void* oldptr, size_t new_size) {
+#if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
+    if (new_size == 0) {
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Reallocating zero bytes is not allowed.", func, line);
+        return NULL;
+    }
+#endif // LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
     void* ret = realloc_func(oldptr, new_size);
-    if (ret == NULL)
-        lmmp_chech_memory(new_size, __func__, __LINE__);
+    if (ret == NULL) {
+        lmmp_memory_abort(new_size, __func__, __LINE__);
+    }
     return ret;
 }
-#endif
+#endif // LAMMP_DEBUG_MEMORY_CHECK == 1
 
 #if LAMMP_DEBUG_MEMORY_CHECK == 1
 void lmmp_free(void* ptr, const char* func, int line) {
-    if (ptr) {
-        lmmp_free_debug(ptr, func, line);
+    lmmp_free_debug(ptr, func, line);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
-        heap_alloc_count--;
+    heap_alloc_count--;
 #endif
-    }
 }
 #else
 void lmmp_free(void* ptr) {
-    if (ptr) {
-        heap_free_func(ptr);
+    heap_free_func(ptr);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
-        heap_alloc_count--;
+    heap_alloc_count--;
 #endif
-    }
 }
 #endif
 

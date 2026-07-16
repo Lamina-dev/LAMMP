@@ -329,8 +329,7 @@ ushort lmmp_prime_cnt16_(ushort n) {
 }
 
 void lmmp_prime_int_table_free_(void) {
-    if (G.map != NULL)
-        lmmp_free(G.map);
+    lmmp_free(G.map);
     G.map = NULL;
     G.max = 0;
     G.map_size = 0;
