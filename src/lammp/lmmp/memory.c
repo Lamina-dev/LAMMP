@@ -161,7 +161,7 @@ static inline void lmmp_memory_abort(size_t size, const char* func, int line) {
 void* lmmp_alloc(size_t size) {
 #if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
     if (size == 0) {
-        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Allocating zero bytes is not allowed.", func, line);
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Allocating zero bytes is not allowed.", __func__, __LINE__);
         return NULL;
     }
 #endif  // LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
@@ -184,7 +184,7 @@ void* lmmp_realloc(void* oldptr, size_t new_size, const char* func, int line) {
 void* lmmp_realloc(void* oldptr, size_t new_size) {
 #if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
     if (new_size == 0) {
-        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Reallocating zero bytes is not allowed.", func, line);
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Reallocating zero bytes is not allowed.", __func__, __LINE__);
         return NULL;
     }
 #endif // LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
@@ -200,14 +200,16 @@ void* lmmp_realloc(void* oldptr, size_t new_size) {
 void lmmp_free(void* ptr, const char* func, int line) {
     lmmp_free_debug(ptr, func, line);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
-    heap_alloc_count--;
+    if (ptr != NULL)
+        heap_alloc_count--;
 #endif
 }
 #else
 void lmmp_free(void* ptr) {
     heap_free_func(ptr);
 #if LAMMP_DEBUG_MEMORY_LEAK == 1
-    heap_alloc_count--;
+    if (ptr != NULL)
+        heap_alloc_count--;
 #endif
 }
 #endif
