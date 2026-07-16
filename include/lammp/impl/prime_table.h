@@ -99,6 +99,8 @@ static inline ulong lmmp_prime_size_(ulong n) {
 /**
  * @brief 初始化全局素数表
  * @param n 素数表大小（含n）
+ * @warning 会自动扩容，可以重入；当 n < PRIME_SHORT_TABLE_N 时，将会直接返回
+ * @note 仅存储奇素数
  */
 void lmmp_prime_int_table_init_(uint n);
 
@@ -108,12 +110,12 @@ void lmmp_prime_int_table_init_(uint n);
 void lmmp_prime_int_table_free_(void);
 
 typedef struct {
-    uintp pp;       // 仅存储奇素数
-    uint size;      // pp 数组大小
-    uint start_idx; // 位图下一次解析的起始索引（字）
-    uint end_idx;   // 位图应该终止解析的结束索引（字）
-    uint end_num;   // 终止解析的最大数
-    int is_end;     // 是否已经遍历到全局质数表末尾
+    uintp restrict pp; // 质数数组（升序排列）
+    uint size;         // pp 数组大小
+    uint start_idx;    // 位图下一次解析的起始索引（字）
+    uint end_idx;      // 位图应该终止解析的结束索引（字）
+    uint end_num;      // 终止解析的最大数
+    int is_end;        // 是否已经遍历到全局质数表末尾
 } prime_cache_t;
 
 /*

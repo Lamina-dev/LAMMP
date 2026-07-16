@@ -181,10 +181,10 @@ void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr
                 else if (nq < DIV_MULINV_N_THRESHOLD)
                     lmmp_div_divide_(dstq, numa2, 2 * nq, numb2, nq, inv21);
                 else {
-                    mp_limb_t ni = lmmp_div_inv_size_(nq, nq);
+                    mp_size_t inv_ni = lmmp_div_inv_size_(nq, nq);
                     mp_ptr invappr = tp;
-                    lmmp_inv_prediv_(invappr, numb2, nq, ni);
-                    lmmp_div_mulinv_(dstq, numa2, 2 * nq, numb2, nq, invappr, ni);
+                    lmmp_inv_prediv_(invappr, numb2, nq, inv_ni);
+                    lmmp_div_mulinv_(dstq, numa2, 2 * nq, numb2, nq, invappr, inv_ni);
                 }
             }
             /*

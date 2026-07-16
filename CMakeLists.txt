@@ -117,9 +117,37 @@ function(lammp_target_setup target)
 
     if(TARGET_SYSTEM STREQUAL "WIN")
         target_compile_definitions(${target} PRIVATE LAMMP_WINDOWS)
+    elseif(TARGET_SYSTEM STREQUAL "LIN")
+        target_compile_definitions(${target} PRIVATE LAMMP_LINUX)
     endif()
 
-    if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    if(MSVC)
+        if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+            set(MP_FLAG "/MP")
+        else()
+            set(MP_FLAG "")
+        endif()
+
+        target_compile_options(${target} PRIVATE
+            $<$<COMPILE_LANGUAGE:C>:
+                ${MP_FLAG} /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
+                /wd4305 /wd4244
+                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
+                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
+                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
+                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
+            >
+            $<$<COMPILE_LANGUAGE:CXX>:
+                ${MP_FLAG} /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
+                /wd4305 /wd4244
+                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
+                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
+                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
+                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
+            >
+        )
+        message(STATUS "Compile options: MSVC standard options set.")
+    else()
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
                 -Wall -Wextra -Wpedantic -m64
@@ -138,43 +166,42 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
         )
-    elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-        target_compile_options(${target} PRIVATE
-            $<$<COMPILE_LANGUAGE:C>:
-                /MP /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
-                /wd4305 /wd4244
-                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
-                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
-                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
-                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
-            >
-            $<$<COMPILE_LANGUAGE:CXX>:
-                /MP /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
-                /wd4305 /wd4244
-                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
-                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
-                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
-                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
-            >
-        )
+        message(STATUS "Compile options: GNU standard options set.")
     endif()
 
-    if(CMAKE_C_COMPILER_LINKER_ID STREQUAL "MSVC")
-        # MSVC 链接器 (link.exe / lld-link in MSVC mode)
+    if(MSVC)
+        # MSVC 兼容编译器（原生 MSVC、clang-cl、Intel 等）
         target_link_options(${target} PRIVATE
             /DYNAMICBASE
             /NXCOMPAT
             /SUBSYSTEM:CONSOLE
             $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:REF /OPT:ICF>
         )
-    elseif(CMAKE_C_COMPILER_LINKER_ID MATCHES "^(GNU|GOLD|LLD)$")
-        # GNU ld, gold, lld
-        if(NOT (CMAKE_C_COMPILER_LINKER_ID STREQUAL "LLD" AND TARGET_SYSTEM STREQUAL "WIN"))
-            target_link_options(${target} PRIVATE
-                -Wl,--no-undefined
-                $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-s -Wl,--strip-all>
-            )
-        endif()
+        message(STATUS "Linker options: msvc standard options set.")
+    elseif(TARGET_SYSTEM STREQUAL "WIN" AND NOT MINGW)
+        # Windows 上使用 clang（GNU 驱动），目标为 MSVC ABI
+        # 使用 -Wl, 将 MSVC 选项原样转发给链接器
+        target_link_options(${target} PRIVATE
+            -Wl,/DYNAMICBASE
+            -Wl,/NXCOMPAT
+            -Wl,/SUBSYSTEM:CONSOLE
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:
+                -Wl,/OPT:REF -Wl,/OPT:ICF
+            >
+        )
+        message(STATUS "Linker options: clang standard options set.")
+    elseif(MINGW OR TARGET_SYSTEM STREQUAL "LIN")
+        # MinGW 或 Linux 使用 GNU ld 风格
+        target_link_options(${target} PRIVATE
+            -Wl,--no-undefined
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:
+                -Wl,--strip-all
+            >
+        )
+        message(STATUS "Linker options: GNU ld standard options set.")
+    else()
+        # 其他平台（如 macOS）需要单独处理
+        message(STATUS "Warning: Unknown platform. No link options set for this platform.")
     endif()
 endfunction()
 

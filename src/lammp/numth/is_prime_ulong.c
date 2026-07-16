@@ -381,11 +381,13 @@ bool lmmp_is_prime_notrial_(ulong n) {
 bool lmmp_is_prime_ulong_(ulong n) {
     if (n % 2 == 0 || n <= 1)
         return false;
-    int judge = lmmp_is_prime_table_(n);
-    if (judge == 0) {
-        return false;
-    } else if (judge == 1) {
-        return true;
+    if (n <= MP_UINT_MAX) {
+        int judge = lmmp_is_prime_table_(n);
+        if (judge == 0) {
+            return false;
+        } else if (judge == 1) {
+            return true;
+        }
     }
     if (trial_div35711(n))
         return false;

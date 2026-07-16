@@ -145,8 +145,10 @@ static inline int check_memory_block_integrity(mem_header* hdr, void* user_ptr, 
  * @return 分配的内存块的指针
  */
 static inline void* lmmp_alloc_debug(size_t size, const char* func, int line) {
-    if (size == 0)
+    if (size == 0) {
+        lmmp_abort(LAMMP_ERROR_MEMORY_ALLOC_FAILURE, "Allocating zero bytes is not allowed.", func, line);
         return NULL;
+    }
 
     size_t extra_size = (size * LAMMP_MEMORY_MORE_ALLOC_TIMES) / 10;
     extra_size = align_up(extra_size);
