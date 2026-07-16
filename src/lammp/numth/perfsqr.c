@@ -135,37 +135,37 @@ static inline bool is_perfsqr_p97(uchar r) {
 }
 
 static inline bool is_perfsqr_p241(ushort r) {
-    static const mp_limb_t p241[] = {0x3C67A3116B15977F, 0x2FD21C174C8FA909, 0x98F24257C4CBA0E1, 0x0001FBA6A35A2317};
-    ushort elem = r / LIMB_BITS;
+    static const uint64_t p241[] = {0x3C67A3116B15977F, 0x2FD21C174C8FA909, 0x98F24257C4CBA0E1, 0x0001FBA6A35A2317};
+    ushort elem = r / 64;
     lmmp_param_assert(elem < 4);
-    ushort bit = r % LIMB_BITS;
+    ushort bit = r % 64;
     return (p241[elem] >> bit) & 1ULL;
 }
 
 static inline bool is_perfsqr_p257(ushort r) {
-    static const mp_limb_t p257[] = {0x7E16541DE6E7AB17, 0x1F76811C93128359, 0x6B052324E205BBE3, 0xA3579D9EE0A9A1FA,
+    static const uint64_t p257[] = {0x7E16541DE6E7AB17, 0x1F76811C93128359, 0x6B052324E205BBE3, 0xA3579D9EE0A9A1FA,
                                      0x0000000000000001};
-    ushort elem = r / LIMB_BITS;
+    ushort elem = r / 64;
     lmmp_param_assert(elem < 5);
-    ushort bit = r % LIMB_BITS;
+    ushort bit = r % 64;
     return (p257[elem] >> bit) & 1ULL;
 }
 
 static inline bool is_perfsqr_p673(ushort r) {
-    static const mp_limb_t p673[] = {0x85F744B13FA573DF, 0xC231D5979ABA4F21, 0xE944C76E98DD0C01, 0xD20E0F2BD993E915,
+    static const uint64_t p673[] = {0x85F744B13FA573DF, 0xC231D5979ABA4F21, 0xE944C76E98DD0C01, 0xD20E0F2BD993E915,
                                      0x616259FB225208AB, 0x7E691A18F8B7B47C, 0x53C1C12F54412913, 0xDB8C8A5EA25F266F,
                                      0xA6AE310E00C2EC65, 0x348BBE8613C97567, 0x00000001EF3A97F2};
-    ushort elem = r / LIMB_BITS;
+    ushort elem = r / 64;
     lmmp_param_assert(elem < 11);
-    ushort bit = r % LIMB_BITS;
+    ushort bit = r % 64;
     return (p673[elem] >> bit) & 1ULL;
 }
 
 static inline bool is_perfsqr_p256(uchar r) {
-    static const mp_limb_t p256[] = {0x0202021202030213, 0x0202021202020213, 0x0202021202030212, 0x0202021202020212};
-    ushort elem = r / LIMB_BITS;
+    static const uint64_t p256[] = {0x0202021202030213, 0x0202021202020213, 0x0202021202030212, 0x0202021202020212};
+    ushort elem = r / 64;
     lmmp_param_assert(elem < 4);
-    ushort bit = r % LIMB_BITS;
+    ushort bit = r % 64;
     return (p256[elem] >> bit) & 1ULL;
 }
 
@@ -179,6 +179,7 @@ bool lmmp_perfsqr_filter_1_(mp_limb_t p) {
 }
 
 bool lmmp_perfsqr_filter_(mp_srcptr p, mp_size_t n) {
+    lmmp_param_assert(n > 0 && p != NULL);
     mp_limb_t a = p[0] % 256;
     if (!is_perfsqr_p256(a))
         return false;

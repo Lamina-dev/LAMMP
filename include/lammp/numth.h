@@ -835,6 +835,7 @@ LAMMP_API bool lmmp_perfsqr_filter_1_(mp_limb_t p);
  * @brief 非完全平方数过滤器
  * @param p 输入指针
  * @param n 输入的 limb 长度
+ * @warning p!=NULL, n>0
  * @return false 意味着必定为非完全平方数，所有完全平方数和部分非完全平方数会返回 true
  * @note 此过滤器主要针对随机输入情况，对于大概率是完全平方数的输入，可以无需此函数。
  */
