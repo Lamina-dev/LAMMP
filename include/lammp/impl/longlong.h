@@ -412,6 +412,8 @@ typedef uint64_t u192[3];
         (sl) = _x_;                         \
     } while (0)
 
+// n = nh * B + nl, di = lmmp_inv_1_(d)
+// q = n / d, r = n % d
 #define _udiv_qrnnd_preinv(q, r, nh, nl, d, di)              \
     do {                                                     \
         uint64_t _qh_, _ql_, _r_, _mask_;                    \
@@ -429,6 +431,8 @@ typedef uint64_t u192[3];
         (q) = _qh_;                                          \
     } while (0)
 
+// n = n2 * B^2 + n1 * B + n0, d = d1 * B + d0, dinv = lmmp_inv_2_1_(d)
+// q = n / d, r = n % d
 #define _udiv_qr_3by2(q, r1, r0, n2, n1, n0, d1, d0, dinv)                 \
     do {                                                                   \
         mp_limb_t _q0_, _t1_, _t0_, _mask_;                                \
