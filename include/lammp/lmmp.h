@@ -29,9 +29,9 @@ extern "C" {
 
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
-// 开启时，将会检查栈溢出；开销：中
+// 开启时，将会检查栈溢出；开销：高
 #define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
-// 开启时，将会开启debug_assert的检查；开销：低
+// 开启时，将会开启debug_assert的检查；开销：中
 #define LAMMP_DEBUG_ASSERT_CHECK 1
 // 开启时，将会进行参数检查；开销：中
 #define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
@@ -39,7 +39,7 @@ extern "C" {
 #define LAMMP_DEBUG_MEMORY_CHECK 1
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
-// 开启时，会增加内存分配和释放次数的统计功能；开销：中
+// 开启时，会增加内存分配和释放次数的统计功能；开销：低
 #define LAMMP_DEBUG_MEMORY_LEAK 1
 
 #else
@@ -156,12 +156,12 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
     /* C23 std */
     #define LAMMP_ASSUME(expr) do { [[assume(expr)]]; } while(0)
-#elif defined(_MSC_VER)
-    /* MSVC */
-    #define LAMMP_ASSUME(expr) __assume(expr)
 #elif defined(__clang__)
     /* Clang */
     #define LAMMP_ASSUME(expr) __builtin_assume(expr)
+#elif defined(_MSC_VER)
+    /* MSVC */
+    #define LAMMP_ASSUME(expr) __assume(expr)
 #elif defined(__GNUC__)
     /* GCC */
     #if __GNUC__ >= 13
