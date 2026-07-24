@@ -51,5 +51,8 @@ void test_binvert_unbalanced();
 void test_divexact();
 void test_divexact_basecase();
 void test_divexact_unbalanced();
+void test_perfsqr_filter();
+void test_cbrt_6();
+void test_cbrt();
 
 #endif // __LAMMP_TEST_SHORT_H__
