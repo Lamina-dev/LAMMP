@@ -26,6 +26,10 @@ mp_limb_t lmmp_div_s_(
     mp_srcptr restrict numb,
     mp_size_t            nb
 ) {
+    lmmp_param_assert(na >= nb);
+    lmmp_param_assert(numa != NULL && numb != NULL && nb > 0);
+    lmmp_param_assert(numb[nb - 1] >= LIMB_B_2);
+
     TEMP_DECL;
     mp_limb_t nq = na - nb;
     mp_limb_t qh;
@@ -72,6 +76,9 @@ mp_limb_t lmmp_div_s_(
 }
 
 void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb) {
+    lmmp_param_assert(na >= nb);
+    lmmp_param_assert(numa != NULL && numb != NULL && nb > 0);
+    lmmp_param_assert(numb[nb - 1] > 0);
     if (nb == 1) {
         mp_limb_t rem = lmmp_div_1_(dstq, numa, na, *numb);
         if (dstr)
