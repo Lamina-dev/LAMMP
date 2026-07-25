@@ -811,7 +811,7 @@ LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param numa 源数组
  * @param na 源数组的长度
  * @param tp 临时数组（2*na个limb）
- * @warning dst!=NULL, numa!=NULL, na>0, tp!=NULL
+ * @warning dst!=NULL, numa!=NULL, na>0, tp!=NULL, numa[na-1]!=0
  * @return 返回结果的数组长度
  */
 LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr tp);

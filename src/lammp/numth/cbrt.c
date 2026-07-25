@@ -42,6 +42,7 @@ static inline mp_size_t lmmp_cube_6_(mp_ptr restrict dst, mp_srcptr restrict num
 mp_size_t lmmp_cube_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_ptr restrict tp) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(dst != NULL && tp != NULL && numa != NULL);
+    lmmp_param_assert(numa[na - 1] != 0);
     lmmp_sqr_(tp, numa, na);
     lmmp_mul_(dst, tp, 2 * na, numa, na);
     na *= 3;
