@@ -141,6 +141,7 @@ void lmmp_toom_interp7_(
         cy = lmmp_add_n_(dst + 6 * n, dst + 6 * n, w5 + n, n + 1);
         lmmp_inc_1(dst + 7 * n + 1, cy);
     } else {
-        lmmp_assert(lmmp_add_n_(dst + 6 * n, dst + 6 * n, w5 + n, w6n));
+        cy = lmmp_add_n_(dst + 6 * n, dst + 6 * n, w5 + n, w6n);
+        lmmp_debug_assert(cy == 0);
     }
 }

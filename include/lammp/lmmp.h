@@ -29,9 +29,9 @@ extern "C" {
 
 /* LAMMP 调试宏，定义为1时，会开启相应的调试功能，共有四个开销等级：低、中、高、很高。 */
 
-// 开启时，将会检查栈溢出；开销：中
+// 开启时，将会检查栈溢出；开销：高
 #define LAMMP_DEBUG_STACK_OVERFLOW_CHECK 1
-// 开启时，将会开启debug_assert的检查；开销：低
+// 开启时，将会开启debug_assert的检查；开销：中
 #define LAMMP_DEBUG_ASSERT_CHECK 1
 // 开启时，将会进行参数检查；开销：中
 #define LAMMP_DEBUG_PARAM_ASSERT_CHECK 1
@@ -39,7 +39,7 @@ extern "C" {
 #define LAMMP_DEBUG_MEMORY_CHECK 1
 // 堆栈溢出检查中额外分配的内存倍数，额外分配的内存空间=单次分配的内存空间*(MORE_ALLOC_TIMES/10)
 #define LAMMP_MEMORY_MORE_ALLOC_TIMES 1
-// 开启时，会增加内存分配和释放次数的统计功能；开销：中
+// 开启时，会增加内存分配和释放次数的统计功能；开销：低
 #define LAMMP_DEBUG_MEMORY_LEAK 1
 
 #else
@@ -151,6 +151,29 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
             #define LAMMP_NORETURN /* no definition */
         #endif
     #endif
+#endif
+
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 202311L
+    /* C23 std */
+    #define LAMMP_ASSUME(expr) do { [[assume(expr)]]; } while(0)
+#elif defined(__clang__)
+    /* Clang */
+    #define LAMMP_ASSUME(expr) __builtin_assume(expr)
+#elif defined(_MSC_VER)
+    /* MSVC */
+    #define LAMMP_ASSUME(expr) __assume(expr)
+#elif defined(__GNUC__)
+    /* GCC */
+    #if __GNUC__ >= 13
+        /* GCC 13+ */
+        #define LAMMP_ASSUME(expr) do { __attribute__((assume(expr))); } while(0)
+    #else
+        /* GCC 13 lower */
+        #define LAMMP_ASSUME(expr) do { if (!(expr)) __builtin_unreachable(); } while(0)
+    #endif
+#else
+    /* fallback noassume */
+    #define LAMMP_ASSUME(expr) ((void)(expr))
 #endif
 
 /*
@@ -367,22 +390,34 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
 #define lmmp_leak_tracker ((void)0)
 #endif
 
-// 计算整数的绝对值
+/**
+ * @brief 计算绝对值
+ */
 #define LMMP_ABS(x) ((x) >= 0 ? (x) : -(x))
-// 返回两个数中的较小值
+/**
+ * @brief 返回两个数中的较小值
+ */
 #define LMMP_MIN(l, o) ((l) < (o) ? (l) : (o))
-// 返回两个数中的较大值
+/**
+ * @brief 返回两个数中的较大值
+ */
 #define LMMP_MAX(h, i) ((h) > (i) ? (h) : (i))
-// 交换两个同类型变量的值
+/**
+ * @brief 交换两个变量的值
+ */
 #define LMMP_SWAP(x, y, type) \
     do {                      \
         type _swap_ = (x);    \
         (x) = (y);            \
         (y) = _swap_;         \
     } while (0)
-// 检查n是否为2的整数次幂
+/**
+ * @brief 检查n是否为2的幂次方
+ */
 #define LMMP_POW2_Q(n) (((n) & ((n) - 1)) == 0)
-// 将a向上取整为m的整数倍
+/**
+ * @brief 将a向上取整到m的倍数
+ */
 #define LMMP_ROUND_UP_MULTIPLE(a, m) ((a) + (m) - 1 - ((a) + (m) - 1) % (m))
 
 // 内存拷贝宏：拷贝n个limb（每个8字节），使用memmove保证重叠安全
@@ -392,6 +427,7 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
 
 // 断言宏：检查条件x是否成立，不成立则触发段错误（严格的错误检查）
 // RELEASE 版本也会检查
+// 不可使用有副作用的表达式
 #define lmmp_assert(x)                                                      \
     do {                                                                    \
         if (!(x)) {                                                         \
@@ -409,7 +445,7 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
     } while (0)
 #else
 // 调试断言宏：检查条件x是否成立，不成立则触发段错误（调试版本）
-#define lmmp_debug_assert(x) ((void)0)
+#define lmmp_debug_assert(x) LAMMP_ASSUME(x)
 #endif
 
 #if LAMMP_DEBUG_PARAM_ASSERT_CHECK == 1
@@ -420,14 +456,16 @@ LAMMP_API void lmmp_leak_tracker(const char* func, int line);
         }                                                                         \
     } while (0)
 #else
-#define lmmp_param_assert(x) ((void)0)
+#define lmmp_param_assert(x) LAMMP_ASSUME(x)
 #endif
+
+LAMMP_API void lmmp_fill(mp_ptr dst, mp_size_t begin, mp_size_t end, mp_limb_t val);
 
 /**
  * @brief 全局初始化函数（线程局部的）
  * @note 调用此函数将初始化全局范围内的所有线程局部资源，如栈式分配器等。
  *       部分惰性初始化的资源将在首次使用时初始化。调用此函数不会进行初始化。
- *       此函数可重入，多次调用不会导致重复初始化。
+ *       此函数多次调用不会导致重复初始化。
  * @warning 我们建议在进程或线程启动时调用此函数，以保证线程安全。
  */
 LAMMP_API void lmmp_global_init(void);
@@ -435,7 +473,7 @@ LAMMP_API void lmmp_global_init(void);
 /**
  * @brief （线程局部的）全局共享的动态分配的堆内存资源释放函数
  * @note 调用此函数将释放全局范围内的所有动态分配的堆内存资源。
- *       此函数可重入，多次调用不会导致重复释放。如需要再次使用，请重新调用 lmmp_global_init 初始化。
+ *       此函数多次调用不会导致重复释放。如需要再次使用，请重新调用 lmmp_global_init 初始化。
  *       部分惰性初始化的资源将在再次首次使用时再次初始化，调用此函数可能导致部分缓存失效，导致性能下降。
  * @warning 我们建议在线程结束时或程序进程结束时调用此函数。多线程下，每个线程都会拥有独立的副本，
  *          未调用此函数结束线程可能导致内存泄漏。

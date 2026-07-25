@@ -131,7 +131,8 @@ void lmmp_invappr_newton_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_
             // else (neg to not) compensate (mod transfer)
 
             if (xp[na] != LIMB_MAX) {
-                lmmp_assert(xp[na] + lmmp_add_n_(xp, xp, numa - na, na) == LIMB_MAX);
+                mp_limb_t not_xp = lmmp_add_n_(xp, xp, numa - na, na);
+                lmmp_assert(xp[na] + not_xp == LIMB_MAX);
                 lmmp_inc(dst - nr);
             }
 

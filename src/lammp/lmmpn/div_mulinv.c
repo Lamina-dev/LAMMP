@@ -77,11 +77,12 @@ mp_limb_t lmmp_div_mulinv_(
         dstq -= ni;
         nq -= ni;
 
-        lmmp_mul_n_(tp, numa + nb, invappr, ni);
-        lmmp_assert(lmmp_add_n_(dstq, tp + ni, numa + nb, ni) == 0);
-
         mp_size_t mn, wn;
         mp_limb_t cy;
+
+        lmmp_mul_n_(tp, numa + nb, invappr, ni);
+        cy = lmmp_add_n_(dstq, tp + ni, numa + nb, ni);
+        lmmp_assert(cy == 0);
 
         if (nb < DIV_MULINV_MODM_THRESHOLD || (mn = lmmp_fft_next_size_(nb + 1)) >= nb + ni) {
             lmmp_mul_(tp, numb, nb, dstq, ni);  // nb+ni limbs, high 'ni' cancels

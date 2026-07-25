@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -13,15 +13,13 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include "include/test_long.hpp"
-#include "include/test_short.hpp"
-#include <vector>
+#include "../../../include/lammp/lmmp.h"
 
 
-int main() {
-    lmmp_global_init();
-    test_cbrt();
-    lmmp_global_deinit();
-    return 0;
+void lmmp_fill(mp_ptr dst, mp_size_t begin, mp_size_t end, mp_limb_t val) {
+    lmmp_param_assert(dst != NULL);
+    lmmp_param_assert(begin <= end);
+    for (mp_size_t i = begin; i < end; i++) {
+        dst[i] = val;
+    }
 }

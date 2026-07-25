@@ -806,6 +806,28 @@ LAMMP_API mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2)
 LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
+ * @brief 计算 [numa, na] 的立方
+ * @param dst 目标数组（3*na个limb）
+ * @param numa 源数组
+ * @param na 源数组的长度
+ * @param tp 临时数组（2*na个limb）
+ * @warning dst!=NULL, numa!=NULL, na>0, tp!=NULL, numa[na-1]!=0
+ * @return 返回结果的数组长度
+ */
+LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr tp);
+
+/**
+ * @brief 计算 [numa, na]*B^ni 的近似立方根
+ * @param dst 目标数组（(na+ni+2)/3+2个limb）
+ * @param numa 被开方数指针
+ * @param na 被开方数的 limb 长度
+ * @param ni 被开方数的偏移量
+ * @warning dst!=NULL, numa!=NULL, na>0, numa[na-1]!=0
+ * @return 返回结果的数组长度
+ */
+LAMMP_API mp_size_t lmmp_cbrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
+
+/**
  * @brief 计算 floor(n^(1/root))
  * @param n 被开方数
  * @param root 开方次数

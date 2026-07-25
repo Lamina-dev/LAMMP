@@ -187,7 +187,6 @@ static mp_size_t lmmp_10pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong exp) {
 static mp_size_t lmmp_12pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong exp) {
     mp_size_t n = (2 * exp) / LIMB_BITS;
     lmmp_zero(dst, n);
-    lmmp_assert(rn > n);
     rn = lmmp_3pow_1_(dst + n, rn - n, exp);
     dst[n + rn] = lmmp_shl_(dst + n, dst + n, rn, (2 * exp) % LIMB_BITS);
     rn += n + 1;

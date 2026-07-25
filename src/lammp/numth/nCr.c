@@ -79,7 +79,7 @@ static inline uint factor_size_int(mp_size_t rn, uint n) {
     */
     // 此处假定了LIMB_BITS为64
     ulong approx1 = rn * 8;
-    lmmp_debug_assert(approx1 <= MP_UINT_MAX);
+    lmmp_debug_assert(rn * 8 <= MP_UINT_MAX);
     ulong approx2 = lmmp_prime_size_(n);
     return approx1 < approx2 ? approx1 : approx2;
 }
@@ -90,7 +90,7 @@ static inline ushort factor_size_short(mp_size_t rn) {
     */
     // 此处假定了LIMB_BITS为64
     uint approx1 = rn * 10;
-    lmmp_debug_assert(approx1 <= MP_USHORT_MAX);
+    lmmp_debug_assert(rn * 10 <= MP_USHORT_MAX);
     return (ushort)approx1;
 }
 
