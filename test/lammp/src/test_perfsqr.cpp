@@ -35,4 +35,6 @@ void test_perfsqr_filter() {
     auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
     std::cout << duration1 << ";";
     std::cout << t << ";";
+
+    lmmp_free(b);
 }

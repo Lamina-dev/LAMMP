@@ -41,7 +41,7 @@ void test_cbrt_6() {
 
 
 void test_cbrt() {
-    mp_size_t len = 19, ni = 0;
+    mp_size_t len = 23119, ni = 0;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(3 * len, mp_limb_t);
     mp_ptr tp = ALLOC_TYPE(2 * len, mp_limb_t);
@@ -62,17 +62,21 @@ void test_cbrt() {
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << duration2 << "\n";
 
-    std::cout << "len = " << len << "\n";
-    std::cout << "an  = " << an << "\n";
+    if (an != len) {
+        std::cout << "an != bn\n";
+        goto end;
+    }
 
     for (mp_ssize_t i = len - 1; i >= 0; --i) {
         if (a0[i] != a[i]) {
+            std::cout << "i = " << i << "\n";
             std::cout << "a0 = " << std::hex << a0[i - 1] << "\n";
             std::cout << "a  = " << std::hex << a[i - 1] << "\n";
-            break;
+            goto end;
         }
     }
 
+end:
     lmmp_free(a0);
     lmmp_free(a);
     lmmp_free(b);
