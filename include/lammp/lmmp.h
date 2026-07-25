@@ -166,12 +166,13 @@ STATIC_ASSERT(sizeof(void*) == 8, "64-bit architecture required");
     /* GCC */
     #if __GNUC__ >= 13
         /* GCC 13+ */
-        #define LAMMP_ASSUME(expr) __attribute__((assume(expr))) (void)0
+        #define LAMMP_ASSUME(expr) do { __attribute__((assume(expr))); } while(0)
     #else
         /* GCC 13 lower */
         #define LAMMP_ASSUME(expr) do { if (!(expr)) __builtin_unreachable(); } while(0)
     #endif
 #else
+    /* fallback noassume */
     #define LAMMP_ASSUME(expr) ((void)(expr))
 #endif
 
