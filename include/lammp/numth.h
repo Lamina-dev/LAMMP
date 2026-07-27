@@ -749,6 +749,41 @@ LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size
 LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
 
 /**
+ * @brief 计算算术平方根 floor(sqrt(a0+a1*B))
+ * @param a0 低位 limb
+ * @param a1 高位 limb
+ * @warning a1>0
+ * @return floor(sqrt(a0+a1*B))
+ */
+LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_limb_t a0, mp_limb_t a1);
+
+/**
+ * @brief 计算算术平方根 floor(sqrt([numa,na]))
+ * @param dst 结果指针（长度为 2 个limb）
+ * @param numa 被开方数指针
+ * @param na 被开方数的 limb 长度
+ * @warning dst!=NULL, numa!=NULL, 2<na<=4, numa[na-1]!=0, eqsep(dst,numa)
+ * @return floor(sqrt(a0+a1*B))
+ */
+LAMMP_API void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief 大数平方根和取余操作
+ * @note 如果dstr不为NULL: [dsts,nf+na/2+1], [dstr,nf+na/2+1] = sqrtrem([numa,na]*B^(2*nf))
+ *                         也即 [numa,na] × B^(2×nf) = [dsts,nf+na/2+1]^2 + [dstr,nf+na/2+1]
+ *                         且 0 <= [dstr,nf+na/2+1] < 2 * [dsts,nf+na/2+1] + 1
+ *        如果dstr为NULL:   [dsts,nf+na/2+1] = [floor|round](sqrt([numa,na]*B^(2*nf)))
+ *                          [floor|round](x) 等价于 x-[0|1]
+ * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa)
+ * @param dsts 平方根结果输出指针
+ * @param dstr 余数结果输出指针（NULL表示不计算余数）
+ * @param numa 源操作数指针
+ * @param na 操作数的 limb 长度
+ * @param nf 精度因子
+ */
+LAMMP_API mp_size_t lmmp_sqrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
+
+/**
  * @brief 计算算数立方根 floor(cbrt(n))
  * @param n 被开方数
  * @return floor(cbrt(n))
@@ -817,12 +852,15 @@ LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr tp);
 
 /**
- * @brief 计算 [numa, na]*B^ni 的近似立方根
+ * @brief 计算 [numa, na]*B^ni 的近似立方根，[floor|round](cbrt([numa, na]*B^ni))
  * @param dst 目标数组（(na+ni+2)/3+2个limb）
  * @param numa 被开方数指针
  * @param na 被开方数的 limb 长度
  * @param ni 被开方数的偏移量
  * @warning dst!=NULL, numa!=NULL, na>0, numa[na-1]!=0
+ * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
+ *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>=1728会是一个保守的限制，
+ *       numa[na-1]低于此值也可能迭代收敛。
  * @return 返回结果的数组长度
  */
 LAMMP_API mp_size_t lmmp_cbrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);

@@ -916,21 +916,6 @@ LAMMP_API mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcpt
 LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief 大数平方根和取余操作
- * @note 如果dstr不为NULL: [dsts,nf+na/2+1], [dstr,nf+na/2+1] = sqrtrem([numa,na]*B^(2*nf))
- *                         也即 [numa,na] × B^(2×nf) = [dsts,nf+na/2+1]^2 + [dstr,nf+na/2+1]
- *                         且 0 <= [dstr,nf+na/2+1] < 2 * [dsts,nf+na/2+1] + 1
- *        如果dstr为NULL:   [dsts,nf+na/2+1] = [round|floor](sqrt([numa,na]*B^(2*nf)))
- * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa)
- * @param dsts 平方根结果输出指针
- * @param dstr 余数结果输出指针（NULL表示不计算余数）
- * @param numa 源操作数指针
- * @param na 操作数的 limb 长度
- * @param nf 精度因子
- */
-LAMMP_API void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf);
-
-/**
  * @brief 大数加1宏（预期无进位）
  * @param p 指向大数起始位置的指针
  * @note 从最低位开始加1，直到遇到非零值（预期无进位溢出）

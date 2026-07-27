@@ -22,6 +22,8 @@
 
 
 void test_add_nc();
+void test_sqrt_1();
+void test_sqrt_4();
 void test_sqrt();
 int test_pow();
 void test_powmod();
