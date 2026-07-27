@@ -18,17 +18,6 @@
 #include "../../../include/lammp/numth.h"
 
 
-ulong lmmp_sqrt_ulong_(ulong a) {
-    ulong is;
-
-    is = (ulong)sqrt((double)a);
-
-    is -= (is * is > a);
-    if (is == (1ULL << 32))
-        is--;
-    return is;
-}
-
 static inline ulong pow_n(ulong x, ulong n) {
     ulong ret = 1;
     for (ulong i = 0; i < n; ++i) {
