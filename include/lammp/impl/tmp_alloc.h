@@ -66,7 +66,7 @@ static inline void lmmp_temp_heap_free_(lmmp_alloc_marker* pmarker) {
     /*
      *  Free all allocated memory blocks in the linked list pointed to by pmarker->heap_marker.
      */
-    while (pmarker->heap_marker) {
+    while (pmarker->heap_marker != NULL) {
         void* next = *(void**)(pmarker->heap_marker);
         global_heap.free(pmarker->heap_marker);
         pmarker->heap_marker = next;
@@ -149,19 +149,17 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
 // 临时内存释放：释放所有通过TEMP_XALLOC系列函数分配的临时内存
 #define TEMP_FREE                                   \
     do {                                            \
-        if (__lmmp_marker_.heap_marker != NULL)     \
-            lmmp_temp_heap_free_(&__lmmp_marker_);  \
+        lmmp_temp_heap_free_(&__lmmp_marker_);      \
         if (__lmmp_marker_.stack_marker != NULL)    \
             lmmp_temp_stack_free_(&__lmmp_marker_); \
         if (__lmmp_marker_.pool_marker != NULL)     \
             lmmp_temp_pool_free_(&__lmmp_marker_);  \
     } while (0)
-#define TEMP_B_FREE                                 \
-    do {                                            \
-        if (__lmmp_marker_.pool_marker != NULL)     \
-            lmmp_temp_pool_free_(&__lmmp_marker_);  \
-        if (__lmmp_marker_.heap_marker != NULL)     \
-            lmmp_temp_heap_free_(&__lmmp_marker_);  \
+#define TEMP_B_FREE                                \
+    do {                                           \
+        lmmp_temp_heap_free_(&__lmmp_marker_);     \
+        if (__lmmp_marker_.pool_marker != NULL)    \
+            lmmp_temp_pool_free_(&__lmmp_marker_); \
     } while (0)
 #define TEMP_S_FREE                                 \
     do {                                            \
