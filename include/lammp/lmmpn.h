@@ -108,7 +108,7 @@ LAMMP_API mp_limb_t lmmp_mulh_(mp_limb_t a, mp_limb_t b);
  * @param dst 输出结果缓冲区，存储乘积结果，长度为 2
  * @param a 第一个64位无符号整数
  * @param b 第二个64位无符号整数
- * @warning dst 必须指向一个长度为 2 的数组
+ * @warning dst!=NULL
  * @return 无返回值
  */
 LAMMP_API void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr dst);
@@ -120,7 +120,7 @@ LAMMP_API void lmmp_mullh_(mp_limb_t a, mp_limb_t b, mp_ptr dst);
  * @param numb 第二个加数指针
  * @param n limb长度
  * @param c 初始进位值 [0|1]
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
+ * @warning c=[0|1], n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 运算后的最终进位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
@@ -131,7 +131,7 @@ LAMMP_API mp_limb_t lmmp_add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 运算后的最终进位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -143,7 +143,7 @@ LAMMP_API mp_limb_t lmmp_add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_s
  * @param numb 减数指针
  * @param n limb长度
  * @param c 初始借位值 [0|1]
- * @warning c=[0|1], n>0, eqsep(dst,[numa|numb])
+ * @warning c=[0|1], n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 运算后的最终借位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
@@ -154,7 +154,7 @@ LAMMP_API mp_limb_t lmmp_sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n limb长度
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 运算后的最终借位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -166,7 +166,7 @@ LAMMP_API mp_limb_t lmmp_sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_s
  * @param numa 第一个操作数指针（被加数/被减数）
  * @param numb 第二个操作数指针（加数/减数）
  * @param n limb长度
- * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb])
+ * @warning n>0, eqsep(dsta,[numa|numb]), eqsep(dstb,[numa|numb]), dsta!=NULL, dstb!=NULL, numa!=NULL, numb!=NULL
  * @return 组合返回值 cb = 2*c + b (c为加法进位, b为减法借位)
  *         返回值范围: 0(无进位无借位),1(无进位有借位),2(有进位无借位),3(有进位有借位)
  */
@@ -178,7 +178,7 @@ LAMMP_API mp_limb_t lmmp_add_n_sub_n_(mp_ptr dsta, mp_ptr dstb, mp_srcptr numa, 
  * @param numa 第一个加数指针
  * @param numb 第二个加数指针
  * @param n limb长度
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 右移操作产生的进位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -190,7 +190,7 @@ LAMMP_API mp_limb_t lmmp_shr1add_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, 
  * @param numb 第二个加数指针
  * @param n limb长度
  * @param c 初始进位值 [0|1]
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
+ * @warning n>0, c=[0|1], eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 右移操作产生的进位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
@@ -201,7 +201,7 @@ LAMMP_API mp_limb_t lmmp_shr1add_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb,
  * @param numa 被减数指针
  * @param numb 减数指针
  * @param n 操作数的位数（limb数量）
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 右移操作产生的进位值 (0或1)
  */
 LAMMP_API mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -213,31 +213,31 @@ LAMMP_API mp_limb_t lmmp_shr1sub_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, 
  * @param numb 减数指针
  * @param n limb长度
  * @param c 初始借位值 [0|1]
- * @warning n>0, c=[0|1], eqsep(dst,[numa|numb])
+ * @warning n>0, c=[0|1], eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 右移操作产生的进位值 [0|1]
  */
 LAMMP_API mp_limb_t lmmp_shr1sub_nc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t c);
 
 /**
- * @brief 大数右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充0
+ * @brief 右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充0
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shr 右移的位数 (0~63)
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
+ * @warning na>0, 0<=shr<64, eqsep(dst,numa), dst!=NULL, numa!=NULL
  *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
  */
 LAMMP_API mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr);
 
 /**
- * @brief 带进位的大数右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充c的高shr位
+ * @brief 带进位的右移操作 [dst,na] = [numa,na]>>shr，dst的高shr位填充c的高shr位
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shr 右移的位数 (0~63)
  * @param c 进位值（其低(64-shr)位必须为0）
- * @warning na>0, 0<=shr<64, eqsep(dst,numa)
+ * @warning na>0, 0<=shr<64, eqsep(dst,numa), dst!=NULL, numa!=NULL
  *          c的低(64-shr)位必须为0
  *          允许dst指针地址小于numa（即支持原地长移位操作）
  * @return 其最高shr个比特位填充[numa,na]被移出的shr个最低位，其余比特位为0
@@ -245,25 +245,25 @@ LAMMP_API mp_limb_t lmmp_shr_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_
 LAMMP_API mp_limb_t lmmp_shr_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shr, mp_limb_t c);
 
 /**
- * @brief 大数左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充0
+ * @brief 左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充0
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa), dst!=NULL, numa!=NULL
  *          允许dst指针地址大于numa（即支持原地长移位操作）
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
  */
 LAMMP_API mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
 
 /**
- * @brief 带进位的大数左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充c的低shl位
+ * @brief 带进位的左移操作 [dst,na] = [numa,na]<<shl，dst的低shl位填充c的低shl位
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
  * @param c 进位值（其高(64-shl)位必须为0）
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa), dst!=NULL, numa!=NULL
  *          c的高(64-shl)位必须为0
  *          允许dst指针地址大于numa（即支持原地长移位操作）
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
@@ -271,11 +271,11 @@ LAMMP_API mp_limb_t lmmp_shl_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_
 LAMMP_API mp_limb_t lmmp_shl_c_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl, mp_limb_t c);
 
 /**
- * @brief 大数按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
+ * @brief 按位取反操作 [dst,na] = ~[numa,na] (对每个limb执行按位非操作)
  * @param dst 结果输出指针
  * @param numa 源操作数指针
  * @param na limb长度
- * @warning na>0, eqsep(dst,numa)
+ * @warning na>0, eqsep(dst,numa), dst!=NULL, numa!=NULL
  */
 LAMMP_API void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
@@ -285,7 +285,7 @@ LAMMP_API void lmmp_not_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param numa 源操作数指针
  * @param na limb长度
  * @param shl 左移的位数 (0~63)
- * @warning na>0, 0<=shl<64, eqsep(dst,numa)
+ * @warning na>0, 0<=shl<64, eqsep(dst,numa), dst!=NULL, numa!=NULL
  * @return 其最低shl个比特位填充[numa,na]被移出的shl个最高位，其余比特位为0
  */
 LAMMP_API mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t shl);
@@ -296,7 +296,7 @@ LAMMP_API mp_limb_t lmmp_shlnot_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_si
  * @param numa 被加数指针
  * @param numb 加数指针（先左移1位）
  * @param n limb长度
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL
  * @return 运算后的进位值 [0|1|2]
  */
 LAMMP_API mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -307,40 +307,40 @@ LAMMP_API mp_limb_t lmmp_addshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, 
  * @param numa 被减数指针
  * @param numb 减数指针（先左移1位）
  * @param n limb长度
- * @warning n>0, eqsep(dst,[numa|numb])
+ * @warning n>0, eqsep(dst,[numa|numb]), dst!=NULL, numa!=NULL
  * @return 运算后的借位值 [0|1|2]
  */
 LAMMP_API mp_limb_t lmmp_subshl1_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * @brief 大数乘以单limb并累加操作 [numa,n] += [numb,n] * b
+ * @brief 乘以单limb并累加操作 [numa,n] += [numb,n] * b
  * @param numa 被加数指针（结果也存储在此）
  * @param numb 乘数指针
  * @param n limb长度
  * @param b 乘数
- * @warning n>0, eqsep(numa,numb))
+ * @warning n>0, eqsep(numa,numb)), numa!=NULL, numb!=NULL
  * @return 运算后的进位limb值
  */
 LAMMP_API mp_limb_t lmmp_addmul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
- * @brief 大数乘以单limb并累减操作 [numa,n] -= [numb,n] * b
+ * @brief 乘以单limb并累减操作 [numa,n] -= [numb,n] * b
  * @param numa 被减数指针（结果也存储在此）
  * @param numb 乘数指针
  * @param n limb长度
  * @param b 乘数
- * @warning n>0, eqsep(numa,numb))
+ * @warning n>0, eqsep(numa,numb)), numa!=NULL, numb!=NULL
  * @return 运算后的借位limb值
  */
 LAMMP_API mp_limb_t lmmp_submul_1_(mp_ptr numa, mp_srcptr numb, mp_size_t n, mp_limb_t b);
 
 /**
- * @brief 大数乘以单limb操作 [dst,na] = [numa,na] * x
+ * @brief 乘以单limb操作 [dst,na] = [numa,na] * x
  * @param dst 结果输出指针
  * @param numa 被乘数指针
  * @param na 操作数的位数（limb数量）
  * @param x 单个limb乘数
- * @warning na>0, eqsep(dst,numa)
+ * @warning na>0, eqsep(dst,numa), dst!=NULL, numa!=NULL
  *          支持 dst<=numa+1 的内存布局
  * @return 运算后的进位limb值
  */
@@ -351,7 +351,7 @@ LAMMP_API mp_limb_t lmmp_mul_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_lim
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
- * @warning 0<na, sep(dst,numa)
+ * @warning 0<na, sep(dst,numa), dst!=NULL, numa!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_sqr_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
@@ -361,7 +361,7 @@ LAMMP_API void lmmp_sqr_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param dst 输出结果缓冲区，长度至少为 2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的 limb 长度
- * @warning ??<na, sep(dst,numa)
+ * @warning ??<na, sep(dst,numa), dst!=NULL, numa!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
@@ -371,7 +371,7 @@ LAMMP_API void lmmp_sqr_toom2_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的单精度数(limb)长度
- * @warning ??<na, sep(dst,numa)
+ * @warning ??<na, sep(dst,numa), dst!=NULL, numa!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
@@ -381,10 +381,10 @@ LAMMP_API void lmmp_sqr_toom3_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param dst 输出结果缓冲区，长度至少为2*na
  * @param numa 输入操作数，长度为na
  * @param na 输入操作数的单精度数(limb)长度
- * @warning ??<na, sep(dst,numa)
+ * @warning ??<na, sep(dst,numa), dst!=NULL, numa!=NULL
  * @return 无返回值，结果存储在dst中
  */
-LAMMP_API void lmmp_sqr_toom4_(mp_ptr pp, mp_srcptr ap, mp_size_t an);
+LAMMP_API void lmmp_sqr_toom4_(mp_ptr dst, mp_srcptr numa, mp_size_t an);
 
 /**
  * @brief 基础乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -393,7 +393,7 @@ LAMMP_API void lmmp_sqr_toom4_(mp_ptr pp, mp_srcptr ap, mp_size_t an);
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 0<nb<=na, sep(dst,[numa|numb])
+ * @warning 0<nb<=na, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -405,7 +405,7 @@ LAMMP_API void lmmp_mul_basecase_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_s
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 4/5<=nb/na<=1, nb>=5, sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1, nb>=5, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -417,7 +417,7 @@ LAMMP_API void lmmp_mul_toom22_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 5/9<=nb/na<=4/5, nb>=12, sep(dst,[numa|numb])
+ * @warning 5/9<=nb/na<=4/5, nb>=12, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -429,7 +429,7 @@ LAMMP_API void lmmp_mul_toom32_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 4/5<=nb/na<=1, nb>=26, sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1, nb>=26, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -441,7 +441,7 @@ LAMMP_API void lmmp_mul_toom33_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/3<=nb/na<=5/9, nb>=20, sep(dst,[numa|numb])
+ * @warning 1/3<=nb/na<=5/9, nb>=20, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -453,7 +453,7 @@ LAMMP_API void lmmp_mul_toom42_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning na>=3*nb, nb>=20, sep(dst,[numa|numb])
+ * @warning na>=3*nb, nb>=20, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom42_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -465,7 +465,7 @@ LAMMP_API void lmmp_mul_toom42_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t 
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 3/5<=nb/na<=4/5, nb>=??, sep(dst,[numa|numb])
+ * @warning 3/5<=nb/na<=4/5, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom43_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -477,7 +477,7 @@ LAMMP_API void lmmp_mul_toom43_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 4/5<=nb/na<=1, nb>=??, sep(dst,[numa|numb])
+ * @warning 4/5<=nb/na<=1, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom44_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -489,7 +489,7 @@ LAMMP_API void lmmp_mul_toom44_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/3<=nb/na<=9/20, nb>=??, sep(dst,[numa|numb])
+ * @warning 1/3<=nb/na<=9/20, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom52_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -501,7 +501,7 @@ LAMMP_API void lmmp_mul_toom52_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 9/20<=nb/na<=3/5, nb>=??, sep(dst,[numa|numb])
+ * @warning 9/20<=nb/na<=3/5, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom53_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -513,7 +513,7 @@ LAMMP_API void lmmp_mul_toom53_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning 1/5<=nb/na<=1/3, nb>=??, sep(dst,[numa|numb])
+ * @warning 1/5<=nb/na<=1/3, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom62_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -525,7 +525,7 @@ LAMMP_API void lmmp_mul_toom62_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_src
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning na>=5*nb, nb>=??, sep(dst,[numa|numb])
+ * @warning na>=5*nb, nb>=??, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_toom62_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -570,7 +570,7 @@ LAMMP_API void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_s
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning ???<=nb<=na, sep(dst,[numa|numb])
+ * @warning ???<=nb<=na, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -583,22 +583,23 @@ LAMMP_API void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
- * @warning ???<=nb<=na, na>=3*nb, sep(dst,[numa|numb])
+ * @warning ???<=nb<=na, na>=3*nb, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fft_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief 大数平方操作 [dst,2*na] = [numa,na]^2
- * @warning na>0, sep(dst,numa)
+ * @brief 平方操作 [dst,2*na] = [numa,na]^2
  * @param dst 平方结果输出指针（需要2*na的limb长度）
  * @param numa 源操作数指针
  * @param na limb长度
+ * @warning na>0, sep(dst,numa), dst!=NULL, numa!=NULL
+ * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief 等长大数乘法操作 [dst,2*n] = [numa,n] * [numb,n]
+ * @brief 等长乘法操作 [dst,2*n] = [numa,n] * [numb,n]
  * @warning n>0, sep(dst,[numa|numb])
  * @param dst 乘积结果输出指针（需要 2*n 的 limb 长度）
  * @param numa 第一个乘数指针
@@ -608,7 +609,7 @@ LAMMP_API void lmmp_sqr_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 LAMMP_API void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
 
 /**
- * @brief 不等长大数乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
+ * @brief 不等长乘法操作 [dst,na+nb] = [numa,na] * [numb,nb]
  * @warning 0<nb<=na, sep(dst,[numa|numb])
  * @param dst 乘积结果输出指针（需要 na+nb 的 limb 长度）
  * @param numa 第一个乘数指针（较长的操作数）
@@ -619,13 +620,23 @@ LAMMP_API void lmmp_mul_n_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t
 LAMMP_API void lmmp_mul_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
+ * @brief 基础低位乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
+ * @param dst 输出结果缓冲区，长度至少为 n
+ * @param numa 第一个输入操作数，长度为 n
+ * @param numb 第二个输入操作数，长度为 n
+ * @param n limb长度
+ * @warning n>0, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
+ * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
+ */
+LAMMP_API void lmmp_mullo_basecase_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
+
+/**
  * @brief 低位乘法 [dst,n] = [numa,n] * [numb,n] mod B^n
  * @param dst 输出结果缓冲区，长度至少为 n
  * @param numa 第一个输入操作数，长度为 n
  * @param numb 第二个输入操作数，长度为 n
  * @param n limb长度
- * @warning n>0, sep(dst,[numa|numb])
- *          特殊情况：当 n >= MULLO_DC_THRESHOLD 时，eqsep(dst,[numa|numb])是允许的
+ * @warning n>0, sep(dst,[numa|numb]), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
 LAMMP_API void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n);
@@ -637,7 +648,7 @@ LAMMP_API void lmmp_mullo_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t
  * @param numb 第二个输入操作数，长度为 n
  * @param tp 临时缓冲区，长度至少为 2*n
  * @param n limb长度
- * @warning n>0, sep(dst,[numa|numb],tp)
+ * @warning n>0, sep(dst,[numa|numb],tp), dst!=NULL, numa!=NULL, numb!=NULL
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n] * [numb,n] mod B^n
  */
 LAMMP_API void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr tp, mp_size_t n);
@@ -648,7 +659,7 @@ LAMMP_API void lmmp_mullo_dc_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_ptr
  * @param numa 第一个输入操作数，长度为 n
  * @param tp 临时缓冲区，长度至少为 2*n
  * @param n limb长度
- * @warning n>0, sep(dst,numa,tp)
+ * @warning n>0, sep(dst,numa,tp), dst!=NULL, numa!=NULL, tp!=NULL
  * @return 无返回值，结果存储在dst中，[dst,n]=[numa,n]^2 mod B^n
  */
 LAMMP_API void lmmp_sqrlo_dc_(mp_ptr dst, mp_srcptr numa, mp_ptr tp, mp_size_t n);
@@ -826,7 +837,7 @@ INLINE_ mp_size_t lmmp_div_inv_size_(mp_size_t nq, mp_size_t nb) {
 LAMMP_API void lmmp_inv_prediv_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
 /**
- * @brief 大数求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
+ * @brief 求逆操作 [dst,na+nf+1] = (B^(2*(na+nf)) - 1) / ([numa,na]*B^nf) + [0|-1]
  * @param dst 逆元结果输出指针
  * @param numa 源操作数指针
  * @param na 操作数的 limb 长度
@@ -900,7 +911,7 @@ LAMMP_API mp_limb_t lmmp_div_2_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_src
 LAMMP_API mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief 大数除法和取模操作
+ * @brief 除法和取模操作
  * @note 如果dstq不为NULL: [dstq,na-nb+1] = [numa,na] / [numb,nb] (商)
  *       如果dstr不为NULL: [dstr,nb] = [numa,na] mod [numb,nb] (余数)
  * @warning 0<nb<=na, numb[nb-1]!=0, sep(dstq,[numa|numb]), eqsep(dstr,[numa|numb]))
@@ -916,8 +927,8 @@ LAMMP_API mp_limb_t lmmp_div_s_(mp_ptr dstq, mp_ptr numa, mp_size_t na, mp_srcpt
 LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
 
 /**
- * @brief 大数加1宏（预期无进位）
- * @param p 指向大数起始位置的指针
+ * @brief加1宏（预期无进位）
+ * @param p 指针
  * @note 从最低位开始加1，直到遇到非零值（预期无进位溢出）
  */
 #define lmmp_inc(p)                \
@@ -927,8 +938,8 @@ LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na,
     } while (0)
 
 /**
- * @brief 大数加指定值宏（预期无进位）
- * @param p 指向大数起始位置的指针
+ * @brief 加指定值宏（预期无进位）
+ * @param p 指针
  * @param inc 要加的单精度数值
  * @note 先加最低位，若产生进位则逐位加1，直到无进位（预期无溢出）
  */
@@ -943,8 +954,8 @@ LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na,
     } while (0)
 
 /**
- * @brief 大数减1宏（预期无借位）
- * @param p 指向大数起始位置的指针
+ * @brief 减1宏（预期无借位）
+ * @param p 指针
  * @note 从最低位开始减1，直到遇到非零值（预期无借位溢出）
  */
 #define lmmp_dec(p)                \
@@ -954,8 +965,8 @@ LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na,
     } while (0)
 
 /**
- * @brief 大数减指定值宏（预期无借位）
- * @param p 指向大数起始位置的指针
+ * @brief 减指定值宏（预期无借位）
+ * @param p 指针
  * @param dec 要减的单精度数值
  * @note 先减最低位，若产生借位则逐位减1，直到无借位（预期无溢出）
  */
@@ -970,10 +981,10 @@ LAMMP_API void lmmp_div_(mp_ptr dstq, mp_ptr dstr, mp_srcptr numa, mp_size_t na,
     } while (0)
 
 /**
- * @brief 大数比较函数（内联）
- * @param numa 第一个大数，长度为n
- * @param numb 第二个大数，长度为n
- * @param n 大数的单精度数(limb)长度
+ * @brief 比较函数（内联）
+ * @param numa 第一个指针，长度为n
+ * @param numb 第二个指针，长度为n
+ * @param n 比较两数的 limb 长度
  * @return 1(numa>numb) / 0(numa==numb) / -1(numa<numb)
  * @warning n>0, numa!=NULL, numb!=NULL
  * @note 从最高位开始逐位比较，直到找到不同位
@@ -994,9 +1005,9 @@ INLINE_ int lmmp_cmp_(mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
 }
 
 /**
- * @brief 大数判零函数（内联）
- * @param p 指向大数起始位置的指针
- * @param n 大数的单精度数(limb)长度
+ * @brief 判零函数（内联）
+ * @param p 指针
+ * @param n 数的 limb 长度
  * @return 1(全零) / 0(非零)
  * @warning n>0
  * @note 从最高位开始检查，只要有非零位则返回0
@@ -1023,7 +1034,7 @@ INLINE_ int lmmp_zero_q_(mp_srcptr p, mp_size_t n) {
     return 0
 
 /**
- * @brief 大数加法静态内联函数 [dst,na]=[numa,na]+[numb,nb]
+ * @brief 加法静态内联函数 [dst,na]=[numa,na]+[numb,nb]
  * @param dst 输出结果缓冲区，存储numa + numb
  * @param numa 第一个加数，长度为na
  * @param na 第一个加数的 limb 长度
@@ -1037,7 +1048,7 @@ INLINE_ mp_limb_t lmmp_add_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr 
 }
 
 /**
- * @brief 大数减法静态内联函数 [dst,na]=[numa,na]-[numb,nb]
+ * @brief 减法静态内联函数 [dst,na]=[numa,na]-[numb,nb]
  * @param dst 输出结果缓冲区，存储numa - numb
  * @param numa 被减数，长度为na
  * @param na 被减数的 limb 长度
@@ -1077,7 +1088,7 @@ INLINE_ mp_limb_t lmmp_sub_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr 
 #define LMMP_SUBCB_(r, x, y) ((x) < (y))
 
 /**
- * @brief 大数加单精度数静态内联函数 [dst,na]=[numa,na]+x
+ * @brief 加单精度数静态内联函数 [dst,na]=[numa,na]+x
  * @param dst 输出结果缓冲区，存储numa + x
  * @param numa 被加数，长度为na
  * @param na 被加数的 limb 长度
@@ -1088,7 +1099,7 @@ INLINE_ mp_limb_t lmmp_sub_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr 
 INLINE_ mp_limb_t lmmp_add_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x) { LMMP_AORS_1_(+, LMMP_ADDCB_); }
 
 /**
- * @brief 大数减单精度数静态内联函数 [dst,na]=[numa,na]-x
+ * @brief 减单精度数静态内联函数 [dst,na]=[numa,na]-x
  * @param dst 输出结果缓冲区，存储numa - x
  * @param numa 被减数，长度为na
  * @param na 被减数的 limb 长度
@@ -1099,20 +1110,20 @@ INLINE_ mp_limb_t lmmp_add_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_
 INLINE_ mp_limb_t lmmp_sub_1_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_limb_t x) { LMMP_AORS_1_(-, LMMP_SUBCB_); }
 
 /**
- * @brief 计算大数转换为字符串，字符串需要的缓冲区长度
- * @param numa 输入大数，长度为na
- * @param na 大数的 limb 长度
+ * @brief 计算转换为字符串，字符串需要的缓冲区长度
+ * @param numa 输入指针，长度为na
+ * @param na 输入的 limb 长度
  * @param base 目标基数（2~256）
- * @return 大数在指定基数下的位数
  * @warning na>=0, 2<=base<=256
  * @note 将会忽略numa的前导零，
  *       1. if (numa!=NULL) 返回的长度可能会多分配一个字符空间
  *       2. if (numa==NULL) 返回na个limb长度的数的最大可能字符长度（最坏情况）
+ * @return 在指定基数下的位数
  */
 LAMMP_API mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base);
 
 /**
- * @brief 计算字符串转大数所需的 limb 缓冲区长度
+ * @brief 计算字符串转limb数组所需的 limb 缓冲区长度
  * @param src 输入字符串指针
  * @param len 字符串长度
  * @param base 字符串的基数（2~256）
@@ -1125,22 +1136,22 @@ LAMMP_API mp_size_t lmmp_to_str_len_(mp_srcptr numa, mp_size_t na, int base);
 LAMMP_API mp_size_t lmmp_from_str_len_(const mp_byte_t* src, mp_size_t len, int base);
 
 /**
- * @brief 字符串转大数操作 [src,len,base] to [dst,return value,B]
+ * @brief 字符串转limb数组操作 [src,len,base] to [dst,return value,B]
  * @warning len>=0, 2<=base<=256
- * @param dst 大数结果输出指针
+ * @param dst 结果输出指针
  * @param src 字符串源指针
  * @param len 字符串长度
  * @param base 字符串的进制基数
- * @return 转换后的大数 limb 长度
+ * @return 转换后的结果的 limb 长度
  */
 LAMMP_API mp_size_t lmmp_from_str_(mp_ptr dst, const mp_byte_t* src, mp_size_t len, int base);
 
 /**
- * @brief 大数转字符串操作 [numa,na,B] to [dst,return value,base]
+ * @brief limb数组转字符串操作 [numa,na,B] to [dst,return value,base]
  * @warning na>=0, 2<=base<=256
  * @param dst 字符串结果输出指针
- * @param numa 大数源指针
- * @param na 大数的 limb 长度
+ * @param numa 输入指针
+ * @param na 输入的 limb 长度
  * @param base 目标字符串的进制基数
  * @return 转换后的字符串长度
  */
@@ -1148,7 +1159,7 @@ LAMMP_API mp_size_t lmmp_to_str_(mp_byte_t* dst, mp_srcptr numa, mp_size_t na, i
 
 /**
  * @brief 提取高位指定位数，并返回低位bits位数
- * @param num 待提取的大数指针
+ * @param num 待提取的指针
  * @param n num的 limb 长度
  * @param bits 待提取的位数(1-64)
  * @param ext 提取结果输出指针
