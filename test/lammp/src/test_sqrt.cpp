@@ -30,6 +30,7 @@ void test_sqrt_1() {
     for (mp_ssize_t i = 0; i < 1000000; ++i) {
         lmmp_sqrt_2_(b[0], b[1]);
         b[1] *= b[0] + 198218233;
+        b[1] |= 1;
         b[0] += 11122222333;
     }
     auto end1 = std::chrono::high_resolution_clock::now();
@@ -69,12 +70,13 @@ void test_sqrt_4() {
 }
 
 void test_sqrt() {
-    mp_size_t len = 41123, ni = 0;
+    mp_size_t len = 3, ni = 0;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(2 * len, mp_limb_t);
 
     //lmmp_fill(a0, 0, len, LIMB_MAX);
-    len = lmmp_seed_random_(a0, len, 221, 0);
+    len = lmmp_seed_random_(a0, len, 2333222221, 1);
+    a0[len - 1] = 22;
 
     auto start1 = std::chrono::high_resolution_clock::now();
     lmmp_sqr_(b, a0, len);
@@ -89,7 +91,7 @@ void test_sqrt() {
     //mp_size_t bn = 2 * len;
     //lmmp_fill(b, 0, bn, LIMB_MAX);
 
-    mp_size_t an = ni + bn / 2;
+    mp_size_t an = (ni + bn) / 2 + 1;
     mp_ptr a = ALLOC_TYPE(an, mp_limb_t);
 
     auto start2 = std::chrono::high_resolution_clock::now();
@@ -99,7 +101,9 @@ void test_sqrt() {
     std::cout << duration2 << "\n";
 
     if (an != len) {
-        std::cout << "an != bn\n";
+        std::cout << "an != len\n";
+        std::cout << "an = " << an << "\n";
+        std::cout << "len = " << len << "\n";
         goto end;
     }
 
