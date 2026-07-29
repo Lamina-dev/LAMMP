@@ -74,7 +74,7 @@ lin mov r10, rdi                 ; 保存 rdi (dstq) 到 r10，call 会破坏它
     mov r12, r8                  ; r12 = 规整化除数
     mov rx0, r8                  ; 参数：x → rcx/rdi
 
-    ; 栈对齐与影子空间（尽管这不是必须的）
+    ; 栈对齐与影子空间（尽管并未使用）
 win sub rsp, 32
     call lmmp_inv_1_
 win add rsp, 32

@@ -139,22 +139,15 @@ void lmmp_bninv_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp
     lmmp_param_assert(numa[na - 1] > 0);
     TEMP_DECL;
     if (na == 1) {
-        mp_ptr restrict bnp = TALLOC_TYPE(3 + ni, mp_limb_t);
-        lmmp_zero(bnp, 2 + ni);
-        bnp[2 + ni] = 1;
-        /*
-        FIXME: 应该新增一个汇编函数 lmmp_divqxn_1_(), 相当于[numa,na] * B^qxn / x
-        */
-        lmmp_div_1_(dstq, bnp, 3 + ni, numa[0]);
+        lmmp_zero(dstq, 2 + ni);
+        dstq[2 + ni] = 1;
+        lmmp_div_1_(dstq, dstq, 3 + ni, numa[0]);
     } else if (na == 2) {
         mp_size_t bn = 2 * 2 + ni + 1;
         mp_ptr restrict bnp = TALLOC_TYPE(bn, mp_limb_t);
         lmmp_zero(bnp, bn - 1);
         bnp[bn - 1] = 1;
         mp_limb_t d[2] = {numa[0], numa[1]};
-        /*
-        FIXME: 应该新增一个汇编函数 lmmp_divqxn_2_(), 相当于[numa,na] * B^qxn / x
-        */
         lmmp_div_2_(dstq, bnp, bn, d);
     } else if (ni > na) {
         mp_ptr restrict B = TALLOC_TYPE(2 * na + ni + 1, mp_limb_t);
