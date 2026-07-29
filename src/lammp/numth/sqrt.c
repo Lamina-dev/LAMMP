@@ -143,6 +143,7 @@ mp_size_t lmmp_sqrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t n
         mp_ptr restrict rkdiv = TALLOC_TYPE(rkdivn, mp_limb_t);
 
         lmmp_debug_assert(qn <= rkdivn);
+        rkdiv[rkdivn - 1] = 0; // 此时 qn 应该恰好为rkdivn-1，商的结果无法写入到最高位中
 
         lmmp_div_(rkdiv, NULL, Adiv, Adivn, Ahr, rn);
 

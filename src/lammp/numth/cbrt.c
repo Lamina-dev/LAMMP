@@ -333,14 +333,8 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
 
         lmmp_div_1_(dst, rkdiv, rn, 3);
 
-        if (rkdiv[rn - 1] < 3)
-            rn -= dst[rn - 1] == 0 ? 1 : 0;
-        else {
-            lmmp_debug_assert(rkdiv[rn - 1] == 3);
-            rn--;
-            // 此时结果恰好舍入到了1，此时结果应为 B^rn
-            lmmp_fill(dst, 0, rn, LIMB_MAX);
-        }
+        while (dst[rn - 1] == 0) --rn;
+
         TEMP_FREE;
         return rn;
     }

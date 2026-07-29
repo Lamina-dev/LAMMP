@@ -121,7 +121,7 @@ static void lmmp_sqrtapprox_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
             a[3] = (numa[3] << shift) | (numa[2] >> (64 - shift));
             a[2] = (numa[2] << shift) | (numa[1] >> (64 - shift));
             a[1] = (numa[1] << shift) | (numa[0] >> (64 - shift));
-            a[0] <<= shift;
+            a[0] = (numa[0] << shift);
             shift /= 2;
         } else {
             a[3] = numa[3];
