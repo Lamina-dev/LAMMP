@@ -767,7 +767,7 @@ LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_limb_t a0, mp_limb_t a1);
 LAMMP_API void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
- * @brief 计算 [numa, na]*B^ni 的近似平方根，[floor|round](sqrt([numa, na]*B^ni))
+ * @brief 计算 [numa, na]*B^ni 的近似平方根，sqrt([numa, na]*B^ni) + [0|1]
  * @param dst 结果指针（(na+ni)/2+1个limb）
  * @param numa 被开方数指针
  * @param na 被开方数的 limb 长度
@@ -776,8 +776,6 @@ LAMMP_API void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
  *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>=16会是一个保守的限制，
  *       numa[na-1]低于此值也可能迭代收敛。
- * @attention [floor|round](x)的含义为floor(x+epsilon), where 0.5<epsilon<1
- *            也就是说[floor|round](x) = floor(x) + [0|1]
  */
 LAMMP_API mp_size_t lmmp_sqrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
 
@@ -850,8 +848,8 @@ LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr tp);
 
 /**
- * @brief 计算 [numa, na]*B^ni 的近似立方根，[floor|round](cbrt([numa, na]*B^ni))
- * @param dst 结果指针（(na+ni+2)/3+2个limb）
+ * @brief 计算 [numa, na]*B^ni 的近似立方根，cbrt([numa, na]*B^ni) + [0|1]
+ * @param dst 结果指针（(na+ni)/3+2个limb）
  * @param numa 被开方数指针
  * @param na 被开方数的 limb 长度
  * @param ni 被开方数的偏移量
@@ -859,8 +857,6 @@ LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr 
  * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
  *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>=1728会是一个保守的限制，
  *       numa[na-1]低于此值也可能迭代收敛。
- * @attention [floor|round](x)的含义为floor(x+epsilon), where 0.5<epsilon<1
- *            也就是说[floor|round](x) = floor(x) + [0|1]
  * @return 返回结果的数组长度
  */
 LAMMP_API mp_size_t lmmp_cbrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
