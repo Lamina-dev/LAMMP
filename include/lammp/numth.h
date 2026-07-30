@@ -774,7 +774,7 @@ LAMMP_API void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
  * @param ni 精度因子
  * @warning na>0, numa[na-1]!=0, sep(dsts,numa), dst!=NULL, numa!=NULL
  * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
- *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>=16会是一个保守的限制，
+ *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>16会是一个保守的限制，
  *       numa[na-1]低于此值也可能迭代收敛。
  */
 LAMMP_API mp_size_t lmmp_sqrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
@@ -855,7 +855,7 @@ LAMMP_API mp_size_t lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_ptr 
  * @param ni 被开方数的偏移量
  * @warning dst!=NULL, numa!=NULL, na>0, numa[na-1]!=0
  * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
- *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>=1728会是一个保守的限制，
+ *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>1728会是一个保守的限制，
  *       numa[na-1]低于此值也可能迭代收敛。
  * @return 返回结果的数组长度
  */

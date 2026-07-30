@@ -109,7 +109,7 @@ static void lmmp_sqrt_4normalize_(mp_ptr dst, mp_ptr numa) {
  * @return floor(sqrt(a0+a1*B))
  */
 static void lmmp_sqrtapprox_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    lmmp_param_assert(na > 0);
+    lmmp_param_assert(na > 2);
     lmmp_param_assert(numa[na - 1] > 0);
     lmmp_param_assert(dst != NULL && numa != NULL);
     int shift;
@@ -158,7 +158,7 @@ static void lmmp_sqrtapprox_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
 }
 
 void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    lmmp_param_assert(na > 0);
+    lmmp_param_assert(na > 2);
     lmmp_param_assert(numa[na - 1] > 0);
     lmmp_param_assert(dst != NULL && numa != NULL);
 
