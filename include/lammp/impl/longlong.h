@@ -238,6 +238,32 @@ static inline void _umul128to256_(uint64_t a_high, uint64_t a_low, uint64_t b_hi
     rr[3] += carry;
 }
 
+static inline void _usqr128to256_(uint64_t a_high, uint64_t a_low, uint64_t rr[4]) {
+    uint64_t p1_low, p1_high;  // p1 = a_low × a_high
+    _umul64to128_(a_low, a_low, rr, rr + 1);
+    _umul64to128_(a_low, a_high, &p1_low, &p1_high);
+    _umul64to128_(a_high, a_high, rr + 2, rr + 3);
+    /*
+        | res0 | res1 | res2 | res3 |
+        |  p0l |  p0h |      |      |
+               |  p1l |  p1h |      |
+               |  p1l |  p1h |      |
+               |      |  p3l |  p3h |
+    */
+    rr[3] += p1_high >> 63;
+    p1_high = (p1_high << 1) | (p1_low >> 63);
+    p1_low <<= 1;
+    rr[1] += p1_low;
+    uint64_t carry = (rr[1] < p1_low) ? 1 : 0;
+
+    rr[2] += carry;
+    carry = (rr[2] < carry) ? 1 : 0;
+    rr[2] += p1_high;
+    carry += (rr[2] < p1_high) ? 1 : 0;
+
+    rr[3] += carry;
+}
+
 static inline void _umul128to128_(uint64_t a_high, uint64_t a_low, uint64_t b_high, uint64_t b_low, uint64_t rr[2]) {
     _umul64to128_(a_low, b_low, rr, rr + 1);
     rr[1] += a_low * b_high;

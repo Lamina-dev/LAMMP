@@ -124,11 +124,7 @@ void lmmp_mullo_dc_(
     mp_size_t             n
 ) {
     if (n < MULLO_BASECASE_THRESHOLD) {
-        lmmp_mul_1_(dst, numa, n, numb[0]);
-        for (mp_size_t i = 1; i < n; ++i) {
-            lmmp_mul_1_(tp, numa, n - i, numb[i]);
-            lmmp_add_n_(dst + i, dst + i, tp, n - i);
-        }
+        lmmp_mullo_basecase_(dst, numa, numb, n);
         return;
     } else {
         mp_size_t m, t;
@@ -176,11 +172,7 @@ void lmmp_mullo_dc_(
 
 void lmmp_sqrlo_dc_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_ptr restrict tp, mp_size_t n) {
     if (n < MULLO_BASECASE_THRESHOLD) {
-        lmmp_mul_1_(dst, numa, n, numa[0]);
-        for (mp_size_t i = 1; i < n; ++i) {
-            lmmp_mul_1_(tp, numa, n - i, numa[i]);
-            lmmp_add_n_(dst + i, dst + i, tp, n - i);
-        }
+        lmmp_mullo_basecase_(dst, numa, numa, n);
         return;
     } else {
         mp_size_t m, t;

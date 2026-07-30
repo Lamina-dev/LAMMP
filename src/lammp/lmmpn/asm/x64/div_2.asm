@@ -100,7 +100,7 @@ lin mov r10, rdi                       ; 保护 rdi（Linux 下 call 会破坏�
     push r9
     mov rx0, r9                        ; 参数：除数高位
 
-    ; 栈对齐与影子空间（尽管这不是必须的）
+    ; 栈对齐与影子空间（尽管并未使用）
 win sub rsp, 32
     call lmmp_inv_1_
 win add rsp, 32

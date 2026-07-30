@@ -22,7 +22,7 @@
 /*
 funtion: bninv
 output:
-    dstq := B^(2*(na+ni)) // ([numa,na] * B^ni)
+    dstq := B^(2*(na+ni)) / ([numa,na] * B^ni)
 
            numa
              |
@@ -79,8 +79,8 @@ output:
 
 /**
  * @brief 牛顿法求精确逆元（至多产生1的误差）
- * @note dstq := B^(2*(na+ni)) // ([numa,na] * B^ni) + [0|1]
- * @warning eqsep(dstq,numa), dstq!=NULL, numa!=NULL, na>=3, MSB(numa)=1
+ * @note dstq := B^(2*(na+ni)) / ([numa,na] * B^ni) + [0|1]
+ * @warning sep(dstq,numa), dstq!=NULL, numa!=NULL, na>=3, MSB(numa)=1
  */
 static void lmmp_bninv_appr_newton_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp_size_t ni) {
     lmmp_param_assert(na >= 3);
@@ -139,10 +139,9 @@ void lmmp_bninv_(mp_ptr restrict dstq, mp_srcptr restrict numa, mp_size_t na, mp
     lmmp_param_assert(numa[na - 1] > 0);
     TEMP_DECL;
     if (na == 1) {
-        mp_ptr restrict bnp = TALLOC_TYPE(3 + ni, mp_limb_t);
-        lmmp_zero(bnp, 2 + ni);
-        bnp[2 + ni] = 1;
-        lmmp_div_1_(dstq, bnp, 3 + ni, numa[0]);
+        lmmp_zero(dstq, 2 + ni);
+        dstq[2 + ni] = 1;
+        lmmp_div_1_(dstq, dstq, 3 + ni, numa[0]);
     } else if (na == 2) {
         mp_size_t bn = 2 * 2 + ni + 1;
         mp_ptr restrict bnp = TALLOC_TYPE(bn, mp_limb_t);

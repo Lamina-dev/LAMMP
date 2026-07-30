@@ -61,9 +61,8 @@ mp_limb_t lmmp_mul_1_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na
             cl = (lpl0 < cl) + hpl0;
             dst[i] = lpl0;
         }
-    }
-
-    else {
+    } else {
+        /* seq(dst,numa) */
         for (; i + 4 <= na; i += 4) {
             ul0 = numa[i + 0];
             ul1 = numa[i + 1];
@@ -160,6 +159,7 @@ mp_limb_t lmmp_addmul_1_(mp_ptr restrict numa, mp_srcptr restrict numb, mp_size_
             numa[i] = lpl0;
         }
     } else {
+        /* seq(numa,numb) */
         for (; i + 4 <= n; i += 4) {
             ul0 = numb[i + 0];
             ul1 = numb[i + 1];
@@ -269,6 +269,7 @@ mp_limb_t lmmp_submul_1_(mp_ptr restrict numa, mp_srcptr restrict numb, mp_size_
             numa[i] = lpl0;
         }
     } else {
+        /* seq(numa,numb) */
         for (; i + 4 <= n; i += 4) {
             ul0 = numb[i + 0];
             ul1 = numb[i + 1];
@@ -320,4 +321,25 @@ mp_limb_t lmmp_submul_1_(mp_ptr restrict numa, mp_srcptr restrict numb, mp_size_
         }
     }
     return cl;
+}
+
+void lmmp_mullo_basecase_(mp_ptr restrict dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n) {
+    mp_limb_t h;
+    h = numa[0] * numb[n - 1];
+    if (n != 1) {
+        mp_size_t i;
+        mp_limb_t b0;
+
+        b0 = *numb++;
+        h += numa[n - 1] * b0 + lmmp_mul_1_(dst, numa, n - 1, b0);
+        dst++;
+
+        for (i = n - 2; i > 0; i--) {
+            b0 = *numb++;
+            h += numa[i] * b0 + lmmp_addmul_1_(dst, numa, i, b0);
+            dst++;
+        }
+    }
+
+    dst[0] = h;
 }

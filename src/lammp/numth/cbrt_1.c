@@ -77,11 +77,10 @@ ulong lmmp_cbrt_chebyshev_(ulong n) {
     dec = alias.double_val;
 
     rem = expo % 3;
-    expo /= 3;                  /* cube root of 2^expo */
-    factor = factor_table[rem]; /* select factor */
+    expo /= 3;
+    factor = factor_table[rem];
 
     /* Calculating cube root of dec using chebyshev approximation polynomial */
-    /* Evaluating approx polynomial at (dec) by Estrin's scheme */
 
     dec2 = dec * dec;
     root = (coeff[table_index][0] + coeff[table_index][1] * dec);

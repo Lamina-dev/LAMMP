@@ -41,12 +41,14 @@ void test_cbrt_6() {
 
 
 void test_cbrt() {
-    mp_size_t len = 23119, ni = 0;
+    mp_size_t len = 20, ni = 0;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(3 * len, mp_limb_t);
     mp_ptr tp = ALLOC_TYPE(2 * len, mp_limb_t);
 
+    //lmmp_fill(a0, 0, len, LIMB_MAX);
     len = lmmp_random_(a0, len);
+    a0[len - 1] = 13333000;
 
     auto start1 = std::chrono::high_resolution_clock::now();
     mp_size_t bn = lmmp_cube_(b, a0, len, tp);
@@ -54,7 +56,9 @@ void test_cbrt() {
     auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
     std::cout << duration1 << "\n";
 
-    mp_ptr a = ALLOC_TYPE((bn + ni + 2) / 3 + 2, mp_limb_t);
+    lmmp_inc(b);
+    //lmmp_fill(b, 0, bn, LIMB_MAX);
+    mp_ptr a = ALLOC_TYPE((bn + ni) / 3 + 2, mp_limb_t);
 
     auto start2 = std::chrono::high_resolution_clock::now();
     mp_size_t an = lmmp_cbrtapprox_(a, b, bn, ni);
@@ -63,7 +67,9 @@ void test_cbrt() {
     std::cout << duration2 << "\n";
 
     if (an != len) {
-        std::cout << "an != bn\n";
+        std::cout << "an != len\n";
+        std::cout << "an = " << an << "\n";
+        std::cout << "len = " << len << "\n";
         goto end;
     }
 

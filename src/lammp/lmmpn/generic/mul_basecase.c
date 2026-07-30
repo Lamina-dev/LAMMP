@@ -208,6 +208,7 @@ void lmmp_sqr_basecase_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t 
         nb--;
     }
 }
+
 void lmmp_mul_basecase_(
     mp_ptr    restrict  dst,
     mp_srcptr restrict numa,

@@ -224,7 +224,8 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
         mp_size_t nhi = (n - 1) / 2;
         mp_size_t nlo = nhi - (nhi % 3);
         nhi = n - nlo;
-        /*
+        /**
+         * 假设计算 n 次根式：A^(1/n)
          * 设 beta = B^b，alpha = Ah^(1/n)，rho = A^(1/n)。
          * 已知 tk 满足 floor(Ah^(1/n)) - 1 <= tk <= floor(Ah^(1/n))，
          * 因此 xk = tk * beta 与真实根 rho 的误差满足（最坏情况）：
@@ -253,13 +254,12 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
          *
          * 对于立方根，即有：m_min = 1728
          * 
-         * 注：在实践观察中，即使 m 取 1，随机输入的情况几乎不可能出现误差超过1的情况。
-         *     可能存在精心构造的输入，使得迭代不收敛。
+         * 注：1728 是一个保守的上界，不满足此上界并不意味着迭代一定不收敛。
          */
-
+#define MMIN 1728
 #if LAMMP_DEBUG_ASSERT_CHECK == 1
         if (nhi == nlo + 1) {
-            lmmp_debug_assert(numa[na - 1] > 1728);
+            lmmp_debug_assert(numa[na - 1] > MMIN);
         }
 #endif
         nlo /= 3;
@@ -286,7 +286,7 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
             //  __________________ n ___________________
             //  |__________ na __________|_____ ni ____|
             //  |xxxxxxxxxxxxxxxxxxxxxxxx|0000000000000|
-            //  |________ nhi _____|_nlo___|__ 2*nlo __|
+            //  |_______ nhi _____|__ nlo _|__ 2*nlo __|
 
             rn = lmmp_cbrtapprox_(Ahr, numa + na - nhi, nhi, 0);
 
@@ -298,7 +298,7 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
             //  __________________ n ___________________
             //  |__________ na __________|_____ ni ____|
             //  |xxxxxxxxxxxxxxxxxxxxxxxx|0000000000000|
-            //  |_____ nhi ____|__nlo__|____ 2*nlo ____|
+            //  |_____ nhi ___|__ nlo__|____ 2*nlo ____|
 
             rn = lmmp_cbrtapprox_(Ahr, numa + na - nhi, nhi, 0);
 
@@ -333,11 +333,10 @@ mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size
 
         lmmp_div_1_(dst, rkdiv, rn, 3);
 
-        rn -= dst[rn - 1] == 0 ? 1 : 0;
+        while (dst[rn - 1] == 0) --rn;
 
         TEMP_FREE;
         return rn;
     }
 #undef Ahr
 }
-
