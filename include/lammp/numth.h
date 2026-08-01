@@ -749,35 +749,45 @@ LAMMP_API mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* nn, mp_srcptr dp, mp_size
 LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
 
 /**
- * @brief 计算算术平方根 floor(sqrt(a0+a1*B))
- * @param a0 低位 limb
- * @param a1 高位 limb
- * @warning a1>0
- * @return floor(sqrt(a0+a1*B))
+ * @brief 计算算术平方根 floor(sqrt(x))
+ * @param dsts 结果指针（1个limb）
+ * @param x 被开方数
+ * @warning x>=B/4, dsts!=NULL
+ * @note [dsts,1]=floor(sqrt(x)), return remainder
+ * @return 余数
  */
-LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_limb_t a0, mp_limb_t a1);
+LAMMP_API mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x);
 
 /**
- * @brief 计算算术平方根 floor(sqrt([numa,na]))
- * @param dst 结果指针（长度为 2 个limb）
+ * @brief 计算算术平方根 floor(sqrt([numa,2]))
+ * @param dsts 结果指针（1个limb）
+ * @param dstr 余数指针（1个limb）
  * @param numa 被开方数指针
- * @param na 被开方数的 limb 长度
- * @warning dst!=NULL, numa!=NULL, 2<na<=4, numa[na-1]!=0, eqsep(dst,numa)
+ * @warning numa[1]>=B/4, dsts!=NULL, dstr!=NULL, numa!=NULL
+ * @note [dsts,1]=floor(sqrt([numa,2])), rh:[dstr,1]=remainder, return rh
+ * @return 余数的高位
  */
-LAMMP_API void lmmp_sqrt_4_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
+LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa);
 
 /**
- * @brief 计算 [numa, na]*B^ni 的近似平方根，sqrt([numa, na]*B^ni) + [0|1]
- * @param dst 结果指针（(na+ni)/2+1个limb）
- * @param numa 被开方数指针
- * @param na 被开方数的 limb 长度
- * @param ni 精度因子
- * @warning na>0, numa[na-1]!=0, sep(dsts,numa), dst!=NULL, numa!=NULL
- * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
- *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>16会是一个保守的限制，
- *       numa[na-1]低于此值也可能迭代收敛。
+ * @brief 计算 [numa,na] * B^(2*nf) 的平方根和余数
+ * @param dsts 平方根结果输出指针
+ * @param dstr 余数结果输出指针（NULL表示不计算余数）
+ * @param numa 源操作数指针
+ * @param na 操作数的 limb 长度
+ * @param nf 精度因子
+ * @note if (dstr != NULL) {
+ *           [dsts,nf+na/2+1], [dstr,nf+na/2+1] = sqrtrem([numa,na]*B^(2*nf))
+ *       } else {
+ *           if (nf == 0) {
+ *               [dsts,na/2+1] = floor(sqrt([numa,na]))
+ *           } else {
+ *               [dsts,nf+na/2+1] = [round|floor](sqrt([numa,na]*B^(2*nf)))
+ *           }
+ *       }
+ * @warning na>0, numa[na-1]!=0, eqsep(dsts,numa), eqsep(dstr,numa)
  */
-LAMMP_API mp_size_t lmmp_sqrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
+LAMMP_API void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
  * @brief 计算算数立方根 floor(cbrt(n))
