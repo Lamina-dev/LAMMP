@@ -41,7 +41,7 @@ void test_cbrt_6() {
 
 
 void test_cbrt() {
-    mp_size_t len = 20, ni = 0;
+    mp_size_t len = 100000 / 3, ni = 0;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(3 * len, mp_limb_t);
     mp_ptr tp = ALLOC_TYPE(2 * len, mp_limb_t);

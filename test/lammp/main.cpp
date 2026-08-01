@@ -21,7 +21,7 @@
 
 int main() {
     lmmp_global_init();
-    test_sqrt();
+    test_cbrt();
     lmmp_global_deinit();
     return 0;
 }
