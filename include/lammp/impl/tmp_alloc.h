@@ -128,9 +128,17 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
 }
 
 // 临时内存标记声明：用于跟踪临时内存分配
-#define TEMP_DECL lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}
-#define TEMP_B_DECL TEMP_DECL
-#define TEMP_S_DECL TEMP_DECL
+#define TEMP_DECL                                          \
+    lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
+    int __lmmp_temp_decl_guard_ = 0 // if TEMP_DECL without TEMP_FREE, compiler will warn this
+
+#define TEMP_B_DECL                                        \
+    lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
+    int __lmmp_temp_b_decl_guard_ = 0 // if TEMP_B_DECL without TEMP_B_FREE, compiler will warn this
+
+#define TEMP_S_DECL                                        \
+    lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
+    int __lmmp_temp_s_decl_guard_ = 0 // if TEMP_S_DECL without TEMP_S_FREE, compiler will warn this
 
 #define TEMP_SALLOC_THRESHOLD 0x7f00  // 小内存分配阈值（小于等于该值的内存分配在栈上）
 
@@ -149,6 +157,7 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
 // 临时内存释放：释放所有通过TEMP_XALLOC系列函数分配的临时内存
 #define TEMP_FREE                                   \
     do {                                            \
+        (void)__lmmp_temp_decl_guard_;              \
         lmmp_temp_heap_free_(&__lmmp_marker_);      \
         if (__lmmp_marker_.stack_marker != NULL)    \
             lmmp_temp_stack_free_(&__lmmp_marker_); \
@@ -157,12 +166,14 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
     } while (0)
 #define TEMP_B_FREE                                \
     do {                                           \
+        (void)__lmmp_temp_b_decl_guard_;           \
         lmmp_temp_heap_free_(&__lmmp_marker_);     \
         if (__lmmp_marker_.pool_marker != NULL)    \
             lmmp_temp_pool_free_(&__lmmp_marker_); \
     } while (0)
 #define TEMP_S_FREE                                 \
     do {                                            \
+        (void)__lmmp_temp_s_decl_guard_;            \
         if (__lmmp_marker_.stack_marker != NULL)    \
             lmmp_temp_stack_free_(&__lmmp_marker_); \
     } while (0)
