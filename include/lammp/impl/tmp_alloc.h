@@ -130,15 +130,15 @@ static inline void lmmp_temp_pool_free_(lmmp_alloc_marker* pmarker) {
 // 临时内存标记声明：用于跟踪临时内存分配
 #define TEMP_DECL                                          \
     lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
-    int __lmmp_temp_decl_guard_ // if TEMP_DECL without TEMP_FREE, compiler will warning this
+    int __lmmp_temp_decl_guard_ = 0 // if TEMP_DECL without TEMP_FREE, compiler will warn this
 
 #define TEMP_B_DECL                                        \
     lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
-    int __lmmp_temp_b_decl_guard_  // if TEMP_DECL without TEMP_FREE, compiler will warning this
+    int __lmmp_temp_b_decl_guard_ = 0 // if TEMP_B_DECL without TEMP_B_FREE, compiler will warn this
 
 #define TEMP_S_DECL                                        \
     lmmp_alloc_marker __lmmp_marker_ = {NULL, NULL, NULL}; \
-    int __lmmp_temp_s_decl_guard_  // if TEMP_DECL without TEMP_FREE, compiler will warning this
+    int __lmmp_temp_s_decl_guard_ = 0 // if TEMP_S_DECL without TEMP_S_FREE, compiler will warn this
 
 #define TEMP_SALLOC_THRESHOLD 0x7f00  // 小内存分配阈值（小于等于该值的内存分配在栈上）
 
