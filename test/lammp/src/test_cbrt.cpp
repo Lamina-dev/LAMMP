@@ -39,22 +39,31 @@ void test_cbrt_6() {
     std::cout << "a  = " << std::hex << a[1] << " " << a[0] << "\n";
 }
 
+static void lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t len) {
+    mp_ptr tp = ALLOC_TYPE(2 * len, mp_limb_t);
+
+    lmmp_sqr_(tp, numa, len);
+    lmmp_mul_(dst, tp, 2 * len, numa, len);
+    lmmp_free(tp);
+}
 
 void test_cbrt() {
     mp_size_t len = 100000 / 3, ni = 0;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(3 * len, mp_limb_t);
-    mp_ptr tp = ALLOC_TYPE(2 * len, mp_limb_t);
 
     //lmmp_fill(a0, 0, len, LIMB_MAX);
     len = lmmp_random_(a0, len);
     a0[len - 1] = 13333000;
 
     auto start1 = std::chrono::high_resolution_clock::now();
-    mp_size_t bn = lmmp_cube_(b, a0, len, tp);
+    lmmp_cube_(b, a0, len);
     auto end1 = std::chrono::high_resolution_clock::now();
     auto duration1 = std::chrono::duration_cast<std::chrono::microseconds>(end1 - start1).count();
     std::cout << duration1 << "\n";
+
+    mp_size_t bn = 3 * len;
+    while (b[bn - 1] == 0) --bn;
 
     lmmp_inc(b);
     //lmmp_fill(b, 0, bn, LIMB_MAX);
@@ -86,5 +95,4 @@ end:
     lmmp_free(a0);
     lmmp_free(a);
     lmmp_free(b);
-    lmmp_free(tp);
 }
