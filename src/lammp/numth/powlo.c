@@ -81,8 +81,8 @@ static inline mp_bitcnt_t count_bits(mp_srcptr p, mp_size_t n) {
 }
 
 void lmmp_powlo_(mp_ptr restrict dst, mp_srcptr restrict bp, mp_size_t n, mp_srcptr restrict ep, mp_size_t en) {
-    lmmp_param_assert(en > 1 || (en == 1 && ep[0] > 1));
-    lmmp_param_assert(n > 0);
+    lmmp_param_assert(ep[en - 1] > 0);
+    lmmp_param_assert(n > 0 && en > 0);
     lmmp_param_assert(dst != NULL && bp != NULL && ep != NULL);
     mp_bitcnt_t cnt, ebi;
     unsigned windowsize, this_windowsize;

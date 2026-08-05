@@ -907,15 +907,13 @@ LAMMP_API bool lmmp_perfsqr_filter_(mp_srcptr p, mp_size_t n);
 LAMMP_API bool lmmp_perfsqr_(mp_srcptr p, mp_size_t n);
 
 /**
- * @brief 幂模运算 [dst,n] = [bp,n]^[ep,en] mod B^n 
- * @param dst 结果指针
+ * @brief 计算 [bp,n]^[ep,en] mod B^n，并将结果写入 [dst,n]
+ * @param dst 结果指针（长度为 n 个limb）
  * @param bp 底数指针
  * @param n 底数的 limb 长度
  * @param ep 指数指针
  * @param en 指数的 limb 长度
- * @warning dst!=NULL, bp!=NULL, ep!=NULL, [ep,en]>1, n>0, sep(dst,[bp|ep])
- * @return false 意味着必定为非完全平方数，所有完全平方数和部分非完全平方数会返回 true
- * @note 此过滤器主要针对随机输入情况，对于大概率是完全平方数的输入，可以无需此函数。
+ * @warning dst!=NULL, bp!=NULL, ep!=NULL, en>0, n>0, ep[n-1]>0, sep(dst,[bp|ep])
  */
 LAMMP_API void lmmp_powlo_(mp_ptr dst, mp_srcptr bp, mp_size_t n, mp_srcptr ep, mp_size_t en);
 
