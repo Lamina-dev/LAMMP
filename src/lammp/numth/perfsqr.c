@@ -13,7 +13,9 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
+ #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/numth.h"
+#include "../../../include/lammp/lmmpn.h"
 
 
 #define MASK48 (0xFFFFFFFFFFFF)
@@ -170,6 +172,7 @@ static inline bool is_perfsqr_p256(uchar r) {
 }
 
 bool lmmp_perfsqr_filter_1_(mp_limb_t p) {
+    lmmp_param_assert(p > 0);
     mp_limb_t a = p % 256;
     if (!is_perfsqr_p256(a)) return false;
     p = p % MASK48;
@@ -180,6 +183,8 @@ bool lmmp_perfsqr_filter_1_(mp_limb_t p) {
 
 bool lmmp_perfsqr_filter_(mp_srcptr p, mp_size_t n) {
     lmmp_param_assert(n > 0 && p != NULL);
+    lmmp_param_assert(p[n - 1] > 0);
+    if (n == 1) return lmmp_perfsqr_filter_1_(p[0]);
     mp_limb_t a = p[0] % 256;
     if (!is_perfsqr_p256(a))
         return false;
@@ -187,4 +192,21 @@ bool lmmp_perfsqr_filter_(mp_srcptr p, mp_size_t n) {
     return is_perfsqr_p9(r % 9) && is_perfsqr_p5(r % 5) && is_perfsqr_p7(r % 7) && is_perfsqr_p13(r % 13) &&
            is_perfsqr_p17(r % 17) && is_perfsqr_p97(r % 97) && is_perfsqr_p241(r % 241) &&
            is_perfsqr_p257(r % 257) && is_perfsqr_p673(r % 673);
+}
+
+bool lmmp_perfsqr_(mp_srcptr p, mp_size_t n) {
+    lmmp_param_assert(n > 0 && p != NULL);
+    lmmp_param_assert(p[n - 1] > 0);
+    bool filter, ret;
+
+    filter = lmmp_perfsqr_filter_(p, n);
+    if (filter == false) return false;
+
+    TEMP_DECL;
+    mp_ptr restrict tp = TALLOC_TYPE(n + 2, mp_limb_t);
+    mp_ptr restrict dstr = tp + n / 2 + 1;
+    lmmp_sqrt_(tp, dstr, p, n, 0);
+    ret = lmmp_zero_q_(dstr, n / 2 + 1);
+    TEMP_FREE;
+    return ret;
 }
