@@ -52,6 +52,10 @@ endif()
 add_library(LammpCore SHARED ${LAMMP_CORE_SRCS})
 add_library(Lammp::Core ALIAS LammpCore)
 
+if(TARGET LammpCore AND UNIX AND NOT APPLE)
+    target_link_options(LammpCore PRIVATE -Wl,-Bsymbolic-functions)
+endif()
+
 if(TARGET_SYSTEM STREQUAL "WIN")
     target_compile_definitions(LammpCore PRIVATE LAMMP_CORE_EXPORTS)
 endif()
