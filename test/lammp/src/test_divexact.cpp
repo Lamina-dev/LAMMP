@@ -116,7 +116,7 @@ void test_divexact_basecase() {
 }
 
 void test_divexact() {
-    mp_size_t bn = 17131;
+    mp_size_t bn = 1711;
     mp_size_t n = 16220;
     mp_ptr b = ALLOC_TYPE(bn, mp_limb_t);
     lmmp_seed_random_(b, bn, 19123311, 1);
@@ -138,7 +138,7 @@ void test_divexact() {
 
     mp_ptr p2 = (mp_ptr)lmmp_alloc((p1n - bn + 1) * sizeof(mp_limb_t));
     auto start = std::chrono::high_resolution_clock::now();
-    lmmp_divexact_divide_(p2, p1, p1n, b, bn);
+    lmmp_div_(p2, NULL, p1, p1n, b, bn);
     auto end = std::chrono::high_resolution_clock::now();
     std::cout << "Time taken: " << std::chrono::duration_cast<std::chrono::microseconds>(end - start).count() << " us"
               << std::endl;
