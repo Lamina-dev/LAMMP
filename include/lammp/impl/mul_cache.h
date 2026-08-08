@@ -123,6 +123,7 @@ void lmmp_mul_mersenne_cache_(mp_ptr dst, mp_srcptr numa, fft_gr_cache* ctx);
  * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
  *        第二个操作数将被缓存
  * @param dst 输出结果缓冲区，长度至少为 na+nb
+ * @param hn 模运算的阶数参数，hn = lmmp_fft_next_size_((na + nb + 1) >> 1)
  * @param numa 第一个输入操作数，长度为 na
  * @param na 第一个操作数的 limb 长度
  * @param numb 第二个输入操作数，长度为 nb

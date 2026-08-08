@@ -276,8 +276,6 @@ void lmmp_mul_fermat_cache_init_(
     fft_gr_cache* ctx
 ) {
     lmmp_param_assert(na > 0 && nb > 0);
-    lmmp_param_assert(na >= nb);
-    lmmp_param_assert(na + nb > rn);
     lmmp_param_assert(dst != NULL && numa != NULL && numb != NULL);
     lmmp_param_assert(ctx != NULL);
     ctx->na = na;
@@ -411,8 +409,6 @@ void lmmp_mul_mersenne_cache_init_(
     fft_gr_cache* ctx
 ) {
     lmmp_param_assert(na > 0 && nb > 0);
-    lmmp_param_assert(na >= nb);
-    lmmp_param_assert(na + nb > rn);
     lmmp_param_assert(dst != NULL && numa != NULL && numb != NULL);
     lmmp_param_assert(ctx != NULL);
     ctx->na = na;
