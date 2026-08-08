@@ -22,37 +22,16 @@
 void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp_ptr scratch) {
     lmmp_param_assert(n > 0);
     mp_size_t hn = lmmp_fft_next_size_((n + n + 1) >> 1);
-    lmmp_assert(n + n > hn);
+    lmmp_debug_assert(n <= hn);
     mp_ptr tp = ALLOC_TYPE(hn + 1, mp_limb_t);
 
-    mp_srcptr amodm = numa;
-    mp_size_t nam = n;
-    if (n > hn) {
-        /*
-          Z = B^hb - 1
-          amodm = a mod Z
-         */
-        if (lmmp_add_(scratch, numa, hn, numa + hn, n - hn))
-            lmmp_inc(scratch);
-        amodm = scratch;
-        nam = hn;
+    if (numa == numb) {
+        lmmp_sqr_mersenne_(scratch, hn, numa, n);
+        lmmp_sqr_fermat_(tp, hn, numa, n);
+    } else {
+        lmmp_mul_mersenne_(scratch, hn, numa, n, numb, n);
+        lmmp_mul_fermat_(tp, hn, numa, n, numb, n);
     }
-    lmmp_mul_mersenne_(scratch, hn, amodm, nam, numb, n);
-
-    mp_srcptr amodp = numa;
-    mp_size_t nap = n;
-    if (n > hn) {
-        /*
-          Z = B^hp - 1
-          amodp = a mod Z
-         */
-        tp[hn] = 0;
-        if (lmmp_sub_(tp, numa, hn, numa + hn, n - hn))
-            lmmp_inc(tp);
-        amodp = tp;
-        nap = hn + 1;
-    }
-    lmmp_mul_fermat_(tp, hn, amodp, nap, numb, n);
 
     mp_limb_t cy = lmmp_shr1add_nc_(scratch, scratch, tp, hn, tp[hn]);
     cy <<= LIMB_BITS - 1;
