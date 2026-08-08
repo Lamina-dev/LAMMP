@@ -93,7 +93,7 @@ void lmmp_mullo_fft_(mp_ptr dst, mp_srcptr numa, mp_srcptr numb, mp_size_t n, mp
 */
 
 #define MUL_TOOM66_THRESHOLD MUL_FFT_THRESHOLD
-#define MUL_TOOM88_THRESHOLD 5621
+#define MUL_TOOM88_THRESHOLD 2921
 
 void lmmp_mullo_dc_(
     mp_ptr    restrict  dst, 
