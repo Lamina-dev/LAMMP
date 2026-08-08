@@ -27,6 +27,7 @@ default rel
   %define rx1 rdx
   %define rx2 r8
   %define rx3 r9
+  %define PLT
 %else
   %define win ;
   %define lin
@@ -34,6 +35,7 @@ default rel
   %define rx1 rsi
   %define rx2 rdx
   %define rx3 rcx
+  %define PLT wrt ..plt
 %endif
 
 EXTERN lmmp_inv_1_
@@ -76,7 +78,7 @@ lin mov r10, rdi                 ; 保存 rdi (dstq) 到 r10，call 会破坏它
 
     ; 栈对齐与影子空间（尽管并未使用）
 win sub rsp, 32
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 win add rsp, 32
 
 lin mov rdi, r10                 ; 恢复 rdi
@@ -142,7 +144,7 @@ win pop rdi
     mov r8, r9
     ; 入口 rsp 仅含返回地址（8 字节，未对齐），需 40 字节调整
     sub rsp, 40
-    call lmmp_mod_1_
+    call lmmp_mod_1_ PLT
     add rsp, 40
 %else
     ; Linux 入口 rsp 未对齐，映射参数并调整栈
@@ -150,7 +152,7 @@ win pop rdi
     mov rsi, rdx
     mov rdx, rcx
     sub rsp, 8
-    call lmmp_mod_1_
+    call lmmp_mod_1_ PLT
     add rsp, 8
 %endif
     ret
@@ -181,7 +183,7 @@ lin mov r10, rdi
     ; 已 push 2 个寄存器，rsp ≡ 8，对齐需 8
     sub rsp, 8
 %endif
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 %ifdef LAMMP_ASM_WIN
     add rsp, 40
 %else

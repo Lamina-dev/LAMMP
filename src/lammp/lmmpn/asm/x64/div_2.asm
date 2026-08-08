@@ -28,6 +28,7 @@ default rel
   %define rx1 rdx
   %define rx2 r8
   %define rx3 r9
+  %define PLT
 %else
   %define win ;
   %define lin
@@ -35,6 +36,7 @@ default rel
   %define rx1 rsi
   %define rx2 rdx
   %define rx3 rcx
+  %define PLT wrt ..plt
 %endif
 
 EXTERN lmmp_inv_1_
@@ -102,7 +104,7 @@ lin mov r10, rdi                       ; 保护 rdi（Linux 下 call 会破坏�
 
     ; 栈对齐与影子空间（尽管并未使用）
 win sub rsp, 32
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 win add rsp, 32
 
 lin mov rdi, r10                       ; 恢复 rdi
@@ -210,14 +212,14 @@ win pop rdi
     mov rdx, r8                        ; na   -> rdx
     mov r8, r9                         ; numb -> r8
     sub rsp, 40                        ; 入口 rsp 偏移 8，需 40 调整
-    call lmmp_mod_2_
+    call lmmp_mod_2_ PLT
     add rsp, 40
 %else
     mov rdi, rsi                       ; numa -> rdi
     mov rsi, rdx                       ; na   -> rsi
     mov rdx, rcx                       ; numb -> rdx
     sub rsp, 8
-    call lmmp_mod_2_
+    call lmmp_mod_2_ PLT
     add rsp, 8
 %endif
     ret
@@ -249,7 +251,7 @@ lin mov r10, rdi                       ; 保存 rdi
 %else
     sub rsp, 8
 %endif
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 %ifdef LAMMP_ASM_WIN
     add rsp, 40
 %else

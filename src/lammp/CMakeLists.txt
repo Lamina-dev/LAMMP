@@ -62,7 +62,7 @@ set_target_properties(LammpCore PROPERTIES
     SOVERSION 1
     PDB_OUTPUT_DIRECTORY "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
 )
-
+target_link_libraries(LammpCore PRIVATE m)
 target_compile_definitions(LammpCore PRIVATE
     LAMMP_VERSION_STR="${LAMMPCORE_VERSION}"
     LAMMP_BUILD_TYPE_STR="${CMAKE_BUILD_TYPE}"

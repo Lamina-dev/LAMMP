@@ -104,8 +104,8 @@ function(lammp_target_setup target)
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
             target_compile_options(${target} PRIVATE
-                $<$<COMPILE_LANGUAGE:C>: -mbmi2>
-                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2>
+                $<$<COMPILE_LANGUAGE:C>: -mbmi2 -fno-plt>
+                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2 -fno-plt>
             )
         elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
             target_compile_options(${target} PRIVATE
