@@ -26,6 +26,7 @@ default rel
   %define rx1 rdx
   %define rx2 r8
   %define rx3 r9
+  %define PLT
 %else
   %define win ;
   %define lin
@@ -33,6 +34,7 @@ default rel
   %define rx1 rsi
   %define rx2 rdx
   %define rx3 rcx
+  %define PLT wrt ..plt
 %endif
 
 EXTERN lmmp_inv_1_
@@ -106,7 +108,7 @@ win push rsi
     ; 栈对齐与影子空间
     ; 当前已 push 8+3=11 个寄存器，rsp ≡ 0 mod 16
 win sub rsp, 32
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 win add rsp, 32
 
     pop r9
