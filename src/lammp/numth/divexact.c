@@ -14,11 +14,13 @@
  */
 
 #include "../../../include/lammp/impl/inlines.h"
+#include "../../../include/lammp/impl/longlong.h"
+#include "../../../include/lammp/impl/mul_cache.h"
 #include "../../../include/lammp/impl/mparam.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 #include "../../../include/lammp/numth.h"
-#include "../../../include/lammp/impl/longlong.h"
+
 
 
 void lmmp_divexact_1_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_limb_t d, mp_limb_t dinv) {
@@ -117,6 +119,7 @@ static inline void lmmp_mullo_n_(
     }
 }
 
+#if 0
 /**
  * @brief 已知乘积的低位，计算乘积的高位
  * @param dst 乘积的高位，长度为 n
@@ -156,6 +159,7 @@ static inline void lmmp_mulhi_n_(
         }
     }
 }
+#endif // 0
 
 void lmmp_divexact_unbalanced_(
     mp_ptr              dst,
@@ -171,6 +175,9 @@ void lmmp_divexact_unbalanced_(
     lmmp_param_assert((dp[0] & 1) != 0);
 
     TEMP_DECL;
+    fft_gr_cache mersenne_ctx;
+    fft_cache fft_ctx;
+    int mersenne_flag = 0, fft_flag = 0;
     mp_ptr restrict tp = TALLOC_TYPE(4 * dn, mp_limb_t);
     if (dinv == NULL) {
         dinv = TALLOC_TYPE(dn, mp_limb_t);
@@ -188,14 +195,46 @@ void lmmp_divexact_unbalanced_(
         for (; i < qn - dn; i += dn) {
             lmmp_sub_n_(l, np + i, c, dn);
             ca = lmmp_cmp_(l, np + i, dn) == 1 ? 1 : 0;
-            /*
-            FIXME: 这里的循环中，第二个乘数dinv以及dp，始终保持不变
-                   在拥有可以惰性初始化的FFT算法的情况下，可以节省numa的正变换
-                   在循环的情况下，这将会有可观的性能提升
-            */
-            lmmp_mullo_n_(dst + i, l, dinv, dn, scratch);
-            lmmp_mulhi_n_(scratch + dn, l, dst + i, dp, dn, scratch);
-            //lmmp_mul_n_(scratch, dst + i, dp, dn);
+
+            // lmmp_mullo_n_(dst + i, l, dinv, dn, scratch);
+            if (dn < MULLO_DC_THRESHOLD)
+                lmmp_mullo_dc_(dst + i, l, dinv, scratch, dn);
+            else {
+                if (fft_flag == 0) {
+                    mp_size_t hn = lmmp_fft_next_size_((dn * 2 + 1) >> 1);
+                    lmmp_mul_fft_cache_init_(scratch, hn, l, dn, dinv, dn, &fft_ctx);
+                    fft_flag = 1;
+                } else {
+                    lmmp_mul_fft_cache_(scratch, l, &fft_ctx);
+                }
+                lmmp_copy(dst + i, scratch, dn);
+            }
+
+            // lmmp_mulhi_n_(scratch + dn, l, dst + i, dp, dn, scratch);
+            if (dn < MULHI_MERSENNE_THRESHOLD) {
+                lmmp_mul_n_(scratch, dst + i, dp, dn);
+            } else {
+                mp_limb_t cy;
+                mp_size_t m = lmmp_fft_next_size_((dn * 2 + 1) >> 1);
+                if (mersenne_flag == 0) {
+                    lmmp_mul_mersenne_cache_init_(scratch, m, dst + i, dn, dp, dn, &mersenne_ctx);
+                    mersenne_flag = 1;
+                } else {
+                    lmmp_mul_mersenne_cache_(scratch, dst + i, &mersenne_ctx);
+                }
+                cy = lmmp_sub_(scratch, scratch, m, l, dn);
+                if (cy != 0)
+                    lmmp_dec(scratch);
+                if (m == dn) {
+                    lmmp_copy(scratch + dn, scratch, dn);
+                } else {
+                    mp_size_t fn = m - dn;
+                    mp_size_t sn = dn - fn;
+                    //lmmp_copy(scratch + dn, scratch + dn, fn);
+                    lmmp_copy(scratch + dn + fn, scratch, sn);
+                }
+            }
+
             if (ca) {
                 lmmp_add_1_(c, scratch + dn, dn, 1);
             } else {
@@ -205,6 +244,12 @@ void lmmp_divexact_unbalanced_(
     }
     lmmp_sub_n_(l, np + i, c, dn);
     lmmp_mullo_n_(dst + i, l, dinv, qn - i, scratch);
+
+    if (mersenne_flag == 1)
+        lmmp_fft_gr_cache_free_(&mersenne_ctx);
+    if (fft_flag == 1)
+        lmmp_fft_cache_free_(&fft_ctx);
+
     TEMP_FREE;
 #undef c
 #undef l

@@ -513,6 +513,7 @@ LAMMP_API mp_size_t lmmp_fft_next_size_(mp_size_t n);
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
  * @warning eqsep(dst,[numa|numb]), 0<=[numa,na]<2*B^rn, 0<=[numb,nb]<2*B^rn, rn = lmmp_fft_next_size_((na+nb+1)>>1)
+ * @note 如果[numa,na]==[numb,nb]，请使用lmmp_sqr_fermat_函数，此函数不会检查操作数是否一致并跳转到lmmp_sqr_fermat_函数
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
@@ -526,9 +527,32 @@ LAMMP_API void lmmp_mul_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_siz
  * @param numb 第二个输入操作数，长度为 nb
  * @param nb 第二个操作数的 limb 长度
  * @warning eqsep(dst,[numa|numb]), 0<=[numa,na]<B^rn, 0<=[numb,nb]<B^rn, rn = lmmp_fft_next_size_((na+nb+1)>>1)
- * @return 无返回值，结果存储在dst中，
+ * @note 如果[numa,na]==[numb,nb]，请使用lmmp_sqr_mersenne_函数，此函数不会检查操作数是否一致并跳转到lmmp_sqr_mersenne_函数
+ * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief 费马数模平方 [dst,rn+1]=[numa,na]^2 mod B^rn+1
+ * @param dst 输出结果缓冲区，长度至少为 rn+1
+ * @param rn 模运算的阶数参数，rn = lmmp_fft_next_size_((2*na + 1) >> 1)
+ * @param numa 操作数，长度为 na
+ * @param na 操作数的 limb 长度
+ * @warning eqsep(dst,numa), 0<=[numa,na]<2*B^rn, rn = lmmp_fft_next_size_((2*na+1)>>1)
+ * @return 无返回值，结果存储在dst中
+ */
+LAMMP_API void lmmp_sqr_fermat_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief 梅森数模平方 [dst,rn] = [numa,na]^2 mod B^rn-1
+ * @param dst 输出结果缓冲区，长度至少为 rn
+ * @param rn 模运算的阶数参数，rn = lmmp_fft_next_size_((2*na + 1) >> 1)
+ * @param numa 输入操作数，长度为 na
+ * @param na 操作数的 limb 长度
+ * @warning eqsep(dst,numa), 0<=[numa,na]<B^rn, rn = lmmp_fft_next_size_((2*na+1)>>1)
+ * @return 无返回值，结果存储在dst中
+ */
+LAMMP_API void lmmp_sqr_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_size_t na);
 
 /**
  * @brief FFT乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -541,6 +565,16 @@ LAMMP_API void lmmp_mul_mersenne_(mp_ptr dst, mp_size_t rn, mp_srcptr numa, mp_s
  * @return 无返回值，结果存储在dst中
  */
 LAMMP_API void lmmp_mul_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_srcptr numb, mp_size_t nb);
+
+/**
+ * @brief FFT平方运算 [dst,2*na] = [numa,na]^2
+ * @param dst 输出结果缓冲区，长度至少为 2*na
+ * @param numa 输入操作数指针，长度为 na
+ * @param na 输入操作数的 limb 长度
+ * @warning ???<=na, sep(dst,numa), dst!=NULL, numa!=NULL
+ * @return 无返回值，结果存储在dst中
+ */
+LAMMP_API void lmmp_sqr_fft_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 
 /**
  * @brief FFT不平衡乘法运算 [dst,na+nb] = [numa,na] * [numb,nb]
@@ -558,8 +592,8 @@ LAMMP_API void lmmp_mul_fft_unbalance_(mp_ptr dst, mp_srcptr numa, mp_size_t na,
 /**
  * @brief 平方操作 [dst,2*na] = [numa,na]^2
  * @param dst 平方结果输出指针（需要2*na的limb长度）
- * @param numa 源操作数指针
- * @param na limb长度
+ * @param numa 输入操作数指针
+ * @param na 输入的 limb 长度
  * @warning na>0, sep(dst,numa), dst!=NULL, numa!=NULL
  * @return 无返回值，结果存储在dst中
  */
