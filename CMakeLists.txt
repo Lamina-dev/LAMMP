@@ -18,7 +18,17 @@ project(LAMMP LANGUAGES C CXX)
 # ==============================================================================
 # 1. 可配置选项
 # ==============================================================================
-option(USE_ASM "Enable x64 assembly optimization (require NASM)" ON)
+set(LAMMP_X86_64 FALSE)
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64)$")
+    set(LAMMP_X86_64 TRUE)
+endif()
+
+set(LAMMP_DEFAULT_USE_ASM OFF)
+if(LAMMP_X86_64 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(LAMMP_DEFAULT_USE_ASM ON)
+endif()
+
+option(USE_ASM "Enable x64 assembly optimization (require NASM)" ${LAMMP_DEFAULT_USE_ASM})
 
 # 目标系统：自动识别，也可手动指定 WIN | LIN
 set(TARGET_SYSTEM "AUTO" CACHE STRING "Target system: AUTO | WIN | LIN")
@@ -47,6 +57,11 @@ message(STATUS "Target system: ${TARGET_SYSTEM_UPPER}")
 # ==============================================================================
 # 3. 汇编支持
 # ==============================================================================
+if(USE_ASM AND NOT LAMMP_X86_64)
+    message(STATUS "ASM support requested on non-x86_64 architecture; falling back to generic C implementation")
+    set(USE_ASM OFF CACHE BOOL "Enable x64 assembly optimization (require NASM)" FORCE)
+endif()
+
 if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
     find_program(NASM_EXECUTABLE nasm
         PATHS
@@ -154,7 +169,7 @@ function(lammp_target_setup target)
     else()
         target_compile_options(${target} PRIVATE
             $<$<COMPILE_LANGUAGE:C>:
-                -Wall -Wextra -Wpedantic -m64
+                -Wall -Wextra -Wpedantic
                 $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
@@ -162,7 +177,7 @@ function(lammp_target_setup target)
                 $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
             >
             $<$<COMPILE_LANGUAGE:CXX>:
-                -Wall -Wextra -Wpedantic -m64
+                -Wall -Wextra -Wpedantic
                 $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
                 $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
                 $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
