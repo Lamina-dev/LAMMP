@@ -104,8 +104,8 @@ function(lammp_target_setup target)
 
         if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
             target_compile_options(${target} PRIVATE
-                $<$<COMPILE_LANGUAGE:C>: -mbmi2 -fno-plt>
-                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2 -fno-plt>
+                $<$<COMPILE_LANGUAGE:C>: -mbmi2>
+                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2>
             )
         elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
             target_compile_options(${target} PRIVATE
@@ -119,6 +119,10 @@ function(lammp_target_setup target)
         target_compile_definitions(${target} PRIVATE LAMMP_WINDOWS)
     elseif(TARGET_SYSTEM STREQUAL "LIN")
         target_compile_definitions(${target} PRIVATE LAMMP_LINUX)
+        target_compile_options(${target} PRIVATE
+                $<$<COMPILE_LANGUAGE:C>: -fno-plt>
+                $<$<COMPILE_LANGUAGE:CXX>: -fno-plt>
+            )
     endif()
 
     if(MSVC)
