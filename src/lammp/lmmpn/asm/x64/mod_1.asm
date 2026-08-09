@@ -26,6 +26,7 @@ default rel
   %define rx1 rdx
   %define rx2 r8
   %define rx3 r9
+  %define PLT
 %else
   %define win ;
   %define lin
@@ -33,6 +34,7 @@ default rel
   %define rx1 rsi
   %define rx2 rdx
   %define rx3 rcx
+  %define PLT wrt ..plt
 %endif
 
 EXTERN lmmp_inv_1_
@@ -81,7 +83,7 @@ lmmp_mod_1_:
     ; 已 push 3 个寄存器，rsp 已对齐
     sub rsp, 8
 %endif
-    call lmmp_inv_1_
+    call lmmp_inv_1_ PLT
 %ifdef LAMMP_ASM_WIN
     add rsp, 40
 %else

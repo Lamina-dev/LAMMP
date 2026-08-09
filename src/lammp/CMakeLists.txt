@@ -52,6 +52,10 @@ endif()
 add_library(LammpCore SHARED ${LAMMP_CORE_SRCS})
 add_library(Lammp::Core ALIAS LammpCore)
 
+if(TARGET LammpCore AND UNIX AND NOT APPLE)
+    target_link_options(LammpCore PRIVATE -Wl,-Bsymbolic-functions)
+endif()
+
 if(TARGET_SYSTEM STREQUAL "WIN")
     target_compile_definitions(LammpCore PRIVATE LAMMP_CORE_EXPORTS)
 endif()
@@ -67,7 +71,9 @@ target_compile_definitions(LammpCore PRIVATE
     LAMMP_VERSION_STR="${LAMMPCORE_VERSION}"
     LAMMP_BUILD_TYPE_STR="${CMAKE_BUILD_TYPE}"
 )
-
+if (TARGET_SYSTEM STREQUAL "LIN")
+    target_link_libraries(LammpCore PRIVATE m)
+endif ()
 lammp_target_setup(LammpCore)
 
 message(STATUS "LammpCore: configured successfully (shared library)")
