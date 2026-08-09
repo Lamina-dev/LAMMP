@@ -82,7 +82,7 @@ mp_size_t lmmp_fft_next_size_(mp_size_t n) {
 void* lmmp_fft_memstack_(fft_memstack* ms, mp_size_t size) {
     if (size) {
         if (++ms->tempdepth > ms->maxdepth) {
-            lmmp_debug_assert(ms->maxdepth < FFT_MEMSTACK_DEPTH);
+            lmmp_debug_assert(ms->maxdepth + 1 < FFT_MEMSTACK_DEPTH);
             ms->mem[++ms->maxdepth] = lmmp_alloc(size);
             ms->memsize[ms->maxdepth] = size;
         }
