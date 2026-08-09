@@ -42,7 +42,7 @@ lmmp_div_3_2_:
 %else
     ; Linux
     mov r15, rdi        ; R15 = numa
-    mov rsi, rsi        ; RSI = numb
+   ;mov rsi, rsi        ; RSI = numb
     mov rax, rdx        ; RAX = inv21
 %endif
 
