@@ -74,7 +74,7 @@ mp_limb_t lmmp_div_mulinv_(
     int mersenne_flag = 0;
     fft_cache fft_ctx;
     int fft_flag = 0;
-    int small_flag = 1;
+    int small_flag = 0;
 
     while (nq) {
         if (nq < ni) {
