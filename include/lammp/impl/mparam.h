@@ -56,7 +56,7 @@
 // 低位乘法阈值：低于此规模使用朴素乘法
 #define MULLO_BASECASE_THRESHOLD 20
 // 低位除法阈值：低于此规模使用不平衡分治乘法
-#define MULLO_DC_THRESHOLD 11238
+#define MULLO_DC_THRESHOLD 3521
 
 // 精确逆元阈值：高于此规模使用牛顿迭代法
 #define BNINV_NEWTON_THRESHOLD 20

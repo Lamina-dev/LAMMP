@@ -15,6 +15,7 @@
 
 #include "../../../include/lammp/impl/inlines.h"
 #include "../../../include/lammp/impl/mparam.h"
+#include "../../../include/lammp/impl/mul_cache.h"
 #include "../../../include/lammp/impl/tmp_alloc.h"
 #include "../../../include/lammp/lmmpn.h"
 
@@ -68,10 +69,18 @@ mp_limb_t lmmp_div_mulinv_(
     if (qh) {
         lmmp_sub_n_(numa, numa, numb, nb);
 	}
+
+    fft_gr_cache mersenne_ctx;
+    int mersenne_flag = 0;
+    fft_cache fft_ctx;
+    int fft_flag = 0;
+    int small_flag = 0;
+
     while (nq) {
         if (nq < ni) {
             invappr += ni - nq;
             ni = nq;
+            small_flag = 1;
         }
         numa -= ni;
         dstq -= ni;
@@ -80,7 +89,17 @@ mp_limb_t lmmp_div_mulinv_(
         mp_size_t mn, wn;
         mp_limb_t cy;
 
-        lmmp_mul_n_(tp, numa + nb, invappr, ni);
+        if (small_flag == 1 || ni < MUL_FFT_THRESHOLD)
+            lmmp_mul_n_(tp, numa + nb, invappr, ni);
+        else {
+            if (fft_flag == 0) {
+                mp_size_t hn = lmmp_fft_next_size_((2 * ni + 1) / 2);
+                lmmp_mul_fft_cache_init_(tp, hn, numa + nb, ni, invappr, ni, &fft_ctx);
+                fft_flag = 1;
+            } else {
+                lmmp_mul_fft_cache_(tp, numa + nb, &fft_ctx);
+            }
+        }
         cy = lmmp_add_n_(dstq, tp + ni, numa + nb, ni);
         lmmp_assert(cy == 0);
 
@@ -92,7 +111,16 @@ mp_limb_t lmmp_div_mulinv_(
 
             // x=b*q
             // tp=x mod 2^mn-1
-            lmmp_mul_mersenne_(tp, mn, numb, nb, dstq, ni);
+            if (small_flag == 1)
+                lmmp_mul_mersenne_(tp, mn, dstq, ni, numb, nb);
+            else {
+                if (mersenne_flag == 0) {
+                    lmmp_mul_mersenne_cache_init_(tp, mn, dstq, ni, numb, nb, &mersenne_ctx);
+                    mersenne_flag = 1;
+                } else {
+                    lmmp_mul_mersenne_cache_(tp, dstq, &mersenne_ctx);
+                }
+            }            
 
             // tp-=ah:0 mod B^mn-1, if result=0, represent it as B^mn-1
             cy = lmmp_sub_nc_(tp, tp, numa + mn, wn, 1);
@@ -122,6 +150,11 @@ mp_limb_t lmmp_div_mulinv_(
             cy = lmmp_sub_n_(numa, numa, numb, nb);
         }
     }
+
+    if (mersenne_flag == 1)
+        lmmp_fft_gr_cache_free_(&mersenne_ctx);
+    if (fft_flag == 1)
+        lmmp_fft_cache_free_(&fft_ctx);
     TEMP_FREE;
     return qh;
 }

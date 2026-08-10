@@ -154,7 +154,7 @@ static inline void __lmmp_sqr_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_
     else if (na < MUL_FFT_THRESHOLD)
         lmmp_sqr_toom4_(dst, numa, na);
     else
-        lmmp_mul_fft_(dst, numa, na, numa, na);
+        lmmp_sqr_fft_(dst, numa, na);
 }
 
 #define lmmp_leading_zeros_ __lmmp_leading_zeros_
