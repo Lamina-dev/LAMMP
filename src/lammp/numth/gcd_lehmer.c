@@ -22,7 +22,7 @@ typedef struct {
     slong m21, m22;
 } mp_gcd_lehmer_t;
 
-#define LEHMER_MIN_V 0x100000000ull
+#define LEHMER_MIN_V 0x100000000ll
 #define LEHMER_EXACT_BITS 63
 
 static void lmmp_gcd_lehmer_step_(slong u, slong v, mp_gcd_lehmer_t* gcd) {
@@ -42,7 +42,7 @@ static void lmmp_gcd_lehmer_step_(slong u, slong v, mp_gcd_lehmer_t* gcd) {
 
         u = v;
         v = t;
-        
+
         t = A - q * C;
         A = C;
         C = t;
@@ -60,7 +60,7 @@ static void lmmp_gcd_lehmer_step_(slong u, slong v, mp_gcd_lehmer_t* gcd) {
 #undef D
 }
 
-static void lmmp_lehmer_extract_(mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn, slong* a, slong* b) {
+static void lmmp_lehmer_extract_(mp_srcptr up, mp_size_t un, mp_srcptr vp, mp_size_t vn, slong* restrict a, slong* restrict b) {
     lmmp_param_assert(un > 1 && vn > 1);
     lmmp_param_assert(un >= vn);
     lmmp_param_assert(up != NULL && vp != NULL);
@@ -102,7 +102,7 @@ typedef struct {
  * @warning [a,an] > [b,bn]
  * @note 不保证返回结果 [a,an] > [b,bn]
  * @return a和b是否有一个为0
- */ 
+ */
 static bool lmmp_lehmer_mul_(mp_ptr a, mp_size_t* an, mp_ptr b, mp_size_t* bn, mp_gcd_lehmer_t* M, lehmer_stack_t* ms) {
 #define A (M->m11)
 #define B (M->m12)
@@ -115,9 +115,7 @@ static bool lmmp_lehmer_mul_(mp_ptr a, mp_size_t* an, mp_ptr b, mp_size_t* bn, m
                \ 1 -q / \ b /            */
         lmmp_debug_assert(B == 1 && C == 1 && D < 0);
         mp_limb_t c = lmmp_mul_1_(ms->tp, b, bn, -D);
-        if (c == 0)
-            ;
-        else {
+        if (c != 0) {
             ++bn;
             (ms->tp)[bn - 1] = c;
         }
@@ -127,7 +125,7 @@ static bool lmmp_lehmer_mul_(mp_ptr a, mp_size_t* an, mp_ptr b, mp_size_t* bn, m
             int cmp = lmmp_cmp_(a, b, an);
             if (cmp >= 0) 
                 lmmp_sub_(a, a, an, b, bn);
-            else 
+            else
                 lmmp_sub_(a, b, bn, a, an);
         } else {
             lmmp_sub_(a, b, bn, a, an);
