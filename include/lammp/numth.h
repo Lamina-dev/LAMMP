@@ -786,7 +786,7 @@ LAMMP_API void lmmp_sqrt_divide_(mp_ptr dst, mp_ptr numa, mp_size_t ns, mp_ptr t
  * @param ns dsts数组的 limb 长度为 ns+1
  * @param numa 输入数组
  * @param na numa数组的 limb 长度
- * @warning ns>=3, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL
+ * @warning ns>=3, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL, sep(dstis,tp)
  * @note [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
  */
 LAMMP_API void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na);

@@ -143,7 +143,7 @@ void lmmp_sqrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, 
 #undef Alr2
 }
 
-void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
+void lmmp_invsqrt_newton_(mp_ptr restrict dstis, mp_size_t ns, mp_srcptr restrict numa, mp_size_t na) {
     lmmp_param_assert(ns >= 3);
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa != NULL && dstis != NULL);
@@ -162,22 +162,23 @@ void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t 
 
     // nr=2
     // i2=floor((B^5-1)/(1+floor(sqrt(x*B^4))))
-    mp_limb_t numa2[6], sval[3];
+    mp_limb_t numa2[6], sval[3], tp[4];
     lmmp_zero(numa2, 4);
     numa2[5] = numa[-1];
     if (na > 1)
         numa2[4] = numa[-2];
     else
         numa2[4] = 0;
-    mp_limb_t tp[4];
+
     lmmp_sqrt_divide_(sval, numa2, 3, tp, 0);
     lmmp_inc(sval);
+
     for (mp_size_t i = 0; i < 5; ++i) numa2[i] = LIMB_MAX;
     dstis[0] = lmmp_div_s_(dstis - 2, numa2, 5, sval, 3);
 
     TEMP_DECL;
     mp_limb_t alloc_size = na + 2 * ns + 6;
-    mp_ptr xp = TALLOC_TYPE(alloc_size, mp_limb_t);
+    mp_ptr restrict xp = TALLOC_TYPE(alloc_size, mp_limb_t);
     do {
         na = *--sizp;
 
@@ -202,7 +203,7 @@ void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t 
             nsqr = 2 * nr + 1;
         } else {
             cmod = 1;
-            lmmp_mul_mersenne_(xp, mn, dstis - nr, nr + 1, dstis - nr, nr + 1);
+            lmmp_sqr_mersenne_(xp, mn, dstis - nr, nr + 1);
             nsqr = mn;
         }
 
@@ -289,7 +290,7 @@ void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf) 
 
     lmmp_invsqrt_newton_(tp, ns, numa2, na);
 
-    mp_ptr msqr = TALLOC_TYPE(na + ns + 1, mp_limb_t);
+    mp_ptr restrict msqr = TALLOC_TYPE(na + ns + 1, mp_limb_t);
 
     if (ns + 1 > na)
         lmmp_mul_(msqr, tp, ns + 1, numa2, na);
@@ -331,7 +332,7 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
         dsts[0] = srt;
         if (dstr)
             dstr[0] = high - srt * srt;
-    } else if (!dstr && nf >= 10 * na + SQRT_NEWTON_THRESHOLD) {
+    } else if (!dstr && nf >= 10 * na + SQRT_INVNEWTON_THRESHOLD) {
         lmmp_sqrt_newton_(dsts, numa, na, nf);
     } else {
         TEMP_DECL;
