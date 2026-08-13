@@ -30,15 +30,6 @@ static inline void lmmp_cube_3_(mp_ptr restrict dst, mp_limb_t a) {
     dst[2] = t[1] + (dst[1] < t[0] ? 1 : 0);
 }
 
-static inline mp_size_t lmmp_cube_6_(mp_ptr restrict dst, mp_srcptr restrict numa) {
-    mp_limb_t t[4];
-    lmmp_sqr_basecase_(t, numa, 2);
-    lmmp_mul_basecase_(dst, t, 4, numa, 2);
-    mp_size_t n = 6;
-    while (dst[n - 1] == 0) --n;
-    return n;
-}
-
 mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
     lmmp_param_assert(a1 > 0);
     mp_limb_t x[2];
@@ -97,235 +88,178 @@ mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
         return r;
 }
 
-void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    lmmp_param_assert(na > 3 && na <= 6);
-    lmmp_param_assert(dst != NULL && numa != NULL);
-    lmmp_param_assert(numa[na - 1] != 0);
-    /* extract the first 129 bits */
-    int bits = lmmp_limb_bits_(numa[na - 1]);
-    mp_bitcnt_t n = bits - 1;
-    mp_limb_t high, low;
-    if (bits == 1) {
-        high = numa[na - 2];
-        low = numa[na - 3];
-    } else {
-        bits--;
-        high = (numa[na - 1] << (64 - bits)) | (numa[na - 2] >> bits);
-        low = (numa[na - 2] << (64 - bits)) | (numa[na - 3] >> bits);
-    }
+/*
+        A     = Ah * B^(3*lo) + Al
 
-    n += LIMB_BITS * (na - 1);
-    mp_limb_t x[3] = {0, 0, n};
+        Ahr   = floor(Ah^(1/3))
+        rk    = Ah - Ahr^3
+        x_k   = Ahr * B^lo
 
-    log2_fixed_128(x, high, low);
-    mp_limb_t r = lmmp_div_1_(x, x, 3, 3);
-    if (2 * r >= 3) // round
-       lmmp_inc(x);
+        x_k+1 = (2*x_k + A / x_k^2 ) / 3
+              = x_k + (A / x_k^2 - x_k) / 3
+              = x_k + (A - x_k^3) / 3 * x_k^2
+              = Ahr * B^lo + (rk * B^(3*lo) + Al) / 3 * x_k^2
+              = Ahr * B^lo + Alr
 
-    n = x[2];
-    high = x[1];
-    low = x[0];
+        let  Alr = (rk * B^(3*lo) + Al) / 3 * x_k^2, R = (rk * B^(3*lo) + Al) mod 3 * x_k^2
+        such that  (rk * B^(3*lo) + Al) = Alr * 3 * x_k^2 + R
+                                          ┌───────────────────────────────────────────────────────────────────────┐
+                                        = |Alr * 3 * Ahr^2*B^(2*lo) + R = R_correct + (Alr-1) * 3 * Ahr^2*B^(2*lo)|
+                                          └───────────────────────────────────────────────────────────────┬───────┘
+        r_k+1 = A - x_k+1^3                                                                               |
+              = Ah*B^(3*lo) + Al - Ahr^3*B^(3*lo) - 3*Alr*Ahr^2*B^(2*lo) - 3*Ahr*Alr^2*B^lo - Alr^3       |
+              = r_k * B^(3*lo) + Al - 3*Alr*Ahr^2*B^(2*lo) - 3*Ahr*Alr^2*B^lo - Alr^3                     |
+              = R - 3*Ahr*Alr^2*B^lo - Alr^3                                                              |
+                                                                                                          |
+        Alr is either correct or 1 too big,                                                               |
+                                                       ┌────────────────────────────────────────────────┐ |
+        r_k+1 = R - 3*Ahr*(Alr-1)^2*B^lo - (Alr-1)^3 + | 3*Alr*Ahr^2*B^(2*lo) - 3*(Alr-1)*Ahr^2*B^(2*lo)├─┘
+              = R - 3*Ahr*Alr^2*B^lo - Alr^3           └────────────────────────────────────────────────┘
+(adjust)      + 3*Ahr^2*B^(2*lo) + 6*Ahr*Alr*B^lo - 3*Ahr*B^lo + 3*Alr^2 - 3*Alr + 1
+*/
 
-    exp2_fixed_128(x, high, low);
+// 此阈值是为了保证 cbrt(A)^2 >= B^2/2
+// 实际值大约 0x5A827999FCEF3242
+#define CBRT_MIN (0x6000000000000000ull)
 
-    lmmp_debug_assert(n >= 64 && n <= 128);
-    if (n == 64) {
-        dst[0] = x[1];
-        dst[1] = 1;
-    } else if (n < 128) {
-        n -= 64;
-        mp_limb_t t = 1ULL << n;
-        dst[1] = (x[1] >> (64 - n)) | t;
-        dst[0] = (x[1] << n) | (x[0] >> (64 - n));
-    } else {
-        dst[1] = LIMB_MAX;
-        dst[0] = LIMB_MAX;
-    }
-}
-
-void lmmp_cbrt_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na) {
-    mp_limb_t ret[2];
-    lmmp_cbrtapprox_6_(ret, numa, na);
-
-    if (ret[1] == LIMB_MAX && ret[0] == LIMB_MAX) {
-        dst[0] = LIMB_MAX;
-        dst[1] = LIMB_MAX;
-    } else {
-        mp_limb_t r[2];
-        r[0] = ret[0] + 1;
-        r[1] = ret[1] + (r[0] == 0 ? 1 : 0);
-        mp_limb_t t[6];
-        mp_size_t tn = lmmp_cube_6_(t, r);
-        if (tn > na) {
-            dst[0] = ret[0];
-            dst[1] = ret[1];
-        } else {
-            lmmp_debug_assert(tn == na);
-            int cmp = lmmp_cmp_(t, numa, na);
-            // approx的结果至多只会低估1
-            if (cmp <= 0) {
-                dst[0] = r[0];
-                dst[1] = r[1];
-            } else {
-                dst[0] = ret[0];
-                dst[1] = ret[1];
-            }
+void lmmp_cbrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, mp_ptr restrict tp, int calr) {
+    lmmp_param_assert(ns > 0);
+    lmmp_param_assert(numa != NULL && dst != NULL && tp != NULL);
+    lmmp_param_assert(numa[3 * ns - 1] >= CBRT_MIN);
+    if (ns == 1) {
+        dst[0] = lmmp_cbrt_3_(numa[0], numa[1], numa[2]);
+        if (calr) {
+            lmmp_cube_3_(tp, dst[0]);
+            lmmp_sub_n_(numa, numa, tp, 3);
         }
-    }
-}
-
-mp_size_t lmmp_cbrtapprox_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, mp_size_t ni) {
-    lmmp_param_assert(na > 0);
-    lmmp_param_assert(dst != NULL && numa != NULL);
-    mp_size_t n = ni + na;
-    if (n == 1) {
-        mp_limb_t a_cbrt = lmmp_cbrt_ulong_(numa[0]);
-        dst[0] = a_cbrt;
-        return 1;
-    } else if (n <= 3) {
-        if (ni == 0)
-            dst[0] = lmmp_cbrtapprox_3_(numa[0], numa[1], numa[2]);
-        else if (ni == 1)
-            dst[0] = lmmp_cbrtapprox_3_(0, numa[0], numa[1]);
-        else
-            dst[0] = lmmp_cbrtapprox_3_(0, 0, numa[0]);
-        return 1;
-    } else if (n <= 6) {
-        mp_limb_t a[6];
-        mp_size_t i;
-        for (i = 0; i < ni; i++) {
-            a[i] = 0;
-        }
-        for (mp_size_t j = 0; i < n; i++, j++) {
-            a[i] = numa[j];
-        }
-        lmmp_cbrtapprox_6_(dst, a, n);
-        return 2;
     } else {
+        mp_size_t lo = ns / 2, hi = ns - lo;
+#define Ahr     (dst + lo)                 // [dst+lo,               hi]
+#define rk      (numa + 3 * lo)            // [numa+3*lo,        2*hi+1]
+#define R       (numa)                     // [numa,             2*ns+1]
+#define Ahr2    (tp)                       // [tp,                 2*hi]
+#define Alr     (tp + 2 * hi)              // [tp + 2*hi,          lo+1]
+#define Alr2    (tp + 2 * hi + lo + 1)     // [tp + 2*hi+lo+1,     2*lo]
+#define scratch (tp + 2 * hi + 3 * lo + 1) // [tp + 2*hi+3*lo+1,   3*lo]
+
+        lmmp_cbrt_divide_(Ahr, rk, hi, tp, 1);
+
+        lmmp_sqr_(Ahr2, Ahr, hi);
+
         /*
-                A     = Ah * B^(3*lo) + Al
-
-                Ahr   = floor(Ah^(1/3))
-                x_k   = Ahr * B^lo
-
-                x_k+1 = (2*x_k + A / x_k^2 ) / 3
+        A / (3*x^2) = A / 3 / x^2
+        A % (3*x^2) = 3 * (A / 3 % x^2) + A % 3
         */
-        mp_size_t nhi = (n - 1) / 2;
-        mp_size_t nlo = nhi - (nhi % 3);
-        nhi = n - nlo;
-        /**
-         * 假设计算 n 次根式：A^(1/n)
-         * 设 beta = B^b，alpha = Ah^(1/n)，rho = A^(1/n)。
-         * 已知 tk 满足 floor(Ah^(1/n)) - 1 <= tk <= floor(Ah^(1/n))，
-         * 因此 xk = tk * beta 与真实根 rho 的误差满足（最坏情况）：
-         *     e = rho - xk <= 2 * beta。
-         *
-         * 牛顿迭代实数形式为：
-         *     F(x) = ((n-1)*x + A / x^(n-1)) / n。
-         * 令 x = rho - e，在 rho 处泰勒展开可得：
-         *     F(x) - rho = (n(n-1)/2) * (e^2 / rho) + O(e^3 / rho^2)。
-         *
-         * 由于 rho >= alpha * beta（因为 A >= Ah * beta^n，开方后略大于 alpha*beta），
-         * 将 e <= 2*beta 代入，忽略高阶小量，得到误差上限：
-         *     F(x) - rho <= (n(n-1)/2) * ((2*beta)^2 / (alpha*beta))
-         *                 = (2*n*(n-1)*beta) / alpha。
-         *
-         * 为使得最终取整后的绝对误差控制在 1 以内，只需令上式 <= 1：
-         *     (2*n*(n-1)*beta) / alpha <= 1
-         *  =>  alpha >= 2*n*(n-1)*beta。
-         *
-         * 两边同时取 n 次方：
-         *     Ah >= [2*n*(n-1)]^n * beta^n
-         *        = [2*n*(n-1)]^n * B^(n*b)。
-         *
-         * 因此，若要保证递归校正始终收敛且误差不超过 1，常数 m 至少取：
-         *     m_min = [2*n*(n-1)]^n。
-         *
-         * 对于立方根，即有：m_min = 1728
-         * 
-         * 注：1728 是一个保守的上界，不满足此上界并不意味着迭代一定不收敛。
-         */
-#define MMIN 1728
-#if LAMMP_DEBUG_ASSERT_CHECK == 1
-        if (nhi == nlo + 1) {
-            lmmp_debug_assert(numa[na - 1] > MMIN);
-        }
-#endif
-        nlo /= 3;
-        lmmp_debug_assert(nlo > 0);
+        mp_limb_t r = lmmp_div_1_(rk - lo, rk - lo, hi + 1 + ns, 3);
+        mp_limb_t qh = lmmp_div_s_(Alr, rk - lo, hi + 1 + ns, Ahr2, 2 * hi);
+        lmmp_debug_assert(qh == 0);
+        (rk - lo)[2 * hi] = lmmp_mul_1_(rk - lo, rk - lo, 2 * hi, 3);
+        lmmp_inc_1(rk - lo, r);
+        /*
+            我们根据 cbrt(A/B^3) == floor(cbrt(A)/B) 可以知道，如果Alr正确结果
+            必定被限制在B^lo以内，其至多高估1，因此Alr的最高位必定为0或1，而为1时，
+            即代表此时结果已经高估。
+        */
+        mp_limb_t adj = Alr[lo];
+        lmmp_debug_assert(adj == 0 || adj == 1);
+        if (adj > 0) {
+            // Alr[0] 仅可能为0或1，分别表示高估了1或2
+            lmmp_debug_assert(Alr[0] == 0 || Alr[0] == 1);
+            lmmp_fill(dst, 0, lo, LIMB_MAX);
+            if (calr == 0) return;
+            /*
+            x_k+1 = Ahr * B^lo + Alr
+                  = Ahr * B^lo + B^lo - 1
 
-        TEMP_DECL;
-        mp_size_t rn, Adivn = nhi + nlo;
-        mp_ptr restrict Adiv;
+            r_k+1 = R - 3*Ahr*(B^lo-1)^2*B^lo - (B^lo-1)^3 + 3*Alr*Ahr^2*B^(2*lo) - 3*(Alr-adj)*Ahr^2*B^(2*lo)
+                  = R - 3*Ahr*B^(3*lo) + 6*Ahr*B^(2*lo) - 3*Ahr*B^lo + 3*adj*Ahr^2*B^(2*lo)
+                    - B^(3*lo) + 3*B^(2*lo) - 3*B^lo + 1
+            */
+            adj += Alr[0];
 
-#define Ahr (dst + nlo)
-        if (ni >= 3 * nlo) {
-            //  __________________ n ___________________
-            //  |__________ na __________|_____ ni ____|
-            //  |xxxxxxxxxxxxxxxxxxxxxxxx|0000000000000|
-            //  |___________ nhi __________|__ 3*nlo __|
+            // - 3*Ahr*B^(3*lo)
+            mp_limb_t cy = lmmp_submul_1_(R + 3 * lo, Ahr, hi, 3);
+            r = lmmp_sub_1_(R + 2 * lo + ns, R + 2 * lo + ns, ns + 1 - 2 * lo, cy);
 
-            rn = lmmp_cbrtapprox_(Ahr, numa, na, ni - 3 * nlo);
+            // + 6*Ahr*B^(2*lo)
+            cy = lmmp_addmul_1_(R + 2 * lo, Ahr, hi, 6);
+            r -= lmmp_add_1_(R + ns + lo, R + ns + lo, hi + 1, cy);
 
-            Adiv = TALLOC_TYPE(Adivn, mp_limb_t);
-            lmmp_zero(Adiv, ni - 2 * nlo);
-            lmmp_copy(Adiv + ni - 2 * nlo, numa, na);
+            // - 3*Ahr*B^lo
+            cy = lmmp_submul_1_(R + lo, Ahr, hi, 3);
+            r += lmmp_sub_1_(R + ns, R + ns, ns + 1, cy);
 
-        } else if (ni >= 2 * nlo) {
-            //  __________________ n ___________________
-            //  |__________ na __________|_____ ni ____|
-            //  |xxxxxxxxxxxxxxxxxxxxxxxx|0000000000000|
-            //  |_______ nhi _____|__ nlo _|__ 2*nlo __|
+            // + 3*adj*Ahr^2*B^(2*lo)
+            cy = lmmp_addmul_1_(R + 2 * lo, Ahr2, 2 * hi, 3 * adj);
+            (R + 2 * ns)[0] += cy;
+            r -= (R + 2 * ns)[0] < cy;
 
-            rn = lmmp_cbrtapprox_(Ahr, numa + na - nhi, nhi, 0);
+            // - B^(3*lo)
+            r -= lmmp_sub_1_(R + 3 * lo, R + 3 * lo, 2 * ns + 1 - 3 * lo, 1);
 
-            Adiv = TALLOC_TYPE(Adivn, mp_limb_t);
-            lmmp_zero(Adiv, ni - 2 * nlo);
-            lmmp_copy(Adiv + ni - 2 * nlo, numa, na);
+            // + 3*B^(2*lo)
+            r -= lmmp_add_1_(R + 2 * lo, R + 2 * lo, 2 * hi + 1, 3);
 
+            // - 3*B^lo
+            r += lmmp_sub_1_(R + lo, R + lo, 2 * ns + 1 - lo, 3);
+
+            // + 1
+            r -= lmmp_add_1_(R, R, 2 * ns + 1, 1);
+
+            lmmp_debug_assert(r == 0);
         } else {
-            //  __________________ n ___________________
-            //  |__________ na __________|_____ ni ____|
-            //  |xxxxxxxxxxxxxxxxxxxxxxxx|0000000000000|
-            //  |_____ nhi ___|__ nlo__|____ 2*nlo ____|
+            lmmp_sqr_(Alr2, Alr, lo);
+            lmmp_mul_(scratch, Alr2, 2 * lo, Alr, lo);
+            r = lmmp_sub_(R, R, 2 * ns + 1, scratch, 3 * lo);
 
-            rn = lmmp_cbrtapprox_(Ahr, numa + na - nhi, nhi, 0);
+            lmmp_mul_(scratch, Alr2, 2 * lo, Ahr, hi);
+            mp_limb_t b = lmmp_submul_1_(R + lo, scratch, 2 * lo + hi, 3);
+            r += lmmp_sub_1_(R + 3 * lo + hi, R + 3 * lo + hi, ns + 1 - 2 * lo, b);
 
-            Adiv = TALLOC_TYPE(Adivn, mp_limb_t);
-            lmmp_copy(Adiv, numa + na - Adivn, Adivn);
+            if (calr == 0) {
+                if (r > 0)
+                    lmmp_dec(Alr);
+                lmmp_copy(dst, Alr, lo);
+                return;
+            }
+            if (r > 0) {
+                // + 3*Alr^2
+                mp_limb_t cy = lmmp_addmul_1_(R, Alr2, 2 * lo, 3);
+                r -= lmmp_add_1_(R + 2 * lo, R + 2 * lo, 2 * hi + 1, cy);
+
+                // - 3*Alr
+                cy = lmmp_submul_1_(R, Alr, lo, 3);
+                r += lmmp_sub_1_(R + lo, R + lo, 2 * ns + 1 - lo, cy);
+
+                // + 6*Ahr*Alr*B^lo
+                lmmp_mul_(scratch, Ahr, hi, Alr, lo);
+                cy = lmmp_addmul_1_(R + lo, scratch, ns, 6);
+                r -= lmmp_add_1_(R + ns + lo, R + ns + lo, ns + 1 - lo, cy);
+
+                // + 3*Ahr^2*B^(2*lo)
+                cy = lmmp_addmul_1_(R + 2 * lo, Ahr2, 2 * hi, 3);
+                // r -= lmmp_add_1_(R + 2 * ns, R + 2 * ns, 1, cy);
+                (R + 2 * ns)[0] += cy;
+                r -= (R + 2 * ns)[0] < cy;
+
+                // + 1
+                r -= lmmp_add_1_(R, R, 2 * ns + 1, 1);
+
+                // - 3*Ahr*B^lo
+                cy = lmmp_submul_1_(R + lo, Ahr, hi, 3);
+                r += lmmp_sub_1_(R + ns, R + ns, ns + 1, cy);
+
+                lmmp_debug_assert(r == 0);
+                lmmp_dec(Alr);
+            }
+            lmmp_copy(dst, Alr, lo);
         }
-
-        mp_size_t Ahr2n = rn * 2;
-        mp_ptr restrict Ahr2 = TALLOC_TYPE(Ahr2n, mp_limb_t);
-        lmmp_sqr_(Ahr2, Ahr, rn);
-        Ahr2n -= (Ahr2[Ahr2n - 1] == 0) ? 1 : 0;
-
-        lmmp_debug_assert(Adivn >= Ahr2n);
-        mp_size_t qn = Adivn - Ahr2n + 1;
-        mp_size_t rkdivn = (n + 2) / 3 + 2; // 额外多两个limb，因为需要作为加法缓冲区
-        mp_ptr restrict rkdiv = TALLOC_TYPE(rkdivn, mp_limb_t);
-
-        lmmp_debug_assert(qn <= rkdivn);
-        lmmp_zero(rkdiv + qn, rkdivn - qn); //高位清零
-
-        lmmp_div_(rkdiv, NULL, Adiv, Adivn, Ahr2, Ahr2n);
-
-        mp_limb_t cy = lmmp_shl_(Ahr, Ahr, rn, 1);
-        Ahr[rn] = cy;
-        rn += cy > 0 ? 1 : 0;
-
-        lmmp_debug_assert(rn + nlo + 1 <= rkdivn);
-        cy = lmmp_add_n_(rkdiv + nlo, Ahr, rkdiv + nlo, rn);
-        rn += nlo;
-        rkdiv[rn] = cy;
-        rn += cy > 0 ? 1 : 0;
-
-        lmmp_div_1_(dst, rkdiv, rn, 3);
-
-        while (dst[rn - 1] == 0) --rn;
-
-        TEMP_FREE;
-        return rn;
     }
 #undef Ahr
+#undef rk
+#undef R
+#undef Ahr2
+#undef Alr
+#undef Alr2
+#undef scratch
 }

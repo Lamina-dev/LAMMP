@@ -20,78 +20,130 @@
 #include "../../../include/lammp/numth.h"
 
 
-/**
- * @brief 分治法计算整数平方根
- * @param dsts 输出：平方根的整数部分，长度为 ns。
- * @param numa 输入/输出：被开方数，长度为 2*ns。
- *               - 输入时存放原被开方数。
- *               - 返回时，若 nsh==0，低 ns 个 limb 存放余数。
- * @param ns    平方根占用的 limb 数。
- * @param nsh   右移位数（0 <= nsh < LIMB_BITS），仅顶层调用时有效。表示最终结果需要右移 nsh 位。
- * @warning ns>0, numa[2*ns-1]>=B/4, 0<=nsh<LIMB_BITS, dsts!=NULL, numa!=NULL
- * @return 返回值语义取决于 nsh 和计算路径：
- *         - 若 nsh == 0：
- *           返回余数的高位 limb（rh），余数低位部分写入 [numa,ns]。
- *         - 若 nsh > 0：
- *           1. 如果 dsts[0] 的低 nsh 位非零（即右移会丢弃有效低位），
- *              函数提前终止，直接返回 1（固定哨兵值）。
- *              此时 numa 中的余数未经计算，不可使用；返回值 1 不代表余数高位。
- *              （此优化用于调用者不需要余数的情况，避免昂贵的余数计算。）
- *           2. 如果低 nsh 位全为零，则继续计算精确余数，
- *              并返回真实的余数高位 limb（rh），同时余数低 ns 位写入 numa。
- *              但鉴于调用者通常不关心余数，该返回值可能被忽略。
- * @note 本函数被设计为递归使用，递归层级均传递 nsh=0，因此 nsh>0 的情形只可能
- *       出现在最外层调用，且通常伴随调用者不需要余数（如 lmmp_sqrt_ 中 dstr==NULL）。
- */
-static mp_limb_t lmmp_sqrt_divide_(mp_ptr dsts, mp_ptr numa, mp_size_t ns, int nsh) {
+/*
+        A     = Ah * B^(2*lo) + Al
+
+        Ahr   = floor(Ah^(1/2))
+        rk    = Ah - Ahr^2
+        x_k   = Ahr * B^lo
+
+        x_k+1 = (x_k + A / x_k ) / 2
+              = x_k + (A / x_k - x_k) / 2
+              = x_k + (A - x_k^2) / 2 * x_k
+              = Ahr * B^lo + (rk * B^(2*lo) + Al) / 2 * x_k
+              = Ahr * B^lo + Alr
+
+        let  Alr = (rk * B^(2*lo) + Al) / 2 * x_k, R = (rk * B^(2*lo) + Al) mod 2 * x_k
+        such that  (rk * B^(2*lo) + Al) = Alr * 2 * x_k + R
+                                          ┌───────────────────────────────────────────────────────────┐
+                                        = |Alr * 2 * Ahr*B^lo + R = R_correct + (Alr-1) * 2 * Ahr*B^lo|
+                                          └───────────────────────────────────────────────────┬───────┘
+                                                                                              |
+        r_k+1 = A - x_k+1^2                                                                   |
+              = Ah*B^(2*lo) + Al - Ahr^2*B^(2*lo) - 2*Alr*Ahr*B^lo - Alr^2                    |
+              = r_k * B^(2*lo) + Al - 2*Alr*Ahr*B^lo - Alr^2                                  |
+              = R - Alr^2                                                                     |
+                                                                                              |
+        Alr is either correct or 1 too big,                                                   |
+                                ┌────────────────────────────────────┐                        |
+        r_k+1 = R - (Alr-1)^2 + | 2*Alr*Ahr*B^lo - 2*(Alr-1)*Ahr*B^lo├────────────────────────┘
+              = R - Alr^2       └────────────────────────────────────┘
+(adjust)      + 2*Ahr*B^lo + 2*Alr - 1
+*/
+
+void lmmp_sqrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, mp_ptr restrict tp, int calr) {
     lmmp_param_assert(ns > 0);
-    lmmp_param_assert(nsh >= 0 && nsh < LIMB_BITS);
-    lmmp_param_assert(numa != NULL && dsts != NULL);
+    lmmp_param_assert(numa != NULL && dst != NULL && tp != NULL);
     lmmp_param_assert(numa[2 * ns - 1] >= LIMB_B_4);
-    mp_slimb_t rh;
     if (ns == 1) {
-        rh = lmmp_sqrt_2_(dsts, numa, numa);
+        dst[0] = lmmp_sqrt_2_(numa, numa);
     } else {
         mp_size_t lo = ns / 2, hi = ns - lo;
-        mp_limb_t qh = lmmp_sqrt_divide_(dsts + lo, numa + 2 * lo, hi, 0);
-        if (qh)
-            lmmp_sub_n_(numa + 2 * lo, numa + 2 * lo, dsts + lo, hi);
-        qh += lmmp_div_s_(dsts, numa + lo, ns, dsts + lo, hi);
-        rh = lmmp_shr_c_(dsts, dsts, lo, 1, qh << (LIMB_BITS - 1));
-        // now dsts is either correct or 1 too big,
-        // if nsh-LSBs are non-zero, subtracting 1
-        // will not affect anything after de-normalization
-        if (dsts[0] & (((mp_limb_t)1 << nsh) - 1))
-            return 1;
-        if (rh)
-            rh = lmmp_add_n_(numa + lo, numa + lo, dsts + lo, hi);
-        qh >>= 1;
-        lmmp_sqr_(numa + ns, dsts, lo);
-        mp_limb_t b = qh + lmmp_sub_n_(numa, numa, numa + ns, lo * 2);
-        if (lo == hi)
-            rh -= b;
-        else
-            rh -= lmmp_sub_1_(numa + 2 * lo, numa + 2 * lo, 1, b);
-        if (rh < 0) {
-            qh = lmmp_add_1_(dsts + lo, dsts + lo, hi, qh);
-            rh += 2 * qh + lmmp_addshl1_n_(numa, numa, dsts, ns);
-            rh -= lmmp_sub_1_(numa, numa, ns, 1);
-            qh -= lmmp_sub_1_(dsts, dsts, ns, 1);
+#define Ahr  (dst + lo)         // [dst+lo,          hi]
+#define rk   (numa + 2 * lo)    // [numa+2*lo,     hi+1]
+#define R    (numa)             // [numa,          ns+1]
+#define Alr  (tp)               // [tp,            lo+1]
+#define Alr2 (tp + lo + 1)      // [tp + lo+1,     2*lo]
+
+        lmmp_sqrt_divide_(Ahr, rk, hi, tp, 1);
+
+        /*
+        A / (2*x) = A / 2 / x
+        A % (2*x) = 2 * (A / 2 % x) + A % 2
+        */
+        mp_limb_t r = lmmp_shr_(rk - lo, rk - lo, ns + 1, 1);
+        mp_limb_t qh = lmmp_div_s_(Alr, rk - lo, ns + 1, Ahr, hi);
+        lmmp_debug_assert(qh == 0);
+        (rk - lo)[hi] = lmmp_shl_c_(rk - lo, rk - lo, hi, 1, r >> (LIMB_BITS - 1));
+        /*
+            我们根据 sqrt(A/B^2) == floor(sqrt(A)/B) 可以知道，如果Alr正确结果
+            必定被限制在B^lo以内，其至多高估1，因此Alr的最高位必定为0或1，而为1时，
+            即代表此时结果已经高估。
+        */
+        mp_limb_t adj = Alr[lo];
+        lmmp_debug_assert(adj == 0 || adj == 1);
+        if (adj > 0) {
+            lmmp_debug_assert(Alr[0] == 0);
+            lmmp_fill(dst, 0, lo, LIMB_MAX);
+            if (calr == 0) return;
+            /*
+            x_k+1 = Ahr * B^lo + Alr
+                  = Ahr * B^lo + B^lo - 1
+
+            r_k+1 = R - (B^lo-1)^2 + 2*Alr*Ahr*B^lo - 2*(Alr-adj)*Ahr*B^lo
+                  = R - B^(2*lo) + 2*B^lo - 1 + 2*adj*Ahr*B^lo
+            */
+
+            // + 2*adj*Ahr*B^lo
+            mp_limb_t cy = lmmp_addmul_1_(R + lo, Ahr, hi, 2 * adj);
+            (R + ns)[0] += cy;
+            r = (R + ns)[0] < cy;
+
+            // - 1
+            r -= lmmp_sub_1_(R, R, ns + 1, 1);
+
+            // + 2*B^lo
+            r += lmmp_add_1_(R + lo, R + lo, hi + 1, 2);
+
+            // - B^(2*lo)
+            r -= lmmp_sub_1_(R + 2 * lo, R + 2 * lo, hi + 1 - lo, 1);
+            lmmp_debug_assert(r == 0);
+        } else {
+            lmmp_sqr_(Alr2, Alr, lo);
+            mp_limb_t b = lmmp_sub_(R, R, ns + 1, Alr2, 2 * lo);
+            if (calr == 0) {
+                if (b > 0)
+                    lmmp_dec(Alr);
+                lmmp_copy(dst, Alr, lo);
+                return;
+            }
+            if (b > 0) {
+                // + 2*Ahr*B^lo
+                mp_limb_t cy = lmmp_addshl1_n_(R + lo, R + lo, Ahr, hi);
+                (R + lo)[hi] += cy;
+                b -= (R + lo)[hi] < cy;
+
+                // + 2*Alr
+                cy = lmmp_addshl1_n_(R, R, Alr, lo);
+                b -= lmmp_add_1_(R + lo, R + lo, hi + 1, cy);
+
+                // - 1
+                b += lmmp_sub_1_(R, R, ns + 1, 1);
+
+                lmmp_debug_assert(b == 0);
+                lmmp_dec(Alr);
+            }
+            lmmp_copy(dst, Alr, lo);
         }
     }
-    return rh;
+#undef Ahr
+#undef rk
+#undef R
+#undef Alr
+#undef Alr2
 }
 
-/**
- * @brief 计算逆平方根 [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
- * @param dstis 目标数组
- * @param ns dsts数组的 limb 长度为 ns+1
- * @param numa 输入数组
- * @param na numa数组的 limb 长度
- * @warning ns>0, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL
- * @note [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
- */
-static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
+void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na) {
     lmmp_param_assert(ns >= 3);
     lmmp_param_assert(na > 0);
     lmmp_param_assert(numa != NULL && dstis != NULL);
@@ -117,7 +169,8 @@ static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_
         numa2[4] = numa[-2];
     else
         numa2[4] = 0;
-    lmmp_sqrt_divide_(sval, numa2, 3, 0);
+    mp_limb_t tp[4];
+    lmmp_sqrt_divide_(sval, numa2, 3, tp, 0);
     lmmp_inc(sval);
     for (mp_size_t i = 0; i < 5; ++i) numa2[i] = LIMB_MAX;
     dstis[0] = lmmp_div_s_(dstis - 2, numa2, 5, sval, 3);
@@ -216,15 +269,7 @@ static void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_
     TEMP_FREE;
 }
 
-/**
- * @brief 计算近似平方根 [dsts,nf+na/2+1]=[floor|round](sqrt([numa,na]*B^(2*nf)))
- * @param dsts 目标数组
- * @param numa 输入数组
- * @param na numa数组的 limb 长度
- * @param nf 精度因子
- * @warning na>0, nf>=2, dsts!=NULL, numa!=NULL, eqsep(dsts,numa)
- */
-static void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
+void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
     lmmp_param_assert(na > 0);
     lmmp_param_assert(nf >= 2);
     lmmp_param_assert(numa != NULL && dsts != NULL);
@@ -280,8 +325,8 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
     int nsh = lmmp_leading_zeros_(high) / 2;
     mp_size_t nl = na + 2 * nf;
     if (nl == 1) {
-        mp_limb_t srt;
-        lmmp_sqrt_1_(&srt, high << nsh * 2);
+        mp_limb_t r;
+        mp_limb_t srt = lmmp_sqrt_1_(&r, high << nsh * 2);
         srt >>= nsh;
         dsts[0] = srt;
         if (dstr)
@@ -291,9 +336,9 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
     } else {
         TEMP_DECL;
         mp_limb_t ns = (nl + 1) / 2;
-        mp_ptr numa2 = TALLOC_TYPE(2 * ns, mp_limb_t);
-        if (nf)
-            lmmp_zero(numa2, 2 * nf);
+        mp_ptr restrict numa2 = TALLOC_TYPE(2 * ns, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE(3 * ns / 2 + 1, mp_limb_t);
+        lmmp_zero(numa2, 2 * nf);
         if (nsh)
             lmmp_shl_(numa2 + 2 * ns - na, numa, na, nsh * 2);
         else
@@ -304,21 +349,28 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
         } else {
             dsts[ns] = 0;
         }
-        mp_limb_t rh = lmmp_sqrt_divide_(dsts, numa2, ns, dstr ? 0 : nsh);
+
+        lmmp_sqrt_divide_(dsts, numa2, ns, tp, dstr ? 1: 0);
         if (nsh) {
+            /*
+                let
+                    s = sqrt(A*T^2), r = sqrtrem(A*T^2)
+                such that
+                    s = T*a + t, where a = sqrt(A) = s // T
+                then
+                    sqrtrem(A) = (r + 2*T*a*t + t^2) // T^2
+                               = (r + 2*t*(s-t) + t^2) // T^2
+                               = (r + 2*t*s - t^2) // T^2
+            */
             if (dstr) {
-                mp_limb_t ds = dsts[0] & (((mp_limb_t)1 << nsh) - 1);
-                rh += lmmp_addmul_1_(numa2, dsts, ns, 2 * ds);
-                mp_limb_t b = lmmp_submul_1_(numa2, &ds, 1, ds);
-                if (ns == 1)
-                    rh -= b;
-                else
-                    rh -= lmmp_sub_1_(numa2 + 1, numa2 + 1, ns - 1, b);
+                mp_limb_t t = dsts[0] & (((mp_limb_t)1 << nsh) - 1);
+                numa2[ns] += lmmp_addmul_1_(numa2, dsts, ns, 2 * t);
+                mp_limb_t b = lmmp_submul_1_(numa2, &t, 1, t);
+                lmmp_sub_1_(numa2 + 1, numa2 + 1, ns, b);
             }
             lmmp_shr_(dsts, dsts, ns, nsh);
         }
         if (dstr) {
-            numa2[ns] = rh;
             nsh *= 2;
             if (nsh >= LIMB_BITS) {
                 nsh -= LIMB_BITS;
@@ -330,6 +382,7 @@ void lmmp_sqrt_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa, mp_size_t na, mp_size_
             else
                 lmmp_copy(dstr, numa2, ns);
         }
+        
         TEMP_FREE;
     }
 }
