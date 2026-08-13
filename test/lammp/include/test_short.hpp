@@ -53,7 +53,6 @@ void test_divexact_basecase();
 void test_divexact_unbalanced();
 void test_perfsqr_filter();
 void test_perfsqr();
-void test_cbrt_6();
 void test_cbrt();
 void test_powlo();
 
