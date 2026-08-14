@@ -40,6 +40,19 @@ static void abort_func_unlock(void) {
     LeaveCriticalSection(&abort_func_cs);
 }
 
+#elif defined(__APPLE__)
+#include <pthread.h>
+
+static pthread_mutex_t abort_func_mtx = PTHREAD_MUTEX_INITIALIZER;
+
+static void abort_func_lock(void) {
+    pthread_mutex_lock(&abort_func_mtx);
+}
+
+static void abort_func_unlock(void) {
+    pthread_mutex_unlock(&abort_func_mtx);
+}
+
 #else
 #ifdef __STDC_NO_THREADS__
 #error "Threads support is required for setting abort function"
