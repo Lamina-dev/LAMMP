@@ -30,19 +30,19 @@ ulong lmmp_sqrt_ulong_(ulong a) {
     return is;
 }
 
-mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x) {
+mp_limb_t lmmp_sqrt_1_(mp_ptr dstr, mp_limb_t x) {
     lmmp_param_assert(x >= LIMB_B_4);
     mp_limb_t s = lmmp_sqrt_ulong_(x);
-    *dsts = s;
-    return x - s * s;
+    *dstr = x - s * s;
+    return s;
 }
 
-mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
+mp_limb_t lmmp_sqrt_2_(mp_ptr dstr, mp_srcptr numa) {
     lmmp_param_assert(numa[1] >= LIMB_B_4);
     mp_limb_t rl, s, q, al, u;
     mp_slimb_t rh;
 
-    rl = lmmp_sqrt_1_(&s, numa[1]);
+    s = lmmp_sqrt_1_(&rl, numa[1]);
     al = numa[0];
 
     //(r:alh)/2
@@ -66,7 +66,7 @@ mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa) {
         rh += rl < s;
     }
 
-    dsts[0] = s;
     dstr[0] = rl;
-    return rh;
+    dstr[1] = rh;
+    return s;
 }

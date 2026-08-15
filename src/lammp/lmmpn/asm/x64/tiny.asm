@@ -118,8 +118,9 @@ ALIGN 16
 global lmmp_mulmod_ulong_
 lmmp_mulmod_ulong_:
     mov    rax, rx0
+    mov    r10, rx2
     mul    rx1
-    div    rx2
+    div    r10
     mov    [rx3], rax
     mov    rax, rdx
     ret

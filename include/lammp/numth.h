@@ -750,24 +750,56 @@ LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
 
 /**
  * @brief 计算算术平方根 floor(sqrt(x))
- * @param dsts 结果指针（1个limb）
+ * @param dstr 余数指针（1个limb）
  * @param x 被开方数
- * @warning x>=B/4, dsts!=NULL
- * @note [dsts,1]=floor(sqrt(x)), return remainder
- * @return 余数
+ * @warning x>=B/4, dstr!=NULL
+ * @note [dstr,1]=sqrtrem(x), return floor(sqrt(x))
+ * @return floor(sqrt(x))
  */
-LAMMP_API mp_limb_t lmmp_sqrt_1_(mp_ptr dsts, mp_limb_t x);
+LAMMP_API mp_limb_t lmmp_sqrt_1_(mp_ptr dstr, mp_limb_t x);
 
 /**
  * @brief 计算算术平方根 floor(sqrt([numa,2]))
- * @param dsts 结果指针（1个limb）
- * @param dstr 余数指针（1个limb）
+ * @param dstr 余数指针（2个limb）
  * @param numa 被开方数指针
- * @warning numa[1]>=B/4, dsts!=NULL, dstr!=NULL, numa!=NULL
- * @note [dsts,1]=floor(sqrt([numa,2])), rh:[dstr,1]=remainder, return rh
- * @return 余数的高位
+ * @warning numa[1]>=B/4, dstr!=NULL, numa!=NULL, eqsep(dstr,numa)
+ * @note return: floor(sqrt([numa,2])), [dstr,2]=remainder
+ * @return floor(sqrt([numa,2]))
  */
-LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_ptr dsts, mp_ptr dstr, mp_srcptr numa);
+LAMMP_API mp_limb_t lmmp_sqrt_2_(mp_ptr dstr, mp_srcptr numa);
+
+/**
+ * @brief 计算算术平方根 floor(sqrt([numa,2*ns]))
+ * @param dst 结果指针（ns个limb）
+ * @param numa 被开方数指针（2*ns个limb，且会被修改，若计算余数，余数存储在[numa,ns+1]中）
+ * @param ns 结果指针的 limb 长度
+ * @param tp 临时指针（3*ns/2+1个limb）
+ * @param calr 是否计算余数（0表示不计算余数，1表示计算余数）
+ * @warning numa[2*ns-1]>=B/4, dst!=NULL, numa!=NULL, tp!=NULL, sep(dst,numa,tp)
+ * @note 即使输入calr=0，numa也会被修改，如果calr=1，则[numa,ns+1]将会储存余数。
+ */
+LAMMP_API void lmmp_sqrt_divide_(mp_ptr dst, mp_ptr numa, mp_size_t ns, mp_ptr tp, int calr);
+
+/**
+ * @brief 计算近似逆平方根 [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
+ * @param dstis 目标数组
+ * @param ns dstis数组的 limb 长度为 ns+1
+ * @param numa 输入数组
+ * @param na numa数组的 limb 长度
+ * @warning ns>=3, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL, sep(dstis,numa)
+ * @note [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
+ */
+LAMMP_API void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na);
+
+/**
+ * @brief 计算近似平方根 [dsts,nf+na/2+1]=[floor|round](sqrt([numa,na]*B^(2*nf)))
+ * @param dsts 目标数组
+ * @param numa 输入数组
+ * @param na numa数组的 limb 长度
+ * @param nf 精度因子
+ * @warning na>0, nf>=2, dsts!=NULL, numa!=NULL, eqsep(dsts,numa)
+ */
+LAMMP_API void lmmp_sqrt_newton_(mp_ptr dsts, mp_srcptr numa, mp_size_t na, mp_size_t nf);
 
 /**
  * @brief 计算 [numa,na] * B^(2*nf) 的平方根和余数
@@ -818,15 +850,6 @@ LAMMP_API ulong lmmp_cbrt_ulong_(ulong n);
 LAMMP_API mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
 
 /**
- * @brief 计算算数立方根 floor(cbrt([numa,na]))
- * @param dst 结果指针（长度为 2 个limb）
- * @param numa 被开方数指针
- * @param na 被开方数的 limb 长度
- * @warning dst!=NULL, numa!=NULL, 3<na<=6, numa[na-1]!=0, eqsep(dst,numa)
- */
-LAMMP_API void lmmp_cbrt_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
-
-/**
  * @brief 计算近似立方根 floor(cbrt(a0+a1*B+a2*B^2))-[0|1]
  * @param a0 低位 limb
  * @param a1 中位 limb
@@ -838,27 +861,16 @@ LAMMP_API void lmmp_cbrt_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
 LAMMP_API mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
 
 /**
- * @brief 计算近似立方根 floor(cbrt([numa,na]))-[0|1]
- * @param dst 结果指针（长度为 2 个limb）
- * @param numa 被开方数指针
- * @param na 被开方数的 limb 长度
- * @warning dst!=NULL, numa!=NULL, 3<na<=6, numa[na-1]!=0, eqsep(dst,numa)
+ * @brief 计算算术立方根 floor(cbrt([numa,3*ns]))
+ * @param dst 结果指针（ns个limb）
+ * @param numa 被开方数指针（3*ns个limb，且会被修改，若计算余数，余数存储在[numa,2*ns+1]中）
+ * @param ns 结果指针的 limb 长度
+ * @param tp 临时指针（4*ns个limb）
+ * @param calr 是否计算余数（0表示不计算余数，1表示计算余数）
+ * @warning numa[3*ns-1]>=0x6000000000000000, dst!=NULL, numa!=NULL, tp!=NULL, sep(dst,numa,tp)
+ * @note 即使输入calr=0，numa也会被修改，如果calr=1，则[numa,2*ns+1]将会储存余数。
  */
-LAMMP_API void lmmp_cbrtapprox_6_(mp_ptr dst, mp_srcptr numa, mp_size_t na);
-
-/**
- * @brief 计算 [numa, na]*B^ni 的近似立方根，cbrt([numa, na]*B^ni) + [0|1]
- * @param dst 结果指针（(na+ni)/3+2个limb）
- * @param numa 被开方数指针
- * @param na 被开方数的 limb 长度
- * @param ni 被开方数的偏移量
- * @warning dst!=NULL, numa!=NULL, na>0, numa[na-1]!=0
- * @note 建议保证numa[na-1]尽可能大，存在精心构造的输入，使得numa[na-1]较小时，此函数计算完全不收敛
- *       当开启DEBUG_ASSERT时，会进行输入检测。如果想要保证迭代收敛，numa[na-1]>1728会是一个保守的限制，
- *       numa[na-1]低于此值也可能迭代收敛。
- * @return 返回结果的数组长度
- */
-LAMMP_API mp_size_t lmmp_cbrtapprox_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t ni);
+LAMMP_API void lmmp_cbrt_divide_(mp_ptr dst, mp_ptr numa, mp_size_t ns, mp_ptr tp, int calr);
 
 /**
  * @brief 计算 floor(n^(1/root))

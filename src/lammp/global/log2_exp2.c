@@ -39,7 +39,7 @@
     我们使用了分段估计的方法，分成了(0,0.25),[0.25,0.5),[0.5,0.75),[0.75,1)四个区间，
     每个区间使用不同的多项式进行估计，这样可以减少计算量。
 */
-
+#if 0
 #define EXP2_COEFFS_SIZE 24
 static const uint64_t exp2_coeffs[][3] = {{0xffca0b964298076cULL, 0xffffffffffffffffULL, 0xffffffffffffffffULL},
                                           {0x33bda4e46bbc7806ULL, 0xc9e3b39803f2f6b0ULL, 0xb17217f7d1cf79abULL},
@@ -261,26 +261,6 @@ static inline void umul192x128_tohi192(uint64_t dst[3], const uint64_t i192[3], 
     dst[2] = p21_h + carry;
 }
 
-static inline void umul128x64_tohi128(uint64_t dst[2], const uint64_t i128[2], uint64_t i64) {
-    uint64_t a0 = i128[0], a1 = i128[1];
-    uint64_t b0 = i64;
-
-    uint64_t p0l, p0h, p1l, p1h;
-
-    _umul64to128_(a0, b0, &p0l, &p0h);
-    _umul64to128_(a1, b0, &p1l, &p1h);
-    /*
-    | res0 | res1 | res2 | res3 |
-           |  p0l |  p0h |
-                  |  p1l |  p1h |
-    */
-
-    uint64_t carry;
-    dst[0] = p0h + p1l;
-    carry = dst[0] < p1l ? 1 : 0;
-    dst[1] = p1h + carry;
-}
-
 static inline bool leq_192(const uint64_t A[3], const uint64_t B[3]) {
     if (A[2] != B[2])
         return A[2] < B[2];
@@ -422,6 +402,27 @@ void exp2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low) {
     }
     dst[0] = res[1];
     dst[1] = res[2];
+}
+#endif // 0
+
+static inline void umul128x64_tohi128(uint64_t dst[2], const uint64_t i128[2], uint64_t i64) {
+    uint64_t a0 = i128[0], a1 = i128[1];
+    uint64_t b0 = i64;
+
+    uint64_t p0l, p0h, p1l, p1h;
+
+    _umul64to128_(a0, b0, &p0l, &p0h);
+    _umul64to128_(a1, b0, &p1l, &p1h);
+    /*
+    | res0 | res1 | res2 | res3 |
+           |  p0l |  p0h |
+                  |  p1l |  p1h |
+    */
+
+    uint64_t carry;
+    dst[0] = p0h + p1l;
+    carry = dst[0] < p1l ? 1 : 0;
+    dst[1] = p1h + carry;
 }
 
 #define LOG2_COEFFS_SIZE_64BIT 27

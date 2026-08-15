@@ -37,8 +37,8 @@
 // 梅森变换乘法逆元阈值：超过此规模选择梅森变换计算乘法逆元
 #define DIV_MULINV_MODM_THRESHOLD 477
 
-// 牛顿迭代开方阈值：超过此规模使用牛顿迭代法开方
-#define SQRT_NEWTON_THRESHOLD 50
+// 平方根计算中，牛顿逆平方乘法阈值
+#define SQRT_INVNEWTON_THRESHOLD 50
 // 梅森变换开方阈值：超过此规模选择梅森变换计算
 #define SQRT_NEWTON_MODM_THRESHOLD 734
 

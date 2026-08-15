@@ -221,7 +221,7 @@ void lmmp_binvert_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, m
     lmmp_param_assert(numa[0] % 2 == 1);
     TEMP_DECL;
     if (n == na) {
-        mp_ptr restrict tp = ALLOC_TYPE(5 * (n + 1) / 2, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE(5 * (n + 1) / 2, mp_limb_t);
         lmmp_binvert_n_dc_(dst, numa, na, tp);
     } else if (na == 1) {
         lmmp_binvert_unbalanced_1_(dst, numa[0], n);
@@ -229,11 +229,11 @@ void lmmp_binvert_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na, m
         lmmp_binvert_unbalanced_2_(dst, numa, n);
     } else if (4 * n >= 5 * na) {
         // n/na >= 5/4 这是一个比较简单的调优结果
-        mp_ptr restrict tp = ALLOC_TYPE((9 * n + 5) / 2, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE((9 * n + 5) / 2, mp_limb_t);
         lmmp_binvert_unbalanced_(dst, numa, na, n, tp);
     } else {
-        mp_ptr restrict ap = ALLOC_TYPE(n, mp_limb_t);
-        mp_ptr restrict tp = ALLOC_TYPE((5 * n + 5) / 2, mp_limb_t);
+        mp_ptr restrict ap = TALLOC_TYPE(n, mp_limb_t);
+        mp_ptr restrict tp = TALLOC_TYPE((5 * n + 5) / 2, mp_limb_t);
         lmmp_copy(ap, numa, n);
         lmmp_zero(ap + na, n - na);
         lmmp_binvert_n_dc_(dst, ap, n, tp);

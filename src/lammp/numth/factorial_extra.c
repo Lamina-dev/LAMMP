@@ -87,8 +87,8 @@ mp_size_t lmmp_factors_mul_ushort_(mp_ptr restrict dst, mp_size_t rn, fac_ptr re
         for (ushort i = 0; i < nfactors; i++) {
             ushort f = fac[i].f;
             uint j = fac[i].j;
-            lmmp_debug_assert(j != 0 && f <= 0xfff);
-#define MAX_T 0xfffffffffffff
+            lmmp_debug_assert(j != 0);
+#define MAX_T 0xffffffffffff
             for (uint e = 0; e < j; e++) {
                 t *= f;
                 if (t > MAX_T) {

@@ -32,6 +32,7 @@ uint64_t log2_fixed_64(uint64_t x);
  */
 uint64_t exp2_fixed_64(uint64_t x);
 
+#if 0
 /**
  * @brief floor(log2(1+x/B)*B), B=2^128
  * @param high 输入的小数部分高64位
@@ -49,5 +50,6 @@ void log2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low);
  * @note x = high * 2^64 + low
  */
 void exp2_fixed_128(uint64_t* dst, uint64_t high, uint64_t low);
+#endif // 0
 
 #endif // __LAMMP_LOG2_EXP2_H__

@@ -158,7 +158,7 @@ static mp_size_t lmmp_6pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong exp) {
     lmmp_zero(dst, n);
     rn = lmmp_3pow_1_(dst + n, rn - n, exp);
     dst[n + rn] = lmmp_shl_(dst + n, dst + n, rn, exp % LIMB_BITS);
-    rn += n;
+    rn += n + 1;
     rn -= dst[rn - 1] == 0 ? 1 : 0;
     return rn;
 }
