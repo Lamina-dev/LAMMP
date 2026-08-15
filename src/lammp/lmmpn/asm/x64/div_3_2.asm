@@ -26,16 +26,15 @@ lmmp_div_3_2_:
     ; Linux  : RDI=numa,  RSI=numb,  RDX=inv21
     ; Windows: RCX=numa,  RDX=numb,  R8=inv21
 
-%ifdef LAMMP_ASM_WIN
-    ; Win RBX, RSI, RDI, R12-R15
     push rbx
     push rsi
     push rdi
     push r12
     push r13
-    push r14
     push r15
 
+%ifdef LAMMP_ASM_WIN
+    ; Win RBX, RSI, RDI, R12-R15
     mov r15, rcx        ; R15 = numa
     mov rsi, rdx        ; RSI = numb
     mov rax, r8         ; RAX = inv21
@@ -88,15 +87,12 @@ lmmp_div_3_2_:
     mov [r15+8], r13
     mov rax, r10        ;return qh
 
-%ifdef LAMMP_ASM_WIN
     pop r15
-    pop r14
     pop r13
     pop r12
     pop rdi
     pop rsi
     pop rbx
-%endif
     ret
 
 .lab_fx:

@@ -30,6 +30,10 @@ mp_limb_t lmmp_div_3_2_(mp_ptr restrict numa, mp_srcptr restrict numb, mp_limb_t
 
 mp_limb_t lmmp_mod_1_(mp_srcptr numa, mp_size_t na, mp_limb_t x) {
     mp_limb_t ah, al;
+    if (na == 1) {
+        ah = numa[0];
+        return ah % x;
+    }
     // q: assigned for macro reuse, unused in this logic (known warning)
     mp_limb_t t = numa[na - 2], q = 0, r = 0;
     const int shift = lmmp_leading_zeros_(x);
