@@ -58,7 +58,7 @@ void lmmp_sqr_toom4_(mp_ptr restrict dst, mp_srcptr restrict numa, mp_size_t na)
 
     n = (na + 3) >> 2;
     TEMP_S_DECL;
-    mp_ptr restrict scratch = SALLOC_TYPE(8 * n + 8, mp_limb_t);
+    mp_ptr restrict scratch = SALLOC_TYPE(10 * n + 10, mp_limb_t);
 
     s = na - 3 * n;
 
