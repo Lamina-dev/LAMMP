@@ -136,13 +136,13 @@ void lmmp_cbrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, 
         }
     } else {
         mp_size_t lo = ns / 2, hi = ns - lo;
-#define Ahr     (dst + lo)                 // [dst+lo,               hi]
-#define rk      (numa + 3 * lo)            // [numa+3*lo,        2*hi+1]
-#define R       (numa)                     // [numa,             2*ns+1]
-#define Ahr2    (tp)                       // [tp,                 2*hi]
-#define Alr     (tp + 2 * hi)              // [tp + 2*hi,          lo+1]
-#define Alr2    (tp + 2 * hi + lo + 1)     // [tp + 2*hi+lo+1,     2*lo]
-#define scratch (tp + 2 * hi + 3 * lo + 1) // [tp + 2*hi+3*lo+1,   3*lo]
+#define Ahr     (dst + lo)             // [dst+lo,              hi]
+#define rk      (numa + 3 * lo)        // [numa+3*lo,       2*hi+1]
+#define R       (numa)                 // [numa,            2*ns+1]
+#define Ahr2    (tp)                   // [tp,                2*hi]
+#define Alr     (tp + 2 * hi)          // [tp + 2*hi,         lo+1]
+#define Alr2    (tp + 2 * hi + lo)     // [tp + 2*hi+lo,      2*lo]
+#define scratch (tp + 2 * hi + 3 * lo) // [tp + 2*hi+3*lo, hi+2*lo]
 
         lmmp_cbrt_divide_(Ahr, rk, hi, tp, 1);
 

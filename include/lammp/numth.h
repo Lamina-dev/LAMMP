@@ -753,7 +753,7 @@ LAMMP_API ulong lmmp_sqrt_ulong_(ulong a);
  * @param dstr 余数指针（1个limb）
  * @param x 被开方数
  * @warning x>=B/4, dstr!=NULL
- * @note [dstr,1]=floor(sqrt(x)), return floor(sqrt(x))
+ * @note [dstr,1]=sqrtrem(x), return floor(sqrt(x))
  * @return floor(sqrt(x))
  */
 LAMMP_API mp_limb_t lmmp_sqrt_1_(mp_ptr dstr, mp_limb_t x);
@@ -783,10 +783,10 @@ LAMMP_API void lmmp_sqrt_divide_(mp_ptr dst, mp_ptr numa, mp_size_t ns, mp_ptr t
 /**
  * @brief 计算近似逆平方根 [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
  * @param dstis 目标数组
- * @param ns dsts数组的 limb 长度为 ns+1
+ * @param ns dstis数组的 limb 长度为 ns+1
  * @param numa 输入数组
  * @param na numa数组的 limb 长度
- * @warning ns>=3, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL, sep(dstis,tp)
+ * @warning ns>=3, na>0, numa[na-1]>=B/4, dstis!=NULL, numa!=NULL, sep(dstis,numa)
  * @note [dstis,ns+1]=floor(sqrt(B^(2*ns+na)/[numa,na]))-[0|1], dstis[ns]=1
  */
 LAMMP_API void lmmp_invsqrt_newton_(mp_ptr dstis, mp_size_t ns, mp_srcptr numa, mp_size_t na);
@@ -865,10 +865,10 @@ LAMMP_API mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2)
  * @param dst 结果指针（ns个limb）
  * @param numa 被开方数指针（3*ns个limb，且会被修改，若计算余数，余数存储在[numa,2*ns+1]中）
  * @param ns 结果指针的 limb 长度
- * @param tp 临时指针（4*ns+1个limb）
+ * @param tp 临时指针（4*ns个limb）
  * @param calr 是否计算余数（0表示不计算余数，1表示计算余数）
  * @warning numa[3*ns-1]>=0x6000000000000000, dst!=NULL, numa!=NULL, tp!=NULL, sep(dst,numa,tp)
- * @note 即使输入calr=0，numa也会被修改，如果calr=1，则[numa,ns+1]将会储存余数。
+ * @note 即使输入calr=0，numa也会被修改，如果calr=1，则[numa,2*ns+1]将会储存余数。
  */
 LAMMP_API void lmmp_cbrt_divide_(mp_ptr dst, mp_ptr numa, mp_size_t ns, mp_ptr tp, int calr);
 
