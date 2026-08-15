@@ -23,12 +23,11 @@
 
 
 void test_sqrt() {
-    mp_size_t len = 100, ni = 10000;
+    mp_size_t len = 100, ni = 100000;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
 
-    // lmmp_fill(a0, 0, len, 0);
-    len = lmmp_seed_random_(a0, len, 2827384783234, 1);
-    a0[len - 1] = 1;
+    //lmmp_fill(a0, 0, 200000, 0);
+    lmmp_seed_random_(a0, len, 2827384783234, 1);
 
     mp_size_t an = ni + len / 2 + 1;
     mp_ptr a = ALLOC_TYPE(an, mp_limb_t);

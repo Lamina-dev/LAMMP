@@ -28,13 +28,14 @@ static void lmmp_cube_(mp_ptr dst, mp_srcptr numa, mp_size_t len) {
 }
 
 void test_cbrt() {
-    mp_size_t len = 10;
+    mp_size_t len = 100000 + 100;
     mp_ptr a0 = ALLOC_TYPE(len, mp_limb_t);
     mp_ptr b = ALLOC_TYPE(3 * len, mp_limb_t);
     mp_ptr tp = ALLOC_TYPE(4 * len + 1, mp_limb_t);
 
     //lmmp_fill(a0, 0, len, LIMB_MAX);
-    len = lmmp_random_(a0, len);
+    lmmp_random_(a0 + 100000, 100);
+    lmmp_fill(a0, 0, len, 0);
     a0[len - 1] = 0xeeffffffffffffff;
 
     auto start1 = std::chrono::high_resolution_clock::now();
@@ -44,16 +45,15 @@ void test_cbrt() {
     std::cout << duration1 << "\n";
 
     lmmp_dec(b);
-    lmmp_zero(b, len);
-    lmmp_fill(b, len, 3 * len, LIMB_MAX);
     mp_ptr a = ALLOC_TYPE(len, mp_limb_t);
 
-    
+    /*
     std::cout << "input = ";
     for (mp_ssize_t i = 3 * len - 1; i >= 0; --i) {
         printf("%016llx", b[i]);
     }
     std::cout << "\n";
+    */
     
     auto start2 = std::chrono::high_resolution_clock::now();
     lmmp_cbrt_divide_(a, b, len, tp, 1);
@@ -61,6 +61,7 @@ void test_cbrt() {
     auto duration2 = std::chrono::duration_cast<std::chrono::microseconds>(end2 - start2).count();
     std::cout << duration2 << "\n";
 
+    /*
     std::cout << "cbrt = ";
     for (mp_ssize_t i = len - 1; i >= 0; --i) {
         printf("%016llx", a[i]);
@@ -74,6 +75,7 @@ void test_cbrt() {
     std::cout << "\n";
 
 end:
+*/
     lmmp_free(a0);
     lmmp_free(a);
     lmmp_free(b);
