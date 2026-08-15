@@ -111,7 +111,9 @@ mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
               = r_k * B^(3*lo) + Al - 3*Alr*Ahr^2*B^(2*lo) - 3*Ahr*Alr^2*B^lo - Alr^3                     |
               = R - 3*Ahr*Alr^2*B^lo - Alr^3                                                              |
                                                                                                           |
-        Alr is either correct or 1 too big,                                                               |
+        Alr is either correct or 1 too big. However, in practice, we have found that Alr can be           |
+        overestimated by up to 2, and at this point, it can only be Alr = B^lo+1, which is different      |
+        from the square root (where the square root Alr is at most B ^ lo)                                |
                                                        ┌────────────────────────────────────────────────┐ |
         r_k+1 = R - 3*Ahr*(Alr-1)^2*B^lo - (Alr-1)^3 + | 3*Alr*Ahr^2*B^(2*lo) - 3*(Alr-1)*Ahr^2*B^(2*lo)├─┘
               = R - 3*Ahr*Alr^2*B^lo - Alr^3           └────────────────────────────────────────────────┘
@@ -120,12 +122,12 @@ mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
 
 // 此阈值是为了保证 cbrt(A)^2 >= B^2/2
 // 实际值大约 0x5A827999FCEF3242
-#define CBRT_MIN (0x6000000000000000ull)
+#define CBRT_DIVIDE_MIN (0x6000000000000000ull)
 
 void lmmp_cbrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, mp_ptr restrict tp, int calr) {
     lmmp_param_assert(ns > 0);
     lmmp_param_assert(numa != NULL && dst != NULL && tp != NULL);
-    lmmp_param_assert(numa[3 * ns - 1] >= CBRT_MIN);
+    lmmp_param_assert(numa[3 * ns - 1] >= CBRT_DIVIDE_MIN);
     if (ns == 1) {
         dst[0] = lmmp_cbrt_3_(numa[0], numa[1], numa[2]);
         if (calr) {
@@ -214,7 +216,7 @@ void lmmp_cbrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, 
 
             lmmp_mul_(scratch, Alr2, 2 * lo, Ahr, hi);
             mp_limb_t b = lmmp_submul_1_(R + lo, scratch, 2 * lo + hi, 3);
-            r += lmmp_sub_1_(R + 3 * lo + hi, R + 3 * lo + hi, ns + 1 - 2 * lo, b);
+            r += lmmp_sub_1_(R + 2 * lo + ns, R + 2 * lo + ns, ns + 1 - 2 * lo, b);
 
             if (calr == 0) {
                 if (r > 0)
@@ -263,3 +265,40 @@ void lmmp_cbrt_divide_(mp_ptr restrict dst, mp_ptr restrict numa, mp_size_t ns, 
 #undef Alr2
 #undef scratch
 }
+
+#if 0
+/*
+
+    B^(3*ns) // [numa,3*ns]^(2/3)
+
+    A     = Ah * B^(3*lo) + Al
+
+    Ahr   = B^(nf+3*hi) / Ah^(2/3)
+    x_k   = Ahr * B^lo
+
+    x_k+1 = x_k + x_k/3 - A^2 * x_k^4 / 3 / B^(9*na+3*nf)
+
+*/
+
+#define INVCBRT_MIN 0xa000000000000000ull
+
+void lmmp_invcbrt_newton_(mp_ptr dst, mp_srcptr numa, mp_size_t na, mp_size_t nf) {
+    lmmp_param_assert(na > 0);
+    lmmp_param_assert(numa != NULL && dst != NULL);
+    lmmp_param_assert(numa[3 * na - 1] >= INVCBRT_MIN);
+
+    mp_size_t ns = na + nf;
+    if (ns == 1) {
+        mp_limb_t a_sqr[6], a_sqrcbrt[2], tp[9];
+        lmmp_sqr_basecase_(a_sqr, numa, 3);
+        lmmp_cbrt_divide_(a_sqrcbrt, a_sqr, 2, tp, 0);
+        lmmp_zero(tp, 3);
+        tp[3] = 1;
+
+        lmmp_div_2_s_(dst, tp, 4, a_sqrcbrt);
+    } else {
+
+    }
+}
+
+#endif
