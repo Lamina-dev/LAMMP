@@ -24,15 +24,15 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64)$")
 endif()
 
 set(LAMMP_DEFAULT_USE_ASM OFF)
-if(LAMMP_X86_64 AND CMAKE_SIZEOF_VOID_P EQUAL 8)
+if(LAMMP_X86_64 AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT APPLE)
     set(LAMMP_DEFAULT_USE_ASM ON)
 endif()
 
 option(USE_ASM "Enable x64 assembly optimization (require NASM)" ${LAMMP_DEFAULT_USE_ASM})
 
-# 目标系统：自动识别，也可手动指定 WIN | LIN
-set(TARGET_SYSTEM "AUTO" CACHE STRING "Target system: AUTO | WIN | LIN")
-set_property(CACHE TARGET_SYSTEM PROPERTY STRINGS AUTO WIN LIN)
+# 目标系统：自动识别，也可手动指定 WIN | LIN | MAC
+set(TARGET_SYSTEM "AUTO" CACHE STRING "Target system: AUTO | WIN | LIN | MAC")
+set_property(CACHE TARGET_SYSTEM PROPERTY STRINGS AUTO WIN LIN MAC)
 
 # 构建类型检查
 set(VALID_BUILD_TYPES Debug Release RelWithDebInfo MinSizeRel)
@@ -46,6 +46,8 @@ endif()
 if(TARGET_SYSTEM STREQUAL "AUTO")
     if(WIN32)
         set(TARGET_SYSTEM "WIN")
+    elseif(APPLE)
+        set(TARGET_SYSTEM "MAC")
     else()
         set(TARGET_SYSTEM "LIN")
     endif()
@@ -80,6 +82,8 @@ if(USE_ASM AND CMAKE_SIZEOF_VOID_P EQUAL 8)
         set(CMAKE_ASM_NASM_OBJECT_FORMAT win64)
     elseif(TARGET_SYSTEM STREQUAL "LIN")
         set(CMAKE_ASM_NASM_OBJECT_FORMAT elf64)
+    elseif(TARGET_SYSTEM STREQUAL "MAC")
+        message(FATAL_ERROR "LAMMP assembly is not supported on macOS; disable USE_ASM.")
     else()
         message(FATAL_ERROR "Unsupported TARGET_SYSTEM: ${TARGET_SYSTEM}")
     endif()
@@ -138,6 +142,8 @@ function(lammp_target_setup target)
                 $<$<COMPILE_LANGUAGE:C>: -fno-plt>
                 $<$<COMPILE_LANGUAGE:CXX>: -fno-plt>
             )
+    elseif(TARGET_SYSTEM STREQUAL "MAC")
+        target_compile_definitions(${target} PRIVATE LAMMP_MACOS)
     endif()
 
     if(MSVC)
@@ -209,6 +215,11 @@ function(lammp_target_setup target)
             >
         )
         message(STATUS "Linker options: clang standard options set.")
+    elseif(APPLE)
+        target_link_options(${target} PRIVATE
+            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,-dead_strip>
+        )
+        message(STATUS "Linker options: Apple ld standard options set.")
     elseif(MINGW OR TARGET_SYSTEM STREQUAL "LIN")
         # MinGW 或 Linux 使用 GNU ld 风格
         target_link_options(${target} PRIVATE
