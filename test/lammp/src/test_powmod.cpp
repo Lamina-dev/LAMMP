@@ -31,7 +31,7 @@ void test_powmod() {
     }
     auto start = std::chrono::high_resolution_clock::now();
     for (mp_size_t i = 0; i < len; i++) {
-        c[i] = lmmp_powmod_uint_(a[i], b[i], c[i]);
+        c[i] = lmmp_powmod_uint_odd_(a[i], b[i], c[i]);
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();

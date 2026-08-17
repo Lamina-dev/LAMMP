@@ -283,20 +283,20 @@ LAMMP_API ulong lmmp_mulmod_ulong_(ulong a, ulong b, ulong mod, ulongp q);
  * @param base 底数
  * @param exp 指数
  * @param mod 模数
- * @warning base < mod, mod > 1
+ * @warning base<mod, mod>1, mod%2==1
  * @return base^exp 对 mod 取模的结果
  */
-LAMMP_API uint lmmp_powmod_uint_(uint base, ulong exp, uint mod);
+LAMMP_API uint lmmp_powmod_uint_odd_(uint base, ulong exp, uint mod);
 
 /**
  * @brief 计算 base^exp 对 mod 取模
  * @param base 底数
  * @param exp 指数
  * @param mod 模数
- * @warning base < mod, mod > 1
+ * @warning base<mod, mod>1, mod%2==1
  * @return base^exp 对 mod 取模的结果
  */
-LAMMP_API ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod);
+LAMMP_API ulong lmmp_powmod_ulong_odd_(ulong base, ulong exp, ulong mod);
 
 /**
  * @brief 大于n的下一个素数

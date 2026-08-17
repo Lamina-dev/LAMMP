@@ -105,13 +105,9 @@ static inline ulong mont63_mul(ulong a, ulong b, ulong m, ulong m_inv) {
     return mont63_reduce(t, m, m_inv);
 }
 
-/*
-FIXME: lmmp_powmod_uint_ 和 lmmp_powmod_ulong_ 实际都要求模数为奇数
-       这与接口的约定（能处理任意大于1的模数）不符
-*/
-
-uint lmmp_powmod_uint_(uint base, ulong exp, uint mod) {
+uint lmmp_powmod_uint_odd_(uint base, ulong exp, uint mod) {
     lmmp_param_assert(mod > base);
+    lmmp_param_assert(mod % 2 == 1);
     lmmp_param_assert(mod > 1);
     ulong dst = 1;
     ulong b = base;
@@ -133,9 +129,12 @@ uint lmmp_powmod_uint_(uint base, ulong exp, uint mod) {
     return dst;
 }
 
-ulong lmmp_powmod_ulong_(ulong base, ulong exp, ulong mod) {
+ulong lmmp_powmod_ulong_odd_(ulong base, ulong exp, ulong mod) {
+    lmmp_param_assert(mod > base);
+    lmmp_param_assert(mod % 2 == 1);
+    lmmp_param_assert(mod > 1);
     if (mod <= MP_UINT_MAX)
-        return lmmp_powmod_uint_(base, exp, mod);
+        return lmmp_powmod_uint_odd_(base, exp, mod);
     else if (mod <= MONT63_MAX) {
         ulong R2 = mont63_R2(mod);
         ulong m_inv = lmmp_binvert_ulong_(mod);

@@ -26,7 +26,7 @@ long long bench_powmod_ulong(int len) {
 
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i++) {
-        c[i] = lmmp_powmod_ulong_(a[i], b[i], m);
+        c[i] = lmmp_powmod_ulong_odd_(a[i], b[i], m);
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
