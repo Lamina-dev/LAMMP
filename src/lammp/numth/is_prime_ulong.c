@@ -105,6 +105,11 @@ static inline ulong mont63_mul(ulong a, ulong b, ulong m, ulong m_inv) {
     return mont63_reduce(t, m, m_inv);
 }
 
+/*
+FIXME: lmmp_powmod_uint_ 和 lmmp_powmod_ulong_ 实际都要求模数为奇数
+       这与接口的约定（能处理任意大于1的模数）不符
+*/
+
 uint lmmp_powmod_uint_(uint base, ulong exp, uint mod) {
     lmmp_param_assert(mod > base);
     lmmp_param_assert(mod > 1);
@@ -291,7 +296,7 @@ bool lmmp_is_prime_uint_(uint n) {
 }
 
 bool lmmp_is_prime_notrial_(ulong n) {
-    lmmp_param_assert(n > 1);
+    lmmp_param_assert(n > 2);
     if (n < 684630005672341) {
         ushort bases[2];
         bases[0] = 2;
