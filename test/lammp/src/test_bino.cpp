@@ -32,7 +32,7 @@ mp_size_t bino_native(mp_ptr dst, mp_size_t rn, ulong n, ulong r) {
     mp_size_t shw1 = bits1 / LIMB_BITS;
     tn = lmmp_nPr_odd_(tp, tn - shw1, n, r);
 
-    mp_size_t bits2;
+    mp_bitcnt_t bits2;
     mp_size_t prn = lmmp_factorial_size_(r, &bits2);
     mp_size_t shw2 = bits2 / LIMB_BITS;
     mp_ptr pr = (mp_ptr)lmmp_alloc(prn * sizeof(mp_limb_t));

@@ -15,10 +15,11 @@
 
 #include "../include/benchmark.hpp"
 #include <vector>
+#include <array>
 
 void bench_gcd2() {
     int len = 1000000;
-    std::vector<mp_limb_t[2]> a(len), b(len);
+    std::vector<std::array<mp_limb_t, 2>> a(len), b(len);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<mp_limb_t> dis(1, LIMB_MAX);
@@ -28,11 +29,11 @@ void bench_gcd2() {
         b[i][0] = dis(gen);
         b[i][1] = dis(gen);
     }
-    std::vector<mp_limb_t[2]> r1(len), r2(len);
+    std::vector<std::array<mp_limb_t, 2>> r1(len), r2(len);
 
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i++) {
-        lmmp_gcd_22_(r1.data()[i], a.data()[i], b.data()[i]);
+        lmmp_gcd_22_(r1[i].data(), a[i].data(), b[i].data());
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -40,7 +41,7 @@ void bench_gcd2() {
 
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i++) {
-        lmmp_gcd_lehmer_(r2.data()[i], a.data()[i], 2, b.data()[i], 2);
+        lmmp_gcd_lehmer_(r2[i].data(), a[i].data(), 2, b[i].data(), 2);
     }
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
