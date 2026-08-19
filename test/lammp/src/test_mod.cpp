@@ -16,6 +16,7 @@
 #include "../include/test_short.hpp"
 #include <chrono>
 #include <vector>
+#include <array>
 
 void test_mod() {
     mp_size_t n = 1000000;

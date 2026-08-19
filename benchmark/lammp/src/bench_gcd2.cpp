@@ -33,7 +33,7 @@ void bench_gcd2() {
 
     auto start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i++) {
-        lmmp_gcd_22_(r1.data()[i].data(), a.data()[i].data(), b.data()[i].data());
+        lmmp_gcd_22_(r1[i].data(), a[i].data(), b[i].data());
     }
     auto end = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
@@ -41,7 +41,7 @@ void bench_gcd2() {
 
     start = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < len; i++) {
-        lmmp_gcd_lehmer_(r2.data()[i].data(), a.data()[i].data(), 2, b.data()[i].data(), 2);
+        lmmp_gcd_lehmer_(r2[i].data(), a[i].data(), 2, b[i].data(), 2);
     }
     end = std::chrono::high_resolution_clock::now();
     duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
