@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -261,6 +261,8 @@ static inline int miller_rabin_64(ulong a, ulong t, ulong u, ulong m, ulong m_in
  *******************************************************************************/
 
 bool lmmp_is_prime_uint_(uint n) {
+    if (n == 2)
+        return true;
     if (n % 2 == 0 || n <= 1)
         return false;
     int judge = lmmp_is_prime_table_(n);
@@ -383,6 +385,8 @@ bool lmmp_is_prime_notrial_(ulong n) {
 }
 
 bool lmmp_is_prime_ulong_(ulong n) {
+    if (n == 2)
+        return true;
     if (n % 2 == 0 || n <= 1)
         return false;
     if (n <= MP_UINT_MAX) {

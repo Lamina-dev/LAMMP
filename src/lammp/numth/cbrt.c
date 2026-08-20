@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -58,18 +58,27 @@ mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
     x[1] = bits - 1;
     x[0] = log2_fixed_64(a_hi);
 
-    mp_limb_t r = lmmp_div_1_(x, x, 2, 3);
-    if (2 * r >= 3) // round
+    mp_limb_t rem = lmmp_div_1_(x, x, 2, 3);
+    if (2 * rem >= 3) // round
         lmmp_inc(x);
 
     mp_bitcnt_t shift = x[1];
     x[0] = exp2_fixed_64(x[0]);
 
     lmmp_debug_assert(shift <= 64);
+    mp_limb_t r;
     if (shift == 64)
-        return LIMB_MAX;
+        r = LIMB_MAX;
     else
-        return (x[0] >> (64 - shift)) | (1ULL << shift);
+        r = (x[0] >> (64 - shift)) | (1ULL << shift);
+
+    // log2/exp2 固定精度近似可能高估 1；高估时回退一档，
+    // 低估 1 仍然满足 floor(cbrt(x))-[0|1] 的接口语义。
+    mp_limb_t t[3], a[3] = {a0, a1, a2};
+    lmmp_cube_3_(t, r);
+    if (lmmp_cmp_(t, a, 3) > 0)
+        --r;
+    return r;
 }
 
 mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
@@ -79,13 +88,16 @@ mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2) {
     if (r == LIMB_MAX)
         return LIMB_MAX;
     mp_limb_t t[3], a[3] = {a0, a1, a2};
+
+    // 近似值可能低估或高估 1（以实测为准，不依赖理论单向偏差）。
+    lmmp_cube_3_(t, r);
+    if (lmmp_cmp_(t, a, 3) > 0)
+        return r - 1;
+
     lmmp_cube_3_(t, r + 1);
-    int cmp = lmmp_cmp_(t, a, 3);
-    // approx的结果至多只会低估1
-    if (cmp <= 0)
+    if (lmmp_cmp_(t, a, 3) <= 0)
         return r + 1;
-    else
-        return r;
+    return r;
 }
 
 /*

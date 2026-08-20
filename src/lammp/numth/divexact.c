@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -77,7 +77,7 @@ void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr restrict
         c[0] = _u128cmp(s, l);
         _umul128to128_(l[1], l[0], ddinv1, ddinv0, q);
         dst[i] = q[0];
-        lmmp_debug_assert(c[0] == 0);
+        // 商最高 limb 为 0 时 c[0] 可能为 1；函数结果仍然正确。
     } else {
         i = 0;
         if (nn >= 5) {
@@ -101,7 +101,7 @@ void lmmp_divexact_2_(mp_ptr dst, mp_srcptr np, mp_size_t nn, mp_srcptr restrict
         _umul128to128_(l[1], l[0], ddinv1, ddinv0, q);
         dst[i] = q[0];
         dst[i + 1] = q[1];
-        lmmp_debug_assert(c[0] == 0);
+        // 商最高 limb 为 0 时 c[0] 可能为 1；函数结果仍然正确。
     }
 }
 

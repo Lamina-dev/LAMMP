@@ -31,7 +31,7 @@ extern "C" {
  */
 INLINE_ bool lmmp_endian(void) {
     int num = 1;
-    return (*(char*)&num) == 0;
+    return (*(char*)&num) != 0;
 }
 
 /**
