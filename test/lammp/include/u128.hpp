@@ -16,9 +16,6 @@
 #ifndef U128_HPP
 #define U128_HPP
 
-// uint128_t.hpp
-#pragma once
-
 #include <cstdint>
 #include <stdexcept>
 #include <type_traits>
