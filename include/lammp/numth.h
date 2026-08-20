@@ -850,13 +850,13 @@ LAMMP_API ulong lmmp_cbrt_ulong_(ulong n);
 LAMMP_API mp_limb_t lmmp_cbrt_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
 
 /**
- * @brief 计算近似立方根 floor(cbrt(a0+a1*B+a2*B^2))-[0|1]
+ * @brief 计算近似立方根 floor(cbrt(a0+a1*B+a2*B^2))+[0|1|-1]
  * @param a0 低位 limb
  * @param a1 中位 limb
  * @param a2 高位 limb
  * @warning a1>0
  * @note a2可以为0，但a1需要大于0，即这个数至少应有65个bit
- * @return floor(cbrt(a0+a1*B+a2*B^2))-[0|1]
+ * @return floor(cbrt(a0+a1*B+a2*B^2))+[0|1|-1]
  */
 LAMMP_API mp_limb_t lmmp_cbrtapprox_3_(mp_limb_t a0, mp_limb_t a1, mp_limb_t a2);
 

@@ -13,13 +13,6 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-/**
- * 测试专用参考大整数实现（C++17，仅用于交叉验证）。
- *
- * 该实现刻意使用与核心库不同的朴素算法（学校乘法、Knuth-D 除法、
- * 欧几里得 gcd、重复平方幂等），用于验证核心库的高性能实现。
- */
-
 #ifndef LAMMP_TEST_UTILS_HPP
 #define LAMMP_TEST_UTILS_HPP
 

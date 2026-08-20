@@ -13,16 +13,6 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-/**
- * 新版 LAMMP 单元测试框架（C++17，无第三方依赖）。
- *
- * 设计思路：
- *   1. 显式注册：通过 TEST_CASE 宏在静态初始化阶段把测试函数注册到全局注册表。
- *   2. 非致命断言：失败后记录并继续运行，便于在一次运行中收集多个错误。
- *   3. 命令行过滤：支持 --filter 子串过滤（匹配 分类/名称），--list 列出用例。
- *   4. 输出风格统一：所有输出均为 ASCII 英文，避免 Windows 控制台代码页问题。
- */
-
 #ifndef LAMMP_TEST_FRAMEWORK_HPP
 #define LAMMP_TEST_FRAMEWORK_HPP
 

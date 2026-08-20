@@ -13,13 +13,6 @@
  *  See <https://www.gnu.org/licenses/>.
  */
 
-/**
- * 新版 LAMMP 性能基准框架（C++17，无第三方依赖）。
- *
- * 统一输出：ns/op、ops/s、bytes/op 可选。
- * 计时器使用 std::chrono::steady_clock（跨平台），不依赖第三方库。
- */
-
 #ifndef LAMMP_BENCH_FRAMEWORK_HPP
 #define LAMMP_BENCH_FRAMEWORK_HPP
 
