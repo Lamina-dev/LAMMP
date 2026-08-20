@@ -1,4 +1,4 @@
-#
+﻿#
 #  Copyright (C) 2026 HJimmyK(Jericho Knox)
 #
 #  This file is part of LAMMP.
@@ -117,24 +117,13 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 function(lammp_target_setup target)
 
     set_target_properties(${target} PROPERTIES
-
         C_STANDARD 11
-
         C_STANDARD_REQUIRED ON
-
         C_EXTENSIONS OFF
-
         CXX_STANDARD 17
-
         CXX_STANDARD_REQUIRED ON
-
         CXX_EXTENSIONS OFF
-
     )
-
-
-
-    # 仅保留 GNU/Clang 风格编译选项。MSVC/clang-cl 已在配置阶段被拒绝。
 
     target_compile_options(${target} PRIVATE
         $<$<COMPILE_LANGUAGE:C>:
