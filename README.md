@@ -7,11 +7,40 @@ LAMMP同时支持或计划支持包括但不限于如开方、阶乘、组合数
 
 ## 编译
 
-目前Lammp使用CMake构建，目前可支持MSVC，MinGW/Gcc，和clang编译器。受限于测试平台，在linux系统中暂无详细的编译测试。Lammp无标准库外的依赖，动态库LammpCore为纯c和汇编编写，无需其他依赖。
+Lammp 使用 CMake 构建，零外部依赖。当前支持 GNU/Clang 风格工具链：
 
-汇编使用nasm汇编器，设计目标可以跨系统（windows和linux）。对于非x64平台，未来仅会针对arm64架构再进行额外的汇编编写。同时目前已有generic实现，在``src/lammp/generic/``下。可以设置编译选项``--DUSE_ASM=ON``，请注意，对于非x64架构，开启此选项会导致编译失败。
++ Windows：MinGW GCC 或 GNU 驱动的 clang（不支持 MSVC / clang-cl）
++ Linux：GCC / Clang
++ macOS：Clang / GCC
 
-请注意，由于使用了BMI2指令集，所以x64架构的CPU最低要求 Intel Haswell及以上或者 AMD Zen 及以上。
+动态库 LammpCore 由纯 C 编写；x64 汇编为可选优化。汇编使用 NASM，需要显式开启：
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DUSE_ASM=ON
+cmake --build build -j
+```
+
+非 x64 平台（例如 macOS arm64）会自动回退到通用 C 实现；macOS x64 暂不支持汇编，请关闭 `USE_ASM`。
+
+## 测试与基准
+
+新测试与基准框架均为项目内实现，不依赖任何第三方库。测试默认随主项目一起构建（可用 `-DLAMMP_BUILD_TESTS=OFF` / `-DLAMMP_BUILD_BENCHMARKS=OFF` 关闭）。
+
+```bash
+# 构建
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build -j
+
+# 运行全部单元测试
+ctest --test-dir build --output-on-failure
+# 或直接运行，支持 --filter 过滤、--list 列出用例
+./dist/lammp/bin/debug/LammpTest --list
+./dist/lammp/bin/debug/LammpTest --filter numth/gcd
+
+# 运行性能基准（同样支持 --filter / --list）
+./dist/lammp/bin/debug/LammpBenchmark
+./dist/lammp/bin/debug/LammpBenchmark --filter lmmpn/mul
+```
 
 ## 接口与调用说明
 

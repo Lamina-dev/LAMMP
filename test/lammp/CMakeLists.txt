@@ -1,43 +1,52 @@
-﻿#
+#
 #  Copyright (C) 2026 HJimmyK(Jericho Knox)
 #
 #  This file is part of LAMMP.
 #
 #  LAMMP is free software: you can redistribute it and/or modify it under
 #  the terms of the GNU Lesser General Public License (LGPL) as published
-#   by the Free Software Foundation; either version 3 of the License, or
+#  by the Free Software Foundation; either version 3 of the License, or
 #  (at your option) any later version.
 #
-#  This program is distributed WITHOUT ANY WARRANTY. 
+#  This program is distributed WITHOUT ANY WARRANTY.
 #
 #  See <https://www.gnu.org/licenses/>.
+#
 
-# 收集测试源代码
-file(GLOB_RECURSE TEST_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+# 新版 LAMMP 单元测试目标（C++17，无第三方依赖）。
+# 测试源码显式列举，避免 GLOB 导致的新增文件不触发 CMake 重新配置。
+
+set(LAMMP_TEST_SRCS
+    main.cpp
+    src/test_low_limb.cpp
+    src/test_mul.cpp
+    src/test_div.cpp
+    src/test_str.cpp
+    src/test_numth_gcd.cpp
+    src/test_numth_pow.cpp
+    src/test_numth_divexact.cpp
+    src/test_numth_binvert.cpp
+    src/test_numth_sqrt_cbrt.cpp
+    src/test_numth_combin.cpp
+    src/test_numth_prime.cpp
+    src/test_rng_hash.cpp
 )
 
-# 生成测试可执行文件
-add_executable(LammpTest ${TEST_SRCS})
+add_executable(LammpTest ${LAMMP_TEST_SRCS})
 
-# 头文件包含
 target_include_directories(LammpTest
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/include
 )
 
-# 链接核心动态库
 target_link_libraries(LammpTest PRIVATE LammpCore)
 
-# 设置编译器选项
 lammp_target_setup(LammpTest)
 
-# 设置输出名称和属性
 set_target_properties(LammpTest PROPERTIES
     OUTPUT_NAME "LammpTest"
-    # Windows PDB文件输出
-    PDB_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    PDB_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )
+
+add_test(NAME LammpTest COMMAND LammpTest)

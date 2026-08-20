@@ -1,31 +1,38 @@
-﻿ # LAMMP - Copyright (C) 2026 HJimmyK(Jericho Knox)
- # This file is part of lammp, under the GNU LGPL v2 license.
- # See LICENSE in the project root for the full license text.
+#
+#  Copyright (C) 2026 HJimmyK(Jericho Knox)
+#
+#  This file is part of LAMMP.
+#
+#  LAMMP is free software: you can redistribute it and/or modify it under
+#  the terms of the GNU Lesser General Public License (LGPL) as published
+#  by the Free Software Foundation; either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed WITHOUT ANY WARRANTY.
+#
+#  See <https://www.gnu.org/licenses/>.
+#
 
-# 收集基准测试源代码
-file(GLOB_RECURSE BENCH_SRCS
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+# 新版 LAMMP 性能基准目标（C++17，无第三方依赖）。
+
+set(LAMMP_BENCH_SRCS
+    main.cpp
+    src/bench_basic.cpp
 )
 
-# 生成基准测试可执行文件
-add_executable(LammpBenchmark ${BENCH_SRCS})
+add_executable(LammpBenchmark ${LAMMP_BENCH_SRCS})
 
-# 头文件包含
 target_include_directories(LammpBenchmark
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/include
 )
 
-# 链接核心动态库
 target_link_libraries(LammpBenchmark PRIVATE LammpCore)
 
-# 设置编译器选项
 lammp_target_setup(LammpBenchmark)
 
-# 设置输出属性
 set_target_properties(LammpBenchmark PROPERTIES
     OUTPUT_NAME "LammpBenchmark"
-    PDB_OUTPUT_DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    PDB_OUTPUT_DIRECTORY "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}"
 )

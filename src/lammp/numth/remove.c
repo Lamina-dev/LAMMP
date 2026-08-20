@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -93,15 +93,19 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* restrict nn, mp_srcptr dp, mp_size_
             LMMP_SWAP(qp, divp, mp_ptr);
 
             ret += (mp_size_t)1 << (i - 1);
+
+            // 先计算下一次试除需要的 d^(2^i) 及其实际 limb 长度，
+            // 再判断是否继续。不能用 2*pn 代替实际长度。
+            prod = TALLOC_TYPE(2 * pn_pow[i - 1], mp_limb_t);
+            lmmp_sqr_(prod, pd_pow[i - 1], pn_pow[i - 1]);
             pn_pow[i] = 2 * pn_pow[i - 1];
+            pn_pow[i] -= (prod[pn_pow[i] - 1] == 0) ? 1 : 0;
+            pd_pow[i] = prod;
+
             if (divn < pn_pow[i]) {
                 ++i;
                 break;
             }
-            prod = TALLOC_TYPE(pn_pow[i], mp_limb_t);
-            lmmp_sqr_(prod, pd_pow[i - 1], pn_pow[i - 1]);
-            pn_pow[i] -= (prod[pn_pow[i] - 1] == 0) ? 1 : 0;
-            pd_pow[i] = prod;
         } else {
             break;
         }
@@ -115,12 +119,12 @@ mp_size_t lmmp_remove_(mp_ptr np, mp_size_t* restrict nn, mp_srcptr dp, mp_size_
         }
     }
     if (qn == 0) {
-        // 无法整除
+        // 无法整除：恢复为最后一次试除前的被除数
         lmmp_copy(np, divp, divn);
         *nn = divn;
     } else {
-        // 整除
-        lmmp_copy(np, qp, qn);
+        // 整除：商在最后一次 swap 后的 divp 中
+        lmmp_copy(np, divp, qn);
         *nn = qn;
     }
 

@@ -1,4 +1,4 @@
-﻿#
+#
 #  Copyright (C) 2026 HJimmyK(Jericho Knox)
 #
 #  This file is part of LAMMP.
@@ -16,6 +16,15 @@ cmake_minimum_required(VERSION 3.29)
 project(LAMMP LANGUAGES C CXX)
 
 # ==============================================================================
+# 0. 工具链限制：仅支持 GNU/Clang 风格工具链
+# ==============================================================================
+if(MSVC OR CMAKE_C_COMPILER_FRONTEND_VARIANT STREQUAL "MSVC")
+    # 原生 MSVC 与 clang-cl 均已停止支持。
+    # Windows 下请使用 MinGW GCC 或 GNU 驱动的 clang。
+    message(FATAL_ERROR "MSVC/clang-cl toolchain is not supported. Use MinGW GCC or GNU-driver clang on Windows.")
+endif()
+
+# ==============================================================================
 # 1. 可配置选项
 # ==============================================================================
 set(LAMMP_X86_64 FALSE)
@@ -23,12 +32,12 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(x86_64|amd64|AMD64|x64|X64)$")
     set(LAMMP_X86_64 TRUE)
 endif()
 
-set(LAMMP_DEFAULT_USE_ASM OFF)
-if(LAMMP_X86_64 AND CMAKE_SIZEOF_VOID_P EQUAL 8 AND NOT APPLE)
-    set(LAMMP_DEFAULT_USE_ASM ON)
-endif()
+# 汇编默认关闭：需要 x86_64 + NASM 时显式 -DUSE_ASM=ON 开启。
+option(USE_ASM "Enable x64 assembly optimization (require NASM)" OFF)
 
-option(USE_ASM "Enable x64 assembly optimization (require NASM)" ${LAMMP_DEFAULT_USE_ASM})
+# 测试与基准目标默认开启，可独立关闭。
+option(LAMMP_BUILD_TESTS "Build LAMMP unit tests" ON)
+option(LAMMP_BUILD_BENCHMARKS "Build LAMMP benchmarks" ON)
 
 # 目标系统：自动识别，也可手动指定 WIN | LIN | MAC
 set(TARGET_SYSTEM "AUTO" CACHE STRING "Target system: AUTO | WIN | LIN | MAC")
@@ -106,32 +115,56 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # 5. 通用编译选项函数
 # ==============================================================================
 function(lammp_target_setup target)
+
     set_target_properties(${target} PROPERTIES
+
         C_STANDARD 11
+
         C_STANDARD_REQUIRED ON
+
         C_EXTENSIONS OFF
+
         CXX_STANDARD 17
+
         CXX_STANDARD_REQUIRED ON
+
         CXX_EXTENSIONS OFF
+
     )
+
+
+
+    # 仅保留 GNU/Clang 风格编译选项。MSVC/clang-cl 已在配置阶段被拒绝。
+
+    target_compile_options(${target} PRIVATE
+        $<$<COMPILE_LANGUAGE:C>:
+            -Wall -Wextra -Wpedantic
+            $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
+            $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
+            $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
+            $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
+            $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
+        >
+        $<$<COMPILE_LANGUAGE:CXX>:
+            -Wall -Wextra -Wpedantic
+            $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
+            $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
+            $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
+            $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
+            $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
+        >
+    )
+    message(STATUS "Compile options: GNU/Clang standard options set.")
 
     if(USE_ASM)
         target_compile_definitions(${target} PRIVATE USE_ASM)
         if(TARGET_SYSTEM STREQUAL "WIN")
             target_compile_definitions(${target} PRIVATE LAMMP_ASM_WIN)
         endif()
-
-        if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
-            target_compile_options(${target} PRIVATE
-                $<$<COMPILE_LANGUAGE:C>: -mbmi2>
-                $<$<COMPILE_LANGUAGE:CXX>: -mbmi2>
-            )
-        elseif(CMAKE_C_COMPILER_ID MATCHES "MSVC")
-            target_compile_options(${target} PRIVATE
-                $<$<COMPILE_LANGUAGE:C>: /arch:AVX2>
-                $<$<COMPILE_LANGUAGE:CXX>: /arch:AVX2>
-            )
-        endif()
+        target_compile_options(${target} PRIVATE
+            $<$<COMPILE_LANGUAGE:C>: -mbmi2>
+            $<$<COMPILE_LANGUAGE:CXX>: -mbmi2>
+        )
     endif()
 
     if(TARGET_SYSTEM STREQUAL "WIN")
@@ -139,83 +172,14 @@ function(lammp_target_setup target)
     elseif(TARGET_SYSTEM STREQUAL "LIN")
         target_compile_definitions(${target} PRIVATE LAMMP_LINUX)
         target_compile_options(${target} PRIVATE
-                $<$<COMPILE_LANGUAGE:C>: -fno-plt>
-                $<$<COMPILE_LANGUAGE:CXX>: -fno-plt>
-            )
+            $<$<COMPILE_LANGUAGE:C>: -fno-plt>
+            $<$<COMPILE_LANGUAGE:CXX>: -fno-plt>
+        )
     elseif(TARGET_SYSTEM STREQUAL "MAC")
         target_compile_definitions(${target} PRIVATE LAMMP_MACOS)
     endif()
 
-    if(MSVC)
-        if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
-            set(MP_FLAG "/MP")
-        else()
-            set(MP_FLAG "")
-        endif()
-
-        target_compile_options(${target} PRIVATE
-            $<$<COMPILE_LANGUAGE:C>:
-                ${MP_FLAG} /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
-                /wd4305 /wd4244
-                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
-                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
-                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
-                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
-            >
-            $<$<COMPILE_LANGUAGE:CXX>:
-                ${MP_FLAG} /W4 /DWIN64 /D_CRT_SECURE_NO_WARNINGS
-                /wd4305 /wd4244
-                $<$<CONFIG:Debug>:/Od /Zi /DDEBUG /MDd>
-                $<$<CONFIG:Release>:/Ox /DNDEBUG /MD>
-                $<$<CONFIG:MinSizeRel>:/Os /DNDEBUG /MD>
-                $<$<CONFIG:RelWithDebInfo>:/O2 /Zi /DNDEBUG /MD>
-            >
-        )
-        message(STATUS "Compile options: MSVC standard options set.")
-    else()
-        target_compile_options(${target} PRIVATE
-            $<$<COMPILE_LANGUAGE:C>:
-                -Wall -Wextra -Wpedantic
-                $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
-                $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
-                $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
-                $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
-            >
-            $<$<COMPILE_LANGUAGE:CXX>:
-                -Wall -Wextra -Wpedantic
-                $<$<NOT:$<PLATFORM_ID:Windows>>:-fPIC>
-                $<$<CONFIG:Debug>:-O0 -g -DDEBUG>
-                $<$<CONFIG:Release>:-O3 -g0 -fno-math-errno -DNDEBUG>
-                $<$<CONFIG:MinSizeRel>:-Os -DNDEBUG>
-                $<$<CONFIG:RelWithDebInfo>:-O2 -g -DNDEBUG>
-            >
-        )
-        message(STATUS "Compile options: GNU standard options set.")
-    endif()
-
-    if(MSVC)
-        # MSVC 兼容编译器（原生 MSVC、clang-cl、Intel 等）
-        target_link_options(${target} PRIVATE
-            /DYNAMICBASE
-            /NXCOMPAT
-            /SUBSYSTEM:CONSOLE
-            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:/OPT:REF /OPT:ICF>
-        )
-        message(STATUS "Linker options: msvc standard options set.")
-    elseif(TARGET_SYSTEM STREQUAL "WIN" AND NOT MINGW)
-        # Windows 上使用 clang（GNU 驱动），目标为 MSVC ABI
-        # 使用 -Wl, 将 MSVC 选项原样转发给链接器
-        target_link_options(${target} PRIVATE
-            -Wl,/DYNAMICBASE
-            -Wl,/NXCOMPAT
-            -Wl,/SUBSYSTEM:CONSOLE
-            $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:
-                -Wl,/OPT:REF -Wl,/OPT:ICF
-            >
-        )
-        message(STATUS "Linker options: clang standard options set.")
-    elseif(APPLE)
+    if(APPLE)
         target_link_options(${target} PRIVATE
             $<$<OR:$<CONFIG:Release>,$<CONFIG:MinSizeRel>>:-Wl,-dead_strip>
         )
@@ -230,9 +194,10 @@ function(lammp_target_setup target)
         )
         message(STATUS "Linker options: GNU ld standard options set.")
     else()
-        # 其他平台（如 macOS）需要单独处理
-        message(STATUS "Warning: Unknown platform. No link options set for this platform.")
+        # Windows 上 GNU 驱动的 clang 等工具链，不附加平台特有链接选项。
+        message(STATUS "Linker options: default for this toolchain.")
     endif()
+
 endfunction()
 
 # ==============================================================================
@@ -258,9 +223,16 @@ if(EXISTS ${CMAKE_SOURCE_DIR}/main.c)
     lammp_target_setup(LammpMain)
 endif()
 
-add_subdirectory(test/lammp)
+if(LAMMP_BUILD_TESTS)
+    enable_testing()
+    add_subdirectory(test/lammp)
+endif()
+
 add_subdirectory(example/lammp)
-add_subdirectory(benchmark/lammp)
+
+if(LAMMP_BUILD_BENCHMARKS)
+    add_subdirectory(benchmark/lammp)
+endif()
 
 # ==============================================================================
 # 8. 最终信息输出

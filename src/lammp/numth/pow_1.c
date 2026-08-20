@@ -1,4 +1,4 @@
-﻿/**
+/**
  *  Copyright (C) 2026 HJimmyK(Jericho Knox)
  *
  *  This file is part of LAMMP.
@@ -362,9 +362,11 @@ mp_size_t lmmp_u32_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong e
     b5[2] = lmmp_mul_1_(b5, b4, b4n, base);
     mp_size_t b5n = b5[2] != 0 ? 3 : 2;
     
-    mp_limb_t b6[3];
+    // b6 需要 4 个 limb 的临时空间：sqr_basecase 会固定写入 2*b3n 个 limb。
+    mp_limb_t b6[4];
     lmmp_sqr_basecase_(b6, b3, b3n);
-    mp_size_t b6n = b6[2] != 0 ? 3 : 2;
+    mp_size_t b6n = 4;
+    while (b6[b6n - 1] == 0) --b6n;
 
     mp_limb_t b7[4];
     b7[3] = lmmp_mul_1_(b7, b5, b5n, b2[0]);
@@ -520,8 +522,10 @@ mp_size_t lmmp_u64_pow_1_(mp_ptr restrict dst, mp_size_t rn, ulong base, ulong e
  */
 
 mp_size_t lmmp_pow_1_(mp_ptr restrict dst, mp_size_t rn, mp_limb_t base, ulong exp) {
-    lmmp_param_assert(base > 1);
+    lmmp_param_assert(base >= 1);
     lmmp_param_assert(exp > 0);
+    if (base == 1)
+        return lmmp_1pow_1_(dst);
     if (base <= (mp_limb_t)0xf) {
         return lmmp_u4_pow_1_(dst, rn, base, exp);
     } else {
