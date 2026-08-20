@@ -23,12 +23,13 @@
 
 #include "lammp/lmmp.h"
 #include "lammp/lmmpn.h"
+#include "u128.hpp"
 
 namespace lammp_test_utils {
 
 using u64 = std::uint64_t;
 using u32 = std::uint32_t;
-using u128 = unsigned __int128;
+using u128 = uint128_t;
 
 constexpr u64 B_LO_MASK = UINT64_MAX;
 

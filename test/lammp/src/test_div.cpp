@@ -175,7 +175,7 @@ TEST_CASE("div/basecase_divide", div_basecase_vs_divide) {
 
 TEST_CASE("div/inv", inv_1_inv_2_1) {
     u64 seed = 0x0f0e0d0c0b0a0908ull;
-    const u128 max128 = (u128)-1;  // B^2 - 1
+    const u128 max128(-1, -1);  // B^2 - 1
     const u128 B = (u128)1 << 64;
 
     for (int i = 0; i < 500; ++i) {
