@@ -37,7 +37,7 @@ add_executable(LammpTest ${LAMMP_TEST_SRCS})
 target_include_directories(LammpTest
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_SOURCE_DIR}/include
+        ${PROJECT_SOURCE_DIR}/include
 )
 
 target_link_libraries(LammpTest PRIVATE LammpCore)
